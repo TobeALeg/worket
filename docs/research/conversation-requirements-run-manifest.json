@@ -1,0 +1,157 @@
+[
+  {
+    "label": "dev-v01-direct",
+    "path": "output/requirements-runs/dev-v01-direct",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v01-verified",
+    "path": "output/requirements-runs/dev-v01-verified",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v02-direct",
+    "path": "output/requirements-runs/dev-v02-direct",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v02-verified",
+    "path": "output/requirements-runs/dev-v02-verified",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v03-verified",
+    "path": "output/requirements-runs/dev-v03-verified",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v04-verified",
+    "path": "output/requirements-runs/dev-v04-verified",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v05-verified",
+    "path": "output/requirements-runs/dev-v05-verified",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v06-grounded",
+    "path": "output/requirements-runs/dev-v06-grounded",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "dev-v09-grounded-low",
+    "path": "output/requirements-runs/dev-v09-grounded-low",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "replay-v11-audited-low",
+    "path": "output/requirements-runs/replay-v11-audited-low",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "test-v09-direct-low",
+    "path": "output/requirements-runs/test-v09-direct-low",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "test-v09-grounded-low",
+    "path": "output/requirements-runs/test-v09-grounded-low",
+    "visibility": "synthetic"
+  },
+  {
+    "label": "real-dev-v02-verified",
+    "path": "output/requirements-private/runs/real-dev-v02-verified",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v03-direct",
+    "path": "output/requirements-private/runs/real-dev-v03-direct",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v03-verified",
+    "path": "output/requirements-private/runs/real-dev-v03-verified",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v04-direct",
+    "path": "output/requirements-private/runs/real-dev-v04-direct",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v04-verified",
+    "path": "output/requirements-private/runs/real-dev-v04-verified",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v05-direct",
+    "path": "output/requirements-private/runs/real-dev-v05-direct",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v05-verified",
+    "path": "output/requirements-private/runs/real-dev-v05-verified",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v06-direct",
+    "path": "output/requirements-private/runs/real-dev-v06-direct",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v06-grounded",
+    "path": "output/requirements-private/runs/real-dev-v06-grounded",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v07-grounded-thinking",
+    "path": "output/requirements-private/runs/real-dev-v07-grounded-thinking",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v08-grounded-low",
+    "path": "output/requirements-private/runs/real-dev-v08-grounded-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v08-grounded-thinking",
+    "path": "output/requirements-private/runs/real-dev-v08-grounded-thinking",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v09-grounded-low",
+    "path": "output/requirements-private/runs/real-dev-v09-grounded-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v10-audited-low",
+    "path": "output/requirements-private/runs/real-dev-v10-audited-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-dev-v11-audited-low",
+    "path": "output/requirements-private/runs/real-dev-v11-audited-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-replay-v10-audited-low",
+    "path": "output/requirements-private/runs/real-replay-v10-audited-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-replay-v11-audited-low",
+    "path": "output/requirements-private/runs/real-replay-v11-audited-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-test-v09-direct-low",
+    "path": "output/requirements-private/runs/real-test-v09-direct-low",
+    "visibility": "real"
+  },
+  {
+    "label": "real-test-v09-grounded-low",
+    "path": "output/requirements-private/runs/real-test-v09-grounded-low",
+    "visibility": "real"
+  }
+]

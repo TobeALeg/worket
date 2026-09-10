@@ -2,7 +2,7 @@ import { indexSource,hydrateDraft } from './evidence.mjs';
 import { randomUUID } from 'node:crypto';
 import { digest } from './provider.mjs';
 import { validateRecord,validateDraft,wrapDraft } from './contracts.mjs';
-import { VERSION,DIRECT,EVIDENCE,SYNTHESIS,REVIEW,REPAIR,GROUND } from './prompts.mjs';
+import { VERSION,DIRECT,EVIDENCE,SYNTHESIS,REVIEW,REPAIR,GROUND,SUPPORT_AUDIT } from './prompts.mjs';
 
 export function windows(messages,maxChars=12000) {
   if(!Number.isInteger(maxChars)||maxChars<200)throw new Error('chunkChars must be >=200');
@@ -19,12 +19,12 @@ export function windows(messages,maxChars=12000) {
 }
 export async function extractRequirements(record,provider,{strategy='verified',chunkChars=12000}={}) {
   validateRecord(record);
-  if(!['direct','structured','verified','grounded'].includes(strategy))throw new Error('strategy: direct | structured | verified | grounded');
+  if(!['direct','structured','verified','grounded','audited'].includes(strategy))throw new Error('strategy: direct | structured | verified | grounded | audited');
   const start=Date.now(),callStart=provider.calls?.length??0;
   const run={schemaVersion:1,kind:'WorkAnalysisRun',id:randomUUID(),workInstanceId:record.work.instanceId,sourceRecordId:record.id,sourceHash:digest(record),algorithmVersion:VERSION,strategy,chunkChars,startedAt:new Date().toISOString()};
   const ledger=[],sourceIndex=indexSource(record),modelRecord=sourceIndex.view;
   let draft;
-  if(['direct','grounded'].includes(strategy))draft=await provider.json(DIRECT,modelRecord,{phase:'direct'});
+  if(['direct','grounded','audited'].includes(strategy))draft=await provider.json(DIRECT,modelRecord,{phase:'direct'});
   else {
     for(const [index,messages] of windows(modelRecord.messages,chunkChars).entries()) {
       const evidence=await provider.json(EVIDENCE,{work:record.work,messages},{phase:`evidence-${index}`});
@@ -40,7 +40,7 @@ export async function extractRequirements(record,provider,{strategy='verified',c
     run.preReviewDraft=structuredClone(draft);
     if(strategy==='verified')draft=await provider.json(REVIEW,{record:modelRecord,candidate:draft,mechanicalIssues:validateDraft(hydrateDraft(draft,sourceIndex),record)},{phase:'review'});
   }
-  if(strategy==='grounded'){
+  if(['grounded','audited'].includes(strategy)){
     run.preGroundingDraft=structuredClone(draft);
     const cards=(draft.requirements??[]).map(r=>({id:r.id,text:r.text,origin:r.origin,status:r.status,evidence:(r.evidence??[]).map(e=>{
       const span=sourceIndex.byId.get(e.spanId);
@@ -52,7 +52,7 @@ export async function extractRequirements(record,provider,{strategy='verified',c
   let errors=validateDraft(draft,record);
   if(errors.length) {
     // Same repair allowance for all strategies; repairs are visible and charged.
-    const invalidIds=draft.requirements.filter(r=>errors.some(e=>e.startsWith(r.id+':'))).map(r=>r.id);
+    const invalidIds=(Array.isArray(draft?.requirements)?draft.requirements:[]).filter(r=>errors.some(e=>e.startsWith(r.id+':'))).map(r=>r.id);
     const onlyRequirements=errors.every(e=>invalidIds.some(id=>e.startsWith(id+':')));
     if(onlyRequirements&&invalidIds.length){
       const fixed=await provider.json(REPAIR,{record:modelRecord,invalidRequirements:draft.requirements.filter(r=>invalidIds.includes(r.id)),errors},{phase:'contract-repair'});
@@ -66,6 +66,30 @@ export async function extractRequirements(record,provider,{strategy='verified',c
     errors=validateDraft(draft,record);
   }
   if(errors.length)throw new Error(`Draft rejected: ${errors.join('; ')}`);
+  if(strategy==='audited') {
+    const active=draft.requirements.filter(r=>r.status==='ACTIVE');
+    const audit=await provider.json(SUPPORT_AUDIT,{record:modelRecord,activeClaims:active,questions:draft.questions},{phase:'support-audit'});
+    applySupportAudit(draft,audit);
+    run.supportAudit=audit;
+  }
+  errors=validateDraft(draft,record);
+  if(errors.length)throw new Error(`Audited draft rejected: ${errors.join('; ')}`);
   Object.assign(run,{finishedAt:new Date().toISOString(),durationMs:Date.now()-start,calls:provider.calls?.slice(callStart)??[],ledger});
   return {draft:wrapDraft(draft,record,run),run};
+}
+
+/** Conservative semantic gate: model may reject claims, never write new authorized requirements. */
+export function applySupportAudit(draft,audit) {
+  const active=draft.requirements.filter(r=>r.status==='ACTIVE');
+  const covers=(rows,key,ids)=>Array.isArray(rows)&&rows.length===ids.length&&new Set(rows.map(r=>r[key])).size===ids.length&&ids.every(id=>rows.some(r=>r[key]===id));
+  if(!covers(audit?.claims,'requirementId',active.map(r=>r.id))||!covers(audit?.questions,'questionId',draft.questions.map(q=>q.id)))throw new Error('Support audit coverage incomplete');
+  for(const a of audit.claims)if(!['SUPPORTED','UNSUPPORTED','UNCERTAIN'].includes(a.verdict)||typeof a.reason!=='string'||!a.reason.trim())throw new Error('Invalid support verdict');
+  for(const q of audit.questions)if(typeof q.unnecessary!=='boolean'||typeof q.blocksWholeWork!=='boolean'||typeof q.reason!=='string'||!q.reason.trim())throw new Error('Invalid question support verdict');
+  for(const a of audit.claims)if(a.verdict!=='SUPPORTED'){
+    const r=active.find(r=>r.id===a.requirementId);
+    r.origin='INFERRED';r.status='UNRESOLVED';
+  }
+  draft.questions=draft.questions.filter(q=>!audit.questions.find(a=>a.questionId===q.id).unnecessary);
+  for(const q of draft.questions)if(!audit.questions.find(a=>a.questionId===q.id).blocksWholeWork)q.priority='OPTIONAL';
+  return draft;
 }

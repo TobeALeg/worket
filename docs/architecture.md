@@ -275,4 +275,4 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 `experiments/conversation-requirements/` 提供 `extractRequirements(WorkRecord, provider, options)`。`WorkAnalysisRun` 记录针对一个 WorkInstance 的提炼运行；`WorkRequirementsDraft` 是该工作记录的派生产物，保留证据、要求变化与待澄清项。它不成为独立于工作的用户画像，也不自动发布 WorkDefinition。跨实例泛化与用户确认仍属于正式沉淀流程。
 
-数据流为冻结记录 → 完整证据窗口 → 工作级整合 → 原文审阅 → 程序校验 → 候选与运行记录。待澄清状态与可供审阅状态均不是用户确认。模型调用集中在独立适配器，凭据来自进程环境，研究不会调用产品的应用 API 或修改用户工作数据库。真实原文与逐条实验结果留在忽略目录。详见 [研究运行说明](../experiments/conversation-requirements/README.md)。
+推荐研究数据流为冻结记录 → 程序编号原文片段 → 直接提取 → 逐条来源与确认范围核验 → 程序校验及修复 → 只可降级的支持判定 → 候选与运行记录。另保留直接提取基线及分块证据/整合/审阅实验组。待澄清状态与可供审阅状态均不是用户确认。模型调用集中在独立适配器，凭据来自进程环境，研究不会调用产品的应用 API 或修改用户工作数据库。真实原文与逐条实验结果留在忽略目录。详见 [研究运行说明](../experiments/conversation-requirements/README.md)。

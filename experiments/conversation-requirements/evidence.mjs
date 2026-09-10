@@ -16,6 +16,7 @@ export function indexSource(record) {
  return {byId,view:{schemaVersion:record.schemaVersion,kind:record.kind,id:record.id,work:record.work,messages}};
 }
 export function hydrateDraft(draft,index) {
+ if(!draft||!Array.isArray(draft.requirements)||!Array.isArray(draft.questions))return draft;
  for(const r of draft.requirements??[]){r.supersedes??=[];r.applicability??='';}
  for(const item of [...(draft.requirements??[]),...(draft.questions??[])]) {
   if(!Array.isArray(item.evidence))continue;

@@ -6,13 +6,13 @@ import {renderDraft} from './contracts.mjs';
 import {judgeCase,aggregate} from './evaluate.mjs';
 import {VERSION} from './prompts.mjs';
 const [corpusPath,outDir,strategy='verified',filter='']=process.argv.slice(2);
-if(!corpusPath||!outDir)throw new Error('Usage: node benchmark.mjs CORPUS.json OUTPUT_DIR [direct|structured|verified] [case-id-substring]');
+if(!corpusPath||!outDir)throw new Error('Usage: node benchmark.mjs CORPUS.json OUTPUT_DIR [direct|structured|verified|grounded|audited] [case-id-substring]');
 const corpusText=await readFile(corpusPath,'utf8'),samples=JSON.parse(corpusText).filter(c=>!filter||c.id.includes(filter));
 if(!samples.length)throw new Error('No selected samples');
 await mkdir(outDir,{recursive:true});
 const moduleFiles=['prompts.mjs','extractor.mjs','evidence.mjs','contracts.mjs','provider.mjs','evaluate.mjs'];
 const codeHashes=Object.fromEntries(await Promise.all(moduleFiles.map(async name=>[name,digest(await readFile(new URL(name,import.meta.url),'utf8'))])));
-const config={codeHashes,version:VERSION,model:'deepseek-flash',family:'DeepSeek-V4.1-Flash',thinking:process.env.WORKET_RESEARCH_THINKING==='true',strategy,corpusHash:digest(corpusText),filter,chunkChars:12000};
+const config={codeHashes,version:VERSION,model:'deepseek-flash',family:'DeepSeek-V4.1-Flash',reasoningEffort:process.env.WORKET_RESEARCH_EFFORT??'high',thinking:process.env.WORKET_RESEARCH_THINKING==='true',strategy,corpusHash:digest(corpusText),filter,chunkChars:12000};
 const configPath=join(outDir,'config.json');
 try {const old=JSON.parse(await readFile(configPath,'utf8'));if(digest(old)!==digest(config))throw new Error('Existing experiment has different config; use a new output directory');}catch(e){if(e.code!=='ENOENT')throw e;await writeFile(configPath,JSON.stringify(config,null,2)+'\n');}
 let index=0;const rows=[];
@@ -22,7 +22,7 @@ async function worker(){
   let checkpoint;
   try {await access(path);checkpoint=JSON.parse(await readFile(path,'utf8'));if(checkpoint.metrics||checkpoint.error){rows.push(checkpoint);continue;}}catch(e){if(e.code!=='ENOENT')throw e;}
   const provider=new DeepSeek({thinking:config.thinking});
-  let row=checkpoint??{id:sample.id,split:sample.split,provenance:sample.provenance,sourceHash:digest(sample.record)};
+  let row=checkpoint??{id:sample.id,expected:{checks:sample.gold.length,positive:sample.gold.filter(g=>['requirement','question'].includes(g.kind)).length,critical:sample.gold.filter(g=>g.critical).length},split:sample.split,provenance:sample.provenance,sourceHash:digest(sample.record)};
   try {
    const result=checkpoint?.draft?{draft:checkpoint.draft,run:checkpoint.run}:await extractRequirements(sample.record,provider,{strategy,chunkChars:config.chunkChars});
    // Persist usable extraction before judge, so judge failure does not destroy evidence.

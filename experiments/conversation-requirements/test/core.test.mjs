@@ -1,3 +1,4 @@
+import {aggregate} from '../evaluate.mjs';
 import {indexSource,hydrateDraft} from '../evidence.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,4 +54,23 @@ test('confirmation must follow all cited proposals, not just one',()=>{
  const rec={...record,messages:[{id:'a1',role:'assistant',content:'采用方案A。'},{id:'u1',role:'user',content:'确认。'},{id:'a2',role:'assistant',content:'另外部署生产。'}]};
  const d=draft();Object.assign(d.requirements[0],{origin:'USER_CONFIRMED',evidence:[{messageId:'a1',quote:'采用方案A。'},{messageId:'u1',quote:'确认。'},{messageId:'a2',quote:'另外部署生产。'}]});
  assert.match(validateDraft(d,rec).join(),/later user evidence/);
+});
+
+test('evaluation denominator includes failed cases instead of silently dropping them',()=>{
+ const rows=[{expected:{checks:2,positive:2},metrics:{checks:2,met:2,positive:2,positiveMet:2,critical:2,criticalMet:2,active:2,unsupported:0,unnecessaryQuestions:0,pass:true}},{expected:{checks:2,positive:2},error:'provider failed'}];
+ const a=aggregate(rows);assert.equal(a.checkRate,0.5);assert.equal(a.positiveRecall,0.5);assert.equal(a.errors,1);
+});
+
+
+test('semantic gate only downgrades and refuses incomplete coverage',async()=>{
+ const {applySupportAudit}=await import('../extractor.mjs');
+ const d=draft();d.questions=[{id:'q1',text:'A or B?',priority:'BLOCKING'}];
+ const text=d.requirements[0].text;
+ const audit={claims:[{requirementId:d.requirements[0].id,verdict:'UNSUPPORTED',reason:'source does not entail exclusive restriction'}],questions:[{questionId:'q1',unnecessary:false,blocksWholeWork:false,reason:'alternative delivery authorized'}]};
+ applySupportAudit(d,audit);assert.equal(d.requirements[0].text,text);assert.equal(d.requirements[0].status,'UNRESOLVED');assert.equal(d.requirements[0].origin,'INFERRED');assert.equal(d.questions[0].priority,'OPTIONAL');
+ assert.throws(()=>applySupportAudit(d,audit),/coverage incomplete/);
+});
+test('semantic gate audits the final repaired draft, not an obsolete candidate',async()=>{
+ const phases=[];const p={calls:[],async json(system,input,{phase}){phases.push(phase);if(phase==='support-audit'){assert.equal(input.activeClaims[0].text,'修复后的内容');return {claims:[{requirementId:'r1',verdict:'SUPPORTED',reason:'supported'}],questions:[]};}if(phase==='contract-repair'){const d=draft();d.requirements[0].text='修复后的内容';return d;}const d=draft();d.requirements[0].category='INVALID';return d;}};
+ await extractRequirements(record,p,{strategy:'audited'});assert.deepEqual(phases,['direct','source-grounding','contract-repair','support-audit']);
 });

@@ -44,5 +44,71 @@
       "recordHash": "c7a85f544b831f8131a2da3411e4a28ec36fae33a664ab05289de0f80d6757d2",
       "goldCount": 9
     }
+  ],
+  "historicalHashNote": "Original import inventory preserved; use evaluationSnapshots below for exact frozen WorkRecord digest used by benchmark (sha256(JSON.stringify(record))).",
+  "evaluationSnapshots": [
+    {
+      "name": "real-dev.json",
+      "fileSha256": "d86af010b66a2c85b09383d2beb947b67af52da7e374f3a8b727abdeb1e7d695",
+      "cases": [
+        {
+          "id": "real-active-window",
+          "goldCount": 6,
+          "benchmarkRecordHash": "8792035f60eb47ee50c3d8b1591f466b8b8f7e59fe5e9a78272c43ca76999101"
+        },
+        {
+          "id": "real-multiwork",
+          "goldCount": 7,
+          "benchmarkRecordHash": "6457b164d681be61d2498912488ab6c255d8b567ffc5c5fbe673a4e49b18ce30"
+        },
+        {
+          "id": "real-distillation",
+          "goldCount": 10,
+          "benchmarkRecordHash": "6811f96b7913d0b325331e8f185a11cadef24c099d917d39169fb9c9b833e5bb"
+        }
+      ]
+    },
+    {
+      "name": "real-dev-expanded.json",
+      "fileSha256": "06296cf11424e040c0483ef65fa831bd2f7a536a8a0beb322b8cb92f3f2063a1",
+      "cases": [
+        {
+          "id": "real-active-window",
+          "goldCount": 9,
+          "benchmarkRecordHash": "8792035f60eb47ee50c3d8b1591f466b8b8f7e59fe5e9a78272c43ca76999101"
+        },
+        {
+          "id": "real-multiwork",
+          "goldCount": 7,
+          "benchmarkRecordHash": "6457b164d681be61d2498912488ab6c255d8b567ffc5c5fbe673a4e49b18ce30"
+        },
+        {
+          "id": "real-distillation",
+          "goldCount": 17,
+          "benchmarkRecordHash": "6811f96b7913d0b325331e8f185a11cadef24c099d917d39169fb9c9b833e5bb"
+        }
+      ]
+    },
+    {
+      "name": "real-test.json",
+      "fileSha256": "f0fc409bbf588f18d1702d235cb27f0ae0deb0949702a6e243c342237223c152",
+      "cases": [
+        {
+          "id": "real-updater",
+          "goldCount": 7,
+          "benchmarkRecordHash": "7c2f5f7aa099a6663ffbd917166a1d22ba89fd64ca31e2668c1c6a8fc44fed6e"
+        },
+        {
+          "id": "real-palette",
+          "goldCount": 6,
+          "benchmarkRecordHash": "acf8fb392e21976c0795142a63fa630c757b9036c71ac1ad9ddb20a539d3dfba"
+        },
+        {
+          "id": "real-video",
+          "goldCount": 9,
+          "benchmarkRecordHash": "4d1cd51acc7d30f58613f563d9bb88dba7aa467b335f4287f94430a1b01806fb"
+        }
+      ]
+    }
   ]
 }

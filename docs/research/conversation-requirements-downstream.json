@@ -1,0 +1,822 @@
+{
+  "direct_arithmetic": {
+    "description": "4 authored order tasks, paired same-model execution; initial arm lacks later information so measures information availability, not extraction superiority. Full conversation is the information-matched control.",
+    "model": "deepseek-flash",
+    "family": "DeepSeek-V4.1-Flash",
+    "results": [
+      {
+        "id": "net-september",
+        "arm": "initial",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": []
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "net-september",
+        "arm": "fullConversation",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "18000.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": false,
+          "currency": true
+        },
+        "pass": false,
+        "clarified": false
+      },
+      {
+        "id": "net-september",
+        "arm": "requirements",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "176.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": false,
+          "currency": true
+        },
+        "pass": false,
+        "clarified": false
+      },
+      {
+        "id": "gross-all",
+        "arm": "initial",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": []
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "gross-all",
+        "arm": "fullConversation",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "gross-all",
+        "arm": "requirements",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "usd-september",
+        "arm": "initial",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": []
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "usd-september",
+        "arm": "fullConversation",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "output": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "usd-september",
+        "arm": "requirements",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "output": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "net-all",
+        "arm": "initial",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": []
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "net-all",
+        "arm": "fullConversation",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "26.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": false,
+          "currency": true
+        },
+        "pass": false,
+        "clarified": false
+      },
+      {
+        "id": "net-all",
+        "arm": "requirements",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "25000.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": false,
+          "currency": true
+        },
+        "pass": false,
+        "clarified": false
+      }
+    ],
+    "byArm": {
+      "initial": {
+        "cases": 4,
+        "passes": 0,
+        "clarifications": 4
+      },
+      "fullConversation": {
+        "cases": 4,
+        "passes": 2,
+        "clarifications": 0
+      },
+      "requirements": {
+        "cases": 4,
+        "passes": 2,
+        "clarifications": 0
+      }
+    }
+  },
+  "bounded_plan": {
+    "description": "4 authored order tasks, paired same-model intent-to-plan compilation and deterministic execution; initial arm lacks later information so measures information availability, not extraction superiority. Full conversation is the information-matched control.",
+    "model": "deepseek-flash",
+    "family": "DeepSeek-V4.1-Flash",
+    "results": [
+      {
+        "id": "net-september",
+        "arm": "initial",
+        "workInstanceId": "order-work-net-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month (e.g., 2026-09)?",
+            "Should refunds be subtracted from the amounts?",
+            "Should amounts be converted from minor units to major units (divide by 100) or kept in minor units?"
+          ]
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month (e.g., 2026-09)?",
+            "Should refunds be subtracted from the amounts?",
+            "Should amounts be converted from minor units to major units (divide by 100) or kept in minor units?"
+          ]
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "net-september",
+        "arm": "fullConversation",
+        "workInstanceId": "order-work-net-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": "2026-09",
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "net-september",
+        "arm": "requirements",
+        "workInstanceId": "order-work-net-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": "2026-09",
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "b",
+            "e"
+          ],
+          "netRevenue": "180.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "gross-all",
+        "arm": "initial",
+        "workInstanceId": "order-work-gross-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "gross-all",
+        "arm": "fullConversation",
+        "workInstanceId": "order-work-gross-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": null,
+          "state": "paid",
+          "subtractRefunds": false,
+          "divisor": 1,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "gross-all",
+        "arm": "requirements",
+        "workInstanceId": "order-work-gross-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": null,
+          "state": "paid",
+          "subtractRefunds": false,
+          "divisor": 1,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "30145.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "usd-september",
+        "arm": "initial",
+        "workInstanceId": "order-work-usd-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "plan": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "usd-september",
+        "arm": "fullConversation",
+        "workInstanceId": "order-work-usd-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "plan": {
+          "currency": "USD",
+          "month": "2026-09",
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "usd-september",
+        "arm": "requirements",
+        "workInstanceId": "order-work-usd-september",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "plan": {
+          "currency": "USD",
+          "month": "2026-09",
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "c"
+          ],
+          "netRevenue": "50.00",
+          "currency": "USD"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "net-all",
+        "arm": "initial",
+        "workInstanceId": "order-work-net-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "output": {
+          "needsClarification": true,
+          "questions": [
+            "Which currency should be used for the aggregation (CNY or USD)?",
+            "Should the aggregation cover all dates or a specific month?",
+            "Should refunds be subtracted from the amounts?"
+          ]
+        },
+        "checks": {
+          "ids": false,
+          "amount": false,
+          "currency": false
+        },
+        "pass": false,
+        "clarified": true
+      },
+      {
+        "id": "net-all",
+        "arm": "fullConversation",
+        "workInstanceId": "order-work-net-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": null,
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      },
+      {
+        "id": "net-all",
+        "arm": "requirements",
+        "workInstanceId": "order-work-net-all",
+        "kind": "WorkExecutionRun",
+        "expected": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "plan": {
+          "currency": "CNY",
+          "month": null,
+          "state": "paid",
+          "subtractRefunds": true,
+          "divisor": 100,
+          "decimalPlaces": 2,
+          "sortIds": true
+        },
+        "output": {
+          "orderIds": [
+            "a",
+            "b",
+            "e"
+          ],
+          "netRevenue": "270.00",
+          "currency": "CNY"
+        },
+        "checks": {
+          "ids": true,
+          "amount": true,
+          "currency": true
+        },
+        "pass": true,
+        "clarified": false
+      }
+    ],
+    "byArm": {
+      "initial": {
+        "cases": 4,
+        "passes": 0,
+        "clarifications": 4
+      },
+      "fullConversation": {
+        "cases": 4,
+        "passes": 4,
+        "clarifications": 0
+      },
+      "requirements": {
+        "cases": 4,
+        "passes": 4,
+        "clarifications": 0
+      }
+    }
+  }
+}

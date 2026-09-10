@@ -3,15 +3,16 @@ export const digest = value => createHash('sha256').update(typeof value === 'str
 
 /** Credentials remain in memory. Trace contains public answer/usage, never reasoning or headers. */
 export class DeepSeek {
-  constructor({key=process.env.DEEPSEEK_API_KEY, baseUrl=process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com', model='deepseek-flash', thinking=false, timeoutMs=300000, retries=2}={}) {
+  constructor({key=process.env.DEEPSEEK_API_KEY, baseUrl=process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com', model='deepseek-flash', thinking=false, effort=process.env.WORKET_RESEARCH_EFFORT??'high', timeoutMs=300000, retries=2}={}) {
     if (!key) throw new Error('DEEPSEEK_API_KEY is required; no mock fallback');
     const url = new URL(baseUrl);
     if(url.protocol !== 'https:' || url.username || url.password || url.search) throw new Error('Provider must be an HTTPS URL without credentials/query');
-    Object.assign(this,{key,baseUrl:baseUrl.replace(/\/$/,''),model,thinking,timeoutMs,retries});
+    if(!['low','high','max'].includes(effort))throw new Error('Invalid reasoning effort');
+    Object.assign(this,{key,baseUrl:baseUrl.replace(/\/$/,''),model,thinking,effort,timeoutMs,retries});
     this.calls=[];
   }
   async json(system, input, {phase='extract', maxTokens=10000}={}) {
-    const body={model:this.model,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}],response_format:{type:'json_object'},thinking:{type:this.thinking?'enabled':'disabled'},max_tokens:this.thinking?Math.max(maxTokens,32768):maxTokens,...(this.thinking?{reasoning_effort:'high'}:{temperature:0})};
+    const body={model:this.model,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}],response_format:{type:'json_object'},thinking:{type:this.thinking?'enabled':'disabled'},max_tokens:this.thinking?Math.max(maxTokens,32768):maxTokens,...(this.thinking?{reasoning_effort:this.effort}:{temperature:0})};
     for(let attempt=0;attempt<=this.retries;attempt++) {
       const start=Date.now(); let response;
       try {

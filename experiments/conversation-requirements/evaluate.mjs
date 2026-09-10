@@ -34,5 +34,7 @@ export async function judgeCase(sample,draft,provider) {
 export function aggregate(rows) {
  const valid=rows.filter(r=>r.metrics),total=keys=>Object.fromEntries(keys.map(k=>[k,valid.reduce((s,r)=>s+r.metrics[k],0)]));
  const sums=total(['checks','met','positive','positiveMet','critical','criticalMet','active','unsupported','unnecessaryQuestions']);
- return {cases:rows.length,completed:valid.length,errors:rows.filter(r=>r.error).length,passes:valid.filter(r=>r.metrics.pass).length,...sums,checkRate:sums.checks?sums.met/sums.checks:null,positiveRecall:sums.positive?sums.positiveMet/sums.positive:null,unsupportedRate:sums.active?sums.unsupported/sums.active:null};
+ const expectedKnown=rows.every(r=>r.expected||r.metrics);
+ const expected={checks:rows.reduce((s,r)=>s+(r.expected?.checks??r.metrics?.checks??0),0),positive:rows.reduce((s,r)=>s+(r.expected?.positive??r.metrics?.positive??0),0)};
+ return {cases:rows.length,completed:valid.length,errors:rows.filter(r=>r.error).length,passes:valid.filter(r=>r.metrics.pass).length,...sums,expectedChecks:expectedKnown?expected.checks:null,expectedPositive:expectedKnown?expected.positive:null,checkRate:expectedKnown&&expected.checks?sums.met/expected.checks:null,positiveRecall:expectedKnown&&expected.positive?sums.positiveMet/expected.positive:null,scoredPositiveRecall:sums.positive?sums.positiveMet/sums.positive:null,unsupportedRate:sums.active?sums.unsupported/sums.active:null};
 }
