@@ -1,0 +1,48 @@
+{
+  "source": "6 visible local Codex conversations; single consenting user",
+  "split": "3 work-product development conversations for dev; 3 update/brand/video tasks held from tuning",
+  "cases": [
+    {
+      "id": "real-active-window",
+      "split": "real-dev",
+      "messageCount": 32,
+      "recordHash": "4124cb815c69f19c63a68a01fb4a88f45c41c033190d77c41ac57f83b14c3ba5",
+      "goldCount": 6
+    },
+    {
+      "id": "real-multiwork",
+      "split": "real-dev",
+      "messageCount": 33,
+      "recordHash": "4efdfb24eec526da5ed7db0a82e48653b32cfb14e2a2183c1c9c0a3a71dbbf2c",
+      "goldCount": 7
+    },
+    {
+      "id": "real-distillation",
+      "split": "real-dev",
+      "messageCount": 29,
+      "recordHash": "67fe9eb07474c2e74b565425b0ab95ee0c760df2b42792f6b331b11cb5e3fb3b",
+      "goldCount": 10
+    },
+    {
+      "id": "real-updater",
+      "split": "real-test",
+      "messageCount": 30,
+      "recordHash": "dfa4d89b082bd59e4892cb4dc0acd8757b448b3e39be4bbdc8fb174bb15cf817",
+      "goldCount": 7
+    },
+    {
+      "id": "real-palette",
+      "split": "real-test",
+      "messageCount": 18,
+      "recordHash": "fec14553aa55738c3f63c1ef21750d8646f045549d446f055e4e8ba702dfa23a",
+      "goldCount": 6
+    },
+    {
+      "id": "real-video",
+      "split": "real-test",
+      "messageCount": 14,
+      "recordHash": "c7a85f544b831f8131a2da3411e4a28ec36fae33a664ab05289de0f80d6757d2",
+      "goldCount": 9
+    }
+  ]
+}

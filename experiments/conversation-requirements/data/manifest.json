@@ -1,0 +1,11 @@
+{
+  "description": "Frozen synthetic cases authored before first extraction run. Test cases not used for prompt tuning; author knew case themes. Not blind, not real users.",
+  "files": {
+    "dev.json": "a258d66c65641b8abe3b877dc84621a9d6164f0edd7b2b4e6f4f493379647e0f",
+    "test.json": "8171423b6d8f3656f7b40796ff099692b6365544626202f48672ff8b3d253406"
+  },
+  "counts": {
+    "dev": 12,
+    "test": 8
+  }
+}

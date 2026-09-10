@@ -1,0 +1,475 @@
+[
+  {
+    "id": "test-translation",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-translation",
+      "work": {
+        "instanceId": "work-test-translation"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "Translate the manual into English. Preserve warning labels and model numbers verbatim."
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "content": "I can simplify warnings and convert all dimensions to inches."
+        },
+        {
+          "id": "m3",
+          "role": "user",
+          "content": "No. Keep the warnings complete, and keep dimensions in millimeters. Deliver a bilingual table."
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "译为英文并交付双语对照表",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "完整保留警告内容",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "requirement",
+        "text": "型号保持原样",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "requirement",
+        "text": "尺寸保持毫米单位",
+        "critical": true
+      },
+      {
+        "id": "g5",
+        "kind": "not_active",
+        "text": "尺寸转英寸",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-event",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-event",
+      "work": {
+        "instanceId": "work-test-event"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "活动邀请函周三发给我审，正式发送在我批准之后。人数上限30人。"
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "content": "将上限扩大到50人以便传播。"
+        },
+        {
+          "id": "m3",
+          "role": "user",
+          "content": "不要扩大。时间改成周四给我审，人数不变。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "周四交付审阅",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "人数上限30人",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "requirement",
+        "text": "正式发送须用户批准",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "人数上限50人",
+        "critical": true
+      },
+      {
+        "id": "g5",
+        "kind": "not_active",
+        "text": "周三交付审阅",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-research",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-research",
+      "work": {
+        "instanceId": "work-test-research"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "比较三种水处理方案，输出决策备忘录，必须列出证据来源。"
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "content": "我认为RO肯定最好，可直接推荐。"
+        },
+        {
+          "id": "m3",
+          "role": "user",
+          "content": "先别定结论，数据不足时标明未知。预算上限我明天提供。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "比较三种水处理方案并输出决策备忘录",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "列出证据来源",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "requirement",
+        "text": "数据不足标明未知",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "question",
+        "text": "预算上限尚未提供",
+        "critical": true
+      },
+      {
+        "id": "g5",
+        "kind": "not_active",
+        "text": "必须推荐RO",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-conditional",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-conditional",
+      "work": {
+        "instanceId": "work-test-conditional"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "所有发货都做出库检查；冷链商品另外附温度记录，普通商品不用附。"
+        },
+        {
+          "id": "m2",
+          "role": "user",
+          "content": "本次是普通商品，但客户额外要求照片，别把照片当成以后所有订单的要求。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "发货必须出库检查",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "温度记录只适用于冷链，普通商品不用",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "requirement",
+        "text": "本次订单需要照片，只限本次",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "以后所有订单都需要照片",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-retract",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-retract",
+      "work": {
+        "instanceId": "work-test-retract"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "周报包含客户名单和邮箱。"
+        },
+        {
+          "id": "m2",
+          "role": "user",
+          "content": "等等，隐私规则变了，删去邮箱，名单改成客户编号。"
+        },
+        {
+          "id": "m3",
+          "role": "assistant",
+          "content": "保留邮箱能方便联系。"
+        },
+        {
+          "id": "m4",
+          "role": "user",
+          "content": "不保留，导出前检查没有邮箱或真实姓名。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "周报使用客户编号",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "不包含邮箱",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "requirement",
+        "text": "导出前检查没有邮箱或真实姓名",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "周报包含客户邮箱",
+        "critical": true
+      },
+      {
+        "id": "g5",
+        "kind": "not_active",
+        "text": "周报包含客户真实姓名",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-ambiguous-ok",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-ambiguous-ok",
+      "work": {
+        "instanceId": "work-test-ambiguous-ok"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "给我做一个预约流程草案。"
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "content": "我建议开放匿名预约、在线支付、短信提醒，并把日志保存一年。"
+        },
+        {
+          "id": "m3",
+          "role": "user",
+          "content": "收到，先画流程，我还没确认这些选项。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "先画预约流程草案",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "not_active",
+        "text": "必须开放匿名预约",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "not_active",
+        "text": "必须在线支付",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "必须短信提醒",
+        "critical": true
+      },
+      {
+        "id": "g5",
+        "kind": "not_active",
+        "text": "日志保存一年",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-contradiction",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-contradiction",
+      "work": {
+        "instanceId": "work-test-contradiction"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "报告里每条记录都必须保留原始时间精确到秒。"
+        },
+        {
+          "id": "m2",
+          "role": "user",
+          "content": "合规要求又说不能输出任何时间。两个要求我还没协调好，先列出冲突，别自行决定。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "question",
+        "text": "保留秒级原始时间与不输出时间的冲突需协调",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "列出冲突且不自行决定",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "not_active",
+        "text": "已经决定删除所有时间",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "已经决定保留全部时间",
+        "critical": true
+      }
+    ]
+  },
+  {
+    "id": "test-source-file",
+    "split": "test",
+    "provenance": "assistant-authored synthetic; not benchmark originals",
+    "record": {
+      "schemaVersion": 1,
+      "kind": "WorkRecord",
+      "id": "record-test-source-file",
+      "work": {
+        "instanceId": "work-test-source-file"
+      },
+      "messages": [
+        {
+          "id": "m1",
+          "role": "user",
+          "content": "按附件合同的赔付条款计算这次赔付，输出明细。"
+        },
+        {
+          "id": "m2",
+          "role": "assistant",
+          "content": "我只有文件名contract.pdf，还没有读取到正文。"
+        },
+        {
+          "id": "m3",
+          "role": "user",
+          "content": "金额和条款都以合同为准，别套默认比例。"
+        }
+      ]
+    },
+    "gold": [
+      {
+        "id": "g1",
+        "kind": "requirement",
+        "text": "按合同赔付条款计算并输出明细",
+        "critical": true
+      },
+      {
+        "id": "g2",
+        "kind": "requirement",
+        "text": "不得套用默认赔付比例",
+        "critical": true
+      },
+      {
+        "id": "g3",
+        "kind": "question",
+        "text": "需要合同正文或具体赔付条款才能计算",
+        "critical": true
+      },
+      {
+        "id": "g4",
+        "kind": "not_active",
+        "text": "按10%计算赔付",
+        "critical": true
+      }
+    ]
+  }
+]

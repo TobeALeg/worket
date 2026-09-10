@@ -270,3 +270,9 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 `desktop/app-updates.ts` 管理检查并发、下载确认、提示及 Finder 定位；`desktop/github-release.ts` 读取公开 GitHub `releases/latest`，比较稳定版本，按严格文件名选择本机架构 ZIP 和 SHA256。主进程注入 Electron net.fetch，下载流式写入系统下载目录中的独立临时文件夹，大小和 SHA256 校验通过后才将 .part 改名为 ZIP。失败清理，不解压或执行附件。
 
 状态流：闲置 → 检查 → 用户确认 → 下载校验 → Finder 定位；稍后、无更新或失败返回闲置。用户自行退出、替换和重开应用；不存在 autoUpdater 或原生安装调用。开发模式不检查。`scripts/release-mac.mjs` 负责免费 ad-hoc 签名、打包及解压 QA，不要求 Apple 公证，不自动发布。GitHub token 不进入客户端，数据目录和 bundle ID 保持稳定。
+
+## 会话工作要求研究（独立实验，未接入应用）
+
+`experiments/conversation-requirements/` 提供 `extractRequirements(WorkRecord, provider, options)`。`WorkAnalysisRun` 记录针对一个 WorkInstance 的提炼运行；`WorkRequirementsDraft` 是该工作记录的派生产物，保留证据、要求变化与待澄清项。它不成为独立于工作的用户画像，也不自动发布 WorkDefinition。跨实例泛化与用户确认仍属于正式沉淀流程。
+
+数据流为冻结记录 → 完整证据窗口 → 工作级整合 → 原文审阅 → 程序校验 → 候选与运行记录。待澄清状态与可供审阅状态均不是用户确认。模型调用集中在独立适配器，凭据来自进程环境，研究不会调用产品的应用 API 或修改用户工作数据库。真实原文与逐条实验结果留在忽略目录。详见 [研究运行说明](../experiments/conversation-requirements/README.md)。
