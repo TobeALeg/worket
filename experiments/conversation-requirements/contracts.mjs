@@ -29,7 +29,11 @@ export function validateDraft(draft,record) {
     for(const [key,allowed] of Object.entries(values))if(!allowed.includes(r[key]))errors.push(`${r.id}: invalid ${key}`);
     const sources=refs(r,r.id);
     if(['USER_STATED','USER_CONFIRMED'].includes(r.origin)&&!sources.some(m=>m.role==='user')) errors.push(`${r.id}: user origin without user evidence`);
-    if(r.origin==='USER_CONFIRMED'&&!sources.some(m=>m.role==='assistant'))errors.push(`${r.id}: confirmation missing proposal evidence`);
+    if(r.origin==='USER_CONFIRMED') {
+      const proposalPositions=sources.filter(m=>m.role==='assistant').map(m=>record.messages.indexOf(m));
+      const userPositions=sources.filter(m=>m.role==='user').map(m=>record.messages.indexOf(m));
+      if(!proposalPositions.length||!userPositions.some(u=>proposalPositions.every(a=>a<u)))errors.push(`${r.id}: confirmation requires a proposal and later user evidence`);
+    }
     if(['AGENT_PROPOSED','INFERRED'].includes(r.origin)&&r.status==='ACTIVE')errors.push(`${r.id}: unconfirmed claim cannot be ACTIVE`);
   }
   const byId=new Map(draft.requirements.map(r=>[r.id,r]));
@@ -44,7 +48,8 @@ export function validateDraft(draft,record) {
   return errors;
 }
 export function wrapDraft(draft,record,run) {
-  return {schemaVersion:1,kind:'WorkRequirementsDraft',id:`requirements-${digest({source:record,version:run.algorithmVersion,strategy:run.strategy}).slice(0,16)}`,workInstanceId:record.work.instanceId,sourceRecordId:record.id,snapshotHash:digest(record),status:draft.questions.some(q=>q.priority==='BLOCKING')||draft.requirements.some(r=>r.status==='UNRESOLVED'&&r.origin!=='AGENT_PROPOSED')?'NEEDS_CLARIFICATION':'READY_FOR_REVIEW',...draft,analysisRunId:run.id};
+  const needsClarification=!draft.requirements.some(r=>r.status==='ACTIVE'&&['OBJECTIVE','DELIVERABLE'].includes(r.category))||draft.questions.some(q=>q.priority==='BLOCKING')||draft.requirements.some(r=>r.status==='UNRESOLVED'&&r.origin!=='AGENT_PROPOSED');
+  return {schemaVersion:1,kind:'WorkRequirementsDraft',id:`requirements-${digest({source:record,version:run.algorithmVersion,strategy:run.strategy,content:draft}).slice(0,16)}`,workInstanceId:record.work.instanceId,sourceRecordId:record.id,snapshotHash:digest(record),status:needsClarification?'NEEDS_CLARIFICATION':'READY_FOR_REVIEW',title:draft.title,requirements:draft.requirements,questions:draft.questions,analysisRunId:run.id};
 }
 export function renderDraft(draft) {
   const lines=[`# ${draft.title}`,`\n工作实例：${draft.workInstanceId}  ·  状态：${draft.status}`, '\n## 工作要求'];

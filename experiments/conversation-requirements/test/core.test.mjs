@@ -1,3 +1,4 @@
+import {indexSource,hydrateDraft} from '../evidence.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateDraft,validateRecord} from '../contracts.mjs';
@@ -16,7 +17,7 @@ test('windowing preserves beginning, long middle and final correction without tr
 test('public extraction interface retains WorkInstance and run provenance',async()=>{
  const provider={calls:[],async json(){this.calls.push({phase:'direct'});return draft();}};
  const result=await extractRequirements(record,provider,{strategy:'direct'});
- assert.equal(result.draft.workInstanceId,'work-a');assert.equal(result.run.workInstanceId,'work-a');assert.equal(result.draft.sourceRecordId,'record-a');assert.equal(result.draft.analysisRunId,result.run.id);assert.equal(result.draft.status,'READY_FOR_REVIEW');
+ assert.equal(result.draft.workInstanceId,'work-a');assert.equal(result.run.workInstanceId,'work-a');assert.equal(result.draft.sourceRecordId,'record-a');assert.equal(result.draft.analysisRunId,result.run.id);assert.equal(result.draft.status,'NEEDS_CLARIFICATION');
 });
 test('structured pipeline refuses missing evidence coverage',async()=>{const p={async json(){return {coveredMessageIds:['m1'],observations:[]};}};await assert.rejects(extractRequirements(record,p,{strategy:'structured'}),/coverage incomplete/);});
 test('Codex importer excludes hidden reasoning, approval prompts and subagent notifications',()=>{
@@ -26,3 +27,30 @@ test('Codex importer excludes hidden reasoning, approval prompts and subagent no
  const result=importCodex(source);assert.deepEqual(result.messages.map(m=>m.content),['请做报告','建议PDF']);assert.equal(result.provenance.exclusions.scaffolding,2);
 });
 test('common credentials removed without printing values',()=>{const raw='sk-'+'a'.repeat(32);assert(!redact(raw).includes(raw));assert.equal(redact('contact person@example.com'),'contact [REDACTED_EMAIL]');});
+
+test('model output cannot overwrite authoritative work identity or review state',async()=>{
+ const p={calls:[],async json(){return {...draft(),workInstanceId:'foreign-work',sourceRecordId:'foreign-record',kind:'PublishedWorkDefinition',status:'CONFIRMED'};}};
+ const {draft:result}=await extractRequirements(record,p,{strategy:'direct'});
+ assert.equal(result.workInstanceId,'work-a');assert.equal(result.sourceRecordId,'record-a');assert.equal(result.kind,'WorkRequirementsDraft');assert.notEqual(result.status,'CONFIRMED');
+});
+
+test('program-owned spans roundtrip Markdown, whitespace, emoji and source offsets',()=>{
+ const r={...record,messages:[{id:'m1',role:'user',content:'**不要** 发送。\n😀 保留两位小数。'}]};
+ const idx=indexSource(r);assert.equal(idx.view.messages[0].spans.map(s=>s.text).join(''),r.messages[0].content);
+ for(const span of idx.byId.values())assert.equal(r.messages[0].content.slice(span.start,span.end),span.quote);
+ const d=draft();d.requirements[0].evidence=[{spanId:'m1:s1',messageId:'attacker',quote:'同意发送'}];
+ hydrateDraft(d,idx);assert.equal(d.requirements[0].evidence[0].quote,'**不要** 发送。');assert.equal(d.requirements[0].evidence[0].messageId,'m1');
+});
+
+test('source sessions and work identities are independent',()=>{
+ const source=JSON.stringify({type:'session_meta',payload:{id:'session-a'}})+'\n'+JSON.stringify({type:'response_item',payload:{type:'message',role:'user',content:[{type:'input_text',text:'做报告'}]}});
+ const a=importCodex(source),b=importCodex(source);
+ assert.notEqual(a.work.instanceId,b.work.instanceId);assert.equal(a.provenance.sourceSessionId,b.provenance.sourceSessionId);
+ assert.equal(importCodex(source,{instanceId:'existing-work'}).work.instanceId,'existing-work');
+});
+
+test('confirmation must follow all cited proposals, not just one',()=>{
+ const rec={...record,messages:[{id:'a1',role:'assistant',content:'采用方案A。'},{id:'u1',role:'user',content:'确认。'},{id:'a2',role:'assistant',content:'另外部署生产。'}]};
+ const d=draft();Object.assign(d.requirements[0],{origin:'USER_CONFIRMED',evidence:[{messageId:'a1',quote:'采用方案A。'},{messageId:'u1',quote:'确认。'},{messageId:'a2',quote:'另外部署生产。'}]});
+ assert.match(validateDraft(d,rec).join(),/later user evidence/);
+});

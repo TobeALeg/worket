@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFile,writeFile,mkdir } from 'node:fs/promises';
 import { dirname,resolve } from 'node:path';
 import { digest } from './provider.mjs';
@@ -28,12 +29,12 @@ export function importCodex(text,{instanceId,focus}={}) {
  }
  if(!messages.some(m=>m.role==='user'))throw new Error('No real user messages after scaffolding exclusion');
  if(messages[0].role==='user'&&messages[0].content.includes('request action you are assessing'))throw new Error('Approval audit is not a user conversation');
- return {schemaVersion:1,kind:'WorkRecord',id:`record-${digest(text).slice(0,16)}`,work:{instanceId:instanceId??`work-${meta.id??digest(text).slice(0,12)}`,...(focus?{focus}:{})},provenance:{format:'codex-visible-jsonl',sourceSessionId:meta.id??null,sourceHash:digest(text),redacted:true,exclusions:excluded,attachments:'Only visible text; linked file/image contents are not imported'},messages};
+ return {schemaVersion:1,kind:'WorkRecord',id:`record-${digest(text).slice(0,16)}`,work:{instanceId:instanceId??`work-${randomUUID()}`,...(focus?{focus}:{})},provenance:{format:'codex-visible-jsonl',sourceSessionId:meta.id??null,sourceHash:digest(text),redacted:true,exclusions:excluded,attachments:'Only visible text; linked file/image contents are not imported'},messages};
 }
 if(process.argv[1]&&import.meta.url===new URL(`file://${resolve(process.argv[1])}`).href) {
- const [source,out,focus]=process.argv.slice(2);
- if(!source||!out)throw new Error('Usage: node import-codex.mjs SOURCE.jsonl OUTPUT.json [work focus]');
- const record=importCodex(await readFile(source,'utf8'),{focus});
+ const [source,out,focus,instanceId]=process.argv.slice(2);
+ if(!source||!out)throw new Error('Usage: node import-codex.mjs SOURCE.jsonl OUTPUT.json [work focus] [existing WorkInstance ID]');
+ const record=importCodex(await readFile(source,'utf8'),{focus,instanceId});
  await mkdir(dirname(resolve(out)),{recursive:true});await writeFile(out,JSON.stringify(record,null,2)+'\n',{mode:0o600});
  console.log(JSON.stringify({output:out,messages:record.messages.length,exclusions:record.provenance.exclusions}));
 }

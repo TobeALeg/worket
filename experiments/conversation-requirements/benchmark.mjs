@@ -10,25 +10,28 @@ if(!corpusPath||!outDir)throw new Error('Usage: node benchmark.mjs CORPUS.json O
 const corpusText=await readFile(corpusPath,'utf8'),samples=JSON.parse(corpusText).filter(c=>!filter||c.id.includes(filter));
 if(!samples.length)throw new Error('No selected samples');
 await mkdir(outDir,{recursive:true});
-const config={version:VERSION,model:'deepseek-flash',family:'DeepSeek-V4.1-Flash',thinking:process.env.WORKET_RESEARCH_THINKING==='true',strategy,corpusHash:digest(corpusText),filter,chunkChars:12000};
+const moduleFiles=['prompts.mjs','extractor.mjs','evidence.mjs','contracts.mjs','provider.mjs','evaluate.mjs'];
+const codeHashes=Object.fromEntries(await Promise.all(moduleFiles.map(async name=>[name,digest(await readFile(new URL(name,import.meta.url),'utf8'))])));
+const config={codeHashes,version:VERSION,model:'deepseek-flash',family:'DeepSeek-V4.1-Flash',thinking:process.env.WORKET_RESEARCH_THINKING==='true',strategy,corpusHash:digest(corpusText),filter,chunkChars:12000};
 const configPath=join(outDir,'config.json');
 try {const old=JSON.parse(await readFile(configPath,'utf8'));if(digest(old)!==digest(config))throw new Error('Existing experiment has different config; use a new output directory');}catch(e){if(e.code!=='ENOENT')throw e;await writeFile(configPath,JSON.stringify(config,null,2)+'\n');}
 let index=0;const rows=[];
 async function worker(){
  while(index<samples.length){
   const sample=samples[index++],path=join(outDir,sample.id+'.json');
-  try {await access(path);const previous=JSON.parse(await readFile(path,'utf8'));if(previous.metrics){rows.push(previous);continue;}}catch(e){if(e.code!=='ENOENT')throw e;}
+  let checkpoint;
+  try {await access(path);checkpoint=JSON.parse(await readFile(path,'utf8'));if(checkpoint.metrics||checkpoint.error){rows.push(checkpoint);continue;}}catch(e){if(e.code!=='ENOENT')throw e;}
   const provider=new DeepSeek({thinking:config.thinking});
-  let row={id:sample.id,split:sample.split,provenance:sample.provenance,sourceHash:digest(sample.record)};
+  let row=checkpoint??{id:sample.id,split:sample.split,provenance:sample.provenance,sourceHash:digest(sample.record)};
   try {
-   const result=await extractRequirements(sample.record,provider,{strategy,chunkChars:config.chunkChars});
+   const result=checkpoint?.draft?{draft:checkpoint.draft,run:checkpoint.run}:await extractRequirements(sample.record,provider,{strategy,chunkChars:config.chunkChars});
    // Persist usable extraction before judge, so judge failure does not destroy evidence.
    Object.assign(row,{draft:result.draft,run:result.run});
    await writeFile(path,JSON.stringify(row,null,2)+'\n',{mode:0o600});
    await writeFile(join(outDir,sample.id+'.md'),renderDraft(row.draft),{mode:0o600});
    Object.assign(row,await judgeCase(sample,row.draft,provider));
   }catch(e){row.error=e.message;}
-  row.allCalls=provider.calls;
+  row.allCalls=[...(checkpoint?.allCalls??checkpoint?.run?.calls??[]),...provider.calls];
   await writeFile(path,JSON.stringify(row,null,2)+'\n',{mode:0o600});rows.push(row);
   console.log(JSON.stringify({id:sample.id,strategy,metrics:row.metrics,error:row.error,calls:provider.calls.length}));
  }

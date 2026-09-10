@@ -1,7 +1,8 @@
+import { indexSource,hydrateDraft } from './evidence.mjs';
 import { randomUUID } from 'node:crypto';
 import { digest } from './provider.mjs';
 import { validateRecord,validateDraft,wrapDraft } from './contracts.mjs';
-import { VERSION,DIRECT,EVIDENCE,SYNTHESIS,REVIEW } from './prompts.mjs';
+import { VERSION,DIRECT,EVIDENCE,SYNTHESIS,REVIEW,REPAIR,GROUND } from './prompts.mjs';
 
 export function windows(messages,maxChars=12000) {
   if(!Number.isInteger(maxChars)||maxChars<200)throw new Error('chunkChars must be >=200');
@@ -18,30 +19,50 @@ export function windows(messages,maxChars=12000) {
 }
 export async function extractRequirements(record,provider,{strategy='verified',chunkChars=12000}={}) {
   validateRecord(record);
-  if(!['direct','structured','verified'].includes(strategy))throw new Error('strategy: direct | structured | verified');
+  if(!['direct','structured','verified','grounded'].includes(strategy))throw new Error('strategy: direct | structured | verified | grounded');
   const start=Date.now(),callStart=provider.calls?.length??0;
   const run={schemaVersion:1,kind:'WorkAnalysisRun',id:randomUUID(),workInstanceId:record.work.instanceId,sourceRecordId:record.id,sourceHash:digest(record),algorithmVersion:VERSION,strategy,chunkChars,startedAt:new Date().toISOString()};
-  const ledger=[];
+  const ledger=[],sourceIndex=indexSource(record),modelRecord=sourceIndex.view;
   let draft;
-  if(strategy==='direct')draft=await provider.json(DIRECT,record,{phase:'direct'});
+  if(['direct','grounded'].includes(strategy))draft=await provider.json(DIRECT,modelRecord,{phase:'direct'});
   else {
-    for(const [index,messages] of windows(record.messages,chunkChars).entries()) {
+    for(const [index,messages] of windows(modelRecord.messages,chunkChars).entries()) {
       const evidence=await provider.json(EVIDENCE,{work:record.work,messages},{phase:`evidence-${index}`});
       const expected=messages.map(m=>m.id);
       if(!Array.isArray(evidence.coveredMessageIds)||new Set(evidence.coveredMessageIds).size!==expected.length||evidence.coveredMessageIds.length!==expected.length||!expected.every(id=>evidence.coveredMessageIds.includes(id))||!Array.isArray(evidence.observations))throw new Error('Evidence window coverage incomplete');
       for(const o of evidence.observations) {
-        const source=messages.find(m=>m.id===o.messageId);
-        if(!source||typeof o.quote!=='string'||!o.quote.trim()||!source.content.includes(o.quote))throw new Error('Evidence ledger contains invented source/quote');
+        const span=sourceIndex.byId.get(o.spanId);
+        if(!span||!messages.some(m=>m.id===span.messageId))throw new Error('Evidence ledger contains an unknown/out-of-window span');
       }
       ledger.push(evidence);
     }
-    draft=await provider.json(SYNTHESIS,{record,ledger},{phase:'synthesis'});
-    if(strategy==='verified')draft=await provider.json(REVIEW,{record,candidate:draft,mechanicalIssues:validateDraft(draft,record)},{phase:'review'});
+    draft=await provider.json(SYNTHESIS,{record:modelRecord,ledger},{phase:'synthesis'});
+    run.preReviewDraft=structuredClone(draft);
+    if(strategy==='verified')draft=await provider.json(REVIEW,{record:modelRecord,candidate:draft,mechanicalIssues:validateDraft(hydrateDraft(draft,sourceIndex),record)},{phase:'review'});
   }
+  if(strategy==='grounded'){
+    run.preGroundingDraft=structuredClone(draft);
+    const cards=(draft.requirements??[]).map(r=>({id:r.id,text:r.text,origin:r.origin,status:r.status,evidence:(r.evidence??[]).map(e=>{
+      const span=sourceIndex.byId.get(e.spanId);
+      return span?{...span,role:record.messages.find(m=>m.id===span.messageId).role}:e;
+    })}));
+    draft=await provider.json(GROUND,{record:modelRecord,candidate:draft,claimEvidenceCards:cards},{phase:'source-grounding'});
+  }
+  draft=hydrateDraft(draft,sourceIndex);
   let errors=validateDraft(draft,record);
   if(errors.length) {
     // Same repair allowance for all strategies; repairs are visible and charged.
-    draft=await provider.json(REVIEW,{record,candidate:draft,mechanicalIssues:errors},{phase:'contract-repair'});
+    const invalidIds=draft.requirements.filter(r=>errors.some(e=>e.startsWith(r.id+':'))).map(r=>r.id);
+    const onlyRequirements=errors.every(e=>invalidIds.some(id=>e.startsWith(id+':')));
+    if(onlyRequirements&&invalidIds.length){
+      const fixed=await provider.json(REPAIR,{record:modelRecord,invalidRequirements:draft.requirements.filter(r=>invalidIds.includes(r.id)),errors},{phase:'contract-repair'});
+      if(!Array.isArray(fixed.requirements)||!invalidIds.every(id=>fixed.requirements.some(r=>r.id===id)))throw new Error('Targeted repair lost requirement IDs');
+      const originalIds=new Set(draft.requirements.map(r=>r.id));
+      const replacements=fixed.requirements.filter(r=>invalidIds.includes(r.id)||!originalIds.has(r.id));
+      run.ignoredRepairIds=fixed.requirements.filter(r=>!invalidIds.includes(r.id)&&originalIds.has(r.id)).map(r=>r.id);
+      draft.requirements=[...draft.requirements.filter(r=>!invalidIds.includes(r.id)),...replacements];
+    }else draft=await provider.json(REVIEW,{record:modelRecord,candidate:draft,mechanicalIssues:errors},{phase:'contract-repair'});
+    draft=hydrateDraft(draft,sourceIndex);
     errors=validateDraft(draft,record);
   }
   if(errors.length)throw new Error(`Draft rejected: ${errors.join('; ')}`);
