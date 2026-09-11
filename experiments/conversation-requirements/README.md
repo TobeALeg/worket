@@ -4,6 +4,12 @@ Node.js 22+，无第三方运行依赖。默认使用用户确认的 **DeepSeek 
 
 ## 运行
 
+### 真人审阅页面（2026-09-11 新增）
+
+双击 `scripts/run-requirements-review.command`，或运行 `node experiments/conversation-requirements/review/server.mjs`，访问 `http://127.0.0.1:4318`。预载昨晚 6 份真实草案，支持接受、原位修改、拒绝、暂放、撤销、原文回查、补遗漏、自动保存和显式提交。此步骤只做本地审阅，不调用模型；需要本机既有的私人实验产物。
+
+反馈保存至忽略目录 `output/requirements-private/human-reviews/`；原稿不覆盖，真人评价不自动发布定义。完整使用、统计口径及验收见 [真人审阅说明](../../docs/research/requirements-human-review.md)。以下命令用于原有模型提取实验。
+
 在仓库根目录，向进程环境配置 `DEEPSEEK_API_KEY`。不要把密钥写进代码或提交。
 
 ```sh
@@ -35,7 +41,7 @@ WorkInstance
            └─ 用户确认/跨实例泛化后才可能形成 DefinitionDraft（本实验不发布）
 ```
 
-这是关系上的派生，未用一个抽象基类让所有数据继承 Work。运行是处理该工作的执行记录；候选是工作记录的可追溯产物。现有 `WorkDefinition → WorkInstance → WorkRecord` 保持不变。本研究不接入 UI、数据库或应用的沉淀发布流程。
+这是关系上的派生，未用一个抽象基类让所有数据继承 Work。运行是处理该工作的执行记录；候选是工作记录的可追溯产物。现有 `WorkDefinition → WorkInstance → WorkRecord` 保持不变。本研究提供独立本地审阅 UI，不接入桌面产品数据库或应用的沉淀发布流程。
 
 - `extractRequirements(record, provider, options)` 是核心入口，返回 `{draft, run}`。
 - `extractor.mjs` 编排程序编号原文片段 → 完整证据窗口 → 工作级整合 → 原文审阅；`direct` 是一次直接提取基线，`structured` 是去掉最后审阅的消融方案；`grounded` 在直接提取后进行用户陈述、问题与确认范围的专门来源核验；`audited` 在所有结构修复后增加逐项支持判定，程序只能将缺乏支持的要求降为待确认，不能替模型补造内容。

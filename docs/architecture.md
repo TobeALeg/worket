@@ -1,5 +1,7 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+> 2026-09-11 独立研究审阅：`experiments/conversation-requirements/review/` 以 `store.mjs` 校验并读取冻结来源/草案，`model.mjs` 处理审阅命令、状态与指标，`server.mjs` 提供仅本机 HTTP 服务，`public/` 提供连续审阅界面。HumanRequirementsReview 关联既有工作、来源、运行与草案，状态为 IN_PROGRESS → SUBMITTED，可显式 reopen；JSON 文件原子保存操作日志及暂存输入。未接入产品数据库或正式 Definition 发布。详见 [数据流、边界与验证](research/requirements-human-review.md)。
+
 待讨论的“工作授权与可替换执行者”方向见 [BP 素材 B001](bp/benefits-and-insights.md#b001--工作授权与可替换执行者)。该条目尚未形成架构决策或实现，不改变当前授权与交接规则。
 
 > 2026-09-09：记录、历史选择、同步、恢复、交接与定义复用已通过执行者注册表路由。具体应用协议在适配器内；接口与验证见 [执行者接入方案](specs/executor-adapters-v1.md)。
