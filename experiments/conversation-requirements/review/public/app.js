@@ -57,7 +57,9 @@ function nav() {
   return `<aside class="sidebar"><button class="brand" data-action="home" aria-label="Worket 审阅首页"><span class="brand-mark">w</span>Worket</button><div class="sidebar-label">你的工作 · HUMAN REVIEW</div><nav class="work-nav" aria-label="工作列表">${cases.map((entry,index) => `<button class="nav-item ${detail?.sample.id === entry.id ? 'selected' : ''}" data-action="case" data-id="${entry.id}"><span class="nav-number">${String(index+1).padStart(2,'0')}</span><span class="nav-copy"><span class="nav-title">${escape(entry.title)}</span><span class="nav-sub">${entry.summary.status === 'SUBMITTED' ? '已提交审阅 ✓' : `${entry.summary.reviewed} / ${entry.summary.total} 已审阅`}</span></span></button>`).join('')}</nav><div class="sidebar-bottom"><span class="local-dot"></span>仅保存在这台 Mac<br>原始对话与实验草案保持不变</div></aside>`;
 }
 function frame(content) {
+  const savedScroll = window.scrollY;
   $('#app').innerHTML = `<div class="shell">${nav()}<div class="workspace"><header class="topbar"><div class="breadcrumb">研究空间 <span> / </span> <b>${detail ? escape(detail.sample.group) : '工作审阅'}</b></div><span class="save-state" id="save-state">${failedOperation ? '尚未保存' : '本机保存'}</span></header><main class="main">${content}</main></div></div>`;
+  window.scrollTo(0,savedScroll);
   syncBusy();
 }
 function renderHome() {
