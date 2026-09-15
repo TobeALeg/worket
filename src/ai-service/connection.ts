@@ -1,7 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { ContractError, ensure } from "../contracts/definition.js";
 
-export const DEFAULT_SERVICE_URL = "https://124.223.223.215";
 export type ServiceConfig = {
   url: string;
   token: string;
@@ -17,17 +16,17 @@ export interface CredentialStore {
 
 export class AutomaticConnection {
   private pending: Promise<void> | undefined;
-  constructor(readonly store: CredentialStore, readonly defaultUrl = DEFAULT_SERVICE_URL) {}
+  constructor(readonly store: CredentialStore, readonly defaultUrl = "") {}
   initialize(): void {
     const current = this.store.read();
-    if (!current.url) this.store.write({
+    if (!current.url && this.defaultUrl) this.store.write({
       url: this.defaultUrl, token: "", installationSecret: randomBytes(32).toString("hex"),
     });
   }
   async ready(): Promise<void> {
     this.initialize();
     const current = this.store.read();
-    if (!current.installationSecret) return; // Preserve manually configured services.
+    if (!current.url || !current.installationSecret) return; // Preserve unconfigured and manual services.
     if (current.token && Date.parse(current.expiresAt ?? "") > Date.now() + 86400000) return;
     if (!this.pending) this.pending = this.enroll(current).finally(() => { this.pending = undefined; });
     await this.pending;

@@ -6,7 +6,7 @@ import { stat } from "node:fs/promises";
 import { DistillationDesktop } from "./distillation/desktop.js";
 import { WorketAIClient } from "./ai-service/client.js";
 import { ServiceCredentials } from "./ai-service/credentials.js";
-import { AutomaticConnection, DEFAULT_SERVICE_URL } from "./ai-service/connection.js";
+import { AutomaticConnection } from "./ai-service/connection.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -436,7 +436,7 @@ app.whenReady().then(async () => {
     !app.isPackaged || process.argv.includes("--dev"),
   );
   const connection = new AutomaticConnection(credentials,
-    !app.isPackaged ? process.env.WORKET_SERVICE_URL ?? DEFAULT_SERVICE_URL : DEFAULT_SERVICE_URL);
+    !app.isPackaged ? process.env.WORKET_SERVICE_URL : undefined);
   connection.initialize();
   distillation = new DistillationDesktop(
     service,

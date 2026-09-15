@@ -49,6 +49,16 @@ test("automatic installation: unique identities, restart, renewal, no secret dis
   } finally { await service.close(); rmSync(directory, { recursive: true, force: true }); }
 });
 
+test("unconfigured installations stay local and request a service configuration", async () => {
+  const config: ServiceConfig = { url: "", token: "" };
+  const store = { read: () => config, write: () => { assert.fail("No default service should be saved"); } };
+  const connection = new AutomaticConnection(store);
+  connection.initialize();
+  await connection.ready();
+  const client = new WorketAIClient(store.read, () => connection.ready());
+  await assert.rejects(() => client.capabilities(), /请先配置 Worket 服务/);
+});
+
 test("automatic connection preserves manual configuration and rejects plaintext public endpoints", async () => {
   let config: ServiceConfig = { url: "https://manual.example", token: "manual-token" };
   const store = { read: () => config, write: (c: ServiceConfig) => { config = c; } };

@@ -4,15 +4,7 @@
 
 ## VPS 管理
 
-管理 Worket VPS 时优先使用 Codex 的 `lighthouse` MCP（腾讯云 Lighthouse），先按公网 IP `124.223.223.215` 核实目标实例与地域。MCP 不可用或不支持所需操作时，再使用 SSH。
-
-通过 SSH 访问 `124.223.223.215:22` 时，使用已验证的 `ubuntu` 账号与本机密钥（实际拼写为 `tecent`）：
-
-```sh
-ssh -i /Users/dandi/Desktop/idd_tecent_dstui.pem -o IdentitiesOnly=yes ubuntu@124.223.223.215
-```
-
-密钥留在本机，权限为 `600`；仓库只记录路径，不保存密钥内容。部署或排查服务器时，先读 [VPS 检查记录](docs/deployment/vps-readiness.md)，再核实实时资源与已有服务；保留现有 DeepSeek Harness 和 Caddy。2026-09-10 已验证登录与免密 sudo。
+用户于 2026-09-15 确认原 VPS 已删除，当前没有默认托管服务。旧部署记录仅作历史验收证据；后续部署需先取得新的目标服务器与连接配置。
 
 ## 持续积累 BP 素材
 

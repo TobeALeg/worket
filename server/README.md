@@ -93,12 +93,10 @@ ssh -L 8789:127.0.0.1:8788 your-server
 
 详细证据见 `docs/acceptance/worket-backend-admin.md` 和 `docs/acceptance/work-distillation-v1.md`。
 
-## VPS 自动接入
+## 自行部署与自动接入
 
 设置 `WORKET_AUTOMATIC_ENROLLMENT=true` 开放 `/v1/installations`。每个安装用自己的 32 字节随机秘密领取/续期 30 天令牌，服务仅保存秘密哈希；管理员可在原接入列表撤销。默认最多 1000 个主体，注册/续期每 IP 60 次/小时、总计 1000 次/小时。`WORKET_GLOBAL_DAILY_CALLS` 默认 200，控制所有主体合计的滚动 24 小时模型调用预占。自动接入不等于正式账户注册或设备归属验证。
 
-`WORKET_TRUST_LOOPBACK_PROXY=true` 仅用于本机反向代理已覆盖 `X-Worket-Client-IP` 的部署，禁止直接把该头作为公网客户端自报来源。部署模板见 `server/deploy/`；服务运行在独立系统用户下，IP 证书由 Certbot 签发并通过专用 timer 自动续期，管理页仅通过 SSH 隧道访问。
+`WORKET_TRUST_LOOPBACK_PROXY=true` 仅用于本机反向代理已覆盖 `X-Worket-Client-IP` 的部署，禁止直接把该头作为公网客户端自报来源。
 
-首次执行 `node scripts/configure-worket-vps.mjs --admin-only`，通过 SSH 在 VPS 创建独立管理员密码；交付文件保存在被 Git 忽略的 `.worket-server/vps-admin-access.json`，权限 600。此步骤不读取或迁移本机模型密钥，重复初始化拒绝覆盖。模型可在远程管理页配置；获得用户对密钥迁移的明确授权后，才可执行 `node scripts/configure-worket-vps.mjs --allow-model-key-transfer`，将本机 Worket 已配置的模型参数通过 SSH stdin 传输并在 VPS 加密保存。两种模式均不导入本地工作记录。
-
-IP 地址客户端可能不发送 TLS SNI，且 VPS 的公网地址可能经过 NAT；Caddy 配置中的 `default_sni 124.223.223.215` 保证这种连接仍选择正确的 IP 证书。不要通过关闭客户端证书校验绕过证书选择问题。
+2026-09-15 原 VPS 已退役，对应的部署模板、证书续期配置和专用初始化脚本已移除。当前客户端没有内置服务地址；部署新的后台后，在高级设置中填写服务地址与令牌。开发环境可用 `WORKET_SERVICE_URL` 显式指定支持自动接入的服务。后台的本机启动与管理员配置按本文前述步骤进行。
