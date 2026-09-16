@@ -488,6 +488,27 @@ export class AppService {
       typeof payload.session_id === "string" ? payload.session_id : null;
     if (!id) return { accepted: false, appendedCount: 0 };
     let work = this.#core.findWorkByBinding(executorId, id);
+    // Some executors notify with only a conversation ID. Read only when this
+    // executor has an outstanding user-initiated delivery; never persist an
+    // unrelated notified conversation. The actual prompt supplies both markers.
+    if (!work && payload.hook_event_name === "ConversationUpdated" &&
+      this.#core.listWorks("OPEN").some(candidate =>
+        candidate.activeBinding?.adapter === executorId &&
+        candidate.activeBinding.conversationId.startsWith("pending:"))) {
+      const thread = await this.#executors.get(executorId).source.readThread(id);
+      if (thread.threadId !== id) throw new Error("来源会话身份不一致，已拒绝确认交接");
+      const matches = thread.events.filter(event => {
+        if (event.kind !== "user.prompt") return false;
+        const markers = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
+        const candidate = markers?.[1] ? this.#core.getWork(markers[1]) : null;
+        return candidate?.instance.status === "OPEN" &&
+          candidate.activeBinding?.adapter === executorId &&
+          candidate.activeBinding.conversationId === `pending:${markers?.[2]}`;
+      });
+      if (matches.length === 1) payload = { ...payload, hook_event_name: "UserPromptSubmit", prompt: matches[0]!.content };
+      // Another notification may have completed binding while readThread awaited.
+      work = this.#core.findWorkByBinding(executorId, id);
+    }
     if (
       !work &&
       payload.hook_event_name === "UserPromptSubmit" &&

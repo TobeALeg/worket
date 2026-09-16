@@ -2,6 +2,8 @@
 
 > 2026-09-16：`adapters/zcode` 只读 tasks-index 与 CLI SQLite，使用消息/片段 ID 规范化历史，排除隐藏消息、reasoning 与未完成回复。通过默认注册表进入通用记录路径；`manual-delivery` 只复制带 workId/deliveryId 的启动指令并打开应用，回执仍为 pending。用户配置合并保留已有 MCP 和 Hook，接入脚本只向本机通知会话身份与交付标识。当前聊天无法可靠定位时明确选择。
 
+> 同日：`adapters/antigravity` 以只读 summary 库发现本机顶层会话，从官方 Hook 使用的 transcript.jsonl 读取已完成事件，按 step_index 去重并保留截断提示；摘要不替代正文。`ConversationUpdated` 通知仅在已有记录或该执行者存在待确认交付时才读取正文，用用户消息开头的 workId/deliveryId 核验交付；异步读取结束后重查绑定，迟到、取消和重复通知不能误绑。普通增量沿用后台轮询。安装配置使用可执行 Node 的绝对路径，支持空配置、原子替换及重复安装，保留既有服务器、Hook 与禁用偏好。
+
 待讨论的“工作授权与可替换执行者”方向见 [BP 素材 B001](bp/benefits-and-insights.md#b001--工作授权与可替换执行者)。该条目尚未形成架构决策或实现，不改变当前授权与交接规则。
 
 > 2026-09-09：记录、历史选择、同步、恢复、交接与定义复用已通过执行者注册表路由。具体应用协议在适配器内；接口与验证见 [执行者接入方案](specs/executor-adapters-v1.md)。

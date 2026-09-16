@@ -4,7 +4,10 @@ import { dirname } from "node:path";
 
 export async function readConfig(path: string): Promise<Record<string, unknown>> {
   try {
-    const value: unknown = JSON.parse(await readFile(path, "utf8"));
+    const text = await readFile(path, "utf8");
+    // Antigravity creates a zero-byte config before the first MCP is added.
+    if (!text.trim()) return {};
+    const value: unknown = JSON.parse(text);
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`配置格式无效：${path}`);
     return value as Record<string, unknown>;
   } catch (error) {

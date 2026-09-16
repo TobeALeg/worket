@@ -292,6 +292,34 @@ test("pending delivery binds only its selected executor and marker, rejects dupl
   }
 });
 
+test("ID-only hooks verify actual user markers, ignore unsolicited chats and reject late cancelled delivery", async () => {
+  const a = fixture("zcode"), b = fixture("antigravity");
+  a.add("original"); b.setPending(true); b.add("unrelated");
+  let reads = 0;
+  const read = b.adapter.source.readThread.bind(b.adapter.source);
+  b.adapter.source.readThread = async id => { reads++; return read(id); };
+  const app = new AppService({ databasePath: ":memory:", executors: [a.adapter, b.adapter] });
+  const notify = (id: string) => app.syncHook("antigravity", { hook_event_name: "ConversationUpdated", session_id: id });
+  try {
+    assert.equal((await notify("unrelated")).accepted, false); assert.equal(reads, 0);
+    const id = (await app.createWorkFromConversation({ executorId: "zcode", threadId: "original" })).selectedWorkId!;
+    await app.handoff(id, "antigravity");
+    assert.equal((await notify("unrelated")).accepted, false);
+    const prompt = b.deliveries.at(-1)!.prompt;
+    b.add("real", prompt);
+    const notices = await Promise.all([notify("real"), notify("real")]);
+    assert.ok(notices.every(n => n.accepted));
+    assert.equal(app.core().getWork(id)!.activeBinding!.conversationId, "real");
+    assert.equal(app.core().getWork(id)!.sourceArchive.filter(e => e.content === prompt).length, 1);
+    await app.handoff(id, "antigravity");
+    const late = b.deliveries.at(-1)!.prompt;
+    app.cancelHandoff(id, "已确认未接手");
+    b.add("late", late);
+    assert.equal((await notify("late")).accepted, false);
+    assert.equal(app.core().getWork(id)!.activeBinding!.conversationId, "real");
+  } finally { app.close(); }
+});
+
 test("cancelled delivery restores the previous source and late prompts cannot bind a retry", async () => {
   const a = fixture("codex"),
     b = fixture("workbuddy");
