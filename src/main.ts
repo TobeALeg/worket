@@ -424,6 +424,13 @@ app.whenReady().then(async () => {
   const executors = createDefaultExecutors({
     launcher: new ElectronWorkBuddyLauncher(),
     openUrl: (url) => shell.openExternal(url),
+    desktop: {
+      openApplication: async (bundleId) => {
+        const { execFile } = await import("node:child_process");
+        await new Promise<void>((resolve, reject) => execFile("/usr/bin/open", ["-b", bundleId], error => error ? reject(error) : resolve()));
+      },
+      writeClipboard: text => clipboard.writeText(text),
+    },
   });
   service = new AppService({
     databasePath: join(dataDirectory, "workpet.sqlite"),

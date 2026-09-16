@@ -1,5 +1,7 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+> 2026-09-16：`adapters/zcode` 只读 tasks-index 与 CLI SQLite，使用消息/片段 ID 规范化历史，排除隐藏消息、reasoning 与未完成回复。通过默认注册表进入通用记录路径；`manual-delivery` 只复制带 workId/deliveryId 的启动指令并打开应用，回执仍为 pending。用户配置合并保留已有 MCP 和 Hook，接入脚本只向本机通知会话身份与交付标识。当前聊天无法可靠定位时明确选择。
+
 待讨论的“工作授权与可替换执行者”方向见 [BP 素材 B001](bp/benefits-and-insights.md#b001--工作授权与可替换执行者)。该条目尚未形成架构决策或实现，不改变当前授权与交接规则。
 
 > 2026-09-09：记录、历史选择、同步、恢复、交接与定义复用已通过执行者注册表路由。具体应用协议在适配器内；接口与验证见 [执行者接入方案](specs/executor-adapters-v1.md)。
