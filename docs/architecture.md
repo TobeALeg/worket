@@ -334,3 +334,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 2026-09-11 发布验收补足桌宠透明窗口底部空间：`PET_SIZE` 为 304×271，增加 1px 阴影余量，角色中心及紧凑收纳尺寸不变。
 
 2026-09-11 签名安装包启动复核：先创建窗口并设置跨工作区显示，再恢复 Dock 图标；避免 `setVisibleOnAllWorkspaces` 的进程类型切换覆盖提前设置的 Dock 可见性。接口行为见 [Electron BrowserWindow](https://www.electronjs.org/docs/latest/api/browser-window#winsetvisibleonallworkspacesvisible-options)。
+
+## 候选文档式审阅（2026-09-18）
+
+`server/workflow.mjs` 的 v1.3 提示词为提取与泛化两阶段统一规定中文叙述，协议键、枚举和原始引文保持原样。`src/renderer/distillation.ts` 保留 DefinitionContent 结构，通过原生 details/summary 展示连续正文，单条展开引用和表单，文本修改即时更新正文；重绘保留当前编辑条目、问题处理和资料绑定。保存与发布继续使用既有 revision、update 和 publish 契约。语言规则属于模型生成约束，不会批量改写已保存候选。

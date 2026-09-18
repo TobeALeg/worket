@@ -137,11 +137,28 @@ dialog::backdrop { background: #00000033; backdrop-filter: blur(4px); }
 .source-row p { color: var(--muted); font-size: 12px; margin-top: 6px; }
 .source-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .history-sources { max-height: 44vh; overflow-y: auto; }
-.definition-item { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.definition-item + .definition-item { margin-top: 12px; }
-.definition-item > button { justify-self: start; }
-.definition-item label:has(select) { display: grid; gap: 6px; }
-.definition-item details { font-size: 12px; overflow-wrap: anywhere; }
+/* Read as one document; reveal controls only for the selected requirement. */
+.definition-document { line-height: 1.7; }
+.definition-document h3 { margin: 18px 0 5px; font-size: 13px; color: var(--muted); }
+.definition-document > h3:first-child { margin-top: 0; }
+.definition-item { margin: 0; border: 0; background: transparent; }
+.review-line { color: var(--text); display: flex; gap: 8px; padding: 7px 8px; margin: 0 -8px; border-radius: 6px; cursor: pointer; list-style: none; }
+.review-line::-webkit-details-marker { display: none; }
+.review-line:hover, .review-line:focus-visible, .definition-item[open] > .review-line { background: var(--surface); outline: 1px solid var(--line); }
+.review-number { flex: 0 0 18px; color: var(--muted); font-size: 11px; opacity: 0; }
+.review-line:hover .review-number, .review-line:focus-visible .review-number, .definition-item[open] .review-number { opacity: 1; }
+[data-preview] { white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-editor { display: grid; gap: 10px; padding: 12px; margin: 4px 0 10px; border-left: 2px solid var(--line); background: var(--surface); }
+.review-editor > * { min-width: 0; overflow-wrap: anywhere; }
+.review-editor textarea[data-text] { min-height: 100px; }
+.review-editor > button { justify-self: start; }
+.review-editor label:has(select) { display: grid; gap: 6px; }
+.review-evidence { font-size: 12px; }
+.review-evidence h4 { margin: 0; }
+.review-section-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.review-section-heading h3 { margin: 0; }
+.review-section-heading > button { min-height: 24px; padding: 0 7px; border-color: transparent; background: transparent; color: var(--muted); }
+
 .file-choice { display: flex; align-items: start; gap: 6px; font-size: 13px; overflow-wrap: anywhere; }
 .consent { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .policy-details { font-size: 12px; color: var(--muted); }

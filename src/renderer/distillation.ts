@@ -257,8 +257,9 @@ async function editDraft(draft: Draft): Promise<void> {
   let content = structuredClone(draft.content);
   const bindings: Record<string, string> = {};
   let issueResolutions = draft.resolutions;
+  let expandedItem: string | null = null;
   function field(item: DefinedItem, section: string, index: number): string {
-    return `<div class="definition-item" data-section="${section}" data-index="${index}">${section === "inputs" ? `<label class="field">变量名<input data-key value="${esc(item.key)}"></label>` : `<input type="hidden" data-key value="${esc(item.key)}">`}<label class="field">内容<textarea data-text>${esc(item.text)}</textarea></label><details><summary>查看依据 · ${esc(item.basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "Agent 提议", SYSTEM_INFERRED: "系统推断" }[item.basis.origin] : item.basis.type === "INFERRED" ? "系统推断" : "用户改写")}</summary><p>${esc(item.basis.type === "INFERRED" ? item.basis.rationale : "")}</p>${item.basis.type !== "USER_AUTHORED" ? item.basis.refs.map((ref) => `<p>${ref.deleted ? "来源已删除" : `<button data-evidence="${esc(JSON.stringify(ref))}">查看原始依据</button>`}</p>${ref.excerpt ? `<blockquote>${esc(ref.excerpt)}</blockquote>` : ""}`).join("") : `<p>编辑记录 ${esc(item.basis.reviewEventId)}</p>`}</details>${section === "inputs" ? `<label>输入类型<select data-type>${["TEXT", "NUMBER", "BOOLEAN", "CHOICE", "FILE"].map((t) => `<option value="${t}" ${(item as any).valueType === t ? "selected" : ""}>${({ TEXT: "文本", NUMBER: "数字", BOOLEAN: "是或否", CHOICE: "选项", FILE: "文件" } as Record<string, string>)[t]}</option>`).join("")}</select></label><label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必填</label><label class="field">可选值（每行一项）<textarea data-choices>${esc(((item as any).choices ?? []).join("\n"))}</textarea></label><label class="field">默认值<input data-default value="${esc((item as any).defaultValue ?? "")}"></label>` : ""}${section === "methods" ? `<label>执行要求<select data-obligation><option value="REFERENCE" ${(item as any).obligation === "REFERENCE" ? "selected" : ""}>参考</option><option value="REQUIRED" ${(item as any).obligation === "REQUIRED" ? "selected" : ""}>强制</option></select></label>` : ""}${section === "materialRoles" ? `<label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必需资料</label><button data-material="${index}">选择固定资料副本</button><span>${esc(bindings[item.key] ?? "")}</span>` : ""}${section !== "purpose" ? "<button data-remove>删除此项</button>" : ""}</div>`;
+    return `<details class="definition-item" data-section="${section}" data-index="${index}" ${expandedItem === `${section}:${index}` ? "open" : ""}><summary class="review-line"><span class="review-number">${index + 1}</span><span data-preview>${esc(item.text || "新增条目")}</span></summary><div class="review-editor">${section === "inputs" ? `<label class="field">变量名<input data-key value="${esc(item.key)}"></label>` : `<input type="hidden" data-key value="${esc(item.key)}">`}<label class="field">内容<textarea data-text>${esc(item.text)}</textarea></label><section class="review-evidence"><h4>引用依据 · ${esc(item.basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "Agent 提议", SYSTEM_INFERRED: "系统推断" }[item.basis.origin] : item.basis.type === "INFERRED" ? "系统推断" : "用户改写")}</h4><p>${esc(item.basis.type === "INFERRED" ? item.basis.rationale : "")}</p>${item.basis.type !== "USER_AUTHORED" ? item.basis.refs.map((ref) => `<p>${ref.deleted ? "来源已删除" : `<button data-evidence="${esc(JSON.stringify(ref))}">查看原始依据</button>`}</p>${ref.excerpt ? `<blockquote>${esc(ref.excerpt)}</blockquote>` : ""}`).join("") : `<p>编辑记录 ${esc(item.basis.reviewEventId)}</p>`}</section>${section === "inputs" ? `<label>输入类型<select data-type>${["TEXT", "NUMBER", "BOOLEAN", "CHOICE", "FILE"].map((t) => `<option value="${t}" ${(item as any).valueType === t ? "selected" : ""}>${({ TEXT: "文本", NUMBER: "数字", BOOLEAN: "是或否", CHOICE: "选项", FILE: "文件" } as Record<string, string>)[t]}</option>`).join("")}</select></label><label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必填</label><label class="field">可选值（每行一项）<textarea data-choices>${esc(((item as any).choices ?? []).join("\n"))}</textarea></label><label class="field">默认值<input data-default value="${esc((item as any).defaultValue ?? "")}"></label>` : ""}${section === "methods" ? `<label>执行要求<select data-obligation><option value="REFERENCE" ${(item as any).obligation === "REFERENCE" ? "selected" : ""}>参考</option><option value="REQUIRED" ${(item as any).obligation === "REQUIRED" ? "selected" : ""}>强制</option></select></label>` : ""}${section === "materialRoles" ? `<label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必需资料</label><button data-material="${index}">选择固定资料副本</button><span>${esc(bindings[item.key] ?? "")}</span>` : ""}${section !== "purpose" ? "<button data-remove>删除此项</button>" : ""}</div></details>`;
   }
   const resolutions = (): Resolution[] =>
     [...modal.querySelectorAll<HTMLElement>("[data-issue]")].flatMap(
@@ -332,8 +333,22 @@ async function editDraft(draft: Draft): Promise<void> {
   function render() {
     show(
       "检查候选定义",
-      `<label class="field">工作名称<input id="definition-name" value="${esc(content.name)}"></label><h3>工作目的</h3>${field(content.purpose, "purpose", 0)}${sections.map(([key, label]) => `<section class="state-section"><h3>${label}</h3>${content[key].map((item, i) => field(item, key, i)).join("")}<button data-add="${key}">添加${label}</button></section>`).join("")}<h3>需要确认的问题</h3>${draft.issues.map((i) => `<section data-issue="${esc(i.id)}"><p>${i.blocking ? "必须处理" : "待确认"} · ${esc(i.message)} (${esc(i.field)})</p><select data-resolution><option value="">尚未处理</option><option value="REWRITE">已修改相关要求</option><option value="DELETE">已删除相关要求</option><option value="CHOOSE">明确选择并保留</option>${i.blocking ? "" : '<option value="ACCEPT">接受提示</option>'}</select><label class="field">具体处理或选择<input data-explanation></label></section>`).join("") || '<p class="consent">暂无待处理问题</p>'}<div class="dialog-actions"><button id="save-draft">保存修改</button><button id="publish-definition" class="primary">确认并保存沉淀</button></div>`,
+      `<label class="field">工作名称<input id="definition-name" value="${esc(content.name)}"></label><article class="definition-document"><h3>工作目的</h3>${field(content.purpose, "purpose", 0)}${sections.map(([key, label]) => `<section class="review-section"><div class="review-section-heading"><h3>${label}</h3><button data-add="${key}" aria-label="添加${label}" title="添加${label}">+</button></div>${content[key].map((item, i) => field(item, key, i)).join("")}</section>`).join("")}</article><h3>需要确认的问题</h3>${draft.issues.map((i) => `<section data-issue="${esc(i.id)}"><p>${i.blocking ? "必须处理" : "待确认"} · ${esc(i.message)} (${esc(i.field)})</p><select data-resolution><option value="">尚未处理</option><option value="REWRITE">已修改相关要求</option><option value="DELETE">已删除相关要求</option><option value="CHOOSE">明确选择并保留</option>${i.blocking ? "" : '<option value="ACCEPT">接受提示</option>'}</select><label class="field">具体处理或选择<input data-explanation></label></section>`).join("") || '<p class="consent">暂无待处理问题</p>'}<div class="dialog-actions"><button id="save-draft">保存修改</button><button id="publish-definition" class="primary">确认并保存沉淀</button></div>`,
     );
+    for (const row of modal.querySelectorAll<HTMLDetailsElement>(".definition-item")) {
+      row.addEventListener("toggle", () => {
+        const id = `${row.dataset.section}:${row.dataset.index}`;
+        if (row.open) {
+          expandedItem = id;
+          for (const other of modal.querySelectorAll<HTMLDetailsElement>(".definition-item[open]")) {
+            if (other !== row) other.open = false;
+          }
+        } else if (expandedItem === id) expandedItem = null;
+      });
+      row.querySelector<HTMLTextAreaElement>("[data-text]")!.addEventListener("input", (event) => {
+        row.querySelector("[data-preview]")!.textContent = (event.target as HTMLTextAreaElement).value || "新增条目";
+      });
+    }
     for (const select of modal.querySelectorAll<HTMLSelectElement>("[data-type]")) {
       const update = () => {
         select.closest(".definition-item")!.querySelector<HTMLTextAreaElement>("[data-choices]")!.closest<HTMLElement>("label")!.hidden = select.value !== "CHOICE";
@@ -374,7 +389,9 @@ async function editDraft(draft: Draft): Promise<void> {
           if (key === "methods") item.obligation = "REFERENCE";
           if (key === "materialRoles") item.required = true;
           (content as any)[key].push(item);
+          expandedItem = `${key}:${(content as any)[key].length - 1}`;
           render();
+          modal.querySelector<HTMLTextAreaElement>(".definition-item[open] [data-text]")?.focus();
         }),
     );
     modal.querySelectorAll<HTMLElement>("[data-remove]").forEach(
@@ -386,6 +403,7 @@ async function editDraft(draft: Draft): Promise<void> {
             Number(row.dataset.index),
             1,
           );
+          expandedItem = null;
           render();
         }),
     );
