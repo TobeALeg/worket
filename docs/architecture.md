@@ -285,7 +285,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 自动接入由服务端显式环境开关开启；单 IP 每小时最多 60 次注册/续期请求、服务每小时最多 1000 次、最多 1000 个接入主体。公网代理覆盖来源地址头，服务仅在配置为信任本机代理时使用该头。模型调用按全局滚动 24 小时默认 200 次限额预占，保留原每主体限额和并发限制；这是调用次数限额，不是固定金额承诺。后台默认绑定 loopback。
 
-2026-09-15 用户确认原 VPS 已删除。已移除对应部署、证书续期配置和专用运维脚本，当前没有托管部署目标；通用后台与手动连接能力保留。旧环境的 HTTPS、隔离与模型验收只作历史证据，见 [VPS 退役记录](deployment/vps-operation.md)。
+2026-09-18 新 managed service 部署在 `jp-server`：Node 24 容器使用 host network，但服务自身仅绑定 `127.0.0.1:18788`；Nginx 在 `https://worket.dandi.site` 只代理 `/health` 与 `/v1/`，其他路径返回 404，管理页面继续通过 SSH 隧道访问。代码目录只读挂载，状态持久化于 `/opt/worket/data`，容器自动重启；公网 HTTPS、API 鉴权和主密钥重启持久化已验证。客户端仍采用显式 URL/令牌，服务端当前尚未配置模型。运维证据见 [jp-server 运维记录](deployment/jp-server-worket.md)；旧环境证据见 [VPS 退役记录](deployment/vps-operation.md)。
 
 2026-09-11 已获用户授权迁移 DeepSeek 配置。实测发现模型可将 `content.purpose` 返回为字符串，并把中间层改写文本当作原始引文。`work-definition-v1.2` 明确目标必须是带来源依据的 Item 对象，聚合阶段只引用真实来源/事件键，不生成缺少原文验证条件的 excerpt；既有对象、引用和证据校验保持严格，不自动补造来源依据。
 
