@@ -58,7 +58,7 @@ ssh -L 8789:127.0.0.1:8788 your-server
 
 随后打开 `http://127.0.0.1:8789/admin/`。管理接口拒绝公网 Host、跨站 Origin 和转发来源头，不能通过公网反向代理直接开放管理页。
 
-2026-09-18 已在 `jp-server` 部署新的远程实例：`https://worket.dandi.site` 只公开 `/health` 与 `/v1/`，管理页仍需 SSH 隧道；容器和证书自动恢复已配置。当前模型供应商和桌面访问令牌尚未初始化，详见 [jp-server 运维记录](../docs/deployment/jp-server-worket.md)。
+2026-09-18 已在 `jp-server` 部署远程实例：`https://worket.dandi.site` 只公开 `/health` 与 `/v1/`，管理页仍需 SSH 隧道；容器、证书、模型供应商和匿名用户自动接入已经配置。v0.1.4 正式桌面通过内置地址创建用户与设备并完成连接检查，详见 [jp-server 运维记录](../docs/deployment/jp-server-worket.md)。
 
 ## 环境变量兼容模式
 
