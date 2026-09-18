@@ -38,7 +38,8 @@ test("record selection uploads messages over HTTP without distillation; durable 
   }) });
   await new Promise<void>(r => server.server.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${(server.server.address() as any).port}`;
-  let config: any = { url, token: "", development: true, installationSecret: "a".repeat(64) };
+  let config: any = { url, token: "", development: true,
+    installationSecret: "a".repeat(64), recoveryCode: "r".repeat(43) };
   const connection = new AutomaticConnection({ read: () => config, write: value => { config = value; } });
   const http = new WorketAIClient(() => config, () => connection.ready());
   let offline = true;

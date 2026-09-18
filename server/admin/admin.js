@@ -224,7 +224,7 @@ async function activity() {
     const row = document.createElement("tr");
     for (const value of [
       new Date(request.created).toLocaleString(),
-      configuration.clients.find((c) => c.id === request.subject)?.name ??
+      configuration.clients.find((c) => c.userId === request.subject)?.name ??
         "已移除接入",
       labels[request.status] ?? request.status,
       request.calls,
@@ -355,7 +355,7 @@ async function samples() {
     const row = element("div", undefined, list);
     row.className = "client-item";
     const button = element("button", `${sample.consent.scope === "RECORDING" ? "工作记录" : sample.consent.scope === "REUSE" ? "工作复用" : "工作沉淀"} · ${new Date(sample.created).toLocaleString()}`, row);
-    element("p", `${configuration.clients.find(c => c.id === sample.subject)?.name ?? sample.subject} · ${sample.eventCount} 条证据 · ${sample.review.status === "REVIEWED" ? "已评审" : "待评审"}`, row);
+    element("p", `${configuration.clients.find(c => c.userId === sample.subject)?.name ?? sample.subject} · ${sample.eventCount} 条证据 · ${sample.review.status === "REVIEWED" ? "已评审" : "待评审"}`, row);
     button.onclick = () => void sampleDetail(sample.id).catch(e => message(e.message, true));
   }
 }

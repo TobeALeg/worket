@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld("workpet", {
   copyWorkPackage: (workId) => ipcRenderer.invoke("distillation:copy", workId),
   configureWorketService: (input) => ipcRenderer.invoke("distillation:configure", input),
   getWorketServiceStatus: () => ipcRenderer.invoke("distillation:connection"),
+  copyWorketRecoveryCode: () => ipcRenderer.invoke("distillation:copy-recovery"),
+  restoreWorketAccount: (recoveryCode) => ipcRenderer.invoke("distillation:restore-account", recoveryCode),
   recordCurrentContextFromPet: () => ipcRenderer.invoke("panel:record-current-context"),
   onPetPlacement: (callback) => {
     const listener = (_event, edge) => callback(edge);

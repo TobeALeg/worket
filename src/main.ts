@@ -6,7 +6,7 @@ import { stat } from "node:fs/promises";
 import { DistillationDesktop } from "./distillation/desktop.js";
 import { WorketAIClient } from "./ai-service/client.js";
 import { ServiceCredentials } from "./ai-service/credentials.js";
-import { AutomaticConnection } from "./ai-service/connection.js";
+import { AutomaticConnection, PRODUCTION_WORKET_SERVICE_URL } from "./ai-service/connection.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -44,6 +44,7 @@ let service: AppService | null = null;
 let bridge: WorkPetHttpBridge | null = null;
 let distillation: DistillationDesktop;
 let credentials: ServiceCredentials;
+let worketConnection: AutomaticConnection;
 let distillationTimer: ReturnType<typeof setTimeout> | null = null;
 async function syncDistillations(): Promise<void> {
   await distillation.service.tick();
@@ -265,7 +266,20 @@ function registerIpc(): void {
     if (event.sender !== panelWindow?.webContents) throw new Error("INVALID_SENDER");
     const current = credentials.read();
     return { url: current.url, automatic: !!current.installationSecret,
-      hasCredential: !!current.token, expiresAt: current.expiresAt ?? null };
+      hasCredential: !!current.token, expiresAt: current.expiresAt ?? null,
+      userId: current.userId ?? null, deviceId: current.deviceId ?? null,
+      hasRecoveryCode: !!current.recoveryCode };
+  });
+  ipcMain.handle("distillation:copy-recovery", (event) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error("INVALID_SENDER");
+    const code = credentials.read().recoveryCode;
+    if (!code) throw new Error("恢复码尚未创建");
+    clipboard.writeText(code);
+  });
+  ipcMain.handle("distillation:restore-account", async (event, recoveryCode) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error("INVALID_SENDER");
+    worketConnection.restore(recoveryCode);
+    await worketConnection.ready();
   });
   ipcMain.handle("distillation:choose-file", async (event) => {
     if (event.sender !== panelWindow?.webContents)
@@ -442,12 +456,12 @@ app.whenReady().then(async () => {
     join(dataDirectory, "worket-service.enc"),
     !app.isPackaged || process.argv.includes("--dev"),
   );
-  const connection = new AutomaticConnection(credentials,
-    !app.isPackaged ? process.env.WORKET_SERVICE_URL : undefined);
-  connection.initialize();
+  worketConnection = new AutomaticConnection(credentials,
+    app.isPackaged ? PRODUCTION_WORKET_SERVICE_URL : process.env.WORKET_SERVICE_URL);
+  worketConnection.initialize();
   distillation = new DistillationDesktop(
     service,
-    new WorketAIClient(() => credentials.read(), () => connection.ready()),
+    new WorketAIClient(() => credentials.read(), () => worketConnection.ready()),
   );
   bridge = new WorkPetHttpBridge({
     configPath:
@@ -467,7 +481,7 @@ app.whenReady().then(async () => {
   registerIpc();
   // Workspace visibility changes the macOS process type; restore the Dock afterwards.
   await configureDock();
-  if (process.env.WORKPET_SKIP_INTEGRATIONS !== "1") void connection.ready().catch(() => {});
+  if (process.env.WORKPET_SKIP_INTEGRATIONS !== "1") void worketConnection.ready().catch(() => {});
   if (process.env.WORKPET_SKIP_INTEGRATIONS !== "1")
     void new IntegrationInstaller(
       integrationResourceRoot(),

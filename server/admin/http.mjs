@@ -275,8 +275,8 @@ export function createAdminHandler({
         /^\/admin\/api\/clients\/([a-zA-Z0-9-]+)\/revoke$/,
       );
       if (revoke && req.method === "POST") {
-        store.revoke(revoke[1]);
-        runtime.revokeSubject(revoke[1]);
+        const client = store.revoke(revoke[1]);
+        runtime.revokeSubject(client.userId);
         reply(res, { ok: true });
         return true;
       }

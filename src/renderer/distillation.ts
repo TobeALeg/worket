@@ -98,9 +98,23 @@ export function setupDistillation(
 }
 async function openServiceSettings(connected = false): Promise<void> {
   const status = await window.workpet.getWorketServiceStatus();
-  show("Worket 服务", `<p>${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p><button id="check-service">检查连接</button><button id="improvement-data">改进数据</button><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
+  const account = status.automatic
+    ? `<section class="state-section"><h3>Worket 用户</h3><p>${status.userId ? `用户 ${esc(status.userId.slice(0, 8))}` : "首次使用时自动创建"}</p><button id="copy-recovery" ${status.hasRecoveryCode ? "" : "disabled"}>复制恢复码</button><details><summary>在此设备恢复已有用户</summary><p class="consent">恢复后，此设备的模型额度和已授权上传归入同一用户。请把恢复码当作密码保管。</p><label class="field">恢复码<input id="recovery-code" type="password" autocomplete="off"></label><button id="restore-account">恢复用户</button></details></section>`
+    : "";
+  show("Worket 服务", `<p>${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service">检查连接</button><button id="improvement-data">改进数据</button><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
   bind("#improvement-data", openImprovementData);
   bind("#check-service", async () => { await api("capabilities"); await openServiceSettings(true); });
+  bind("#copy-recovery", async () => {
+    await window.workpet.copyWorketRecoveryCode();
+    window.alert("恢复码已复制。请像密码一样保管，不要发送给其他人。");
+  });
+  bind("#restore-account", async () => {
+    const recoveryCode = value("#recovery-code").trim();
+    if (!recoveryCode) return;
+    if (!window.confirm("此设备将切换到恢复码对应的 Worket 用户。继续吗？")) return;
+    await window.workpet.restoreWorketAccount(recoveryCode);
+    await openServiceSettings(true);
+  });
   bind("#save-service", async () => {
     await window.workpet.configureWorketService({ url: value("#service-url"), token: value("#service-token") });
     await api("capabilities");

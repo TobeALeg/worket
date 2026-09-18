@@ -7,7 +7,7 @@ import { createManagedService } from "../../server/managed.mjs";
 import { AutomaticConnection, type ServiceConfig } from "../../dist/ai-service/connection.js";
 import { WorketAIClient } from "../../dist/ai-service/client.js";
 
-test("automatic installation: unique identities, restart, renewal, no secret disclosure, revocation and sample isolation", async () => {
+test("automatic users: stable account, recovery across devices, renewal, revocation and upload ownership", async () => {
   const directory = mkdtempSync(join(tmpdir(), "worket-auto-"));
   const service = createManagedService({ directory, automaticEnrollment: true });
   service.store.setup("123456");
@@ -22,30 +22,48 @@ test("automatic installation: unique identities, restart, renewal, no secret dis
     const identity = client.improvementIdentity();
     await Promise.all([connection.ready(), connection.ready(), client.capabilities()]);
     assert.equal(service.store.view().clients.length, 1);
+    assert.equal(service.store.view().users.length, 1);
     assert.ok(config.token);
+    assert.ok(config.recoveryCode);
+    assert.ok(config.userId);
+    assert.ok(config.deviceId);
     assert.equal(client.improvementIdentity(), identity);
     assert.ok(!JSON.stringify(service.store.view()).includes(config.installationSecret!));
     assert.ok(!readFileSync(join(directory, "settings.json"), "utf8").includes(config.installationSecret!));
-    const subject = config.subject;
+    assert.ok(!JSON.stringify(service.store.view()).includes(config.recoveryCode!));
+    assert.ok(!readFileSync(join(directory, "settings.json"), "utf8").includes(config.recoveryCode!));
+    const userId = config.userId;
+    const deviceId = config.deviceId;
     connection = new AutomaticConnection(store, url);
     await connection.ready();
     config.expiresAt = new Date(0).toISOString();
     await connection.ready();
-    assert.equal(config.subject, subject);
+    assert.equal(config.userId, userId);
     assert.equal(service.store.view().clients.length, 1);
     assert.equal(client.improvementIdentity(), identity);
-    const second = await fetch(`${url}/v1/installations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ secret: "b".repeat(64) }) }).then(r => r.json());
-    assert.notEqual(second.subject, subject);
+    let recoveredConfig: ServiceConfig = { url, token: "", development: true,
+      installationSecret: "b".repeat(64), recoveryCode: config.recoveryCode };
+    const recoveredStore = { read: () => recoveredConfig, write: (c: ServiceConfig) => { recoveredConfig = structuredClone(c); } };
+    const recoveredConnection = new AutomaticConnection(recoveredStore);
+    await recoveredConnection.ready();
+    assert.equal(recoveredConfig.userId, userId);
+    assert.notEqual(recoveredConfig.deviceId, deviceId);
+    assert.equal(service.store.view().users.length, 1);
+    assert.equal(service.store.view().clients.length, 2);
+    const isolated = await fetch(`${url}/v1/installations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ secret: "c".repeat(64), recoveryCode: "d".repeat(43) }) }).then(r => r.json());
+    assert.notEqual(isolated.userId, userId);
     const upload: any = { schemaVersion: 1, sampleId: "isolated", consent: { version: "worket-improvement-v1", at: new Date().toISOString(), scope: "REUSE" }, event: { id: "e1", kind: "REUSE", at: new Date().toISOString(), data: { content: "test" } } };
     await client.uploadSample(upload);
-    const other = new WorketAIClient(() => ({ url, token: second.token, development: true }));
+    const recovered = new WorketAIClient(recoveredStore.read);
+    const other = new WorketAIClient(() => ({ url, token: isolated.token, development: true }));
     await other.deleteSample("isolated");
-    await client.deleteSample("isolated");
-    service.store.revoke(subject);
+    await recovered.deleteSample("isolated");
+    service.store.revoke(deviceId!);
     await assert.rejects(() => client.capabilities(), /AUTH_EXPIRED/);
+    await recovered.capabilities();
     config.expiresAt = new Date(0).toISOString();
     await assert.rejects(() => connection.ready(), /已被撤销/);
-    assert.equal(service.store.view().clients.length, 2);
+    assert.equal(service.store.view().clients.length, 3);
   } finally { await service.close(); rmSync(directory, { recursive: true, force: true }); }
 });
 
@@ -79,8 +97,8 @@ test("installation enrollment is opt-in for server deployments and bounds reques
   try {
     assert.equal((await send("x".repeat(1100))).status, 400);
     assert.equal((await send('{"secret":"bad"}')).status, 400);
-    for (let i = 0; i < 58; i++) assert.equal((await send(JSON.stringify({ secret: "a".repeat(64) }))).status, 200);
-    assert.equal((await send(JSON.stringify({ secret: "a".repeat(64) }))).status, 429);
+    for (let i = 0; i < 58; i++) assert.equal((await send(JSON.stringify({ secret: "a".repeat(64), recoveryCode: "r".repeat(43) }))).status, 200);
+    assert.equal((await send(JSON.stringify({ secret: "a".repeat(64), recoveryCode: "r".repeat(43) }))).status, 429);
     assert.equal(service.store.view().clients.length, 1);
   } finally { await service.close(); rmSync(directory, { recursive: true, force: true }); }
 });

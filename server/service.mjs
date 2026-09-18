@@ -56,11 +56,12 @@ export function authenticate(token, config) {
     "AUTH_REQUIRED",
   );
   ensure(!config.revokedSubjects?.includes(claims.sub), "AUTH_EXPIRED");
+  ensure(!claims.uid || (typeof claims.uid === "string" && claims.uid.length > 0), "AUTH_REQUIRED");
   ensure(
-    !config.authorizeSubject || config.authorizeSubject(claims.sub),
+    !config.authorizeSubject || config.authorizeSubject(claims.sub, claims),
     "AUTH_EXPIRED",
   );
-  return claims.sub;
+  return claims.uid ?? claims.sub;
 }
 export function createAIService(config) {
   ensure(

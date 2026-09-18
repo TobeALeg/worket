@@ -23,7 +23,7 @@ import { LIMITS, ensure } from "../../dist/contracts/definition.js";
 const ISSUER = "worket-managed-service",
   AUDIENCE = "worket-ai";
 const blank = () => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   revision: 0,
   password: null,
   provider: {
@@ -41,6 +41,7 @@ const blank = () => ({
     maxSources: 5,
     timeoutMs: 600000,
   },
+  users: [],
   clients: [],
 });
 function text(value, max = 500) {
@@ -91,7 +92,23 @@ export class AdminStore {
     this.data = existsSync(this.path)
       ? JSON.parse(readFileSync(this.path, "utf8"))
       : blank();
-    ensure(this.data.schemaVersion === 1, "CONFIG_INVALID");
+    if (this.data.schemaVersion === 1) {
+      const users = this.data.clients.map((client) => ({
+        id: client.userId ?? client.id,
+        recoveryHash: null,
+        createdAt: client.createdAt,
+      }));
+      this.write({
+        ...this.data,
+        schemaVersion: 2,
+        users,
+        clients: this.data.clients.map((client) => ({
+          ...client,
+          userId: client.userId ?? client.id,
+        })),
+      });
+    }
+    ensure(this.data.schemaVersion === 2 && Array.isArray(this.data.users), "CONFIG_INVALID");
     const keyPath = join(directory, "identity-private.pem");
     ensure(
       existsSync(keyPath) || !this.data.clients.length,
@@ -188,9 +205,15 @@ export class AdminStore {
     return {
       ...data,
       provider: { ...fields, hasKey: !!encryptedKey },
+      users: data.users.map(({ id, createdAt }) => ({
+        id,
+        createdAt,
+        deviceCount: data.clients.filter((client) => client.userId === id).length,
+      })),
       clients: data.clients.map(
-        ({ id, name, createdAt, expiresAt, revokedAt }) => ({
+        ({ id, userId, name, createdAt, expiresAt, revokedAt }) => ({
           id,
+          userId,
           name,
           createdAt,
           expiresAt,
@@ -278,41 +301,58 @@ export class AdminStore {
       "填写接入名称，有效期为 1–90 天",
     );
     const now = Date.now(),
+      user = {
+        id: randomUUID(),
+        recoveryHash: null,
+        createdAt: new Date(now).toISOString(),
+      },
       client = {
         id: randomUUID(),
+        userId: user.id,
         name,
         createdAt: new Date(now).toISOString(),
         expiresAt: new Date(now + days * 86400000).toISOString(),
         revokedAt: null,
       };
-    this.write({ ...this.data, clients: [...this.data.clients, client] });
+    this.write({ ...this.data, users: [...this.data.users, user], clients: [...this.data.clients, client] });
     return { ...client, token: this.tokenFor(client) };
   }
   tokenFor(client) {
     const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
     const payload = Buffer.from(JSON.stringify({
-      sub: client.id, iss: ISSUER, aud: AUDIENCE,
+      sub: client.id, uid: client.userId, iss: ISSUER, aud: AUDIENCE,
       iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.parse(client.expiresAt) / 1000),
     })).toString("base64url");
     return `${header}.${payload}.${sign("RSA-SHA256", Buffer.from(`${header}.${payload}`), this.privateKey).toString("base64url")}`;
   }
-  enrollInstallation(secret) {
+  enrollInstallation(secret, recoveryCode) {
     ensure(this.initialized(), "MODEL_UNAVAILABLE");
     ensure(typeof secret === "string" && /^[a-f0-9]{64}$/.test(secret), "INVALID_INPUT");
-    const secretHash = createHash("sha256").update(secret).digest("hex");
+    ensure(typeof recoveryCode === "string" && /^[A-Za-z0-9_-]{40,100}$/.test(recoveryCode), "INVALID_INPUT");
+    const secretHash = createHash("sha256").update(secret).digest("hex"),
+      recoveryHash = createHash("sha256").update(recoveryCode).digest("hex");
     let client = this.data.clients.find(c => c.installationHash === secretHash);
     ensure(!client?.revokedAt, "AUTH_REVOKED");
+    let user = client ? this.data.users.find(value => value.id === client.userId) :
+      this.data.users.find(value => value.recoveryHash === recoveryHash);
+    ensure(!client || user?.recoveryHash === recoveryHash, "AUTH_REQUIRED");
     if (!client) {
-      ensure(this.data.clients.length < 1000, "QUOTA_EXCEEDED");
+      ensure(this.data.clients.length < 5000, "QUOTA_EXCEEDED");
+      if (!user) {
+        ensure(this.data.users.length < 1000, "QUOTA_EXCEEDED");
+        user = { id: randomUUID(), recoveryHash, createdAt: new Date().toISOString() };
+      }
       const id = randomUUID();
-      client = { id, name: `自动接入 ${id.slice(0, 8)}`, installationHash: secretHash,
+      client = { id, userId: user.id, name: `自动接入 ${id.slice(0, 8)}`, installationHash: secretHash,
         createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(), revokedAt: null };
-      this.write({ ...this.data, clients: [...this.data.clients, client] });
+      this.write({ ...this.data,
+        users: this.data.users.some(value => value.id === user.id) ? this.data.users : [...this.data.users, user],
+        clients: [...this.data.clients, client] });
     } else if (Date.parse(client.expiresAt) < Date.now() + 86400000) {
       client = { ...client, expiresAt: new Date(Date.now() + 30 * 86400000).toISOString() };
       this.write({ ...this.data, clients: this.data.clients.map(c => c.id === client.id ? client : c) });
     }
-    return { subject: client.id, expiresAt: client.expiresAt, token: this.tokenFor(client) };
+    return { userId: client.userId, deviceId: client.id, expiresAt: client.expiresAt, token: this.tokenFor(client) };
   }
   revoke(id) {
     const client = this.data.clients.find((c) => c.id === id);
@@ -325,6 +365,7 @@ export class AdminStore {
           : c,
       ),
     });
+    return client;
   }
   identity() {
     return {
@@ -332,10 +373,11 @@ export class AdminStore {
       issuer: ISSUER,
       audience: AUDIENCE,
       publicKey: this.publicKey,
-      authorizeSubject: (subject) =>
+      authorizeSubject: (subject, claims) =>
         this.data.clients.some(
           (c) =>
             c.id === subject &&
+            (!claims?.uid || claims.uid === c.userId) &&
             !c.revokedAt &&
             Date.parse(c.expiresAt) > Date.now(),
         ),

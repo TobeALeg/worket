@@ -29,7 +29,7 @@ export function createEnrollmentHandler(store, { trustProxy = false } = {}) {
     let input;
     try { input = JSON.parse(Buffer.concat(chunks)); }
     catch { throw new ContractError("INVALID_INPUT"); }
-    const result = store.enrollInstallation(input?.secret);
+    const result = store.enrollInstallation(input?.secret, input?.recoveryCode);
     res.end(JSON.stringify(result));
     return true;
   };

@@ -95,7 +95,7 @@ ssh -L 8789:127.0.0.1:8788 your-server
 
 ## 自行部署与自动接入
 
-设置 `WORKET_AUTOMATIC_ENROLLMENT=true` 开放 `/v1/installations`。每个安装用自己的 32 字节随机秘密领取/续期 30 天令牌，服务仅保存秘密哈希；管理员可在原接入列表撤销。默认最多 1000 个主体，注册/续期每 IP 60 次/小时、总计 1000 次/小时。`WORKET_GLOBAL_DAILY_CALLS` 默认 200，控制所有主体合计的滚动 24 小时模型调用预占。自动接入不等于正式账户注册或设备归属验证。
+设置 `WORKET_AUTOMATIC_ENROLLMENT=true` 开放 `/v1/installations`。桌面分别生成安装秘密和匿名用户恢复码；服务只保存两者的 SHA-256，以恢复码关联用户、以安装秘密区分设备，并签发 30 天令牌。管理员可单独撤销设备。默认最多 1000 个用户、5000 台设备，注册/续期每 IP 60 次/小时、总计 1000 次/小时。`WORKET_GLOBAL_DAILY_CALLS` 默认 200，控制所有用户合计的滚动 24 小时模型调用预占。恢复码提供匿名跨设备恢复，不等于真实姓名验证、邮箱找回或企业成员身份。
 
 `WORKET_TRUST_LOOPBACK_PROXY=true` 仅用于本机反向代理已覆盖 `X-Worket-Client-IP` 的部署，禁止直接把该头作为公网客户端自报来源。
 

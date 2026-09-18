@@ -78,7 +78,7 @@ export class WorketAIClient implements AIClient {
   }
   improvementIdentity() {
     const c = this.config();
-    return hash([c.url.replace(/\/$/, ""), c.installationSecret ?? c.token]);
+    return hash([c.url.replace(/\/$/, ""), c.recoveryCode ?? c.userId ?? c.installationSecret ?? c.token]);
   }
   uploadSample(input: SampleUpload) {
     return this.request("/v1/improvement-samples", "POST", input);
