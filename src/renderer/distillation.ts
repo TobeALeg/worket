@@ -207,7 +207,7 @@ export async function openPreparation(workIds: string[]): Promise<void> {
         .sort();
       if (JSON.stringify(selected) !== JSON.stringify(prepared))
         throw new Error("附件选择已变化，请先更新范围");
-      const job = await api("start", {
+      await api("start", {
         preparationId: snapshot.id,
         expectedContentHash: snapshot.contentHash,
         consentVersion: "worket-data-v1",
@@ -239,7 +239,7 @@ export async function openJob(id: string): Promise<void> {
     await openJob(id);
   });
   bind("#retry-job", async () => {
-    const next = await api("retry", {
+    await api("retry", {
       jobId: id,
       expectedContentHash: snapshot.contentHash,
       commandId: commandId(),
