@@ -48,6 +48,8 @@ export type Snapshot = {
   }[];
 };
 export type Job = {
+  progress?: import("./activity.js").ExtractionProgress;
+  seenStatus?: string;
   id: string;
   snapshotId: string;
   status:
@@ -462,6 +464,10 @@ export class DistillationService {
       job.snapshotId,
     );
     this.assertSources(snapshot, false);
+    if (remote.status === "RUNNING" && remote.progress) {
+      current.progress = remote.progress;
+      this.repository.write("distillation_jobs", current);
+    }
     if (remote.status === "SUCCEEDED") {
       const request = this.wire(snapshot);
       validateResult(remote.result, request);

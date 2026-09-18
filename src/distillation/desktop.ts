@@ -1,3 +1,5 @@
+import { distillationActivity } from "./activity.js";
+import type { Job } from "./service.js";
 import { randomUUID } from "node:crypto";
 import { basename } from "node:path";
 import { statSync } from "node:fs";
@@ -114,6 +116,15 @@ export class DistillationDesktop {
       case "job":
         string(input.jobId);
         return this.service.get(input.jobId);
+      case "activity":
+        return distillationActivity(r.list<Job>("distillation_jobs"));
+      case "seen": {
+        string(input.jobId);
+        const job = r.read<Job>("distillation_jobs", input.jobId);
+        job.seenStatus = job.status;
+        r.write("distillation_jobs", job);
+        return;
+      }
       case "jobs":
         return r.list("distillation_jobs");
       case "snapshot":

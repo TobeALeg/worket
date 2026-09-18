@@ -47,9 +47,11 @@ let credentials: ServiceCredentials;
 let worketConnection: AutomaticConnection;
 let distillationTimer: ReturnType<typeof setTimeout> | null = null;
 async function syncDistillations(): Promise<void> {
-  await distillation.service.tick();
-  if (!quitting)
-    distillationTimer = setTimeout(() => void syncDistillations(), 2000);
+  try {
+    await distillation.service.tick();
+  } finally {
+    if (!quitting) distillationTimer = setTimeout(() => void syncDistillations(), 2000);
+  }
 }
 let captureTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -318,8 +320,15 @@ function registerIpc(): void {
     return target.filePath;
   });
   ipcMain.handle("panel:toggle", () => togglePanel());
+  ipcMain.handle("pet:open-distillation", async (event) => {
+    if (event.sender !== petWindow?.webContents) throw new Error("INVALID_SENDER");
+    const activity = await distillation.call("activity") as import("./distillation/activity.js").DistillationActivity | null;
+    showPanel();
+    if (activity) panelWindow?.webContents.send("distillation:open", activity.jobId);
+  });
   ipcMain.handle("pet:get-view", async () => ({
     ...await requireService().getPetView(),
+    distillation: await distillation.call("activity"),
     recordingUploadNoticeRequired: distillation.service.recordings.noticeRequired(),
     edge: petPosition?.edge ?? null,
     placement: petPosition?.placement,

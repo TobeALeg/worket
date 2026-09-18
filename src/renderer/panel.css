@@ -187,3 +187,13 @@ dialog { overflow-anchor: none; }
 .definition-card > .source-heading::before { content: ""; position: absolute; inset: -24px 0 0; background: var(--background); z-index: -1; }
 .state-section, .definition-item { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .definition-item > * { min-width: 0; overflow-wrap: anywhere; }
+
+.distillation-activity { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; margin-bottom: 12px; text-align: left; background: var(--surface); }
+.distillation-activity strong, .distillation-activity small { display: block; }
+.distillation-activity small { margin-top: 3px; color: var(--muted); }
+.extraction-indicator { display: inline-block; flex-shrink: 0; width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; vertical-align: middle; }
+[data-state="running"] .extraction-indicator, .extraction-indicator.running { animation: extraction-turn 1.2s linear infinite; }
+[data-state="ready"] .extraction-indicator { border-color: #3f9d70; background: #3f9d7030; }
+[data-state="failed"] .extraction-indicator { border-color: var(--danger); background: #c9342c18; }
+@keyframes extraction-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .extraction-indicator { animation: none !important; } }

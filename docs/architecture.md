@@ -338,3 +338,9 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 ## 候选文档式审阅（2026-09-18）
 
 `server/workflow.mjs` 的 v1.3 提示词为提取与泛化两阶段统一规定中文叙述，协议键、枚举和原始引文保持原样。`src/renderer/distillation.ts` 保留 DefinitionContent 结构，通过原生 details/summary 展示连续正文，单条展开引用和表单，文本修改即时更新正文；重绘保留当前编辑条目、问题处理和资料绑定。保存与发布继续使用既有 revision、update 和 publish 契约。语言规则属于模型生成约束，不会批量改写已保存候选。
+
+## 后台沉淀状态与来源核验（2026-09-18）
+
+主进程已有 DistillationService.tick 负责关闭面板后的收取；轮询在 finally 继续调度。服务端 extractDefinition 上报分批完成数及泛化阶段，service 仅在运行请求的内存 Map 中保存进度并随结束清理；客户端将进度投影到 Job。activity.ts 统一生成面板与桌宠状态，Job.seenStatus 持久保存已查看阶段，新状态可再次提醒。桌宠专用 IPC 校验 sender 后打开面板并定位 jobId；候选不自动抢占其他编辑界面。
+
+workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的 USER_STATED 误标作保守降级为 INFERRED，并添加 blocking UNSUPPORTED_SOURCE；引用与摘录真实性检查仍保持拒绝，已有发布门槛要求处理确认问题。此修复不把工具文本提升为用户指令，不额外调用模型。

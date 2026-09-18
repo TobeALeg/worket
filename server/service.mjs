@@ -78,6 +78,7 @@ export function createAIService(config) {
   db.prepare(
     "UPDATE requests SET status='INTERRUPTED',error='SERVICE_INTERRUPTED' WHERE status IN ('RUNNING','SUCCEEDED')",
   ).run();
+  const progress = new Map();
   const running = new Map(),
     results = new Map();
   const limits = { ...LIMITS, ...config.limits };
@@ -105,6 +106,7 @@ export function createAIService(config) {
     return {
       requestId: row.id,
       status: row.status,
+      ...(row.status === "RUNNING" && progress.has(row.id) ? { progress: progress.get(row.id) } : {}),
       ...(results.has(row.id) ? { result: results.get(row.id).result } : {}),
       ...(row.error
         ? {
@@ -139,6 +141,7 @@ export function createAIService(config) {
         provider,
         controller.signal,
         (value) => usage.push(value),
+        (value) => progress.set(id, value),
       );
       if (controller.signal.aborted) throw new ContractError("MODEL_TIMEOUT");
       if (
@@ -169,6 +172,7 @@ export function createAIService(config) {
     } finally {
       clearTimeout(timer);
       running.delete(id);
+      progress.delete(id);
       db.prepare("UPDATE requests SET calls=?,usage_json=? WHERE id=?").run(
         used,
         JSON.stringify({

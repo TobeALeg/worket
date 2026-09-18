@@ -13,6 +13,7 @@ const paperAction = required<HTMLButtonElement>("#paper-action");
 const paperLabel = required<HTMLElement>("#paper-label");
 let currentConversation: CurrentConversationView | null = null;
 let busy = false;
+let distillationActivity: PetView["distillation"] = null;
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -42,7 +43,28 @@ window.workpet.onPetPlacement?.(renderPlacement);
 function render(state: PetView): void {
   renderPlacement(state.placement ?? { edge: state.edge ?? null });
   pet.className = `pet ${state.petState}`;
+  distillationActivity = state.distillation;
   currentConversation = state.currentConversation;
+  if (distillationActivity) {
+    const activity = distillationActivity;
+    pet.className = `pet distilling-${activity.state}`;
+    root.classList.add("has-context");
+    root.classList.remove("recording-context");
+    bubble.hidden = false;
+    applicationMark.className = "application-mark";
+    applicationMark.textContent = activity.state === "running" ? "···" : activity.state === "ready" ? "✓" : "!";
+    contextLabel.textContent = activity.label;
+    contextTitle.textContent = activity.detail;
+    required<HTMLElement>("#recording-upload-notice").hidden = true;
+    paperAction.disabled = false;
+    paperLabel.textContent = activity.state === "ready" ? "审阅" : activity.state === "failed" ? "处理" : "进度";
+    paperAction.dataset.action = "distillation";
+    paperAction.setAttribute("aria-label", activity.label);
+    petBody.title = activity.label;
+    petBody.setAttribute("aria-label", activity.label);
+    return;
+  }
+  petBody.setAttribute("aria-label", "打开 Worket");
   const hasConversation = Boolean(currentConversation);
   root.classList.toggle("has-context", hasConversation);
   root.classList.toggle(
@@ -153,10 +175,12 @@ petBody.addEventListener("click", (event) => {
     suppressClick = false;
     return;
   }
-  void window.workpet.togglePanelFromPet();
+  if (distillationActivity) void window.workpet.openDistillationFromPet();
+  else void window.workpet.togglePanelFromPet();
 });
 
 paperAction.addEventListener("click", async () => {
+  if (distillationActivity) { await window.workpet.openDistillationFromPet(); await refresh(); return; }
   if (!currentConversation || busy) return;
   busy = true;
   paperAction.disabled = true;

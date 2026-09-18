@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld("workpet", {
     ipcRenderer.on("pet:placement", listener);
     return () => ipcRenderer.removeListener("pet:placement", listener);
   },
+  openDistillationFromPet: () => ipcRenderer.invoke("pet:open-distillation"),
+  onOpenDistillation: (callback) => {
+    const listener = (_event, jobId) => callback(jobId);
+    ipcRenderer.on("distillation:open", listener);
+    return () => ipcRenderer.removeListener("distillation:open", listener);
+  },
   getPetView: () => ipcRenderer.invoke("pet:get-view"),
   togglePanelFromPet: () => ipcRenderer.invoke("panel:toggle"),
   setPetMousePassthrough: (ignored) => ipcRenderer.send("pet:mouse-passthrough", ignored),

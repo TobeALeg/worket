@@ -118,3 +118,20 @@ button { font: inherit; }
 }
 
 button:focus-visible { outline: 3px solid #007aff; outline-offset: 3px; }
+
+/* Job feedback remains distinct from recording, including the docked pose. */
+.pet.distilling-running .status-dot { background: #8b6537; animation: recording-glow 1.4s ease-in-out infinite; }
+.pet.distilling-running .paper-lines i { animation: extraction-lines 1.4s ease-in-out infinite; }
+.pet.distilling-running .paper-lines i:nth-child(2) { animation-delay: .2s; }
+.pet.distilling-running .paper-lines i:nth-child(3) { animation-delay: .4s; }
+.pet.distilling-ready .status-dot { background: #3f9d70; animation: ready-glow .6s ease-in-out 3; }
+.pet.distilling-ready .pet-body { animation: carry .45s ease-in-out 3 alternate; }
+.pet.distilling-ready .mouth { border-radius: 0 0 12px 12px; }
+.pet.distilling-failed .status-dot { background: #b6262e; }
+.pet.distilling-failed .pet-body { animation: nudge .35s ease-in-out 3; }
+.docked .pet.distilling-ready .pet-body, .docked .pet.distilling-failed .pet-body { animation: none; }
+@keyframes extraction-lines { 50% { opacity: .25; } }
+@keyframes ready-glow { 50% { opacity: .35; box-shadow: 0 0 7px #3f9d70; } }
+@media (prefers-reduced-motion: reduce) {
+  .pet.distilling-running *, .pet.distilling-ready *, .pet.distilling-failed * { animation: none !important; }
+}

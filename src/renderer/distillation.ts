@@ -1,3 +1,4 @@
+import { jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import type {
   DefinitionContent,
@@ -83,6 +84,11 @@ export function setupDistillation(
   selection: () => string[],
 ): void {
   changed = onChanged;
+  const activityButton = document.querySelector<HTMLButtonElement>("#distillation-activity")!;
+  activityButton.onclick = () => { if (activityButton.dataset.job) void openJob(activityButton.dataset.job); };
+  window.workpet.onOpenDistillation?.(id => void openJob(id));
+  setInterval(() => void refreshActivity().catch(() => {}), 1000);
+  void refreshActivity().catch(() => {});
   document
     .querySelector("#distill-selected")!
     .addEventListener(
@@ -95,6 +101,16 @@ export function setupDistillation(
   document.querySelector("#service-settings")!.addEventListener("click", () => {
     void openServiceSettings().catch(error => window.alert(String(error)));
   });
+}
+async function refreshActivity(): Promise<void> {
+  const activity: DistillationActivity | null = await api("activity");
+  const button = document.querySelector<HTMLButtonElement>("#distillation-activity")!;
+  button.hidden = !activity;
+  if (!activity) return;
+  button.dataset.job = activity.jobId;
+  button.dataset.state = activity.state;
+  button.querySelector("[data-activity-label]")!.textContent = activity.label;
+  button.querySelector("[data-activity-detail]")!.textContent = activity.detail;
 }
 async function openServiceSettings(connected = false): Promise<void> {
   const status = await window.workpet.getWorketServiceStatus();
@@ -128,7 +144,7 @@ export async function renderDefinitions(): Promise<void> {
     .filter((j: Job) => j.status !== "SAVED")
     .map(
       (j: Job) =>
-        `<button class="work-row" data-job="${esc(j.id)}">${esc(j.createdAt.slice(0, 16).replace("T", " "))} · ${esc(jobLabel(j.status))}${j.error ? `<p>${esc(j.error)}</p>` : ""}</button>`,
+        `<button class="work-row" data-job="${esc(j.id)}">${esc(j.createdAt.slice(0, 16).replace("T", " "))} · ${esc(jobLabel(j.status))}${j.error ? `<p>${esc(jobError(j.error))}</p>` : ""}</button>`,
     )
     .join("")}`;
   panel
@@ -198,13 +214,15 @@ export async function openPreparation(workIds: string[]): Promise<void> {
         improvementConsentVersion: improvementVersion(),
         commandId: id,
       });
-      await openJob(job.id);
+      modal.close();
+      await refreshActivity();
     });
   }
   await render();
 }
 export async function openJob(id: string): Promise<void> {
   const job: Job = await api("job", { jobId: id });
+  if (!runningJob(job.status)) await api("seen", { jobId: id });
   if (job.status === "AWAITING_REVIEW" && job.draftId) {
     await editDraft(await api("draft", { id: job.draftId }));
     return;
@@ -212,8 +230,9 @@ export async function openJob(id: string): Promise<void> {
   const snapshot: Snapshot = await api("snapshot", { id: job.snapshotId });
   show(
     "沉淀任务",
-    `<h3>${esc(jobLabel(job.status))}</h3><p>采集截止 ${esc(snapshot.capturedAt)} · 第 ${job.attempt} 次尝试</p>${job.error ? `<p class="notice">${esc(job.error)}</p>` : ""}${job.result?.groups.map((g) => `<section><p>${esc(g.reason)}</p><button data-group="${esc(g.sourceKeys.join(","))}">选择这一组</button></section>`).join("") ?? ""}<div class="dialog-actions"><button id="refresh-job">检查进度</button>${["FAILED", "INTERRUPTED"].includes(job.status) ? '<button id="retry-job">重试（不采集样本）</button>' : ""}${!["SAVED", "CANCELLED"].includes(job.status) ? '<button id="cancel-job">取消沉淀</button>' : ""}</div>`,
+    `<h3>${runningJob(job.status) ? `<span class="extraction-indicator running" aria-hidden="true"></span> ${esc(progressLabel(job.progress))}` : esc(jobLabel(job.status))}</h3><p>采集截止 ${esc(snapshot.capturedAt)} · 第 ${job.attempt} 次尝试</p>${job.error ? `<p class="notice">${esc(jobError(job.error))}</p>` : ""}${job.result?.groups.map((g) => `<section><p>${esc(g.reason)}</p><button data-group="${esc(g.sourceKeys.join(","))}">选择这一组</button></section>`).join("") ?? ""}<div class="dialog-actions">${runningJob(job.status) ? '<button id="background-job">后台继续</button>' : ""}<button id="refresh-job">检查进度</button>${["FAILED", "INTERRUPTED"].includes(job.status) ? '<button id="retry-job">重试（不采集样本）</button>' : ""}${!["SAVED", "CANCELLED"].includes(job.status) ? '<button id="cancel-job">取消沉淀</button>' : ""}</div>`,
   );
+  bind("#background-job", async () => { modal.close(); await refreshActivity(); });
   bind("#refresh-job", () => openJob(id));
   bind("#cancel-job", async () => {
     await api("cancel", { jobId: id });
@@ -225,7 +244,8 @@ export async function openJob(id: string): Promise<void> {
       expectedContentHash: snapshot.contentHash,
       commandId: commandId(),
     });
-    await openJob(next.id);
+    modal.close();
+    await refreshActivity();
   });
   modal
     .querySelectorAll<HTMLElement>("[data-group]")

@@ -19,6 +19,9 @@ const core = createWorkCore({
 const original = source(core);
 core.completeWork(original.instance.id);
 core.close();
+let forceReferenceFailure = false;
+let releaseExtraction;
+const extractionGate = new Promise(resolve => { releaseExtraction = resolve; });
 let calls = 0,
   wire;
 const service = createAIService({
@@ -32,6 +35,7 @@ const service = createAIService({
     model: "fixture",
     async call(messages) {
       calls++;
+      await extractionGate;
       const data = JSON.parse(messages[1].content);
       if (data.phase === "extract") {
         wire = {
@@ -60,6 +64,7 @@ const service = createAIService({
         };
       }
       const candidate = result(wire);
+      if (forceReferenceFailure) candidate.content.purpose.basis.refs[0].eventId = "missing-event";
       candidate.issues.push({ id: 'ui-review', type: 'UNCERTAIN_GENERALIZATION', field: 'methods', message: '请确认固定资料的使用范围', blocking: false });
       return { result: candidate, usage: { total_tokens: 1 } };
     },
@@ -142,6 +147,18 @@ try {
   assert.equal(calls, 0);
   await panel.screenshot({ path: join(output, "01-confirm-range.png") });
   await panel.locator("#start-distillation").click();
+  await panel.locator("#definition-dialog").waitFor({ state: "hidden" });
+  await panel.locator('#distillation-activity[data-state="running"]').waitFor();
+  const pet = app.windows().find(p => p.url().endsWith('/pet.html'));
+  await pet.locator('.pet.distilling-running').waitFor();
+  await panel.screenshot({ path: join(output, '01a-background-running.png') });
+  await panel.locator('#close-panel').click();
+  releaseExtraction();
+  await pet.locator('.pet.distilling-ready').waitFor({ timeout: 20000 });
+  assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.open), false, 'Completion must not force open a modal');
+  await pet.screenshot({ path: join(output, '01b-pet-ready.png') });
+  // The pet opens the result directly, including when the panel was hidden.
+  await pet.locator('#paper-action').click();
   await panel
     .getByRole("heading", { name: "检查候选定义", exact: true })
     .waitFor({ timeout: 20000 });
@@ -293,6 +310,23 @@ try {
   await panel.locator("#use-definition").click();
   assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
   await panel.screenshot({ path: join(output, "09-opt-out-after-restart.png") });
+  await panel.locator('[data-close]').click();
+  forceReferenceFailure = true;
+  await panel.evaluate(async workId => {
+    const snapshot = await window.workpet.distillation('prepare', { workIds: [workId], includedFileIds: [] });
+    await window.workpet.distillation('start', { preparationId: snapshot.id, expectedContentHash: snapshot.contentHash, consentVersion: 'worket-data-v1', commandId: crypto.randomUUID() });
+  }, original.instance.id);
+  await panel.locator('#distillation-activity[data-state="failed"]').waitFor({ timeout: 20000 });
+  const failurePet = app.windows().find(p => p.url().endsWith('/pet.html'));
+  await failurePet.locator('.pet.distilling-failed').waitFor();
+  await failurePet.locator('#paper-action').click();
+  await panel.locator('#definition-dialog').getByText('生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。', { exact: true }).waitFor();
+  forceReferenceFailure = false;
+  await panel.locator('#retry-job').click();
+  await panel.locator('#definition-dialog').waitFor({ state: 'hidden' });
+  await failurePet.locator('.pet.distilling-ready').waitFor({ timeout: 20000 });
+  await failurePet.locator('#paper-action').click();
+  await panel.getByRole('heading', { name: '检查候选定义', exact: true }).waitFor();
   const metrics = await panel.evaluate(() => ({
     width: innerWidth,
     scrollWidth: document.documentElement.scrollWidth,

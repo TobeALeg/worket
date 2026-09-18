@@ -8,6 +8,7 @@ import {
   type ExtractionResult,
 } from "../contracts/definition.js";
 export type RemoteJob = {
+  progress?: import("../distillation/activity.js").ExtractionProgress;
   requestId: string;
   status: string;
   result?: ExtractionResult;
