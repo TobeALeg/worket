@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHmac } from "node:crypto";
@@ -311,6 +311,50 @@ try {
   assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
   await panel.screenshot({ path: join(output, "09-opt-out-after-restart.png") });
   await panel.locator('[data-close]').click();
+  // A source file deleted from disk must still let the user open the range dialog and start.
+  const existingJobs = await panel.evaluate(
+    () => window.workpet.distillation('jobs').then(jobs => jobs.map(j => j.id)),
+  );
+  const gonePath = join(directory, 'cleaned-up.png');
+  writeFileSync(gonePath, 'synthetic image bytes');
+  await panel.evaluate(
+    ({ workId, path }) => window.workpet.distillation('attach', { workId, path }),
+    { workId, path: gonePath },
+  );
+  unlinkSync(gonePath);
+  await panel.evaluate(workId => window.workpet.refreshWork(workId), workId);
+  const goneRefs = await panel.evaluate(
+    workId => window.workpet.distillation('artifacts', { workId }),
+    workId,
+  );
+  assert.equal(goneRefs.at(-1).availability, 'MISSING');
+  await app.evaluate(({ BrowserWindow }, id) => {
+    BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).webContents.send('panel:shown', id);
+  }, workId);
+  await panel.locator('[data-action="distill"]').click();
+  await panel.getByRole('heading', { name: '确认沉淀范围', exact: true }).waitFor();
+  const goneChoice = panel.locator('[data-file-id]').last();
+  assert.equal(await goneChoice.isDisabled(), true);
+  await panel.getByText(/文件已不可用，仅保留文件信息/).waitFor();
+  await panel.screenshot({ path: join(output, '09a-unavailable-file.png') });
+  // The same range submits normally: the missing file is described, never read.
+  await panel.locator('#consent').check();
+  await panel.locator('#start-distillation').click();
+  await panel.locator('#definition-dialog').waitFor({ state: 'hidden' });
+  await panel.locator('#distillation-activity[data-state="running"]').waitFor();
+  const prepared = await panel.evaluate(async workId => {
+    const snapshot = await window.workpet.distillation('prepare', { workIds: [workId], includedFileIds: [] });
+    return snapshot.sources.flatMap(s => s.files);
+  }, workId);
+  const gonePrepared = prepared.find(f => f.name === 'cleaned-up.png');
+  assert.equal(gonePrepared.availability, 'MISSING');
+  assert.equal(gonePrepared.content, undefined, 'a missing file never sends analyzed content');
+  // Clear this extra job so the later failure scenario owns the pet and activity button.
+  await panel.evaluate(async existing => {
+    for (const job of await window.workpet.distillation('jobs'))
+      if (!existing.includes(job.id) && job.status !== 'CANCELLED')
+        await window.workpet.distillation('cancel', { jobId: job.id });
+  }, existingJobs);
   forceReferenceFailure = true;
   await panel.evaluate(async workId => {
     const snapshot = await window.workpet.distillation('prepare', { workIds: [workId], includedFileIds: [] });
@@ -342,7 +386,7 @@ try {
     directory,
     metrics,
     restart: true,
-    screenshots: improvementQA ? 10 : 8,
+    screenshots: readdirSync(output).filter(name => name.endsWith(".png")).length,
     unpackaged,
     defaultEnabled: true,
     persistentOptOut: true,

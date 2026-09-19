@@ -4,6 +4,7 @@ import {
   renderDefinitions,
   workDefinitionAction,
 } from "./distillation.js";
+import { errorText } from "../distillation/activity.js";
 import {
   WORK_STATE_LABELS,
   CAPTURE_STATUS_LABELS,
@@ -201,7 +202,7 @@ async function selectWork(workId: string): Promise<void> {
 function showError(error: unknown): void {
   notice.hidden = false;
   notice.setAttribute("role", "alert");
-  notice.textContent = error instanceof Error ? error.message : String(error);
+  notice.textContent = errorText(error);
 }
 
 function updateSelection(): void {

@@ -344,6 +344,110 @@ test("A13 cancelled late result discarded and source deletion invalidates draft"
   assert.equal(f.core.definitions.list("definition_drafts").length, 0);
   f.core.close();
 });
+test("A16 an attachment that disappeared locally is prepared as metadata instead of failing", async () => {
+  const f = await setup();
+  const storage = await import("../../dist/definitions/storage.js");
+  const file = join(f.directory, "cleaned-up.png");
+  writeFileSync(file, "image bytes");
+  // The tracker appends a reference per state change, so a deleted file leaves the original
+  // AVAILABLE row plus a newer MISSING row with no content hash.
+  const available = f.core.addArtifactRef(f.work.instance.id, {
+    path: file,
+    filename: "cleaned-up.png",
+    role: "INPUT",
+    mimeType: "image/png",
+    size: 11,
+    sha256: storage.hash("image bytes"),
+    lastModifiedAt: new Date().toISOString(),
+    availability: "AVAILABLE",
+  }).artifactRefs.at(-1)!;
+  const missing = f.core.addArtifactRef(f.work.instance.id, {
+    path: file,
+    filename: "cleaned-up.png",
+    role: "INPUT",
+    mimeType: "image/png",
+    size: 0,
+    sha256: "",
+    lastModifiedAt: new Date(0).toISOString(),
+    availability: "MISSING",
+  }).artifactRefs.at(-1)!;
+  const snapshot = f.service.prepare({
+    workIds: [f.work.instance.id],
+    includedFileIds: [],
+  });
+  // One entry per path, describing the file as it is now.
+  assert.equal(snapshot.sources[0]!.files.length, 1);
+  const prepared = snapshot.sources[0]!.files[0]!;
+  assert.equal(prepared.id, missing.id);
+  assert.equal(prepared.availability, "MISSING");
+  assert.equal(prepared.content, undefined);
+  assert.ok(prepared.hash.length > 0, "a metadata-only file still needs an identifying hash");
+  const wire = f.service.wire(snapshot).sources[0]!.events.filter((e) =>
+    e.key.startsWith("file-"),
+  );
+  assert.equal(wire.length, 1);
+  assert.equal(wire[0]!.kind, "file.metadata");
+  assert.match(wire[0]!.content, /"available":false/);
+  // Asking to analyze a file that is gone is refused with an actionable local error.
+  assert.throws(
+    () =>
+      f.service.prepare({
+        workIds: [f.work.instance.id],
+        includedFileIds: [available.id],
+      }),
+    (error: any) => error.code === "MATERIAL_MISSING",
+  );
+  f.core.close();
+});
+test("A16 a readable attachment still carries its content and survives a changed file", async () => {
+  const f = await setup();
+  const storage = await import("../../dist/definitions/storage.js");
+  const file = join(f.directory, "notes.md");
+  writeFileSync(file, "可分析正文");
+  const a = f.core.addArtifactRef(f.work.instance.id, {
+    path: file,
+    filename: "notes.md",
+    role: "INPUT",
+    mimeType: "text/markdown",
+    size: 15,
+    sha256: storage.hash("可分析正文"),
+    lastModifiedAt: new Date().toISOString(),
+    availability: "AVAILABLE",
+  }).artifactRefs.at(-1)!;
+  const snapshot = f.service.prepare({
+    workIds: [f.work.instance.id],
+    includedFileIds: [a.id],
+  });
+  assert.equal(snapshot.sources[0]!.files[0]!.content, "可分析正文");
+  writeFileSync(file, "被改写");
+  assert.throws(
+    () =>
+      f.service.prepare({
+        workIds: [f.work.instance.id],
+        includedFileIds: [a.id],
+      }),
+    (error: any) => error.code === "SOURCE_CHANGED",
+  );
+  // A refreshed work records the rewritten file as CHANGED; asking for its content uses the new bytes.
+  const changed = f.core.addArtifactRef(f.work.instance.id, {
+    path: file,
+    filename: "notes.md",
+    role: "INPUT",
+    mimeType: "text/markdown",
+    size: 9,
+    sha256: storage.hash("被改写"),
+    lastModifiedAt: new Date().toISOString(),
+    availability: "CHANGED",
+  }).artifactRefs.at(-1)!;
+  const refreshed = f.service.prepare({
+    workIds: [f.work.instance.id],
+    includedFileIds: [changed.id],
+  });
+  assert.equal(refreshed.sources[0]!.files.length, 1);
+  assert.equal(refreshed.sources[0]!.files[0]!.content, "被改写");
+  assert.equal(refreshed.sources[0]!.files[0]!.availability, "CHANGED");
+  f.core.close();
+});
 test("A26 delete source clears snapshot file body and excerpts, keeps confirmed version, prevents deleting in-use definition", async () => {
   const f = await setup(),
     draft = await review(f);
@@ -577,6 +681,42 @@ test("A10 identical keys in separate collections retain their distinct provenanc
   });
   assert.equal(updated.content.constraints[0].basis.type, "SOURCE");
   assert.equal(updated.content.acceptanceCriteria[0].basis.type, "INFERRED");
+  f.core.close();
+});
+test("A14 an edit naming an undeclared input is a user input error, not a model output error", async () => {
+  const f = await setup(),
+    draft = await review(f);
+  draft.content.purpose.text = "为 {{undeclared}} 分析市场";
+  assert.throws(
+    () =>
+      f.core.definitions.update({
+        draftId: draft.id,
+        expectedRevision: 1,
+        content: draft.content,
+        issueResolutions: [],
+      }),
+    (error: any) => error.code === "INVALID_INPUT",
+    // A misleading code here would send the user looking for a model problem that does not exist.
+  );
+  // The same violation inside model output is still reported as unusable model output.
+  const wire = f.service.wire(f.snapshot);
+  assert.throws(
+    () =>
+      validateResult(
+        {
+          ...result(wire),
+          content: {
+            ...result(wire).content,
+            purpose: {
+              ...result(wire).content.purpose,
+              text: "为 {{undeclared}} 分析市场",
+            },
+          },
+        },
+        wire,
+      ),
+    (error: any) => error.code === "INVALID_MODEL_OUTPUT",
+  );
   f.core.close();
 });
 test("resolved field changes can be saved then published without redoing the same edit", async () => {

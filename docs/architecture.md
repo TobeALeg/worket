@@ -83,7 +83,7 @@ MCP 成功读取审计使用当前 Binding、Episode 与环境，工作包读取
 
 ### ArtifactTracker 与 ArtifactResolver
 
-`ArtifactTracker` 统一负责编排 Codex 与 WorkBuddy 的资料挂接和使用前复核，避免两个 Adapter 产生不同语义；`ArtifactResolver` 隐藏具体文件存储策略。MVP 只维护原路径与元数据，并在主动刷新或交接时校验 Hash 和可用性。发生变化时写入新的 ArtifactRef 版本与 `artifact.changed` 来源事件。Work Core 不依赖未来是否加入副本或版本存储。
+`ArtifactTracker` 统一负责编排 Codex 与 WorkBuddy 的资料挂接和使用前复核，避免两个 Adapter 产生不同语义；`ArtifactResolver` 隐藏具体文件存储策略。MVP 只维护原路径与元数据，并在主动刷新或交接时校验 Hash 和可用性。发生变化时写入新的 ArtifactRef 版本与 `artifact.changed` 来源事件。Work Core 不依赖未来是否加入副本或版本存储。因此同一路径可能保留多条引用，只有最新一条描述文件当前状态。沉淀范围按路径只取最新引用；已清理或缺内容的文件以「仅文件信息」参与快照，使用引用自身的 hash 而非空 hash；只有用户勾选分析其内容时才要求文件可读。
 
 ### Local Persistence
 

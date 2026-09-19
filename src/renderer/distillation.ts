@@ -1,4 +1,4 @@
-import { jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
+import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import type {
   DefinitionContent,
@@ -49,7 +49,7 @@ function show(title: string, html: string): void {
         preference.checked = !enabled;
         const notice = modal.querySelector<HTMLElement>("#definition-error")!;
         notice.hidden = false;
-        notice.textContent = `未能保存参与改进设置：${String(error)}`;
+        notice.textContent = `未能保存参与改进设置：${errorText(error)}`;
       })
       .finally(() => { preference.disabled = false; });
   });
@@ -66,7 +66,7 @@ function bind(selector: string, action: () => Promise<void>): void {
         const notice = modal.querySelector<HTMLElement>("#definition-error");
         if (notice) {
           notice.hidden = false;
-          notice.textContent = String(error);
+          notice.textContent = errorText(error);
           notice.scrollIntoView({ block: "nearest" });
         }
       })
@@ -95,11 +95,11 @@ export function setupDistillation(
       "click",
       () =>
         void openPreparation(selection()).catch((error) =>
-          window.alert(String(error)),
+          window.alert(errorText(error)),
         ),
     );
   document.querySelector("#service-settings")!.addEventListener("click", () => {
-    void openServiceSettings().catch(error => window.alert(String(error)));
+    void openServiceSettings().catch(error => window.alert(errorText(error)));
   });
 }
 async function refreshActivity(): Promise<void> {
@@ -183,7 +183,7 @@ export async function openPreparation(workIds: string[]): Promise<void> {
     const { enabled } = await api("improvementPreference");
     show(
       "确认沉淀范围",
-      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" ${f.content !== undefined ? "checked" : ""}> ${esc(f.name)} — ${f.content !== undefined ? "含正文" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}<button id="start-distillation" class="primary">开始沉淀</button>`,
+      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}<button id="start-distillation" class="primary">开始沉淀</button>`,
     );
     bind("#apply-range", async () => {
       const ids = [

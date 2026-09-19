@@ -9,6 +9,7 @@ import {
   object,
   string,
   array,
+  ContractError,
   LIMITS,
   validateRequest,
   validateResult,
@@ -42,6 +43,7 @@ export type Snapshot = {
       name: string;
       path: string;
       hash: string;
+      availability?: "AVAILABLE" | "CHANGED" | "MISSING";
       content?: string;
     }[];
     deleted?: boolean;
@@ -156,7 +158,10 @@ export class DistillationService {
       "INVALID_INPUT",
     );
     const chosen = new Set(input.includedFileIds),
-      found = new Set<string>();
+      found = new Set<string>(),
+      // A selection may name a superseded reference, for example when the range was confirmed
+      // before the file changed on disk. That is a stale range, not an unknown id.
+      superseded = new Map<string, string>();
     const sources = input.workIds.map((id, index) => {
       const work = this.core.getWork(id);
       ensure(work, "SOURCE_DELETED");
@@ -175,10 +180,32 @@ export class DistillationService {
         "MISSING_INFORMATION",
         "空工作没有可提交的来源事件",
       );
-      const files = work.artifactRefs.map((a) => {
+      // Verification appends a new reference whenever a file changes or disappears, so the
+      // reference list keeps history. Only the newest reference per path describes the file now.
+      const latest = new Map<string, (typeof work.artifactRefs)[number]>();
+      for (const artifact of work.artifactRefs) {
+        const previous = latest.get(artifact.path);
+        if (previous) superseded.set(previous.id, artifact.filename);
+        latest.set(artifact.path, artifact);
+      }
+      const files = [...latest.values()].map((a) => {
+        // A file that is gone or was never hashed still belongs in the range: it travels as a
+        // metadata-only event whose hash identifies the reference, not the missing content.
+        const referenceHash = a.sha256 || hash([a.path, a.filename, a.availability]);
         if (!chosen.has(a.id))
-          return { id: a.id, name: a.filename, path: a.path, hash: a.sha256 };
+          return {
+            id: a.id,
+            name: a.filename,
+            path: a.path,
+            hash: referenceHash,
+            availability: a.availability,
+          };
         found.add(a.id);
+        ensure(
+          a.availability !== "MISSING",
+          "MATERIAL_MISSING",
+          `附件在本地已不可用，无法分析内容。请取消勾选或恢复文件：${a.filename}`,
+        );
         ensure(
           [
             ".txt",
@@ -198,19 +225,32 @@ export class DistillationService {
           "UNSUPPORTED_FILE",
           "首版仅分析 UTF-8 文本文件",
         );
-        const bytes = this.repository.materials.read(a.path, LIMITS.maxBytes);
+        let bytes: Buffer;
+        try {
+          bytes = this.repository.materials.read(a.path, LIMITS.maxBytes);
+        } catch (error) {
+          if (error instanceof ContractError) throw error;
+          throw new ContractError(
+            "MATERIAL_MISSING",
+            `附件在本地已不可用，无法分析内容。请取消勾选或恢复文件：${a.filename}`,
+          );
+        }
         ensure(hash(bytes) === a.sha256, "SOURCE_CHANGED");
         let content: string;
         try {
           content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
         } catch {
-          throw new Error("UNSUPPORTED_FILE: 文件不是 UTF-8 文本");
+          throw new ContractError(
+            "UNSUPPORTED_FILE",
+            `附件不是 UTF-8 文本：${a.filename}`,
+          );
         }
         return {
           id: a.id,
           name: basename(a.path),
           path: a.path,
           hash: hash(bytes),
+          availability: a.availability,
           content,
         };
       });
@@ -223,10 +263,16 @@ export class DistillationService {
         files,
       };
     });
-    ensure(
-      [...chosen].every((id) => found.has(id)),
-      "INVALID_INPUT",
-    );
+    // A selection may name a superseded reference, for example when the range was confirmed
+    // before the file changed on disk. That is a stale range, not an unknown id.
+    for (const id of chosen)
+      if (!found.has(id))
+        throw new ContractError(
+          superseded.has(id) ? "MATERIAL_MISSING" : "INVALID_INPUT",
+          superseded.has(id)
+            ? `附件已发生变化，请更新附件内容范围后重试：${superseded.get(id)}`
+            : undefined,
+        );
     const snapshot: Snapshot = {
       id: randomUUID(),
       schemaVersion: 1,
@@ -266,6 +312,9 @@ export class DistillationService {
                 : JSON.stringify({
                     type: extname(f.name),
                     contentAnalyzed: false,
+                    ...(f.availability && f.availability !== "AVAILABLE"
+                      ? { available: false }
+                      : {}),
                   }),
             hash: f.hash,
           })),
@@ -485,7 +534,10 @@ export class DistillationService {
           ]
         : []) {
         if (item.basis.type === "USER_AUTHORED")
-          throw new Error("INVALID_MODEL_OUTPUT");
+          throw new ContractError(
+            "INVALID_MODEL_OUTPUT",
+            "模型返回了只允许用户编辑产生的依据",
+          );
         item.basis.refs = item.basis.refs.map((ref) => {
           const s = snapshot.sources.find((s) => s.key === ref.workId);
           ensure(s, "INVALID_SOURCE_REF");

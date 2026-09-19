@@ -102,9 +102,11 @@ export class ContractError extends Error {
     super(`${code}: ${message}`);
   }
 }
+// Shared validation helpers also guard local and user-supplied data, so a structural failure
+// defaults to INVALID_INPUT. Model output is reported as INVALID_MODEL_OUTPUT by validateResult.
 export function ensure(
   condition: unknown,
-  code = "INVALID_MODEL_OUTPUT",
+  code = "INVALID_INPUT",
   message?: string,
 ): asserts condition {
   if (!condition) throw new ContractError(code, message);
@@ -161,8 +163,8 @@ export function validateContent(
     for (const match of item.text.matchAll(/\{\{([^}]+)\}\}/g))
       ensure(
         keys.has(match[1]),
-        "INVALID_MODEL_OUTPUT",
-        "存在未声明的输入变量",
+        "INVALID_INPUT",
+        `存在未声明的输入变量：{{${match[1]}}}`,
       );
     const basis = item.basis;
     if (basis.type === "USER_AUTHORED") {
@@ -274,6 +276,23 @@ export function validateRequest(
   }
 }
 export function validateResult(
+  value: unknown,
+  request: ExtractionRequest,
+): asserts value is ExtractionResult {
+  try {
+    validateModelResult(value, request);
+  } catch (error) {
+    // Any structural violation inside model output is one failure mode for callers: unusable output.
+    if (error instanceof ContractError && error.code === "INVALID_INPUT")
+      throw new ContractError(
+        "INVALID_MODEL_OUTPUT",
+        error.message.replace(/^INVALID_INPUT:\s*/, ""),
+        error.retryable,
+      );
+    throw error;
+  }
+}
+function validateModelResult(
   value: unknown,
   request: ExtractionRequest,
 ): asserts value is ExtractionResult {

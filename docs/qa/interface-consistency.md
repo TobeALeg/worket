@@ -72,3 +72,11 @@
 验证结果：核心、活动状态和来源工作流 27 项，服务 7 项均通过；开发态与最终打包态的 `qa-distillation.mjs --improvement` 均通过（分别模拟正常提取、错误引用失败、重试恢复，共 6 次模型调用），400px 无横向溢出。已人工复核后台进度和桌宠完成截图。
 
 真实服务验收：新版打包客户端连接 `https://worket.dandi.site` 成功，重试此前失败快照，228 秒完成 4 批提取及汇总，本地状态 AWAITING_REVIEW，33 条正文均含中文；4 个非阻塞提示、0 个阻塞问题。此项证明真实提取、引用校验和本地收取通过，未替代用户内容审阅或实际复用验收。
+
+## 2026-09-18 沉淀报错 INVALID_MODEL_OUTPUT 定位
+
+用户点击沉淀时收到 `Error invoking remote method 'distillation:command': Error: INVALID_MODEL_OUTPUT`。本地复现（对真实数据库副本调用 `prepare`）确认与模型无关：来源工作 `6333df79` 有一张已被系统清理的临时截图，`artifact_refs` 为“同一路径、先 AVAILABLE 后 MISSING”两条记录，旧代码取用了含空 `sha256` 的那条，写快照前的 `validateRequest` 因空 hash 抛错；`ensure` 的默认错误码又是 `INVALID_MODEL_OUTPUT`，把本地校验失败显示成了模型输出问题。
+
+修复：同一路径只保留最新引用；`MISSING` 附件以「仅文件信息 + 稳定 hash」参与快照，勾选分析时返回 `MATERIAL_MISSING` 而不是崩溃；`CHANGED` 附件说明内容已更新；`ensure` 默认码改为 `INVALID_INPUT`，`validateResult` 内部再映射回 `INVALID_MODEL_OUTPUT`，保证模型输出错误码不变；对话框与面板把错误码换成可操作的中文原因。`server/` 未修改，纯客户端修复。
+
+验证：`npm run build`；全量 136 项测试通过（新增消失附件降级、可读/变化附件、错误码区分、IPC 文案 4 组断言）；打包态 `qa-distillation.mjs --improvement` 通过，其中新增「文件被删除后仍可打开范围、勾选框禁用、提交后无正文外发」步骤，截图 `output/improvement-desktop/09a-unavailable-file.png`。对真实数据库副本确认原先失败的 `6333df79` 现可生成 534 条事件与 1 条「仅文件信息」附件的快照。`/Applications/Worket.app` 已更新为同一构建，`app.asar` 与 `release/` 一致（`648bc71b…`）。
