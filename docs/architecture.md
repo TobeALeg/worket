@@ -216,6 +216,24 @@ WorkDefinitionExtractor 与现有 WorkStateExtractor 独立：前者只在用户
 
 Worket AI Service 负责固定的提取、比较、泛化与校验流程，不提供 shell、任意文件读取或通用自主 Agent。供应商 Key 仅在服务端；工作库、定义权威版本和正式实例状态保存在本地。后台采用经用户授权的材料暂存和无正文的运行/用量记录，身份、幂等与限额为公开服务必要边界。
 
+### 抽取评测 module（2026-09-21）
+
+`evals/extraction/runner.mjs` 的外部 interface 是配置、case manifest 和一个 adapter；环境冻结、授权 fingerprint、不可覆盖 run/trial、预算预留及失败落账藏在实现内。现有产品路径在 seam 处提供三个 adapter：WorkState 本地/云端 adapter、Definition 托管 adapter，以及仅用于结构回归的 mock adapter。一个 case 在进入 adapter 前移除期望断言、禁止推断和变形答案；grader 是运行后的独立 module，不能参与模型请求。
+
+```text
+case manifest → policy/freeze → runner → product adapter → raw trial
+                         │                         │
+                         │                         ├→ isolated Work Core → Handoff Package
+                         │                         └→ Worket AI Service → Definition result
+                         └→ approval fingerprint
+
+sealed raw trial + gold + human adjudication → grader → metrics/report
+```
+
+状态从 `READY` 进入不可覆盖 run；每个 trial 为 `SUCCEEDED`、`FAILED` 或 `BLOCKED`，整体成功后仍停在 `AWAITING_HUMAN_REVIEW / NOT_JUDGED`，不能由 JSON 合法或 mock 成功跳到语义通过。retry 创建新 run 并保存 `retry_of`。`runs/` 含原始输出与匿名接入凭据，默认不入 Git；正式产品状态和用户工作库不在评测写入范围内。
+
+provider 调用上限由 runner 按 trial 预留。当前托管接口不返回 token、失败前实际调用数或账单金额，因此这些值为 `null`，不能由配置中的声明额度推断为实际消耗。详细运行证据见 [抽取评测验收](acceptance/extraction-evaluation-v1.md)。
+
 ### Data flow
 
 ```text

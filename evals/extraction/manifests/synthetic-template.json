@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "experiment_id": "E0-synthetic-pilot",
+  "source_manifest": "worket_extraction_experiments_v1/05_合成边界用例.jsonl",
+  "source_classification": "SYNTHETIC",
+  "selected_case_ids": [],
+  "repeats": 1,
+  "live": {
+    "enabled": false,
+    "authorization_ref": null,
+    "approved_sources": [],
+    "approved_provider": null,
+    "budget_currency": null,
+    "budget_amount": null
+  },
+  "execution": {
+    "timeout_seconds": 180,
+    "input_token_cap": 100000,
+    "output_token_cap": 40000,
+    "max_provider_calls_total": 20,
+    "max_provider_calls_per_trial": 2,
+    "concurrency": 1
+  },
+  "definition_service": {
+    "url": "https://worket.dandi.site",
+    "credentials_file": "evals/extraction/runs/.definition-service-credentials.json"
+  }
+}

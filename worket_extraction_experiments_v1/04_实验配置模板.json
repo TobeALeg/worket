@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "status": "DESIGN_ONLY_NOT_EXECUTED",
+  "project": "TobeALeg/worket",
+  "excluded": [
+    "Jev integration",
+    "production data mutation",
+    "automatic definition approval"
+  ],
+  "baseline": {
+    "observed_default_branch_commit": "f8758f10b05984cb378d9a270a51d7386a155c53",
+    "must_verify_before_execution": true,
+    "files": {
+      "server/workflow.mjs": "22dce612c3bdab04ba52abbb386a2d060bbaa16c",
+      "src/extractor/openai-compatible-extractor.ts": "c5fcc6bb4950e1b634441710f26f5c186fb9bbe1"
+    },
+    "model_id": null,
+    "model_revision": null,
+    "provider": null
+  },
+  "live": {
+    "enabled": false,
+    "authorization_ref": null,
+    "approved_sources": [],
+    "approved_provider": null,
+    "budget_currency": null,
+    "budget_amount": null,
+    "block_if_authorization_or_budget_missing": true
+  },
+  "data": {
+    "pilot_target_histories": {
+      "development": 2,
+      "sealed": 4
+    },
+    "selection_target_histories": {
+      "development": 10,
+      "validation": 6,
+      "sealed": 4
+    },
+    "actual_histories_loaded": 0,
+    "split_group": "independent_work_or_shared_project_template",
+    "tracks": [
+      "S",
+      "D"
+    ],
+    "max_checkpoints_per_history": 3,
+    "synthetic_must_be_reported_separately": true
+  },
+  "execution": {
+    "minimum_repeats": 2,
+    "finalist_reliability_repeats": 3,
+    "max_development_iterations": 3,
+    "stop_after_no_gain_iterations": 2,
+    "max_audit_revision_rounds_per_trial": 1,
+    "concurrency_default": 1,
+    "timeout_seconds": null,
+    "input_token_cap": null,
+    "output_token_cap": null,
+    "max_provider_calls_per_trial": null,
+    "all_resource_limits_must_be_frozen_before_live": true,
+    "best_of_n_selection_forbidden": true
+  },
+  "experiments": [
+    {
+      "id": "E0",
+      "name": "基线错误分层诊断",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E1",
+      "name": "提示词然后上下文组织",
+      "arms": [
+        "P0",
+        "P1",
+        "C0",
+        "C1"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E2",
+      "name": "证据保真乘职责拆分",
+      "arms": [
+        "E0D0",
+        "E1D0",
+        "E0D1",
+        "E1D1"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E3",
+      "name": "无复查/普通复查/双向复查",
+      "arms": [
+        "R0",
+        "R1",
+        "R2"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E4",
+      "name": "完整展示/普通精简/价值投影",
+      "arms": [
+        "V0",
+        "V1",
+        "V2"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E5",
+      "name": "重复/变形/增量/导出可靠性",
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "E6",
+      "name": "人工纠正与交接复用探针",
+      "status": "NOT_IMPLEMENTED"
+    }
+  ],
+  "proposed_gates_not_results": {
+    "candidate_trust_min": 0.95,
+    "strict_critical_recall_min_each_track": 0.95,
+    "required_recall_min_each_track": 0.9,
+    "useful_precision_min": 0.95,
+    "noise_rate_max": 0.05,
+    "substantive_edit_reduction_target": 0.3,
+    "active_review_time_reduction_target": 0.2,
+    "critical_challenge_errors_max": 0,
+    "confirmed_output_severe_errors_max": 0,
+    "freeze_required": true,
+    "small_sample_not_population_guarantee": true
+  }
+}

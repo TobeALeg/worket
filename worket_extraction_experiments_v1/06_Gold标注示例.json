@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "status": "SYNTHETIC_GOLD_EXAMPLE_NOT_HUMAN_APPROVED",
+  "case_id": "SYN01",
+  "work_id": "SYN01-work",
+  "cutoff_event_id": "SYN01-e2",
+  "units": [
+    {
+      "gold_id": "g1",
+      "semantic_content": "同类海报转视频不得改变原海报主视觉。",
+      "evidence_refs": [
+        {
+          "event_id": "SYN01-e1",
+          "excerpt": "以后同类海报转视频，不要改变原海报的主视觉。"
+        }
+      ],
+      "source_origin": "USER_STATED",
+      "adoption_status": "EXPLICIT_REQUIREMENT",
+      "validity": "ACTIVE_AT_CUTOFF",
+      "scope": "WORK_FAMILY",
+      "destinations": [
+        "S_ACTIVE",
+        "D_REUSABLE_CANDIDATE"
+      ],
+      "criticality": "CRITICAL",
+      "utility_reason": "约束画面改动，影响交付验收。",
+      "acceptable_variants": [
+        "同类海报转视频应保持原海报主视觉不变。"
+      ],
+      "forbidden_inferences": [
+        "所有种类的视频都不得改变主视觉。"
+      ]
+    },
+    {
+      "gold_id": "g2",
+      "semantic_content": "本次字幕使用英文。",
+      "evidence_refs": [
+        {
+          "event_id": "SYN01-e2",
+          "excerpt": "这次字幕用英文"
+        }
+      ],
+      "source_origin": "USER_STATED",
+      "adoption_status": "EXPLICIT_REQUIREMENT",
+      "validity": "ACTIVE_AT_CUTOFF",
+      "scope": "INSTANCE",
+      "destinations": [
+        "S_ACTIVE"
+      ],
+      "criticality": "CRITICAL",
+      "utility_reason": "直接影响本次交付语言。",
+      "acceptable_variants": [],
+      "forbidden_inferences": [
+        "所有后续视频默认英文字幕。"
+      ]
+    },
+    {
+      "gold_id": "g3",
+      "semantic_content": "本次面向客户A。",
+      "evidence_refs": [
+        {
+          "event_id": "SYN01-e2",
+          "excerpt": "给客户A做"
+        }
+      ],
+      "source_origin": "USER_STATED",
+      "adoption_status": "STATED_INSTANCE_FACT",
+      "validity": "ACTIVE_AT_CUTOFF",
+      "scope": "INSTANCE",
+      "destinations": [
+        "S_ACTIVE"
+      ],
+      "criticality": "NORMAL",
+      "utility_reason": "明确本次交付对象，避免客户串线。",
+      "acceptable_variants": [],
+      "forbidden_inferences": [
+        "后续任务默认客户A。"
+      ]
+    }
+  ],
+  "human_approval": null
+}
