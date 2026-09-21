@@ -121,6 +121,27 @@ async function launch() {
   return { app, panel };
 }
 let app, panel, workId;
+async function checkCompactPage(name, action) {
+  const original = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).getBounds());
+  try {
+    for (const size of [{ width: 360, height: 480 }, { width: 600, height: 660 }]) {
+      await app.evaluate(({ BrowserWindow }, size) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(size.width, size.height), size);
+      await panel.waitForFunction(width => innerWidth === width, size.width);
+      const layout = await panel.locator('#definition-dialog').evaluate((dialog, action) => {
+        const button = dialog.querySelector(action).getBoundingClientRect();
+        const header = dialog.querySelector('.window-bar').getBoundingClientRect();
+        return { overflow: dialog.scrollWidth > dialog.clientWidth, button: { x: button.x, y: button.y, right: button.right, bottom: button.bottom }, headerTop: header.top, width: innerWidth, height: innerHeight };
+      }, action);
+      assert.equal(layout.overflow, false, `${name}: horizontal overflow`);
+      assert.equal(layout.headerTop, 0, `${name}: header must remain visible`);
+      assert.ok(layout.button.x >= 0 && layout.button.right <= layout.width && layout.button.y >= 38 && layout.button.bottom <= layout.height, `${name}: action must remain visible`);
+      if (size.width === 360) await panel.screenshot({ path: join(output, `${name}-small.png`) });
+    }
+  } finally {
+    await app.evaluate(({ BrowserWindow }, bounds) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setBounds(bounds), original);
+    await panel.waitForFunction(width => innerWidth === width, original.width);
+  }
+}
 try {
   ({ app, panel } = await launch());
   const errors = [];
@@ -150,6 +171,7 @@ try {
   await panel.locator("#consent").check();
   assert.equal(calls, 0);
   await panel.screenshot({ path: join(output, "01-confirm-range.png") });
+  await checkCompactPage('01-confirm-range', '#start-distillation');
   await panel.locator("#start-distillation").click();
   await panel.locator("#definition-dialog").waitFor({ state: "hidden" });
   await panel.locator('#distillation-activity[data-state="running"]').waitFor();
@@ -237,7 +259,9 @@ try {
   await panel.locator('#publish-definition').click();
   await panel.locator("#use-definition").waitFor();
   await panel.screenshot({ path: join(output, "03-saved-definition.png") });
+  await checkCompactPage('03-saved-definition', '#use-definition');
   await panel.locator("#use-definition").click();
+  await checkCompactPage('03a-reuse', '#create-defined-work');
   await panel.locator('[data-input="customer"]').fill("客户丙");
   await panel.locator('[data-input="market"]').fill("欧洲市场");
   assert.equal(await panel.locator("#improvement-consent").isChecked(), improvementQA);
@@ -274,6 +298,7 @@ try {
   await panel.locator("[data-criterion]").selectOption("PASS");
   await panel.locator("[data-output]").check();
   await panel.screenshot({ path: join(output, "05-user-acceptance.png") });
+  await checkCompactPage('05-user-acceptance', '#accept-output');
   await panel.locator("#accept-output").click();
   await panel.locator("#definition-dialog").waitFor({ state: "hidden" });
   assert.equal(

@@ -80,3 +80,20 @@
 修复：同一路径只保留最新引用；`MISSING` 附件以「仅文件信息 + 稳定 hash」参与快照，勾选分析时返回 `MATERIAL_MISSING` 而不是崩溃；`CHANGED` 附件说明内容已更新；`ensure` 默认码改为 `INVALID_INPUT`，`validateResult` 内部再映射回 `INVALID_MODEL_OUTPUT`，保证模型输出错误码不变；对话框与面板把错误码换成可操作的中文原因。`server/` 未修改，纯客户端修复。
 
 验证：`npm run build`；全量 136 项测试通过（新增消失附件降级、可读/变化附件、错误码区分、IPC 文案 4 组断言）；打包态 `qa-distillation.mjs --improvement` 通过，其中新增「文件被删除后仍可打开范围、勾选框禁用、提交后无正文外发」步骤，截图 `output/improvement-desktop/09a-unavailable-file.png`。对真实数据库副本确认原先失败的 `6333df79` 现可生成 534 条事件与 1 条「仅文件信息」附件的快照。`/Applications/Worket.app` 已更新为同一构建，`app.asar` 与 `release/` 一致（`648bc71b…`）。
+
+## 2026-09-21 紧凑浮窗风格统一
+
+范围：桌面列表 / 详情、历史、交接 / 拆分 / 取消记录、沉淀准备 / 任务 / 审阅 / 保存后定义、复用 / 验收、服务 / 改进数据和桌宠提示。沿用已认可的微笑 Logo、分类图标、浅纸色和绿色主操作；共享 theme 统一颜色、字号和控件。后台页面保留原样。
+
+- 列表以细线代替大卡片；已保存定义与审阅共用分类图标及标签，并展示输入和必填状态。
+- 历史和动态功能页占用现有浮窗，品牌栏与主要操作固定，正文独立滚动。交接和破坏性确认保留轻量弹层。
+- 最近回复 / 执行片段按需展开，同一工作刷新保留展开状态；复用隐藏空资料 / 空案例，固定资料显示用途与文件名，路径悬停可查。云端处理、改进采集和删除后果仍可查看。
+
+验证结果：
+
+- 构建通过；`node scripts/qa-interface.mjs` 34 个状态通过，涵盖桌面导航、历史、窄窗菜单、交接 / 拆分 / 删除、设置及现有本地后台回归。同步更新旧 fixture 的无后台任务返回值，避免产生不存在的活动入口。
+- `node scripts/qa-distillation.mjs --unpackaged --improvement` 和最终打包态 `node scripts/qa-distillation.mjs --improvement` 均通过：沉淀 → 审阅 / 行内决定 / 编辑 → 暂存 / 发布 → 复用 / 验收 → 重启 / 退出采集。新增 360×480 与 600×660 布局检查，覆盖准备、已保存、复用和验收页面的横向溢出、固定顶部与主要按钮可见性。
+- 最终本地应用 `release/Worket-darwin-arm64/Worket.app` 的 `qa-electron.mjs` 通过：410×660 面板、Dock、二次启动恢复、桌宠形态和阴影安全区。核验包内 UI 文件与当前构建一致，用户未跟踪的审计 ZIP 与目录未进入安装包。
+- 人工复核列表、详情、历史、服务、已保存定义、复用、准备及桌宠提示截图。可切换的截图预览位于本机 `output/interface/unified-pages.html`，截图来自 `output/interface/` 与 `output/improvement-desktop/`。
+
+以上为合成材料下的源码与本地打包验收，不代表真实模型或真实用户验收。没有替换 `/Applications/Worket.app`，没有推送或发布版本。

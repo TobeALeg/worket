@@ -152,7 +152,7 @@ function createWindows(): void {
     transparent: false,
     resizable: true,
     alwaysOnTop: true,
-    backgroundColor: "#f4eedf",
+    backgroundColor: "#fbfaf7",
     webPreferences: {
       preload,
       contextIsolation: true,

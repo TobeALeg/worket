@@ -1,5 +1,7 @@
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
+import { definitionSections, sectionItems } from "../definitions/review.js";
+import { definitionLabels, worketBrand } from "./ui.js";
 import { mountDefinitionReview } from "./definition-review.js";
 import type { Definition, Draft } from "../definitions/repository.js";
 import type { Job, Snapshot } from "../distillation/service.js";
@@ -29,12 +31,12 @@ document.body.append(modal);
 let changed: (dashboard?: DashboardView) => void = () => {};
 let preferenceSave: Promise<unknown> = Promise.resolve();
 let disposeReview: (() => void) | null = null;
-function show(title: string, html: string): void {
+function show(title: string, html: string, actions = ""): void {
   disposeReview?.();
   disposeReview = null;
   modal.removeAttribute("aria-label");
   modal.setAttribute("aria-labelledby", "definition-title");
-  modal.innerHTML = `<div class="dialog-card definition-card"><div class="source-heading"><h2 id="definition-title">${esc(title)}</h2><button data-close class="icon-button" aria-label="关闭">×</button></div><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>`;
+  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${worketBrand}<button data-close class="icon-button" aria-label="关闭">×</button></header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
   modal
     .querySelector("[data-close]")!
     .addEventListener("click", () => modal.close());
@@ -116,9 +118,9 @@ async function refreshActivity(): Promise<void> {
 async function openServiceSettings(connected = false): Promise<void> {
   const status = await window.workpet.getWorketServiceStatus();
   const account = status.automatic
-    ? `<section class="state-section"><h3>Worket 用户</h3><p>${status.userId ? `用户 ${esc(status.userId.slice(0, 8))}` : "首次使用时自动创建"}</p><button id="copy-recovery" ${status.hasRecoveryCode ? "" : "disabled"}>复制恢复码</button><details><summary>在此设备恢复已有用户</summary><p class="consent">恢复后，此设备的模型额度和已授权上传归入同一用户。请把恢复码当作密码保管。</p><label class="field">恢复码<input id="recovery-code" type="password" autocomplete="off"></label><button id="restore-account">恢复用户</button></details></section>`
+    ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">◎</span> Worket 用户</h3><p>${status.userId ? `用户 ${esc(status.userId.slice(0, 8))}` : "首次使用时自动创建"}</p><button class="settings-link" id="copy-recovery" ${status.hasRecoveryCode ? "" : "disabled"}>复制恢复码</button><details><summary>在此设备恢复已有用户</summary><p class="consent">恢复后，此设备的模型额度和已授权上传归入同一用户。请把恢复码当作密码保管。</p><label class="field">恢复码<input id="recovery-code" type="password" autocomplete="off"></label><button id="restore-account">恢复用户</button></details></section>`
     : "";
-  show("Worket 服务", `<p>${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service">检查连接</button><button id="improvement-data">改进数据</button><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
+  show("Worket 服务", `<p class="service-status ${connected ? "connected" : ""}">${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service" class="settings-link"><span class="category-icon" aria-hidden="true">↻</span>检查连接</button><button id="improvement-data" class="settings-link"><span class="category-icon" aria-hidden="true">▤</span>改进数据</button><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
   bind("#improvement-data", openImprovementData);
   bind("#check-service", async () => { await api("capabilities"); await openServiceSettings(true); });
   bind("#copy-recovery", async () => {
@@ -184,7 +186,8 @@ export async function openPreparation(workIds: string[]): Promise<void> {
     const { enabled } = await api("improvementPreference");
     show(
       "确认沉淀范围",
-      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}<button id="start-distillation" class="primary">开始沉淀</button>`,
+      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
+      '<button id="start-distillation" class="primary">开始沉淀</button>',
     );
     bind("#apply-range", async () => {
       const ids = [
@@ -231,7 +234,8 @@ export async function openJob(id: string): Promise<void> {
   const snapshot: Snapshot = await api("snapshot", { id: job.snapshotId });
   show(
     "沉淀任务",
-    `<h3>${runningJob(job.status) ? `<span class="extraction-indicator running" aria-hidden="true"></span> ${esc(progressLabel(job.progress))}` : esc(jobLabel(job.status))}</h3><p>采集截止 ${esc(snapshot.capturedAt)} · 第 ${job.attempt} 次尝试</p>${job.error ? `<p class="notice">${esc(jobError(job.error))}</p>` : ""}${job.result?.groups.map((g) => `<section><p>${esc(g.reason)}</p><button data-group="${esc(g.sourceKeys.join(","))}">选择这一组</button></section>`).join("") ?? ""}<div class="dialog-actions">${runningJob(job.status) ? '<button id="background-job">后台继续</button>' : ""}<button id="refresh-job">检查进度</button>${["FAILED", "INTERRUPTED"].includes(job.status) ? '<button id="retry-job">重试（不采集样本）</button>' : ""}${!["SAVED", "CANCELLED"].includes(job.status) ? '<button id="cancel-job">取消沉淀</button>' : ""}</div>`,
+    `<h3>${runningJob(job.status) ? `<span class="extraction-indicator running" aria-hidden="true"></span> ${esc(progressLabel(job.progress))}` : esc(jobLabel(job.status))}</h3><p class="consent">${esc(new Date(snapshot.capturedAt).toLocaleString())} · 第 ${job.attempt} 次尝试</p>${job.error ? `<p class="notice">${esc(jobError(job.error))}</p>` : ""}${job.result?.groups.map((g) => `<section><p>${esc(g.reason)}</p><button data-group="${esc(g.sourceKeys.join(","))}">选择这一组</button></section>`).join("") ?? ""}`,
+    `${runningJob(job.status) ? '<button id="background-job">后台继续</button>' : ""}<button id="refresh-job">检查进度</button>${["FAILED", "INTERRUPTED"].includes(job.status) ? '<button id="retry-job">重试（不采集样本）</button>' : ""}${!["SAVED", "CANCELLED"].includes(job.status) ? '<button id="cancel-job">取消沉淀</button>' : ""}`,
   );
   bind("#background-job", async () => { modal.close(); await refreshActivity(); });
   bind("#refresh-job", () => openJob(id));
@@ -266,14 +270,6 @@ export async function openJob(id: string): Promise<void> {
     }, 2000);
   }
 }
-const sections = [
-  ["inputs", "每次输入"],
-  ["deliverables", "交付"],
-  ["constraints", "必须遵守的要求"],
-  ["acceptanceCriteria", "完成标准"],
-  ["methods", "参考方法"],
-  ["materialRoles", "固定资料角色"],
-] as const;
 async function editDraft(draft: Draft): Promise<void> {
   show("检查候选定义", "");
   modal.setAttribute("aria-label", "检查候选定义");
@@ -290,15 +286,11 @@ async function openDefinition(id: string): Promise<void> {
   });
   show(
     d.content.name,
-    `<label class="field">固定版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><p>${esc(d.content.purpose.text)}</p>${sections
-      .filter(([key]) => key !== "inputs" && d.content[key].length > 0)
-      .map(
-        ([key, label]) =>
-          `<section class="state-section"><h3>${label}</h3>${d.content[key].map((i) => `<p>${esc(i.text)}</p>`).join("")}</section>`,
-      )
-      .join(
-        "",
-      )}<details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details><div class="dialog-actions"><button id="revise-definition">修改为新版本</button><button id="use-definition" class="primary">使用</button></div><details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
+    `<label class="inline-field">版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><div class="definition-summary">${definitionSections
+      .filter(key => sectionItems(d.content, key).length)
+      .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(d.content, key).map(item => `<div class="state-item"><p>${esc(item.text)}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
+      .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details><details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
+    '<button id="revise-definition">修改为新版本</button><button id="use-definition" class="primary">使用</button>',
   );
   modal
     .querySelector("#definition-version")!
@@ -327,7 +319,8 @@ async function useDefinition(d: Definition): Promise<void> {
   const { enabled } = await api("improvementPreference");
   show(
     `使用：${d.content.name}`,
-    `<p class="consent">v${d.version}</p>${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${i.key}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${i.key}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${i.key}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${i.key}">选择本次文件</button>` : ""}</label>`).join("")}<section><h3>固定资料</h3>${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)}</p>`).join("") || "<p>无</p>"}</section><details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("") || "<p>无可用旧成果</p>"}</details>${improvementConsent("REUSE", enabled)}<button id="create-defined-work" class="primary">创建本次工作</button>`,
+    `<p class="consent">v${d.version}</p>${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${i.key}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${i.key}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${i.key}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${i.key}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc(d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料")} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}${improvementConsent("REUSE", enabled)}`,
+    '<button id="create-defined-work" class="primary">创建本次工作</button>',
   );
   modal.querySelectorAll<HTMLElement>("[data-input-file]").forEach(
     (b) =>
@@ -392,7 +385,8 @@ export async function workDefinitionAction(
     let artifacts: any[] = await api("artifacts", { workId: work.id });
     show(
       "验收本次交付",
-      `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.acceptanceCriteria.map((c) => `<label class="field">${esc(c.text)}<select data-criterion="${c.key}"><option value="">请选择</option><option value="PASS">通过</option><option value="NEEDS_REVISION">需要修改</option></select></label>`).join("")}<h3>本次交付物</h3><div id="acceptance-artifacts"></div><button id="attach-output">关联本次交付物</button><button id="accept-output" class="primary">保存验收结果</button>`,
+      `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.acceptanceCriteria.map((c) => `<label class="field">${esc(c.text)}<select data-criterion="${c.key}"><option value="">请选择</option><option value="PASS">通过</option><option value="NEEDS_REVISION">需要修改</option></select></label>`).join("")}<h3><span class="category-icon" aria-hidden="true">↗</span> 本次交付物</h3><div id="acceptance-artifacts"></div><button id="attach-output">关联本次交付物</button>`,
+      '<button id="accept-output" class="primary">保存验收结果</button>',
     );
     const renderArtifacts = () => {
       modal.querySelector("#acceptance-artifacts")!.innerHTML = artifacts

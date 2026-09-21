@@ -120,6 +120,10 @@ function render(): void {
 }
 
 function renderDetail(work: WorkDetailView | null): void {
+  const expanded = detail.dataset.currentWorkId === work?.id
+    ? new Set([...detail.querySelectorAll<HTMLDetailsElement>("details[data-preview][open]")].map(el => el.dataset.preview))
+    : new Set<string>();
+  detail.dataset.currentWorkId = work?.id ?? "";
   detail.hidden = !work;
   list.hidden = Boolean(work);
   required<HTMLElement>("#list-toolbar").hidden = Boolean(work);
@@ -135,13 +139,13 @@ function renderDetail(work: WorkDetailView | null): void {
     <button id="back-to-list" class="back-button">‹ 返回列表</button>
     <div class="detail-head"><span class="eyebrow">${escapeHtml(work.agentName)}</span><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.reusableDefinitionId || work.captureStatus === "waiting" ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" && work.dispatchReadAt ? "已接手" : "等待接手"}</span>` : ""}</p></div>
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作">更多</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
-    ${work.latestActivity ? `<section class="state-section"><h3>最近回复</h3><div class="state-item"><p class="latest-activity">${escapeHtml(work.latestActivity.text.trim().split(/\n\s*\n/u).slice(0, 3).join("\n\n").replace(/\*\*([^*]+)\*\*/gu, "$1"))}</p></div></section>` : ""}
+    ${work.latestActivity ? `<details class="activity-preview" data-preview="reply" ${expanded.has("reply") ? "open" : ""}><summary>最近回复</summary><p class="latest-activity">${escapeHtml(work.latestActivity.text.trim().split(/\n\s*\n/u).slice(0, 3).join("\n\n").replace(/\*\*([^*]+)\*\*/gu, "$1"))}</p></details>` : ""}
     ${Object.entries(WORK_STATE_LABELS)
       .map(([field, label]) =>
         stateSection(work, field as WorkStateField, label),
       )
       .join("")}
-    <section class="state-section"><h3>执行片段</h3>${work.episodes.map((episode) => `<div class="episode"><span>${escapeHtml(episode.environment)} · ${escapeHtml(episode.executor)}</span><strong>${episode.status === "ACTIVE" ? "进行中" : "已结束"}</strong></div>`).join("")}</section>`;
+    <details class="activity-preview" data-preview="episodes" ${expanded.has("episodes") ? "open" : ""}><summary>执行片段 · ${work.episodes.length}</summary>${work.episodes.map((episode) => `<div class="episode"><span>${escapeHtml(episode.environment)} · ${escapeHtml(episode.executor)}</span><strong>${episode.status === "ACTIVE" ? "进行中" : "已结束"}</strong></div>`).join("")}</details>`;
 
   for (const link of detail.querySelectorAll<HTMLAnchorElement>("[data-artifact-id]")) {
     link.addEventListener("click", (event) => {
@@ -171,13 +175,14 @@ function stateSection(
 ): string {
   const items = work.state[field];
   if (!items.length) return "";
-  return `<section class="state-section"><h3>${label}</h3>${items.map((item) => {
+  const icons: Record<WorkStateField, string> = { objective: "◎", successCriteria: "✓", constraints: "⊙", facts: "≡", decisions: "◇", completedActions: "✓", pendingActions: "⇢", artifacts: "▤" };
+  return `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${icons[field]}</span>${field === "artifacts" ? "资料" : label}</h3><div class="state-items">${items.map((item) => {
     const file = field === "artifacts" ? item.file : undefined;
     return `<div class="state-item${file ? " artifact-item" : ""}">
       <p>${file ? `<a class="artifact-link" href="${escapeHtml(file.url)}" title="${escapeHtml(file.path)}" data-artifact-id="${escapeHtml(item.id)}">${escapeHtml(file.name)}</a>` : escapeHtml(item.text)}</p>
-      <span class="origin">${item.sourceMessageIds.length} 个来源</span>
+      <span class="origin" title="${item.sourceMessageIds.length} 个来源" aria-label="${item.sourceMessageIds.length} 个来源">${item.sourceMessageIds.length ? `↗ ${item.sourceMessageIds.length}` : ""}</span>
     </div>`;
-  }).join("")}</section>`;
+  }).join("")}</div></section>`;
 }
 
 async function renderWithRecordingNotice(): Promise<void> {

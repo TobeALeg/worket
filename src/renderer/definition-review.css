@@ -1,11 +1,10 @@
 /* Compact draft review occupies the existing floating panel; no second window or side column. */
-#definition-dialog.draft-review { --text:#343d36; --muted:#92968c; --line:#e8e8e0; --background:#fbfaf7; --surface:#f0f2eb; --accent:#38634b; --accent-hover:#2b513c; position:fixed; inset:0; width:100%; max-width:none; height:100%; max-height:none; margin:0; padding:0; border:0; border-radius:0; background:var(--background); overflow:hidden; }
+#definition-dialog.draft-review { position:fixed; inset:0; width:100%; max-width:none; height:100%; max-height:none; margin:0; padding:0; border:0; border-radius:0; background:var(--background); overflow:hidden; }
 .draft-review::backdrop { background:var(--background); backdrop-filter:none; }
 .dr-shell { display:flex; flex-direction:column; height:100%; min-height:0; }
 .dr-bar { height:38px; flex-shrink:0; padding:0 17px; display:flex; align-items:center; gap:7px; border-bottom:1px solid var(--line); -webkit-app-region:drag; }
 .dr-bar strong { font-size:16px; letter-spacing:-.6px; }
 .dr-bar > span:last-of-type { font-size:10px; color:var(--muted); }
-.dr-logo { display:inline-flex; align-items:center; justify-content:center; width:25px; height:23px; background:#dfca8d; border-radius:45%; font-size:14px; color:#79632e; }
 .draft-review button { -webkit-app-region:no-drag; min-height:0; box-shadow:none; }
 .dr-close { margin-left:auto; border:0; padding:2px 7px; background:transparent; color:var(--muted); }
 .dr-controls { flex:1; min-height:0; min-width:0; border:0; padding:0; margin:0; display:flex; flex-direction:column; }

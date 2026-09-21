@@ -69,6 +69,7 @@ await page.addInitScript(() => {
     getWorketServiceStatus: async () => ({ automatic: true, url: 'https://worket.example.com' }),
     configureWorketService: async () => {},
     distillation: async action => {
+      if (action === 'activity') return null;
       if (action === 'recordingNotice') return { required: false };
       if (action === 'improvementPreference') return { enabled: preference };
       if (action === 'setImprovementPreference') { preference = !preference; return {}; }
@@ -140,7 +141,7 @@ try {
   await page.locator('#record-history').click(); await page.locator('#history-sources .source-row').waitFor(); await shot('11-history');
   await page.locator('#history-search').fill('没有这个结果'); await shot('12-history-empty');
   await page.locator('#history-close').click();
-  await page.locator('#tab-definitions').click(); await page.locator('[data-job]').click(); await shot('13-job-failed'); await page.keyboard.press('Escape');
+  await page.locator('#tab-definitions').click(); await page.locator('#definitions-panel [data-job]').click(); await shot('13-job-failed'); await page.keyboard.press('Escape');
   await page.locator('#app-menu summary').click(); await page.locator('#service-settings').click(); await shot('14-service');
   await page.locator('#check-service').click(); await page.getByText('已连接', { exact: true }).waitFor();
   await page.locator('#improvement-data').click(); await shot('15-improvement');

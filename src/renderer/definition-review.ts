@@ -3,10 +3,8 @@ import type { Draft, Definition } from "../definitions/repository.js";
 import { definitionSections, resolveReviewField, reviewFieldValue, reviewFingerprint, sameAddress, sectionItems, type DefinitionSection, type ItemAddress } from "../definitions/review.js";
 import { errorText } from "../distillation/activity.js";
 
-const labels: Record<DefinitionSection, [string, string]> = {
-  purpose: ["◎", "目的"], inputs: ["↳", "输入"], deliverables: ["↗", "交付"], constraints: ["⊙", "约束"],
-  acceptanceCriteria: ["✓", "验收"], methods: ["⇢", "方法"], materialRoles: ["▤", "资料"],
-};
+import { definitionLabels as labels, worketBrand } from "./ui.js";
+
 const escape = (value: unknown) => String(value).replace(/[&<>"']/gu, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const idOf = (a: ItemAddress) => `${a.section}.${a.key}`;
 const quoteIcon = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v7H7l-3 3v-3H3zM5.5 6h5M5.5 8h3"/></svg>';
@@ -86,7 +84,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const focus = active?.dataset.address, property = active?.dataset.property, text = active?.hasAttribute("data-text");
     const selection = text ? [active?.selectionStart, active?.selectionEnd] : null;
     modal.classList.add("draft-review");
-    modal.innerHTML = `<div class="dr-shell"><header class="dr-bar"><span class="dr-logo" aria-hidden="true">•‿•</span><strong>Worket</strong><span>审阅</span><button data-review-action="close" aria-label="关闭" class="dr-close">×</button></header><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span><button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${definitionSections.filter(s => s === "purpose" || editMode || sectionItems(content, s).length || draft.issues.some(i => targets.get(i.id)?.section === s)).map(section => {
+    modal.innerHTML = `<div class="dr-shell"><header class="dr-bar">${worketBrand}<span>审阅</span><button data-review-action="close" aria-label="关闭" class="dr-close">×</button></header><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span><button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${definitionSections.filter(s => s === "purpose" || editMode || sectionItems(content, s).length || draft.issues.some(i => targets.get(i.id)?.section === s)).map(section => {
       const items = sectionItems(content, section);
       const deleted = sectionItems(draft.originalContent, section).filter(i => !items.some(n => n.key === i.key) && issuesAt(section, i.key).length);
       return `<section class="dr-group"><div class="dr-label"><span aria-hidden="true">${labels[section][0]}</span>${labels[section][1]}</div><div class="dr-items">${items.map(item => rowHtml(item, { section, key: item.key })).join("")}${deleted.map(item => rowHtml(item, { section, key: item.key }, true)).join("")}<div data-issues-for="${section}">${issuesAt(section).map(issueHtml).join("")}</div>${editMode && section !== "purpose" ? `<button class="dr-add" data-review-action="add" data-section="${section}">＋ 添加${labels[section][1]}</button>` : ""}</div></section>`;
