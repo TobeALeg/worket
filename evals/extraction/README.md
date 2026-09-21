@@ -16,7 +16,7 @@ npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adju
 
 `run` 不接受 gold 参数。它先把 case 中的 `expected_semantic_assertions`、`forbidden_inferences` 和变形答案剥离，再把最小输入交给 adapter。`grade` 是独立命令，只读取已封存 trial。
 
-`import-codex` 只接受显式授权工作区下、`thread_source=user` 的根对话；同一 thread 的续聊文件按可见消息去重合并。它只导入用户与助手的可见文本，排除自动注入的插件/AGENTS/环境上下文、子代理、系统与开发者消息、工具调用及输出、隐藏推理和独立附件正文。导入结果初始为 `split=UNASSIGNED`，不能在未记录分组与盲法状态前冒充封存集。
+`import-codex` 只接受显式授权工作区下、`thread_source=user` 的根对话；同一 thread 的续聊文件按可见消息去重合并，并输出 Worket 原生 `user.prompt / agent.response` 事件。Codex 的交互式问答包装会拆回助手问题与用户答案，避免来源错归。它只导入用户与助手的可见文本，排除自动注入的插件/AGENTS/环境上下文、子代理、系统与开发者消息、工具调用及输出、隐藏推理和独立附件正文。导入结果初始为 `split=UNASSIGNED`，不能在未记录分组与盲法状态前冒充封存集。
 
 `curate` 用本地计划登记 `split`、近重复/共享模板 `group_id` 与盲法状态，并阻断同组跨 split。计划和真实清单必须留在被忽略的本地路径；四份试点保留集在 H1 前不运行、不查看正文。曾参与这些历史工作的操作者即使本轮不打开正文，也必须将其标成非严格盲法，不能作为最终独立封存证据。
 

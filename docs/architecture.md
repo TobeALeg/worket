@@ -230,7 +230,7 @@ case manifest → policy/freeze → runner → product adapter → raw trial
 sealed raw trial + gold + human adjudication → grader → metrics/report
 ```
 
-授权 Codex 对话通过独立 importer 进入 manifest：只接受显式工作区内的根对话，合并同一 thread 的续聊文件并投影为可见用户/助手消息。curation plan 再登记 `split`、共享项目/模板 `group_id` 与盲法状态；同组跨 split 会被阻断。真实来源还必须在冻结配置中声明 `allowed_splits`，因此校准运行不能因 case 列表误配而读取试点保留集。
+授权 Codex 对话通过独立 importer 进入 manifest：只接受显式工作区内的根对话，合并同一 thread 的续聊文件并投影为 Worket 原生 `user.prompt / agent.response`。Codex 交互式问题回复包装会拆回助手问题与用户答案，避免把问题文本误标为用户约束。curation plan 再登记 `split`、共享项目/模板 `group_id` 与盲法状态；同组跨 split 会被阻断。真实来源还必须在冻结配置中声明 `allowed_splits`，因此校准运行不能因 case 列表误配而读取试点保留集。
 
 状态从 `READY` 进入不可覆盖 run；每个 trial 为 `SUCCEEDED`、`FAILED` 或 `BLOCKED`，整体成功后仍停在 `AWAITING_HUMAN_REVIEW / NOT_JUDGED`，不能由 JSON 合法或 mock 成功跳到语义通过。retry 创建新 run 并保存 `retry_of`。`runs/` 含原始输出与匿名接入凭据，默认不入 Git；正式产品状态和用户工作库不在评测写入范围内。
 

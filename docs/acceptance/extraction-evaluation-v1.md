@@ -63,3 +63,13 @@ run `E0-synthetic-pilot-2026-09-21T10-13-00-466Z-9a49e534` 对 12/12 个案例�
 本地导入得到 13 个根对话。按任务家族和共享模板分组后，当前 pilot manifest 选择 2 个 `CALIBRATION` 与 4 个 `PILOT_HOLDOUT`；工程说明/品牌风险分析等非视频主任务不进入本轮。共享同一视频或 Definition 模板的记录不会跨 split。runner 对真实来源新增 `allowed_splits` 硬门禁，H1 前的 live 配置只允许 `CALIBRATION`，不会误跑四个保留案例。
 
 这四个保留案例不能称为严格盲法：当前操作者曾参与或接触过 VideoCreator 项目上下文，即使本轮未为选样而打开正文，也存在先验暴露。它们只适合初步试点，不是最终独立封存证据。校准 live 配置冻结为 2 个 case × 2 repeats、最多 8 次 provider 调用、声明预算 CNY 10；真实币种账单仍无法由当前接口实时核销。
+
+### VideoCreator 本地 WorkState 校准结果
+
+最终有效 run 为 `E0-videocreator-calibration-baseline-2026-09-21T10-44-21-280Z-3cee121b`。2 个校准 case 各运行 2 次，4/4 完成隔离 SQLite 持久化和 Handoff Package 导出，0 次 provider 调用；同一 case 两次的持久化 state hash 完全一致。状态仍为 `AWAITING_HUMAN_REVIEW / NOT_JUDGED`。
+
+本轮先发现并修复了两项采集/适配缺陷，失败证据没有覆盖：首个 run `…c9de2d29` 因 importer 使用非 Worket 事件名而产生空状态；第二个 run `…8b5a81a3` 虽有结果，但把 Codex 交互式问答包装中的助手问题一并归为用户消息。最终 importer 使用 `user.prompt / agent.response`，并把问答包装拆回助手问题与用户答案，专项测试增至 24 项。
+
+未建立 gold 前的初步诊断：本地规则路径可保留视频中央安全区、医生/报告场景、时间点动画、免责声明禁用等若干要求，但没有保留后续最终生效的“每平台文案 50 words 以内”，也没有显式表达它替代此前约 120 words 的关系；同一目标同时进入 objective 与 constraint，长规格常只保留冒号前的总述；已完成工作后仍可能把早期“按 1–4 展示”作为 next step。以上分别提示 DISCOVERY/INTERPRETATION、重复噪音和当前状态投影风险，需由 H1 gold 逐项裁定，不能据此计算正式指标。
+
+Definition 真实模型 run 尚未发出。执行环境的出站审查要求比“可使用记录、可收费”更精确的目的地授权：需明确允许把这两份校准对话正文发送到 `https://worket.dandi.site`，并由其当前配置的模型供应商处理。该门禁被保留，不以其他外发路径绕过。

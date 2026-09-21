@@ -25,21 +25,33 @@ function textFromMessage(message) {
     .trim();
 }
 
-function visibleUserText(text) {
+function visibleUserMessages(text) {
   const trimmed = text.trim();
-  if (!trimmed) return null;
+  if (!trimmed) return [];
   if (
     trimmed.startsWith("<recommended_plugins>") ||
     trimmed.startsWith("# AGENTS.md instructions") ||
     trimmed.startsWith("<environment_context>") ||
     trimmed.startsWith("<app-context>")
-  ) return null;
+  ) return [];
   if (trimmed.startsWith("# Files mentioned by the user:")) {
     const marker = "## My request:";
     const index = trimmed.indexOf(marker);
-    return index === -1 ? null : trimmed.slice(index + marker.length).trim() || null;
+    const request = index === -1 ? "" : trimmed.slice(index + marker.length).trim();
+    return request ? [{ role: "user", content: request }] : [];
   }
-  return trimmed;
+  const reply = trimmed.match(/^<send_user_message_question_reply>\s*([\s\S]*?)\s*<\/send_user_message_question_reply>$/u);
+  if (reply) {
+    const items = JSON.parse(reply[1]);
+    if (!Array.isArray(items)) throw new Error("INVALID_QUESTION_REPLY_WRAPPER");
+    return items.flatMap((item) => {
+      const messages = [];
+      if (typeof item.question === "string" && item.question.trim()) messages.push({ role: "assistant", content: item.question.trim() });
+      if (typeof item.answer === "string" && item.answer.trim()) messages.push({ role: "user", content: item.answer.trim() });
+      return messages;
+    });
+  }
+  return [{ role: "user", content: trimmed }];
 }
 
 function parseFile(path, sessionsRoot, authorizedCwd) {
@@ -53,15 +65,13 @@ function parseFile(path, sessionsRoot, authorizedCwd) {
     const record = records[ordinal];
     const message = record.type === "response_item" && record.payload?.type === "message" ? record.payload : null;
     if (!message || !["user", "assistant"].includes(message.role)) continue;
-    let content = textFromMessage(message);
-    if (message.role === "user") content = visibleUserText(content);
-    if (!content) continue;
-    messages.push({
-      role: message.role,
-      content,
+    const content = textFromMessage(message);
+    const visible = message.role === "user" ? visibleUserMessages(content) : content ? [{ role: "assistant", content }] : [];
+    visible.forEach((item, part) => messages.push({
+      ...item,
       timestamp: record.timestamp ?? meta.timestamp ?? null,
-      ordinal,
-    });
+      ordinal: ordinal + part / 100,
+    }));
   }
   return {
     sessionId: meta.id,
@@ -88,7 +98,7 @@ function mergeSession(entries) {
   const events = messages.map((message, index) => ({
     id: `message-${String(index + 1).padStart(4, "0")}-${sha256(message.content).slice(0, 10)}`,
     sequence: index + 1,
-    kind: message.role === "user" ? "user_message" : "assistant_message",
+    kind: message.role === "user" ? "user.prompt" : "agent.response",
     content: message.content,
     occurred_at: message.timestamp,
   }));

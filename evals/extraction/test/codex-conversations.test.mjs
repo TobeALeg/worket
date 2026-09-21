@@ -41,8 +41,8 @@ test("只导入授权工作区的根对话和可见消息", () => {
   const result = importCodexConversations({ sessionsRoot: sessions, authorizedCwd: allowed, authorizationRef: "USER-2026-09-21" });
   assert.equal(result.cases.length, 1);
   assert.deepEqual(result.cases[0].events.map(({ kind, content }) => ({ kind, content })), [
-    { kind: "user_message", content: "制作一个视频" },
-    { kind: "assistant_message", content: "已经完成" },
+    { kind: "user.prompt", content: "制作一个视频" },
+    { kind: "agent.response", content: "已经完成" },
   ]);
   assert.equal(result.cases[0].source_type, "AUTHORIZED_REAL");
   assert.equal(result.cases[0].attachment_policy, "VISIBLE_MESSAGE_TEXT_ONLY_NO_ATTACHMENT_BODY");
@@ -77,4 +77,21 @@ test("文件上下文包装只保留显式 My request", () => {
   });
   const result = importCodexConversations({ sessionsRoot: sessions, authorizedCwd: allowed, authorizationRef: "USER-2026-09-21" });
   assert.equal(result.cases[0].events[0].content, "执行这个");
+});
+
+test("交互式问题回复拆回助手问题和用户答案", () => {
+  const directory = mkdtempSync(join(tmpdir(), "worket-codex-question-"));
+  const sessions = join(directory, "sessions");
+  const allowed = join(directory, "VideoCreator");
+  mkdirSync(sessions, { recursive: true });
+  mkdirSync(allowed, { recursive: true });
+  const wrapped = '<send_user_message_question_reply>\n[{"question":"使用英文还是中文？","answer":"使用英文"}]\n</send_user_message_question_reply>';
+  writeSession(join(sessions, "root.jsonl"), {
+    id: "root-1", cwd: allowed, extra: [record("response_item", message("user", wrapped), "2026-09-01T00:00:02Z")],
+  });
+  const result = importCodexConversations({ sessionsRoot: sessions, authorizedCwd: allowed, authorizationRef: "USER-2026-09-21" });
+  assert.deepEqual(result.cases[0].events.map(({ kind, content }) => ({ kind, content })), [
+    { kind: "agent.response", content: "使用英文还是中文？" },
+    { kind: "user.prompt", content: "使用英文" },
+  ]);
 });
