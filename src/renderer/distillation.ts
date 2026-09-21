@@ -1,10 +1,6 @@
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
-import type {
-  DefinitionContent,
-  DefinedItem,
-  Resolution,
-} from "../contracts/definition.js";
+import { mountDefinitionReview } from "./definition-review.js";
 import type { Definition, Draft } from "../definitions/repository.js";
 import type { Job, Snapshot } from "../distillation/service.js";
 import type { DashboardView, WorkDetailView } from "../ui-contract.js";
@@ -32,7 +28,12 @@ modal.setAttribute("aria-labelledby", "definition-title");
 document.body.append(modal);
 let changed: (dashboard?: DashboardView) => void = () => {};
 let preferenceSave: Promise<unknown> = Promise.resolve();
+let disposeReview: (() => void) | null = null;
 function show(title: string, html: string): void {
+  disposeReview?.();
+  disposeReview = null;
+  modal.removeAttribute("aria-label");
+  modal.setAttribute("aria-labelledby", "definition-title");
   modal.innerHTML = `<div class="dialog-card definition-card"><div class="source-heading"><h2 id="definition-title">${esc(title)}</h2><button data-close class="icon-button" aria-label="关闭">×</button></div><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>`;
   modal
     .querySelector("[data-close]")!
@@ -274,212 +275,13 @@ const sections = [
   ["materialRoles", "固定资料角色"],
 ] as const;
 async function editDraft(draft: Draft): Promise<void> {
-  let content = structuredClone(draft.content);
-  const bindings: Record<string, string> = {};
-  let issueResolutions = draft.resolutions;
-  let expandedItem: string | null = null;
-  function field(item: DefinedItem, section: string, index: number): string {
-    return `<details class="definition-item" data-section="${section}" data-index="${index}" ${expandedItem === `${section}:${index}` ? "open" : ""}><summary class="review-line"><span class="review-number">${index + 1}</span><span data-preview>${esc(item.text || "新增条目")}</span></summary><div class="review-editor">${section === "inputs" ? `<label class="field">变量名<input data-key value="${esc(item.key)}"></label>` : `<input type="hidden" data-key value="${esc(item.key)}">`}<label class="field">内容<textarea data-text>${esc(item.text)}</textarea></label><section class="review-evidence"><h4>引用依据 · ${esc(item.basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "Agent 提议", SYSTEM_INFERRED: "系统推断" }[item.basis.origin] : item.basis.type === "INFERRED" ? "系统推断" : "用户改写")}</h4><p>${esc(item.basis.type === "INFERRED" ? item.basis.rationale : "")}</p>${item.basis.type !== "USER_AUTHORED" ? item.basis.refs.map((ref) => `<p>${ref.deleted ? "来源已删除" : `<button data-evidence="${esc(JSON.stringify(ref))}">查看原始依据</button>`}</p>${ref.excerpt ? `<blockquote>${esc(ref.excerpt)}</blockquote>` : ""}`).join("") : `<p>编辑记录 ${esc(item.basis.reviewEventId)}</p>`}</section>${section === "inputs" ? `<label>输入类型<select data-type>${["TEXT", "NUMBER", "BOOLEAN", "CHOICE", "FILE"].map((t) => `<option value="${t}" ${(item as any).valueType === t ? "selected" : ""}>${({ TEXT: "文本", NUMBER: "数字", BOOLEAN: "是或否", CHOICE: "选项", FILE: "文件" } as Record<string, string>)[t]}</option>`).join("")}</select></label><label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必填</label><label class="field">可选值（每行一项）<textarea data-choices>${esc(((item as any).choices ?? []).join("\n"))}</textarea></label><label class="field">默认值<input data-default value="${esc((item as any).defaultValue ?? "")}"></label>` : ""}${section === "methods" ? `<label>执行要求<select data-obligation><option value="REFERENCE" ${(item as any).obligation === "REFERENCE" ? "selected" : ""}>参考</option><option value="REQUIRED" ${(item as any).obligation === "REQUIRED" ? "selected" : ""}>强制</option></select></label>` : ""}${section === "materialRoles" ? `<label><input type="checkbox" data-required ${(item as any).required ? "checked" : ""}>必需资料</label><button data-material="${index}">选择固定资料副本</button><span>${esc(bindings[item.key] ?? "")}</span>` : ""}${section !== "purpose" ? "<button data-remove>删除此项</button>" : ""}</div></details>`;
-  }
-  const resolutions = (): Resolution[] =>
-    [...modal.querySelectorAll<HTMLElement>("[data-issue]")].flatMap(
-      (row) => {
-        const action = (
-          row.querySelector("[data-resolution]") as HTMLSelectElement
-        ).value;
-        return action
-          ? [
-              {
-                issueId: row.dataset.issue!,
-                action: action as Resolution["action"],
-                explanation: (
-                  row.querySelector("[data-explanation]") as HTMLInputElement
-                ).value,
-              },
-            ]
-          : [];
-      },
-    );
-  function collect() {
-    issueResolutions = resolutions();
-    content.name = value("#definition-name");
-    for (const row of modal.querySelectorAll<HTMLElement>(".definition-item")) {
-      const section = row.dataset.section!,
-        index = Number(row.dataset.index);
-      const item =
-        section === "purpose"
-          ? content.purpose
-          : (content as any)[section][index];
-      item.key = (row.querySelector("[data-key]") as HTMLInputElement).value;
-      item.text = (
-        row.querySelector("[data-text]") as HTMLTextAreaElement
-      ).value;
-      if (section === "inputs") {
-        item.valueType = (
-          row.querySelector("[data-type]") as HTMLSelectElement
-        ).value;
-        item.required = (
-          row.querySelector("[data-required]") as HTMLInputElement
-        ).checked;
-        const choices = (
-          row.querySelector("[data-choices]") as HTMLTextAreaElement
-        ).value
-          .split("\n")
-          .filter(Boolean);
-        if (item.valueType === "CHOICE") item.choices = choices;
-        else delete item.choices;
-        const defaultValue = (
-          row.querySelector("[data-default]") as HTMLInputElement
-        ).value;
-        if (defaultValue === "") delete item.defaultValue;
-        else
-          item.defaultValue =
-            item.valueType === "NUMBER"
-              ? Number(defaultValue)
-              : item.valueType === "BOOLEAN"
-                ? defaultValue === "true"
-                : defaultValue;
-      }
-      if (section === "methods")
-        item.obligation = (
-          row.querySelector("[data-obligation]") as HTMLSelectElement
-        ).value;
-      if (section === "materialRoles")
-        item.required = (
-          row.querySelector("[data-required]") as HTMLInputElement
-        ).checked;
-    }
-  }
-  function render() {
-    show(
-      "检查候选定义",
-      `<label class="field">工作名称<input id="definition-name" value="${esc(content.name)}"></label><article class="definition-document"><h3>工作目的</h3>${field(content.purpose, "purpose", 0)}${sections.map(([key, label]) => `<section class="review-section"><div class="review-section-heading"><h3>${label}</h3><button data-add="${key}" aria-label="添加${label}" title="添加${label}">+</button></div>${content[key].map((item, i) => field(item, key, i)).join("")}</section>`).join("")}</article><h3>需要确认的问题</h3>${draft.issues.map((i) => `<section data-issue="${esc(i.id)}"><p>${i.blocking ? "必须处理" : "待确认"} · ${esc(i.message)} (${esc(i.field)})</p><select data-resolution><option value="">尚未处理</option><option value="REWRITE">已修改相关要求</option><option value="DELETE">已删除相关要求</option><option value="CHOOSE">明确选择并保留</option>${i.blocking ? "" : '<option value="ACCEPT">接受提示</option>'}</select><label class="field">具体处理或选择<input data-explanation></label></section>`).join("") || '<p class="consent">暂无待处理问题</p>'}<div class="dialog-actions"><button id="save-draft">保存修改</button><button id="publish-definition" class="primary">确认并保存沉淀</button></div>`,
-    );
-    for (const row of modal.querySelectorAll<HTMLDetailsElement>(".definition-item")) {
-      row.addEventListener("toggle", () => {
-        const id = `${row.dataset.section}:${row.dataset.index}`;
-        if (row.open) {
-          expandedItem = id;
-          for (const other of modal.querySelectorAll<HTMLDetailsElement>(".definition-item[open]")) {
-            if (other !== row) other.open = false;
-          }
-        } else if (expandedItem === id) expandedItem = null;
-      });
-      row.querySelector<HTMLTextAreaElement>("[data-text]")!.addEventListener("input", (event) => {
-        row.querySelector("[data-preview]")!.textContent = (event.target as HTMLTextAreaElement).value || "新增条目";
-      });
-    }
-    for (const select of modal.querySelectorAll<HTMLSelectElement>("[data-type]")) {
-      const update = () => {
-        select.closest(".definition-item")!.querySelector<HTMLTextAreaElement>("[data-choices]")!.closest<HTMLElement>("label")!.hidden = select.value !== "CHOICE";
-      };
-      select.addEventListener("change", update);
-      update();
-    }
-    modal.querySelectorAll<HTMLElement>("[data-evidence]").forEach(
-      (b) =>
-        (b.onclick = () =>
-          void api("evidence", JSON.parse(b.dataset.evidence!))
-            .then((text) => {
-              const p = document.createElement("p");
-              p.className = "source-evidence";
-              p.textContent = text;
-              b.replaceWith(p);
-            })
-            .catch((error) => {
-              b.textContent = String(error);
-            })),
-    );
-    modal.querySelectorAll<HTMLElement>("[data-add]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          collect();
-          const key = b.dataset.add!;
-          const item: any = {
-            key: `item_${crypto.randomUUID().slice(0, 8)}`,
-            text: "",
-            basis: {
-              type: "INFERRED",
-              refs: [],
-              rationale: "用户新增，保存时记录编辑依据",
-            },
-          };
-          if (key === "inputs")
-            Object.assign(item, { valueType: "TEXT", required: true });
-          if (key === "methods") item.obligation = "REFERENCE";
-          if (key === "materialRoles") item.required = true;
-          (content as any)[key].push(item);
-          expandedItem = `${key}:${(content as any)[key].length - 1}`;
-          render();
-          modal.querySelector<HTMLTextAreaElement>(".definition-item[open] [data-text]")?.focus();
-        }),
-    );
-    modal.querySelectorAll<HTMLElement>("[data-remove]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          collect();
-          const row = b.closest<HTMLElement>(".definition-item")!;
-          (content as any)[row.dataset.section!].splice(
-            Number(row.dataset.index),
-            1,
-          );
-          expandedItem = null;
-          render();
-        }),
-    );
-    modal.querySelectorAll<HTMLElement>("[data-material]").forEach(
-      (b) =>
-        (b.onclick = () =>
-          void (async () => {
-            collect();
-            const path = await window.workpet.chooseDefinitionFile();
-            if (path) {
-              bindings[content.materialRoles[Number(b.dataset.material)]!.key] =
-                path;
-              render();
-            }
-          })()),
-    );
-    async function save() {
-      collect();
-      draft = await api("update", {
-        draftId: draft.id,
-        expectedRevision: draft.revision,
-        content,
-        issueResolutions,
-      });
-    }
-    bind("#save-draft", async () => {
-      await save();
-      content = structuredClone(draft.content);
-      issueResolutions = draft.resolutions;
-      render();
-    });
-    const publishId = commandId();
-    bind("#publish-definition", async () => {
-      await save();
-      const definition = await api("publish", {
-        draftId: draft.id,
-        expectedRevision: draft.revision,
-        materialBindings: bindings,
-        commandId: publishId,
-      });
-      changed();
-      await openDefinition(definition.id);
-    });
-    for (const row of modal.querySelectorAll<HTMLElement>("[data-issue]")) {
-      const resolution = issueResolutions.find(
-        (r) => r.issueId === row.dataset.issue,
-      );
-      if (resolution) {
-        (row.querySelector("[data-resolution]") as HTMLSelectElement).value =
-          resolution.action;
-        (row.querySelector("[data-explanation]") as HTMLInputElement).value =
-          resolution.explanation;
-      }
-    }
-  }
-  render();
+  show("检查候选定义", "");
+  modal.setAttribute("aria-label", "检查候选定义");
+  modal.removeAttribute("aria-labelledby");
+  disposeReview = mountDefinitionReview(modal, draft, api, async definition => {
+    changed();
+    await openDefinition(definition.id);
+  });
 }
 async function openDefinition(id: string): Promise<void> {
   const d: Definition = await api("definition", { id });

@@ -152,6 +152,7 @@ export interface CreateWorkFromMessageRequest {
 }
 
 export interface WorkPetApi {
+  resizePanelRight(phase: "start" | "move" | "end", screenX: number): void;
   openArtifact(workId: string, itemId: string): Promise<void>;
   distillation(action: string, input?: unknown): Promise<any>;
   chooseDefinitionFile(): Promise<string | null>;

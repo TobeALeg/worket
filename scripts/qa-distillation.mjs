@@ -65,6 +65,10 @@ const service = createAIService({
       }
       const candidate = result(wire);
       if (forceReferenceFailure) candidate.content.purpose.basis.refs[0].eventId = "missing-event";
+      candidate.content.deliverables.push({ key: 'excel', text: 'Excel 数据明细', basis: structuredClone(candidate.content.purpose.basis) });
+      candidate.content.methods.push({ key: 'outline', text: '先确认大纲，再撰写全文', obligation: 'REQUIRED', basis: structuredClone(candidate.content.purpose.basis) });
+      candidate.issues.push({ id: 'excel-scope', type: 'UNCERTAIN_GENERALIZATION', field: 'deliverables.excel', message: 'Excel 是否每次交付？', blocking: true });
+      candidate.issues.push({ id: 'method-scope', type: 'UNCERTAIN_GENERALIZATION', field: 'methods.outline', message: '是否必须等待大纲确认？', blocking: true });
       candidate.issues.push({ id: 'ui-review', type: 'UNCERTAIN_GENERALIZATION', field: 'methods', message: '请确认固定资料的使用范围', blocking: false });
       return { result: candidate, usage: { total_tokens: 1 } };
     },
@@ -159,37 +163,46 @@ try {
   await pet.screenshot({ path: join(output, '01b-pet-ready.png') });
   // The pet opens the result directly, including when the panel was hidden.
   await pet.locator('#paper-action').click();
-  await panel
-    .getByRole("heading", { name: "检查候选定义", exact: true })
-    .waitFor({ timeout: 20000 });
-  await panel.locator("#definition-name").fill("可复用竞品报告");
-  await panel.screenshot({ path: join(output, "02-review-draft.png") });
-  assert.equal(await panel.locator('.definition-item[open]').count(), 0);
-  const purpose = panel.locator('[data-section="purpose"]');
-  assert.equal(await purpose.locator('[data-text]').isVisible(), false);
-  await purpose.locator('summary').hover();
-  assert.equal(await purpose.locator('.review-number').evaluate(el => getComputedStyle(el).opacity), '1');
-  await purpose.locator('summary').focus();
-  await panel.keyboard.press('Enter');
-  assert.equal(await purpose.locator('[data-text]').isVisible(), true);
-  assert.equal(await purpose.locator('.review-evidence').isVisible(), true);
+  await panel.locator('#definition-dialog.draft-review').waitFor({ timeout: 20000 });
+  await panel.screenshot({ path: join(output, '02-review-draft.png') });
+  assert.equal(await panel.locator('[data-text]').count(), 0, 'Read mode hides editor controls');
+  const bounds = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).getBounds());
+  await panel.locator('.dr-resize').focus();
+  await panel.keyboard.press('ArrowRight');
+  await panel.waitForFunction(width => innerWidth > width, bounds.width);
+  const resized = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).getBounds());
+  assert.equal(resized.x, bounds.x);
+  assert.equal(resized.width, bounds.width + 20);
+  await panel.locator('[data-review-action="optional"][data-issue="excel-scope"]').click();
+  assert.equal(await panel.locator('.dr-item[data-section="inputs"]').count(), 3, 'Conditional delivery creates an input');
+  await panel.locator('[data-review-action="undo"]').click();
+  assert.equal(await panel.locator('.dr-item[data-section="inputs"]').count(), 2, 'Undo removes the generated input');
+  await panel.locator('[data-review-action="exclude"][data-issue="excel-scope"]').click();
+  await panel.locator('.dr-removed').waitFor();
+  await panel.locator('[data-review-action="undo"]').click();
+  await panel.locator('[data-review-action="keep"][data-issue="excel-scope"]').click();
+  await panel.locator('[data-review-action="reference"][data-issue="method-scope"]').click();
+  await panel.locator('#edit-all').click();
+  await panel.locator('#definition-name').fill('可复用竞品报告');
+  const purpose = panel.locator('.dr-item[data-section="purpose"]');
   const originalPurpose = await purpose.locator('[data-text]').inputValue();
   await purpose.locator('[data-text]').fill(originalPurpose + '，便于复核');
-  await purpose.locator('summary').click();
-  assert.equal(await purpose.locator('[data-preview]').textContent(), originalPurpose + '，便于复核');
-  const firstInput = panel.locator('[data-section="inputs"]').first();
-  await firstInput.locator('summary').click();
-  assert.equal(await panel.locator('.definition-item[open]').count(), 1);
-  await panel.screenshot({ path: join(output, '02a-review-edit.png') });
-  await firstInput.locator('[data-type]').selectOption('CHOICE');
-  assert.equal(await firstInput.locator('[data-choices]').isVisible(), true);
-  await firstInput.locator('[data-type]').selectOption('TEXT');
-  assert.equal(await firstInput.locator('[data-choices]').isVisible(), false);
-  await panel.locator('[data-resolution]').selectOption('ACCEPT');
-  await panel.locator('[data-explanation]').fill('固定格式可复用');
-  await panel.locator('[data-add="materialRoles"]').click();
-  assert.equal(await panel.locator('[data-explanation]').inputValue(), '固定格式可复用');
-  const material = panel.locator('[data-section="materialRoles"]').last();
+  await purpose.locator('[data-review-action="evidence"]').click();
+  await purpose.locator('[data-review-action="load-evidence"]').click();
+  await purpose.locator('.dr-evidence pre').waitFor();
+  const firstInput = panel.locator('.dr-item[data-section="inputs"]').first();
+  await firstInput.locator('[data-review-action="toggle-property"]').click();
+  assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /选填/);
+  await firstInput.locator('[data-review-action="toggle-property"]').click();
+  await firstInput.locator('[data-review-action="settings"]').click();
+  await firstInput.locator('[data-property="valueType"]').selectOption('CHOICE');
+  await firstInput.locator('[data-property="choices"]').fill('客户丙\n客户丁');
+  await firstInput.locator('[data-property="choices"]').blur();
+  await firstInput.locator('[data-property="valueType"]').selectOption('TEXT');
+  assert.equal(await firstInput.locator('[data-property="choices"]').count(), 0);
+  await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
+  await panel.locator('[data-review-action="add"][data-section="materialRoles"]').click();
+  const material = panel.locator('.dr-item[data-section="materialRoles"]').last();
   await material.locator('[data-text]').fill('报告格式');
   const materialPath = join(directory, 'report-format.txt');
   writeFileSync(materialPath, '合成固定格式：摘要、证据、建议。');
@@ -197,18 +210,31 @@ try {
     globalThis.__worketQAOpenDialog = dialog.showOpenDialog;
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, materialPath);
-  await material.locator('[data-material]').click();
-  await panel.getByText(materialPath, { exact: true }).waitFor();
+  await material.locator('[data-review-action="material"]').click();
+  await panel.getByText('report-format.txt', { exact: true }).waitFor();
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
-  await panel.waitForFunction(() => !document.querySelector('#save-draft')?.disabled);
+  await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
   assert.equal(await panel.locator('#definition-name').inputValue(), '可复用竞品报告');
-  assert.equal(await panel.locator('[data-explanation]').inputValue(), '固定格式可复用');
-  assert.equal(await panel.getByText(materialPath, { exact: true }).count(), 1);
-  await panel.locator('[data-add="constraints"]').scrollIntoViewIfNeeded();
-  assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.scrollWidth <= el.clientWidth), true, 'Long material paths must not widen the editor');
-  await panel.screenshot({ path: join(output, '02b-review-fields.png') });
-  await panel.locator("#publish-definition").click();
+  assert.equal(await panel.locator('[data-review-action="reopen"]').count(), 3, 'Unrelated additions preserve decisions');
+  await panel.locator('[data-review-action="reopen"][data-issue="ui-review"]').click();
+  await panel.locator('#save-draft').click();
+  await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
+  const reviewDraft = await panel.evaluate(async () => {
+    const jobs = await window.workpet.distillation('jobs');
+    return window.workpet.distillation('draft', { id: jobs.find(j => j.draftId).draftId });
+  });
+  assert.equal(reviewDraft.resolutions.length, 2, 'Revoked decisions stay revoked in storage');
+  await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
+  await panel.locator('#save-draft').click();
+  await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
+  assert.equal(await panel.getByText('report-format.txt', { exact: true }).count(), 1);
+  await panel.screenshot({ path: join(output, '02a-review-edit.png') });
+  await panel.locator('#edit-all').click();
+  assert.equal(await panel.locator('[data-text]').count(), 0);
+  assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.scrollWidth <= el.clientWidth), true);
+  await panel.screenshot({ path: join(output, '02b-review-ready.png') });
+  await panel.locator('#publish-definition').click();
   await panel.locator("#use-definition").waitFor();
   await panel.screenshot({ path: join(output, "03-saved-definition.png") });
   await panel.locator("#use-definition").click();
@@ -370,7 +396,7 @@ try {
   await panel.locator('#definition-dialog').waitFor({ state: 'hidden' });
   await failurePet.locator('.pet.distilling-ready').waitFor({ timeout: 20000 });
   await failurePet.locator('#paper-action').click();
-  await panel.getByRole('heading', { name: '检查候选定义', exact: true }).waitFor();
+  await panel.locator('#definition-dialog.draft-review').waitFor();
   const metrics = await panel.evaluate(() => ({
     width: innerWidth,
     scrollWidth: document.documentElement.scrollWidth,

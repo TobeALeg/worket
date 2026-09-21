@@ -337,10 +337,20 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 ## 候选文档式审阅（2026-09-18）
 
-`server/workflow.mjs` 的 v1.3 提示词为提取与泛化两阶段统一规定中文叙述，协议键、枚举和原始引文保持原样。`src/renderer/distillation.ts` 保留 DefinitionContent 结构，通过原生 details/summary 展示连续正文，单条展开引用和表单，文本修改即时更新正文；重绘保留当前编辑条目、问题处理和资料绑定。保存与发布继续使用既有 revision、update 和 publish 契约。语言规则属于模型生成约束，不会批量改写已保存候选。
+`server/workflow.mjs` 的 v1.3 提示词为提取与泛化两阶段统一规定中文叙述，协议键、枚举和原始引文保持原样。`src/renderer/distillation.ts` 保留 DefinitionContent 结构；2026-09-21 审阅界面已拆分至下述紧凑审阅模块。保存与发布继续使用既有 revision、update 和 publish 契约。语言规则属于模型生成约束，不会批量改写已保存候选。
 
 ## 后台沉淀状态与来源核验（2026-09-18）
 
 主进程已有 DistillationService.tick 负责关闭面板后的收取；轮询在 finally 继续调度。服务端 extractDefinition 上报分批完成数及泛化阶段，service 仅在运行请求的内存 Map 中保存进度并随结束清理；客户端将进度投影到 Job。activity.ts 统一生成面板与桌宠状态，Job.seenStatus 持久保存已查看阶段，新状态可再次提醒。桌宠专用 IPC 校验 sender 后打开面板并定位 jobId；候选不自动抢占其他编辑界面。
 
 workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的 USER_STATED 误标作保守降级为 INFERRED，并添加 blocking UNSUPPORTED_SOURCE；引用与摘录真实性检查仍保持拒绝，已有发布门槛要求处理确认问题。此修复不把工具文本提升为用户指令，不额外调用模型。
+
+## 紧凑审阅与窗口调宽（2026-09-21）
+
+`renderer/definition-review.ts` 管理一个候选的本地编辑副本、决策、来源展开、固定资料绑定和单次撤销；`definition-review.css` 独立限定审阅样式。`distillation.ts` 负责进入与退出，其他服务与复用弹窗继续使用原有界面。编辑态/只读态 → 暂存（revision 校验）→ 显式确认 → 不可变定义；保存期间禁用操作，后台刷新不替换审阅 DOM。
+
+`definitions/review.ts` 为界面和仓库共用字段定位：支持章节、章节加 key、原始数组位置和唯一裸 key；数组位置始终以 originalContent 解析，跨章节重名不猜测。未能定位的 Issue 保留在独立区域；不生成虚构证据或自动作出语义选择。编辑不改写来源，原始依据始终可核验；保存后的 basis 由仓库按既有规则记录为 USER_AUTHORED。
+
+仓库 update 增加可选 replaceResolutions，审阅界面用完整集合替换，以便“重新决定”在暂存与重启后仍有效；旧调用继续增量语义。REWRITE/DELETE 比较原始候选的实际内容，排除 basis，允许先暂存文字、稍后采用修改。发布沿用既有未处理问题、必需资料、版本和来源校验。
+
+调宽经 preload 的 panel:resize-right 发送 start/move/end，主进程核验发送窗口和有限坐标；`desktop/panel-resize.ts` 以起始 bounds 计算宽度，保持 x/y/height，限定 360–1000px 及当前显示器右边界。默认窗口宽度 410px，不增加渲染进程 Node 权限。

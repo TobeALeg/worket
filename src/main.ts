@@ -28,6 +28,7 @@ import { WorkPetHttpBridge } from "./bridge/http-bridge.js";
 import { WorkPetMcpHandler } from "./bridge/mcp-handler.js";
 import { IntegrationInstaller } from "./integrations/installer.js";
 import { PetPosition } from "./desktop/pet-position.js";
+import { resizePanelRight } from "./desktop/panel-resize.js";
 import { PET_SIZE } from "./desktop/pet-layout.js";
 
 let quitting = false;
@@ -142,7 +143,7 @@ function createWindows(): void {
   screen.on("display-metrics-changed", recoverPosition);
 
   panelWindow = new BrowserWindow({
-    width: 400,
+    width: 410,
     height: 660,
     minWidth: 360,
     minHeight: 480,
@@ -358,6 +359,18 @@ function registerIpc(): void {
       else if (phase === "end") petPosition?.end();
     },
   );
+  let panelResize: { cursorX: number; bounds: Electron.Rectangle; area: Electron.Rectangle } | null = null;
+  ipcMain.on("panel:resize-right", (event, phase: string, cursorX: number) => {
+    if (event.sender !== panelWindow?.webContents || !panelWindow || panelWindow.isDestroyed()) return;
+    if (phase === "end") { panelResize = null; return; }
+    if (!Number.isFinite(cursorX)) return;
+    if (phase === "start") {
+      const bounds = panelWindow.getBounds();
+      panelResize = { cursorX, bounds, area: screen.getDisplayMatching(bounds).workArea };
+    } else if (phase === "move" && panelResize) {
+      panelWindow.setBounds(resizePanelRight(panelResize.bounds, panelResize.area, cursorX - panelResize.cursorX));
+    }
+  });
   ipcMain.handle("panel:close", () => panelWindow?.hide());
   ipcMain.handle("dashboard:get", (_event, workId?: string) =>
     requireService().dashboardWithContext(workId),

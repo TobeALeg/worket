@@ -48,5 +48,6 @@ contextBridge.exposeInMainWorld("workpet", {
     ipcRenderer.on("panel:shown", listener);
     return () => ipcRenderer.removeListener("panel:shown", listener);
   },
+  resizePanelRight: (phase, screenX) => ipcRenderer.send("panel:resize-right", phase, screenX),
   closePanel: () => ipcRenderer.invoke("panel:close")
 });

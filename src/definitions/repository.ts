@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { reviewFieldValue, reviewFingerprint, resolveReviewField } from "./review.js";
 import type { DatabaseSync } from "node:sqlite";
 import {
   ensure,
@@ -8,7 +9,6 @@ import {
   array,
   LIMITS,
   type DefinitionContent,
-  type DefinedItem,
   type Issue,
   type Resolution,
   type SourceRef,
@@ -52,23 +52,6 @@ export type CreateFromDefinition = {
   referenceExampleIds: string[];
   commandId: string;
 };
-const fieldItems = (content: DefinitionContent, field: string): unknown => {
-  const parts = field.split(".");
-  const collection = (content as unknown as Record<string, unknown>)[parts[0]!];
-  if (parts.length === 1 && collection !== undefined) return collection;
-  if (Array.isArray(collection))
-    return collection.find((i: DefinedItem) => i.key === parts[1]);
-  return allItems(content).find((i) => i.key === field);
-};
-const allItems = (content: DefinitionContent): DefinedItem[] => [
-  content.purpose,
-  ...content.inputs,
-  ...content.deliverables,
-  ...content.constraints,
-  ...content.acceptanceCriteria,
-  ...content.methods,
-  ...content.materialRoles,
-];
 export class DefinitionRepository {
   readonly materials: MaterialStore;
   constructor(
@@ -200,6 +183,7 @@ export class DefinitionRepository {
     expectedRevision: number;
     content: DefinitionContent;
     issueResolutions: Resolution[];
+    replaceResolutions?: boolean;
   }): Draft {
     validateContent(input.content);
     array(input.issueResolutions);
@@ -258,8 +242,8 @@ export class DefinitionRepository {
         );
         if (resolution.action === "REWRITE" || resolution.action === "DELETE")
           ensure(
-            canonical(fieldItems(content, issue.field)) !==
-              canonical(fieldItems(draft.content, issue.field)),
+            reviewFingerprint(reviewFieldValue(content, draft.originalContent, issue.field)) !==
+              reviewFingerprint(reviewFieldValue(draft.originalContent, draft.originalContent, issue.field)),
             "UNRESOLVED_ISSUES",
             "请实际修改或删除问题涉及的要求",
           );
@@ -277,9 +261,9 @@ export class DefinitionRepository {
       draft.content = content;
       draft.revision++;
       draft.resolutions = [
-        ...draft.resolutions.filter(
+        ...(input.replaceResolutions ? [] : draft.resolutions.filter(
           (r) => !input.issueResolutions.some((n) => n.issueId === r.issueId),
-        ),
+        )),
         ...input.issueResolutions,
       ];
       this.write("definition_drafts", draft);
@@ -369,7 +353,10 @@ export class DefinitionRepository {
                 (r) =>
                   r.action === "CHOOSE" &&
                   current.issues.some(
-                    (i) => i.id === r.issueId && i.field === method.key,
+                    (i) => {
+                      const target = resolveReviewField(current.originalContent, i.field);
+                      return i.id === r.issueId && target?.section === "methods" && target.key === method.key;
+                    },
                   ),
               ),
             "UNSUPPORTED_SOURCE",
