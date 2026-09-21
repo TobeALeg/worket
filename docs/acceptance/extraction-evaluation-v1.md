@@ -1,6 +1,6 @@
 # 抽取质量评测 runner 与 E0 合成基线
 
-日期：2026-09-21。状态：Phase 0–2 runner 已实现并通过结构回归；E0 已运行合成 Work State 本地基线和部分真实模型 Definition 基线。VideoCreator 对话已获 H0 授权并建立本地真实语料清单，但 H1 人工 gold、人工修改计时和业务复用结论仍未完成。
+日期：2026-09-21。状态：Phase 0–2 runner 已实现并通过结构回归；E0 已运行合成基线，以及 VideoCreator 真实校准记录的本地 WorkState 与收费 Definition 基线。H1 人工 gold、人工修改计时和业务复用结论仍未完成。
 
 ## 交付边界
 
@@ -72,4 +72,12 @@ run `E0-synthetic-pilot-2026-09-21T10-13-00-466Z-9a49e534` 对 12/12 个案例�
 
 未建立 gold 前的初步诊断：本地规则路径可保留视频中央安全区、医生/报告场景、时间点动画、免责声明禁用等若干要求，但没有保留后续最终生效的“每平台文案 50 words 以内”，也没有显式表达它替代此前约 120 words 的关系；同一目标同时进入 objective 与 constraint，长规格常只保留冒号前的总述；已完成工作后仍可能把早期“按 1–4 展示”作为 next step。以上分别提示 DISCOVERY/INTERPRETATION、重复噪音和当前状态投影风险，需由 H1 gold 逐项裁定，不能据此计算正式指标。
 
-Definition 真实模型 run 尚未发出。执行环境的出站审查要求比“可使用记录、可收费”更精确的目的地授权：需明确允许把这两份校准对话正文发送到 `https://worket.dandi.site`，并由其当前配置的模型供应商处理。该门禁被保留，不以其他外发路径绕过。
+### VideoCreator 收费 Definition 校准结果
+
+用户随后明确允许把两份校准对话正文发送到 `https://worket.dandi.site`；结合此前真实模型 API 与费用授权，冻结 run `E0-videocreator-calibration-baseline-2026-09-21T10-56-56-687Z-18ecb74f` 正式执行。四份 `PILOT_HOLDOUT` 未读取、未发送。
+
+结果为 2 成功、2 失败、0 预算阻断，run 状态 `COMPLETED_WITH_FAILURES / NOT_JUDGED`。两次成功都来自第一份 40-event 校准历史，实际模型 `deepseek-flash`、提示词 `work-definition-v1.4`、单 chunk；第二份历史两次分别为 `fetch failed` 和 `INVALID_MODEL_OUTPUT`，因此该 case 没有可审阅 Definition。运行后公开 `/health` 仍返回 `ok:true, configured:true`，只能说明检查时服务整体在线，不能证明此前 fetch 失败的具体根因。
+
+第一份历史的两次成功输出也不稳定：两次分别生成 9/4 个 inputs、9/11 个 constraints、7/5 个 acceptance criteria 和 8/6 个 issues。第二次把同日后缀、片尾放大 15%、固定 BGM 文件名等代理提出或未逐项确认的信息写入约束，同时又在 issues 中标记其未确认；这显示采纳状态与最终投影可能自相矛盾。未有 H1 gold 前，这些是重复稳定性和来源/采纳边界风险，不是正式准确率结论。
+
+runner 按冻结上限预留 8 次 provider 调用。成功 trial 可观察到 4 次调用；两个失败 trial 的实际调用数、全部 token 和币种账单均未由服务返回，因此整体 `provider_calls_observed`、token 与 cost 保持 `null`，不能把 8 次预留写成 8 次已计费调用。未新增预算，不自动重试。
