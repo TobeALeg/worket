@@ -20,6 +20,8 @@ export async function runExperiment({ root, config, sourcePath, adapter, approva
     : allCases;
   if (!selected.length) throw new Error("NO_CASES_SELECTED");
   if (selected.some((item) => item.source_type !== config.source_classification)) throw new Error("SOURCE_CLASSIFICATION_MISMATCH");
+  if (config.source_classification === "AUTHORIZED_REAL" && selected.some((item) => !config.allowed_splits.includes(item.split)))
+    throw new Error("SPLIT_NOT_ALLOWED");
 
   const id = createRunId(config.experiment_id);
   const runDirectory = resolve(root, "evals/extraction/runs", id);

@@ -45,3 +45,11 @@ test("mock 结果不能冒充真实证据", () => {
   value.adapter = { id: "mock", live: false, estimatedProviderCalls: 0 };
   assert.ok(preflight(value).errors.includes("MOCK_CANNOT_PRODUCE_REAL_EVIDENCE"));
 });
+
+test("真实来源必须显式冻结允许的 split", () => {
+  const value = fixture();
+  value.config.source_classification = "AUTHORIZED_REAL";
+  assert.ok(preflight(value).errors.includes("AUTHORIZED_REAL_REQUIRES_ALLOWED_SPLITS"));
+  value.config.allowed_splits = ["CALIBRATION"];
+  assert.ok(!preflight(value).errors.includes("AUTHORIZED_REAL_REQUIRES_ALLOWED_SPLITS"));
+});

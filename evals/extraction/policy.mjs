@@ -8,6 +8,7 @@ export function approvalFingerprint({ config, sourcePath, adapterId }) {
   const liveScope = {
     experiment_id: config.experiment_id,
     source_classification: config.source_classification,
+    allowed_splits: config.allowed_splits,
     selected_case_ids: config.selected_case_ids,
     repeats: config.repeats,
     live: config.live,
@@ -23,6 +24,7 @@ export function preflight({ config, sourcePath, adapter, approval }) {
   const errors = [];
   if (config.schema_version !== 1) errors.push("UNSUPPORTED_CONFIG_SCHEMA");
   if (config.source_classification !== "SYNTHETIC" && config.source_classification !== "AUTHORIZED_REAL") errors.push("INVALID_SOURCE_CLASSIFICATION");
+  if (config.source_classification === "AUTHORIZED_REAL" && (!Array.isArray(config.allowed_splits) || !config.allowed_splits.length)) errors.push("AUTHORIZED_REAL_REQUIRES_ALLOWED_SPLITS");
   if (!Number.isInteger(config.repeats) || config.repeats < 1) errors.push("INVALID_REPEATS");
   const execution = config.execution ?? {};
   for (const key of ["timeout_seconds", "input_token_cap", "output_token_cap", "max_provider_calls_total", "max_provider_calls_per_trial"])

@@ -5,8 +5,10 @@ import { fileURLToPath } from "node:url";
 import { createDefinitionServiceAdapter } from "./adapters/definition-service.mjs";
 import { createMockAdapter } from "./adapters/mock.mjs";
 import { createWorkStateAdapter } from "./adapters/work-state.mjs";
+import { curateCases } from "./curation.mjs";
 import { gradeAdjudication } from "./grader.mjs";
-import { parseArgs, readJson, writeJson } from "./lib.mjs";
+import { importCodexConversations } from "./importers/codex-conversations.mjs";
+import { parseArgs, readJson, writeJson, writeJsonl } from "./lib.mjs";
 import { approvalDocument, preflight } from "./policy.mjs";
 import { runExperiment } from "./runner.mjs";
 
@@ -32,6 +34,30 @@ function load(values) {
 
 async function main() {
   const { command, values } = parseArgs(process.argv.slice(2));
+  if (command === "import-codex") {
+    for (const key of ["sessions_root", "authorized_cwd", "authorization_ref", "output", "inventory"])
+      if (!values[key]) throw new Error(`import-codex 缺少 --${key.replaceAll("_", "-")}`);
+    const imported = importCodexConversations({
+      sessionsRoot: resolve(values.sessions_root),
+      authorizedCwd: resolve(values.authorized_cwd),
+      authorizationRef: values.authorization_ref,
+      taskFamily: values.task_family ?? "video-production",
+    });
+    const outputPath = resolve(root, values.output);
+    const inventoryPath = resolve(root, values.inventory);
+    writeJsonl(outputPath, imported.cases, { exclusive: true, mode: 0o600 });
+    writeJson(inventoryPath, { ...imported.provenance, cases: imported.inventory }, { exclusive: true, mode: 0o600 });
+    console.log(JSON.stringify({ status: "IMPORTED", cases: imported.cases.length, output: values.output, inventory: values.inventory }, null, 2));
+    return;
+  }
+  if (command === "curate") {
+    for (const key of ["source", "plan", "output"])
+      if (!values[key]) throw new Error(`curate 缺少 --${key}`);
+    const selected = curateCases(resolve(root, values.source), resolve(root, values.plan));
+    writeJsonl(resolve(root, values.output), selected, { exclusive: true, mode: 0o600 });
+    console.log(JSON.stringify({ status: "CURATED", cases: selected.length, splits: Object.groupBy(selected, (item) => item.split), output: values.output }, (_key, value) => Array.isArray(value) && value.length && value[0]?.case_id ? value.length : value, 2));
+    return;
+  }
   if (["preflight", "freeze", "run"].includes(command)) {
     const loaded = load(values);
     if (!existsSync(loaded.sourcePath)) throw new Error(`来源不存在：${loaded.sourcePath}`);
@@ -58,7 +84,7 @@ async function main() {
     console.log(JSON.stringify(grade, null, 2));
     return;
   }
-  throw new Error("用法：eval:extraction <preflight|freeze|run|grade> [参数]");
+  throw new Error("用法：eval:extraction <import-codex|curate|preflight|freeze|run|grade> [参数]");
 }
 
 main().catch((error) => {

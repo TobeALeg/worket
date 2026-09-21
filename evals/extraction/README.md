@@ -6,6 +6,8 @@
 
 ```bash
 npm run eval:extraction:test
+npm run eval:extraction -- import-codex --sessions-root /path/to/sessions --authorized-cwd /path/to/authorized/project --authorization-ref USER-YYYY-MM-DD --output evals/extraction/runs/imports/<id>/cases.jsonl --inventory evals/extraction/runs/imports/<id>/inventory.json
+npm run eval:extraction -- curate --source <imported-cases.jsonl> --plan <local-plan.json> --output <curated-cases.jsonl>
 npm run eval:extraction -- preflight --config evals/extraction/manifests/synthetic-template.json
 npm run eval:extraction -- run --config <local-config.json> --adapter work-state-local
 npm run eval:extraction -- run --config <local-config.json> --adapter definition-service --approval <approval.json>
@@ -13,6 +15,10 @@ npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adju
 ```
 
 `run` 不接受 gold 参数。它先把 case 中的 `expected_semantic_assertions`、`forbidden_inferences` 和变形答案剥离，再把最小输入交给 adapter。`grade` 是独立命令，只读取已封存 trial。
+
+`import-codex` 只接受显式授权工作区下、`thread_source=user` 的根对话；同一 thread 的续聊文件按可见消息去重合并。它只导入用户与助手的可见文本，排除自动注入的插件/AGENTS/环境上下文、子代理、系统与开发者消息、工具调用及输出、隐藏推理和独立附件正文。导入结果初始为 `split=UNASSIGNED`，不能在未记录分组与盲法状态前冒充封存集。
+
+`curate` 用本地计划登记 `split`、近重复/共享模板 `group_id` 与盲法状态，并阻断同组跨 split。计划和真实清单必须留在被忽略的本地路径；四份试点保留集在 H1 前不运行、不查看正文。曾参与这些历史工作的操作者即使本轮不打开正文，也必须将其标成非严格盲法，不能作为最终独立封存证据。
 
 ## Adapter
 
@@ -24,6 +30,7 @@ npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adju
 ## 不变量
 
 - live 必须同时具备授权引用、明确数据范围、正数预算、调用/token 上限和与当前输入 hash 完全一致的 approval 文件。
+- 授权真实来源必须冻结 `allowed_splits`；runner 会阻断误选试点保留集，H1 前的校准运行只允许 `CALIBRATION`。
 - 每次运行和重试都创建新目录；现有 trial 不覆盖。
 - provider 失败、预算阻断和人工时间未知都进入账本，分别记为 `FAILED`、`BLOCKED` 和 `null`。
 - synthetic/mock 永远不能记为 real；结构测试成功不能写成语义质量通过。

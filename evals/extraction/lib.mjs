@@ -28,6 +28,12 @@ export function writeJson(path, value, options = {}) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, { encoding: "utf8", flag: options.exclusive ? "wx" : "w", mode: options.mode });
 }
 
+export function writeJsonl(path, values, options = {}) {
+  mkdirSync(dirname(path), { recursive: true });
+  const body = values.map((value) => JSON.stringify(value)).join("\n");
+  writeFileSync(path, `${body}${body ? "\n" : ""}`, { encoding: "utf8", flag: options.exclusive ? "wx" : "w", mode: options.mode });
+}
+
 export function resolveFrom(root, path) {
   return resolve(root, path);
 }
