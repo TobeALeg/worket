@@ -1,6 +1,6 @@
 {
   "round": 9,
-  "sourceCommit": null,
+  "sourceCommit": "7ead4f4",
   "reproduction": {
     "firstAfterRead": "recording",
     "secondWithoutRead": "recording",
@@ -75,9 +75,57 @@
         "missingCompanionBlocked": true,
         "syntheticAcceptanceCompleted": true
       }
+    },
+    {
+      "run": "2026-09-22T20-27-47-456Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-delivery-e2e-0XLnWT",
+      "providerCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "readBeforeHookRetained": true,
+        "noInheritedOrUncorrelatedReceipt": true
+      }
+    },
+    {
+      "run": "2026-09-22T20-27-56-141Z",
+      "status": "PASSED",
+      "packaged": true,
+      "kind": "synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-mcp-context-bZa69t",
+      "actualProviderCalls": 0,
+      "checks": {
+        "freshStateArtifactsAndPinnedVersion": true,
+        "missingMaterialBlocked": true,
+        "corruptMaterialBlocked": true,
+        "immutableHistoryAndNoFalseReceipt": true
+      }
+    },
+    {
+      "run": "2026-09-22T20-27-56-879Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-K6hQ6A",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "frozen actual model response through local HTTP; synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {
+        "relativeCompanionsExecuted": true,
+        "missingCompanionBlocked": true,
+        "syntheticAcceptanceCompleted": true
+      }
     }
   ],
   "providerCalls": 0,
   "targetAgent": false,
-  "businessAcceptance": false
+  "businessAcceptance": false,
+  "package": {
+    "sourceCommit": "7ead4f4",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-7ead4f4.zip",
+    "sha256": "ff2b8806ffcab83516ead43f45b5747d090c2e1cb4cbe9e875136f2f4da74cb4",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-receipt-extract-uk46hm7h/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  }
 }
