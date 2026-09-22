@@ -378,5 +378,31 @@
   "harnessCorrections": [
     "Negated must/ban wording is not a positive obligation or prohibition. Original withdrawal run false positive retained.",
     "WorkPackage contains resolved rules; verifier must not resolve historical relations a second time."
-  ]
+  ],
+  "deployment": {
+    "release": "/opt/worket/releases/b4702a0",
+    "previous": "/opt/worket/releases/44dd3ba",
+    "rollbackContainer": "worket-before-b4702a0-20260922-232351",
+    "dataBackup": "/opt/worket/backups/data-pre-b4702a0-20260922-232351.tgz",
+    "health": {
+      "ok": true,
+      "configured": true
+    },
+    "configurationPreserved": true,
+    "sourceCommit": "b4702a0",
+    "archiveSha256": "63a93a661090c6bbdea6d48e42eb4e0b620a0c0c565358d30661c8f1848924ec",
+    "runtimeHashes": {
+      "/app/server/evolution-prompt.mjs": "7b1edf2431c16fbff0abe6ce4d514d9d60c3acd5e19bb14524c5605493cdf7f6",
+      "/app/server/workflow.mjs": "6b3f7d38eb83f4bf6e85753a451a556f1522c68e49bd9b88d4a81d25b88ca64e",
+      "/app/dist/contracts/evolution.js": "fa19b82919d711075f8c67b4b1a2cc2f153d11e6a495817e0fb098bb5dfda2b6"
+    },
+    "publicSmoke": [
+      "/health 200",
+      "/v1/capabilities 401",
+      "/admin/ 404",
+      "{\"recordingViewSchemaVersions\":[1,2],\"authenticatedCapabilities\":200,\"ruleSchemaVersions\":[1],\"evolutionSchemaVersions\":[1],\"evidenceSchemaVersions\":[1],\"skillSchemaVersions\":[1]}"
+    ],
+    "clientSourceCommit": "db8dfa2",
+    "weeklyUsedPercent": 79
+  }
 }

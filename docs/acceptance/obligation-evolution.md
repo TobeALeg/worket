@@ -12,4 +12,4 @@
 
 230 项全量测试通过，包含新真实成功响应和旧错误响应仍被拒绝。共 10 次真实供应商调用，input 33,771 / output 51,794 / total 85,565 tokens；供应商未返回费用，未知，不记为零。端到端通过不等于真实视频验收或长期节时。
 
-本轮桌面运行时代码未变，沿用 db8dfa2 试用包，已验证其兼容新后台流程；无需重复构建客户端。后台干净构建与部署待完成。详细记录见 [机器结果](obligation-evolution-results.json)。
+本轮桌面运行时代码未变，沿用 db8dfa2 试用包，已验证其兼容新后台流程；无需重复构建客户端。后台 b4702a0 已从提交干净构建部署，公网健康/能力检查通过，evolution-prompt.mjs、workflow.mjs、contracts/evolution.js 三份运行 hash 与干净构建一致；原容器配置保持。备份与回滚见 [运维记录](../deployment/jp-server-worket.md)。详细记录见 [机器结果](obligation-evolution-results.json)。
