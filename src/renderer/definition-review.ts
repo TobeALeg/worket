@@ -23,7 +23,8 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
   const evidenceCache = new Map<string, string>();
   const explanations = new Map<string, string>();
   const abort = new AbortController(), signal = abort.signal;
-  let targets = new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field)]));
+  const issueTargets = () => new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field, draft.content)]));
+  let targets = issueTargets();
   const signature = () => JSON.stringify({ content, resolutions, bindings });
   savedState = signature();
   const byAddress = (address: string): { address: ItemAddress; item: Item | undefined } => {
@@ -143,6 +144,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     validate();
     const next: Draft = await api("update", { draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: resolutions, replaceResolutions: true });
     draft = next; content = structuredClone(next.content); resolutions = structuredClone(next.resolutions);
+    targets = issueTargets();
     savedState = signature(); message = "已暂存";
   }
   function close() {
@@ -244,7 +246,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
       }
       if (action === "adopt-document" && documentPreview) {
         const next = await api("adoptDocumentRevision", { draftId: draft.id, expectedRevision: draft.revision, address: documentPreview.address, path: documentPreview.path, expectedHash: documentPreview.hash, startLine: Number(modal.querySelector<HTMLInputElement>("#doc-start-line")!.value), endLine: Number(modal.querySelector<HTMLInputElement>("#doc-end-line")!.value) });
-        draft = next; targets = new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field)])); content = structuredClone(next.content); resolutions = structuredClone(next.resolutions); savedState = signature(); documentPreview = null; undo = null; message = "新版条款已保存到草稿，发布后用于新实例"; render(); return;
+        draft = next; targets = issueTargets(); content = structuredClone(next.content); resolutions = structuredClone(next.resolutions); savedState = signature(); documentPreview = null; undo = null; message = "新版条款已保存到草稿，发布后用于新实例"; render(); return;
       }
       if (action === "edit-all") { if (editMode) validate(); editMode = !editMode; render(); return; }
       if (action === "undo" && undo) { ({ content, resolutions, bindings } = undo); undo = null; render(); return; }
@@ -281,8 +283,11 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
         try {
           await save();
           if (action === "publish") {
-            const definition = await api("publish", { draftId: draft.id, expectedRevision: draft.revision, materialBindings: bindings, commandId: crypto.randomUUID() });
-            await onPublished(definition); return;
+            if (draft.issues.some(i => !getResolution(i.id))) message = "修改影响了关联规则，请先处理新增待定事项";
+            else {
+              const definition = await api("publish", { draftId: draft.id, expectedRevision: draft.revision, materialBindings: bindings, commandId: crypto.randomUUID() });
+              await onPublished(definition); return;
+            }
           }
         } finally { busy = false; }
         render();

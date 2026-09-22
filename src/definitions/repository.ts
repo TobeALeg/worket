@@ -1,4 +1,5 @@
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
+import { invalidateRuleDependents } from "./rule-review.js";
 import { effectiveRules, acceptanceChecks, ruleText, type InstanceOverride } from "../contracts/rules.js";
 import { randomUUID } from "node:crypto";
 import { reviewFieldValue, reviewFingerprint, resolveReviewField } from "./review.js";
@@ -252,6 +253,15 @@ export class DefinitionRepository {
             "请实际修改或删除问题涉及的要求",
           );
       }
+      const affected = invalidateRuleDependents(draft.content, content);
+      const reopened = new Set(affected.map(address => `rule-change-${address}`));
+      for (const address of affected) {
+        const issueId = `rule-change-${address}`;
+        if (!draft.issues.some(issue => issue.id === issueId)) draft.issues.push({
+          id: issueId, type: "UNCERTAIN_GENERALIZATION", field: address,
+          message: "所依赖的规则已修改，请重新核对这条重复、补充、替代或验收关系。", blocking: true,
+        });
+      }
       this.db.prepare("INSERT INTO review_events VALUES (?, ?, ?)").run(
         reviewId,
         draft.id,
@@ -269,7 +279,7 @@ export class DefinitionRepository {
           (r) => !input.issueResolutions.some((n) => n.issueId === r.issueId),
         )),
         ...input.issueResolutions,
-      ];
+      ].filter(resolution => !reopened.has(resolution.issueId));
       this.write("definition_drafts", draft);
       return draft;
     });

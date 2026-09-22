@@ -38,11 +38,6 @@ export function adoptDocumentRevision(repository: DefinitionRepository, input: {
   item.text = selectedText;
   const updated = repository.update({ draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: [], replaceResolutions: true });
   updated.refs.push(source);
-  for (const row of ruleItems(updated.content)) if (row.item.rule?.relation?.target === input.address) {
-    row.item.rule.status = 'PROPOSED';
-    const issueId = `document-change-${updated.revision}-${row.address}`;
-    updated.issues.push({ id: issueId, type: 'UNCERTAIN_GENERALIZATION', field: row.address, message: '依赖条款已更新，请重新确认这条合并、补充或替代关系；未确认前不生效。', blocking: true });
-  }
   repository.write('definition_drafts', updated);
   return updated;
 }

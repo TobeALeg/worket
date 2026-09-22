@@ -147,6 +147,21 @@ try {
   const unchanged = await panel.evaluate(workId => window.workpet.distillation('package',{workId}),newId); assert.ok(unchanged.markdown.includes(oldLimit));
   mark('instance-only override → old/default definition unchanged');
   await panel.screenshot({ path:join(output,'03-new-instance.png') });
+  if (scenario === 'report') {
+    // This recorded response has an acceptance alias of the normative limit.
+    // A manual edit must enter re-review before publishing, just like a file revision.
+    await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
+    await panel.locator('#edit-all').click();
+    await panel.locator(`[data-text][data-address="${firstAddress}"]`).fill(`今后每节摘要不超过 25 ${unit}。`);
+    await panel.locator('#edit-all').click(); await panel.locator('#publish-definition').click();
+    await panel.getByText('修改影响了关联规则，请先处理新增待定事项', { exact: true }).waitFor();
+    assert.equal(await panel.locator('#publish-definition').isDisabled(), true);
+    assert.ok(await panel.locator('[data-review-action="exclude"][data-issue^="rule-change-"]').count());
+    const versions = await panel.evaluate(key => window.workpet.distillation('versions', { key }), definition.definitionKey);
+    assert.equal(versions.length, 1, 'manual edit with stale aliases must not publish');
+    await panel.locator('[data-review-action="close"]').click();
+    mark('manual upstream edit → dependent review visible; stale acceptance prevents publication');
+  }
   // File evolution and invalid dependency through the shipped renderer/IPC routes.
   await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
   const renamed = join(directory, 'RENAMED-FRAME.md'); renameSync(path, renamed);
@@ -159,7 +174,7 @@ try {
   await panel.locator('#doc-start-line').fill('2'); await panel.locator('#doc-end-line').fill('2');
   await panel.screenshot({path:join(output,'04-document-diff.png')});
   await panel.locator('[data-review-action="adopt-document"]').click();
-  while (await panel.locator('[data-review-action="exclude"][data-issue^="document-change-"]').count()) await panel.locator('[data-review-action="exclude"][data-issue^="document-change-"]').first().click();
+  while (await panel.locator('[data-review-action="exclude"][data-issue^="rule-change-"]').count()) await panel.locator('[data-review-action="exclude"][data-issue^="rule-change-"]').first().click();
   await panel.locator('#publish-definition').click(); await panel.locator('#use-definition').waitFor();
   const versions = await panel.evaluate(key=>window.workpet.distillation('versions',{key}),definition.definitionKey);
   const v2 = versions.find(v=>v.version===2); assert.ok(v2);

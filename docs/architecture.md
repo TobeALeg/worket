@@ -12,7 +12,7 @@
 
 `definitions/document-rules.ts` 只从已授权且标为 NORMATIVE 的正文快照固定条款；文件 hash、行区间与 SourceRef 共同定位。完整正文按 hash 共用不可变 blob，执行时仅展开所选条款，不附加“遵循整份旧文件”覆盖新规则。资料缺失或校验失败时阻止执行包导出。来源名/位置用于追溯，不作为规则身份或跨机器依赖。
 
-`definitions/document-revision.ts` 预览新文本，采用时重验预览 hash 与草稿 revision；保存新来源快照并更新指定条款，直接依赖关系退回 PROPOSED 并要求审阅。发布创建新定义版本。修改条款文字会解除其文件正文绑定，避免导出时把用户修改覆盖回旧原文。
+`definitions/document-revision.ts` 预览新文本，采用时重验预览 hash 与草稿 revision；保存新来源快照并更新指定条款，通过统一 update 路径触发依赖再审。发布创建新定义版本。`definitions/rule-review.ts` 从手改/条款版本变更沿关系图追踪直接与间接依赖；固定问题 ID，撤销失效确认，关联条目退回 PROPOSED。保存后 renderer 刷新待定映射；新问题须解决后才能发布。修改条款文字会解除其文件正文绑定，避免导出时把用户修改覆盖回旧原文。
 
 `effectiveRules` 用于创建实例及所有工作包出口；本次覆盖存入 `instance_inputs`，不改 Definition。`acceptanceChecks` 将被合并的验收项指向保留规则；新版定义没有独立验收文字时，从有效交付与约束生成引用式清单。旧定义仍要求原有显式验收项。验收结果不因文字去重而被跳过。
 

@@ -155,7 +155,42 @@ test('editing a document-derived rule explicitly detaches the old clause rather 
     const content = structuredClone(f.draft.content); content.constraints[0].text = '今后不超过 40 words';
     const draft = f.core.definitions.update({ draftId: f.draft.id, expectedRevision: f.draft.revision, content, issueResolutions: [] });
     assert.equal(draft.content.constraints[0].document, undefined);
-    const pkg = buildWorkPackage(f.create(f.publish(draft)), f.core.definitions);
+    assert.throws(() => f.publish(draft), /UNRESOLVED_ISSUES/);
+    const revised = structuredClone(draft.content); revised.constraints = revised.constraints.filter(i => i.key !== 'duplicate');
+    const reviewed = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision, content: revised, issueResolutions: draft.issues.map(i => ({ issueId: i.id, action: 'DELETE', explanation: '50 词证据不能证明 40 词规则' })) });
+    const pkg = buildWorkPackage(f.create(f.publish(reviewed)), f.core.definitions);
     assert.equal(pkg.definition.content.constraints[0].text, '今后不超过 40 words');
+  } finally { f.core.close(); }
+});
+
+test('manual edits reopen transitive dependent reviews; unrelated rules and prior versions remain stable', async () => {
+  const f = await setup();
+  try {
+    const initial = structuredClone(f.draft.content);
+    initial.acceptanceCriteria.push(item('alias', '核对文案限制', { kind: 'DUPLICATE', target: 'constraints.duplicate' }));
+    let draft = f.core.definitions.update({ draftId: f.draft.id, expectedRevision: f.draft.revision, content: initial, issueResolutions: [] });
+    const v1 = f.publish(draft), first = f.create(v1);
+    draft = f.core.definitions.revise({ definitionId: v1.id, commandId: id() });
+    const edit = (text: string, resolutions: any[] = []) => {
+      const next = structuredClone(draft.content); next.constraints[0].text = text;
+      draft = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision, content: next, issueResolutions: resolutions });
+    };
+    edit('以后 40 words');
+    assert.deepEqual(draft.issues.map(i => i.field).sort(), ['acceptanceCriteria.alias', 'constraints.duplicate']);
+    assert.equal(draft.content.acceptanceCriteria.find(i => i.key === 'alias').rule.status, 'PROPOSED');
+    assert.equal(draft.content.acceptanceCriteria.find(i => i.key === 'review').rule.status, 'ACTIVE');
+    assert.throws(() => f.publish(draft), /UNRESOLVED_ISSUES/);
+    const decisions = draft.issues.map(i => ({ issueId: i.id, action: 'CHOOSE', explanation: '重新核对该关系' }));
+    const reconfirmed = structuredClone(draft.content);
+    reconfirmed.constraints.find(i => i.key === 'duplicate').rule.status = 'ACTIVE';
+    reconfirmed.acceptanceCriteria.find(i => i.key === 'alias').rule.status = 'ACTIVE';
+    draft = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision, content: reconfirmed, issueResolutions: decisions });
+    assert.equal(draft.resolutions.length, 2);
+    // A subsequent upstream edit invalidates old decisions, including a replay in the same save.
+    edit('以后 30 words', decisions);
+    assert.equal(draft.resolutions.length, 0);
+    assert.equal(draft.issues.length, 2, 'stable issue identities avoid an ever-growing queue');
+    assert.throws(() => f.publish(draft), /UNRESOLVED_ISSUES/);
+    assert.equal(buildWorkPackage(first, f.core.definitions).definition.content.constraints[0].text, '每个平台文案不超过 50 words。');
   } finally { f.core.close(); }
 });
