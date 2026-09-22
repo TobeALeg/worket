@@ -26,6 +26,8 @@
 
 共 12 次真实模型调用尝试，其中 11 次已返回用量：input 30,715 / output 93,957 / total 124,672 tokens。另一次失败用量未知；供应商没有返回费用，不记为零。详细每次结果见 [机器记录](contract-semantic-trials-results.json)。
 
+源码提交 `46b2c1a`。干净导出构建的 ZIP 解压客户端三例通过 `2026-09-22T19-24-58-636Z`；原包与解压签名验证通过，隔离测试钥匙串，正常系统钥匙串批准未验证。试用包 `release/Worket-loop-46b2c1a.zip`，SHA-256 `610d1f31455429726dbe6ffe399499f90c988c8cff3ad98e9c41a2ed1500f755`。同版后台已部署，公网认证能力返回 rule/evolution/evidence schema 1；无新增模型调用。
+
 ## 下一步已复现问题
 
 执行路径预检查发现 `get_work_context` 直接返回旧交接包：交接后新增资料，MCP 返回 neededArtifacts 仍为 0，而当前工作已为 1。隔离复现证据 [已保存复现](mcp-context-freshness-repro.json)。这是下一轮优先修复项；本轮不宣称目标 Agent 已经读取最新完整工作包或完成业务交付。

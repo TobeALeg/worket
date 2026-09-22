@@ -87,3 +87,11 @@ ssh jp-server 'sudo nginx -t'
 部署前无活跃/待领取请求，离线模块加载通过。前版 `/opt/worket/releases/858c677`；回滚容器 `worket-before-5e1800e-20260922-181226`；数据备份 `/opt/worket/backups/data-pre-5e1800e-20260922-181226.tgz`。保留全部容器配置，无数据库迁移或模型密钥变更。
 
 公网 HTTPS health 200，未授权 capabilities 401，admin 404；服务器内生成一分钟临时只读检查令牌，认证能力接口 200，rule/evolution schema 均为 1。未输出令牌或密钥、未修改账户数据。四次真实模型调用发生在隔离 HTTP/桌面验收链路；部署后只做健康/能力检查，没有重复执行供应商调用。客户端 ZIP 解压态回放亦通过，见 [检查点](../acceptance/worket-improvement-loop.md)。
+
+## 2026-09-23 来源角色与覆盖提示部署
+
+`46b2c1a` 增加 `evidenceSchemaVersions:[1]`；声明新能力的请求区分直接依据与 CONTEXT 背景引用。协调提示 v2.2、增量提示 v1.2；旧请求保持兼容。后台包 SHA-256 `f55c02d41d251540a700a4880d0037e8af23f98e755e2e6cc9ce1d6a4c44c11f`。
+
+部署前无活跃/待领取请求，离线模块导入通过。前版 `/opt/worket/releases/5e1800e`，回滚容器 `worket-before-46b2c1a-20260922-192542`，数据备份 `/opt/worket/backups/data-pre-46b2c1a-20260922-192542.tgz`。原容器配置逐项复核不变，无数据库迁移或凭据变更。
+
+公网 health 200 且 configured=true，匿名 capabilities 401，admin 404；服务器内一分钟签名检查返回认证 200，rule/evolution/evidence schema 均为 1。凭据未离开服务器或写入日志；部署后没有重复模型调用。解压客户端三类完整语义回放通过，见 [语义验收](../acceptance/contract-semantic-trials.md)。

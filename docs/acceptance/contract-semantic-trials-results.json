@@ -437,6 +437,59 @@
           }
         }
       ]
+    },
+    {
+      "run": "2026-09-22T19-24-58-636Z",
+      "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "packaged": true,
+          "credentialStorage": "isolated mock keychain; OS approval not tested",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-p9eFBh",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-24-58-636Z/conditions-and-exception",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        },
+        {
+          "id": "cross-instance-conflict",
+          "status": "PASSED",
+          "packaged": true,
+          "credentialStorage": "isolated mock keychain; OS approval not tested",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-36L1yg",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-24-58-636Z/cross-instance-conflict",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "BLOCK",
+            "reason": "cross-instance contradiction is unresolved; original version retained"
+          },
+          "reviewDecision": "Synthetic user explicitly chooses 30 words after the unresolved conflict was blocked"
+        },
+        {
+          "id": "partial-adoption",
+          "status": "PASSED",
+          "packaged": true,
+          "credentialStorage": "isolated mock keychain; OS approval not tested",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-WviJCo",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-24-58-636Z/partial-adoption",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          }
+        }
+      ]
     }
   ]
 }
