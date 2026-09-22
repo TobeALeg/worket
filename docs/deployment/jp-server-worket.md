@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- Worket 服务代码来自提交 `813a758`（2026-09-22 更新），版本目录为 `/opt/worket/releases/813a758`，`/opt/worket/current` 指向当前版本。
+- Worket 服务代码来自提交 `858c677`（2026-09-23 更新），版本目录为 `/opt/worket/releases/858c677`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -71,3 +71,11 @@ ssh jp-server 'sudo nginx -t'
 验证：本机 Node fetch 与服务器访问 `https://worket.dandi.site/health` 均为 200；服务器内使用现有主体的一分钟临时签名认证，公网 capabilities 为 200 并返回 `[1]`，无认证为 401，`/admin/` 为 404。令牌和私钥始终留在服务器，没有写日志或改账号。没有另行消耗模型调用重跑生产请求；模型/桌面链路在相同实现的隔离服务中验证，见 [系统验收](../acceptance/working-contract-v2.md)。
 
 本地试用包为 `release/Worket-contract-v2-813a758.zip`，打包态完整流程已回放通过；未发布新 GitHub Release，用户已安装应用保持原样。
+
+## 2026-09-23 首批持续优化部署
+
+`858c677` 更新规则解析：替代重复组的任一别名作用于整组，竞争替代阻断，旧重复证据不转归新义务。后台协议与提示词版本保持，客户端另含关联规则再审。包 SHA-256 为 `252dc6988c715197fc96836f33c60988c25f72487c61918ed24be7009b419012`。
+
+部署前检查无活跃/待领取请求，离线容器模块导入成功；保留所有原容器配置并备份数据。前版 `/opt/worket/releases/813a758`，回滚容器 `worket-before-858c677-20260922-172802`，数据备份 `/opt/worket/backups/data-pre-858c677-20260922-172802.tgz`。没有数据库迁移。
+
+公网 HTTPS health 200 且 configured=true，未授权 capabilities 401，admin 404。实际运行 rules.js 的 SHA-256 `fbdb121592f4471323923c736615f82db725b9ae2a383a6cc41b85bf8c095934` 与已提交源码 server 构建一致。未额外运行真实模型任务；功能与打包态端到端证据见 [优化检查点](../acceptance/worket-improvement-loop.md)。
