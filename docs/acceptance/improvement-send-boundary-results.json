@@ -44,6 +44,18 @@
       "packaged": false,
       "actualProviderCalls": 0,
       "continuous": true
+    },
+    "packagedBoundary": {
+      "run": "2026-09-22T21-37-44-725Z",
+      "status": "PASSED",
+      "packaged": true,
+      "actualProviderCalls": 0
+    },
+    "packagedContinuous": {
+      "run": "2026-09-22T21-37-51-697Z",
+      "status": "PASSED",
+      "packaged": true,
+      "actualProviderCalls": 0
     }
   },
   "before": {
@@ -58,5 +70,13 @@
   "after": {
     "stopped": "STOPPED",
     "received": []
-  }
+  },
+  "sourceCommit": "f1ea25c",
+  "package": {
+    "sourceCommit": "f1ea25c",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-f1ea25c.zip",
+    "sha256": "442bb972bf8a6c76deab61d51759a4cc9fe33da68cabddef78682914044578d4",
+    "signatureVerified": true
+  },
+  "backendSourceCommit": "58be614"
 }
