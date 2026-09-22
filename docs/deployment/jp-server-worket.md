@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- Worket 服务代码来自提交 `b4702a0`（2026-09-23 更新），版本目录为 `/opt/worket/releases/b4702a0`，`/opt/worket/current` 指向当前版本。
+- Worket 服务代码来自提交 `8d39223`（2026-09-23 更新），版本目录为 `/opt/worket/releases/8d39223`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -127,3 +127,11 @@ ssh jp-server 'sudo nginx -t'
 前版 `/opt/worket/releases/44dd3ba`；回滚容器 `worket-before-b4702a0-20260922-232351`；数据备份 `/opt/worket/backups/data-pre-b4702a0-20260922-232351.tgz`。部署前无活跃/待领取请求，离线导入和健康检查通过；原容器配置逐项保持，无数据库迁移或凭据变更。
 
 公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内短期令牌检查认证能力 200，rule/evolution/evidence/skill 均为 [1]、recordingView 为 [1,2]。evolution-prompt.mjs、workflow.mjs、contracts/evolution.js 运行 hash 与干净构建一致。令牌未输出或离开服务器；部署检查没有新模型调用、生产样本或账户写入。真实语义与解压客户端回放证据见 [验收](../acceptance/obligation-evolution.md)。
+
+## 2026-09-23 模型完全一致关系归一化部署
+
+源码 `8d39223`，新增模型结果入口 normalize-evolution.mjs，折叠完全一致的重复关系，规范领域校验与提示版本保持。后台包 SHA-256 `53bec1db6874216dbf620f362d9cde165e8620ea6cb52910dec2856948b6a18a`。客户端沿用已通过两条回放的 657c2a6。
+
+前版 `/opt/worket/releases/b4702a0`；回滚容器 `worket-before-8d39223-20260922-235509`；数据备份 `/opt/worket/backups/data-pre-8d39223-20260922-235509.tgz`。部署前无活跃/待领取请求，模块离线导入与健康检查通过；原容器配置逐项保持，无数据库迁移或凭据变更。
+
+公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内短期令牌检查认证能力 200，rule/evolution/evidence/skill 均为 [1]，recordingView 为 [1,2]。normalize-evolution.mjs、workflow.mjs、contracts/evolution.js 运行 hash 与干净构建一致。凭据未输出/离开服务器，无生产样本或账号写入，部署检查没有模型调用。试验与失败边界见 [验收](../acceptance/repetition-evolution.md)。

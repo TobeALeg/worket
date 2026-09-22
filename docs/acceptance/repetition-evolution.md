@@ -15,4 +15,4 @@
 
 共 8 次真实调用，input 31189 / output 59614 / total 90803 tokens；供应商未返回费用。所有后续回放零新调用。无真实视频或外部 Agent 业务交付，不是盲测或长期收益证据。
 
-本轮客户端运行时无变更，沿用已验证的 657c2a6。后台干净构建与部署待完成；见 [机器结果](repetition-evolution-results.json)。
+本轮客户端运行时无变更，沿用已验证的 657c2a6。后台 8d39223 已从固定提交干净构建部署，公网健康/认证能力及 normalize-evolution.mjs、workflow.mjs、contracts/evolution.js 三份运行 hash 均确认。备份与回滚见 [运维记录](../deployment/jp-server-worket.md)；见 [机器结果](repetition-evolution-results.json)。

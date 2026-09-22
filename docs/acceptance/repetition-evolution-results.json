@@ -281,5 +281,31 @@
       ]
     }
   ],
-  "scope": "Synthetic semantic trials and frozen replay; not blind or business acceptance"
+  "scope": "Synthetic semantic trials and frozen replay; not blind or business acceptance",
+  "deployment": {
+    "release": "/opt/worket/releases/8d39223",
+    "previous": "/opt/worket/releases/b4702a0",
+    "rollbackContainer": "worket-before-8d39223-20260922-235509",
+    "dataBackup": "/opt/worket/backups/data-pre-8d39223-20260922-235509.tgz",
+    "health": {
+      "ok": true,
+      "configured": true
+    },
+    "configurationPreserved": true,
+    "sourceCommit": "8d39223",
+    "archiveSha256": "53bec1db6874216dbf620f362d9cde165e8620ea6cb52910dec2856948b6a18a",
+    "runtimeHashes": {
+      "/app/server/normalize-evolution.mjs": "7cec5326680ee52f870cc469d94ce4562d43a0bb709b1a2e22de98985089c463",
+      "/app/server/workflow.mjs": "d8d3fb0a83ead3d012dee37ef893c0faada169052e4d8d8eebaf335e740d22ec",
+      "/app/dist/contracts/evolution.js": "fa19b82919d711075f8c67b4b1a2cc2f153d11e6a495817e0fb098bb5dfda2b6"
+    },
+    "publicSmoke": [
+      "/health 200",
+      "/v1/capabilities 401",
+      "/admin/ 404",
+      "{\"recordingViewSchemaVersions\":[1,2],\"authenticatedCapabilities\":200,\"ruleSchemaVersions\":[1],\"evolutionSchemaVersions\":[1],\"evidenceSchemaVersions\":[1],\"skillSchemaVersions\":[1]}"
+    ],
+    "clientSourceCommit": "657c2a6",
+    "weeklyUsedPercent": 83
+  }
 }
