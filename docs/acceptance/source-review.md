@@ -10,4 +10,4 @@
 
 本轮零真实供应商调用。候选由受控合成模型边界经真实 DistillationService 验证产生，来源同步和桌面/MCP 为真实产品路径；没有外部 Agent 业务执行或用户实际交付验收。检查范围受本地同步新鲜度限制，不能发现尚未同步的外部修改。
 
-客户端干净构建和 ZIP 解压验收待完成；后台保持 b4702a0，不需要服务协议或后台运行代码更新。详细运行报告见 [机器结果](source-review-results.json)。
+源码 657c2a6 已从 git archive 干净构建，原包与解压签名均通过。ZIP release/Worket-loop-657c2a6.zip，SHA-256 13084821cf74ae3cb704c9ffc17b30b2e92d1dd0b7e123988fc1d4b90be68da1。解压客户端二次修订窄面板 23-38-46-327Z、stdio 缺失恢复 23-38-56-484Z 两条链路通过，窄面板截图已查看。打包测试使用隔离 mock keychain，不代表系统钥匙串授权验收；未替换 Applications 安装或发布 GitHub Release。后台保持 b4702a0，不需要服务协议或后台运行代码更新。详细运行报告见 [机器结果](source-review-results.json)。

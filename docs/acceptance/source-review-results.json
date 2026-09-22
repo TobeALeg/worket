@@ -259,6 +259,147 @@
           ]
         }
       ]
+    },
+    {
+      "run": "2026-09-22T23-38-46-327Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-HAcSYJ",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": false,
+      "checks": {
+        "noPartialReply": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true,
+        "explicitSnapshotReviewAndReuse": true
+      }
+    },
+    {
+      "run": "2026-09-22T23-38-56-484Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-JsvevX",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "sourceAbsence": true,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true,
+        "absentEvidenceVisibleAndBlocked": true,
+        "absenceArchiveCurrentViewAndRestoration": true,
+        "restoredEvidenceAndExplicitPublication": true
+      },
+      "recordingView": false,
+      "rpc": [
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two",
+          "error": "synthetic second page failure"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        }
+      ]
     }
-  ]
+  ],
+  "package": {
+    "sourceCommit": "657c2a6",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-657c2a6.zip",
+    "sha256": "13084821cf74ae3cb704c9ffc17b30b2e92d1dd0b7e123988fc1d4b90be68da1",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-review-extract-royo5lyf/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "backendSourceCommit": "b4702a0",
+  "weeklyUsedPercent": 81
 }
