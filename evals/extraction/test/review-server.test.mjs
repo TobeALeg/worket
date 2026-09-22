@@ -100,6 +100,11 @@ test("server auto-loads source/draft and serves original visible messages", asyn
   assert.match(script.body, /识别后应该保存到哪里/u);
   assert.match(script.body, /本轮要求模型识别吗/u);
   assert.match(script.body, /模型漏掉它会怎样/u);
+  assert.match(script.body, /需要确认的内容/u);
+  assert.match(script.body, /自动分类/u);
+  assert.match(script.body, /正确，进入下一条/u);
+  assert.match(script.body, /不对，查看原因并修改/u);
+  assert.match(script.body, /\$\$\("\[data-evidence-field\]", card\)/u);
   assert.doesNotMatch(script.body, />目标（可多选）</u);
 });
 

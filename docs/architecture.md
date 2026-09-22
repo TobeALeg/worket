@@ -242,6 +242,8 @@ H1 使用 `evals/extraction/review-server.mjs` 提供的本机 HTML。server 显
 
 评审 UI 将稳定枚举翻译为面向决策的问题：`required` 是“本轮要求模型识别吗”，`criticality` 是“模型漏掉它会怎样”，`destinations` 是“识别后应该保存到哪里”。映射只存在于浏览器显示层，保存与 grader 继续使用原枚举，避免文案调整改变评分合同。
 
+单条评审采用渐进披露状态：`UNREVIEWED` 先只读展示 `semantic_content` 与自动分类摘要；确认正确直接转为 `KEEP/CONFIRMED` 并定位下一条；选择不正确才打开可编辑字段、证据和最终动作。全部单位离开 `UNREVIEWED` 后 case 自动转为 `REVIEWED`。这个状态只影响浏览器交互，最终 server 校验仍是唯一写入门禁。
+
 ### Data flow
 
 ```text

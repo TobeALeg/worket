@@ -68,6 +68,7 @@ const SOURCE_TYPE_LABELS = {
 
 let state = null;
 let currentCaseIndex = 0;
+let editingUnitId = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -111,6 +112,7 @@ function renderCaseList() {
   $$("[data-case-index]").forEach((button) => button.addEventListener("click", () => {
     collectVisibleFields();
     currentCaseIndex = Number(button.dataset.caseIndex);
+    editingUnitId = null;
     render();
   }));
 }
@@ -136,30 +138,69 @@ function renderEvidence(unit, index) {
     <button type="button" class="secondary add-evidence" data-unit="${index}">新增证据行</button></div>`;
 }
 
-function renderUnit(unit, index) {
+function classificationValue(labels, value) {
+  return labels[value] || value || "未判断";
+}
+
+function renderClassification(unit) {
+  const destinations = (unit.destinations ?? []).map((value) => classificationValue(DESTINATION_LABELS, value));
+  return `<div class="classification-grid">
+    <div><span>依据</span><strong>${escapeHtml(classificationValue(SOURCE_LABELS, unit.source_origin))}</strong></div>
+    <div><span>确认状态</span><strong>${escapeHtml(classificationValue(ADOPTION_LABELS, unit.adoption_status))}</strong></div>
+    <div><span>是否有效</span><strong>${escapeHtml(classificationValue(VALIDITY_LABELS, unit.validity))}</strong></div>
+    <div><span>适用范围</span><strong>${escapeHtml(classificationValue(SCOPE_LABELS, unit.scope))}</strong></div>
+    <div><span>漏掉后的影响</span><strong>${escapeHtml(unit.criticality === "CRITICAL" ? "会导致返工或错误" : "影响较小")}</strong></div>
+    <div><span>本轮评分</span><strong>${unit.required === false ? "不要求模型识别" : "要求模型识别"}</strong></div>
+    <div class="classification-wide"><span>识别后保存到</span><strong>${escapeHtml(destinations.join("、") || "未设置")}</strong></div>
+  </div>`;
+}
+
+function renderUnitEditor(unit, index) {
   const destinations = Array.isArray(unit.destinations) ? unit.destinations : [];
-  return `<article class="${unitClass(unit)}" data-unit-card="${index}">
-    <div class="unit-head"><h3>待确认内容 <span class="unit-id">${escapeHtml(unit.gold_id)}</span></h3>
-      <div class="unit-actions"><span>${escapeHtml(REVIEW_STATUS_LABELS[unit.review_status] || unit.review_status)}</span>
-        <select data-unit="${index}" data-field="review_action" aria-label="怎么处理这条内容">${labeledOptions(ACTION_LABELS, unit.review_action)}</select>
-        ${unit.review_action === "ADDED" ? `<button type="button" class="danger remove-unit" data-unit="${index}">放弃补录</button>` : ""}
-      </div>
+  return `<div class="editor-panel"><h4>哪里不对？修改内容或自动分类</h4><div class="field-grid">
+    <label class="field full semantic"><span>这条要求是什么？（写成一条可以检查真假的要求，不写宽泛总结）</span><textarea data-unit="${index}" data-field="semantic_content" placeholder="例如：本次字幕使用英文">${escapeHtml(unit.semantic_content)}</textarea></label>
+    <label class="field"><span>这条内容依据什么？</span><select data-unit="${index}" data-field="source_origin">${labeledOptions(SOURCE_LABELS, unit.source_origin)}</select></label>
+    <label class="field"><span>用户是否已经确认？</span><select data-unit="${index}" data-field="adoption_status">${labeledOptions(ADOPTION_LABELS, unit.adoption_status)}</select></label>
+    <label class="field"><span>这条要求现在有效吗？</span><select data-unit="${index}" data-field="validity">${labeledOptions(VALIDITY_LABELS, unit.validity)}</select></label>
+    <label class="field"><span>适用于哪些工作？</span><select data-unit="${index}" data-field="scope">${labeledOptions(SCOPE_LABELS, unit.scope)}</select></label>
+    <label class="field"><span>模型漏掉它会怎样？</span><select data-unit="${index}" data-field="criticality">${option("CRITICAL", "会导致返工或错误", unit.criticality)}${option("NORMAL", "影响较小", unit.criticality)}</select></label>
+    <label class="field"><span>本轮要求模型识别吗？</span><span class="chip"><input type="checkbox" data-unit="${index}" data-field="required"${unit.required !== false ? " checked" : ""}>计入本轮评分</span><small class="field-note">当前有效要求通常勾选；历史、误提取或已被替代的内容不勾选。</small></label>
+    <label class="field full"><span>识别后应该保存到哪里？（可多选）</span><div class="chips">${Object.entries(DESTINATION_LABELS).map(([value, label]) => `<label class="chip"><input type="checkbox" data-unit="${index}" data-destination="${escapeHtml(value)}"${destinations.includes(value) ? " checked" : ""}>${escapeHtml(label)}</label>`).join("")}</div><small class="field-note">“本次工作”用于当前交付；“以后同类工作”表示可能成为长期规则；“还要问我”不能直接当规则。</small></label>
+    <label class="field full"><span>为什么要保留这条？</span><textarea data-unit="${index}" data-field="utility_reason" placeholder="它会影响什么决策、交付或后续复用？">${escapeHtml(unit.utility_reason)}</textarea></label>
+    <label class="field full"><span>哪些说法也算同一要求？（每行一条，可留空）</span><textarea data-unit="${index}" data-field="acceptable_variants">${escapeHtml((unit.acceptable_variants ?? []).join("\n"))}</textarea></label>
+    <label class="field full"><span>不能从这条要求推出什么？（每行一条，可留空）</span><textarea data-unit="${index}" data-field="forbidden_inferences" placeholder="例如：不能因此推断所有后续视频都使用英文字幕">${escapeHtml((unit.forbidden_inferences ?? []).join("\n"))}</textarea></label>
+    ${renderEvidence(unit, index)}
+    <label class="field full"><span>它替代了哪一条？（仅选择“已被新规则替代”时填写内部 ID）</span><input class="small-input" data-unit="${index}" data-field="replacement_for" value="${escapeHtml(unit.replacement_for)}" placeholder="旧 ID，可留空"></label>
+  </div></div>`;
+}
+
+function renderJudgment(unit, index, isEditing) {
+  if (isEditing) return `<div class="judgment-bar">
+    <div><span class="step-number">3</span><strong>修改后，这条应该怎么处理？</strong></div>
+    <div class="judgment-actions">
+      <select data-unit="${index}" data-field="review_action" aria-label="怎么处理这条内容">${labeledOptions(ACTION_LABELS, unit.review_action)}</select>
+      ${unit.review_action === "ADDED" ? `<button type="button" class="danger remove-unit" data-unit="${index}">放弃补录</button>` : ""}
+      <button type="button" class="primary finish-edit" data-unit="${index}">保存这条，进入下一条</button>
     </div>
-    <div class="field-grid">
-      <label class="field full semantic"><span>这条要求是什么？（写成一条可以检查真假的要求，不写宽泛总结）</span><textarea data-unit="${index}" data-field="semantic_content" placeholder="例如：本次字幕使用英文">${escapeHtml(unit.semantic_content)}</textarea></label>
-      <label class="field"><span>这条内容依据什么？</span><select data-unit="${index}" data-field="source_origin">${labeledOptions(SOURCE_LABELS, unit.source_origin)}</select></label>
-      <label class="field"><span>用户是否已经确认？</span><select data-unit="${index}" data-field="adoption_status">${labeledOptions(ADOPTION_LABELS, unit.adoption_status)}</select></label>
-      <label class="field"><span>这条要求现在有效吗？</span><select data-unit="${index}" data-field="validity">${labeledOptions(VALIDITY_LABELS, unit.validity)}</select></label>
-      <label class="field"><span>适用于哪些工作？</span><select data-unit="${index}" data-field="scope">${labeledOptions(SCOPE_LABELS, unit.scope)}</select></label>
-      <label class="field"><span>模型漏掉它会怎样？</span><select data-unit="${index}" data-field="criticality">${option("CRITICAL", "会导致返工或错误", unit.criticality)}${option("NORMAL", "影响较小", unit.criticality)}</select></label>
-      <label class="field"><span>本轮要求模型识别吗？</span><span class="chip"><input type="checkbox" data-unit="${index}" data-field="required"${unit.required !== false ? " checked" : ""}>计入本轮评分</span><small class="field-note">当前有效要求通常勾选；历史、误提取或已被替代的内容不勾选。</small></label>
-      <label class="field full"><span>识别后应该保存到哪里？（可多选）</span><div class="chips">${Object.entries(DESTINATION_LABELS).map(([value, label]) => `<label class="chip"><input type="checkbox" data-unit="${index}" data-destination="${escapeHtml(value)}"${destinations.includes(value) ? " checked" : ""}>${escapeHtml(label)}</label>`).join("")}</div><small class="field-note">“本次工作”用于当前交付；“以后同类工作”表示可能成为长期规则；“还要问我”不能直接当规则。</small></label>
-      <label class="field full"><span>为什么要保留这条？</span><textarea data-unit="${index}" data-field="utility_reason" placeholder="它会影响什么决策、交付或后续复用？">${escapeHtml(unit.utility_reason)}</textarea></label>
-      <label class="field full"><span>哪些说法也算同一要求？（每行一条，可留空）</span><textarea data-unit="${index}" data-field="acceptable_variants">${escapeHtml((unit.acceptable_variants ?? []).join("\n"))}</textarea></label>
-      <label class="field full"><span>不能从这条要求推出什么？（每行一条，可留空）</span><textarea data-unit="${index}" data-field="forbidden_inferences" placeholder="例如：不能因此推断所有后续视频都使用英文字幕">${escapeHtml((unit.forbidden_inferences ?? []).join("\n"))}</textarea></label>
-      ${renderEvidence(unit, index)}
-      <label class="field full"><span>它替代了哪一条？（仅选择“已被新规则替代”时填写内部 ID）</span><input class="small-input" data-unit="${index}" data-field="replacement_for" value="${escapeHtml(unit.replacement_for)}" placeholder="旧 ID，可留空"></label>
-    </div>
+  </div>`;
+  if (unit.review_action === "UNREVIEWED") return `<div class="judgment-bar">
+    <div><span class="step-number">3</span><strong>这条内容和自动分类都正确吗？</strong></div>
+    <div class="judgment-actions"><button type="button" class="primary confirm-correct" data-unit="${index}">正确，进入下一条</button><button type="button" class="secondary edit-unit" data-unit="${index}">不对，查看原因并修改</button></div>
+  </div>`;
+  return `<div class="judgment-bar reviewed-judgment">
+    <div><span class="step-number">3</span><strong>已确认：${escapeHtml(ACTION_LABELS[unit.review_action] || unit.review_action)}</strong></div>
+    <button type="button" class="secondary edit-unit" data-unit="${index}">重新检查</button>
+  </div>`;
+}
+
+function renderUnit(unit, index, units) {
+  const isEditing = editingUnitId === unit.gold_id;
+  return `<article class="${unitClass(unit)}${isEditing ? " editing" : ""}" data-unit-card="${index}">
+    <div class="unit-head"><h3>第 ${index + 1} / ${units.length} 条 <span class="unit-id">${escapeHtml(unit.gold_id)}</span></h3><span class="unit-status">${escapeHtml(REVIEW_STATUS_LABELS[unit.review_status] || unit.review_status)}</span></div>
+    <section class="review-step"><div class="review-step-title"><span class="step-number">1</span><strong>需要确认的内容</strong></div><div class="semantic-preview">${escapeHtml(unit.semantic_content) || "尚未填写内容"}</div></section>
+    <section class="review-step"><div class="review-step-title"><span class="step-number">2</span><strong>自动分类</strong></div>${renderClassification(unit)}</section>
+    ${isEditing ? renderUnitEditor(unit, index) : ""}
+    ${renderJudgment(unit, index, isEditing)}
   </article>`;
 }
 
@@ -169,10 +210,10 @@ function renderDetail() {
   const source = reviewCase.source;
   $("#detail").innerHTML = `<div class="case-head">
     <div><h2>${escapeHtml(reviewCase.display_name || reviewCase.case_id)}</h2><div class="metadata">case_id：${escapeHtml(reviewCase.case_id)}<br>work_id：${escapeHtml(reviewCase.work_id)}<br>cutoff_event_id：${escapeHtml(reviewCase.cutoff_event_id)}<br>来源：${escapeHtml(SOURCE_TYPE_LABELS[reviewCase.source_origin || source?.source_type] || reviewCase.source_origin || source?.source_type)} ${reviewCase.task_family ? ` · 类型：${escapeHtml(reviewCase.task_family)}` : ""}</div></div>
-    <div class="case-actions"><button type="button" class="secondary mark-reviewed" data-case-status="REVIEWED">本案已审完</button><button type="button" class="secondary mark-reviewed" data-case-status="NO_REQUIREMENTS">本案没有需要识别的要求</button></div>
+    <div class="case-actions"><button type="button" class="secondary mark-reviewed" data-case-status="NO_REQUIREMENTS">本案没有需要识别的要求</button></div>
   </div>
   <details class="source-card"><summary>原始可见消息（${reviewCase.source?.messages?.length ?? 0} 条）<span>仅用户/助手正文；展开后可引用补录</span></summary><div class="source-messages">${renderMessages(reviewCase)}</div></details>
-  <section><h3>逐条确认</h3><div class="review-guide"><strong>先确认内容对不对。</strong>然后决定它是否应被模型识别、漏掉后的影响，以及识别后保存到本次工作、以后同类工作、待确认或历史。</div>${reviewCase.units.map(renderUnit).join("") || `<div class="empty">还没有单位。可以从原文消息引用创建，或直接新增补遗漏项。</div>`}
+  <section><h3>逐条确认</h3><div class="review-guide"><strong>从上往下看：</strong>先看需要确认的内容，再看自动分类，最后判断是否正确。只有选择“不对”时才会展开证据、原因和修改字段。</div>${reviewCase.units.map((unit, index, units) => renderUnit(unit, index, units)).join("") || `<div class="empty">还没有内容。可以从原文消息引用创建，或直接补录。</div>`}
     <button type="button" class="add-unit secondary" data-add-unit="ADDED">＋补录遗漏的真实要求</button>
     <div class="case-note"><label class="field"><span>案例备注</span><textarea data-case-field="review_note" placeholder="记录争议、范围判断或待二次确认事项">${escapeHtml(reviewCase.review_note)}</textarea></label></div>
   </section>`;
@@ -199,14 +240,17 @@ function collectVisibleFields() {
       else if (field === "acceptable_variants" || field === "forbidden_inferences") unit[field] = lines(element.value);
       else unit[field] = element.value;
     });
-    unit.destinations = $$(`[data-unit="${index}"][data-destination]`, card).filter((element) => element.checked).map((element) => element.dataset.destination);
-    unit.evidence_refs = $$("[data-evidence-index]", card).reduce((result, element) => {
-      const refIndex = Number(element.dataset.evidenceIndex);
-      const field = element.dataset.evidenceField;
-      result[refIndex] ??= { event_id: "", excerpt: "" };
-      result[refIndex][field] = element.value.trim();
-      return result;
-    }, []).filter((reference) => reference.event_id);
+    const destinationInputs = $$(`[data-unit="${index}"][data-destination]`, card);
+    if (destinationInputs.length) unit.destinations = destinationInputs.filter((element) => element.checked).map((element) => element.dataset.destination);
+    if ($(".evidence-list", card)) {
+      unit.evidence_refs = $$("[data-evidence-field]", card).reduce((result, element) => {
+        const refIndex = Number(element.dataset.evidenceIndex);
+        const field = element.dataset.evidenceField;
+        result[refIndex] ??= { event_id: "", excerpt: "" };
+        result[refIndex][field] = element.value.trim();
+        return result;
+      }, []).filter((reference) => reference.event_id);
+    }
     unit.review_status = ACTION_STATUS[unit.review_action] || "PENDING";
   });
   const note = $('[data-case-field="review_note"]');
@@ -235,12 +279,66 @@ function addUnit(action = "ADDED", evidence = null) {
     review_action: action,
     review_status: ACTION_STATUS[action],
   });
+  editingUnitId = id;
   render();
   const last = $$("[data-unit-card]").at(-1);
   last?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+function scrollToUnit(index) {
+  window.requestAnimationFrame(() => $(`[data-unit-card="${index}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+}
+
+function advanceAfter(index) {
+  const reviewCase = state.cases[currentCaseIndex];
+  const nextIndex = reviewCase.units.findIndex((unit, unitIndex) => unitIndex > index && unit.review_action === "UNREVIEWED");
+  const wrappedIndex = nextIndex >= 0 ? nextIndex : reviewCase.units.findIndex((unit) => unit.review_action === "UNREVIEWED");
+  editingUnitId = null;
+  if (wrappedIndex >= 0) {
+    reviewCase.review_status = "PENDING";
+    render();
+    scrollToUnit(wrappedIndex);
+    return;
+  }
+  reviewCase.review_status = "REVIEWED";
+  const nextCaseIndex = state.cases.findIndex((item, caseIndex) => caseIndex > currentCaseIndex && item.units.some((unit) => unit.review_action === "UNREVIEWED"));
+  if (nextCaseIndex >= 0) {
+    currentCaseIndex = nextCaseIndex;
+    render();
+    window.requestAnimationFrame(() => $(".detail")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    showNotice("本案已审完，已进入下一个案例。", "ok");
+    return;
+  }
+  render();
+  showNotice("所有待确认内容都已处理。请保存草稿，检查无误后再生成最终确认。", "ok");
+}
+
 function bindDetailEvents() {
+  $$(".confirm-correct").forEach((button) => button.addEventListener("click", () => {
+    collectVisibleFields();
+    const index = Number(button.dataset.unit);
+    const unit = state.cases[currentCaseIndex].units[index];
+    unit.review_action = "KEEP";
+    unit.review_status = ACTION_STATUS.KEEP;
+    advanceAfter(index);
+  }));
+  $$(".edit-unit").forEach((button) => button.addEventListener("click", () => {
+    collectVisibleFields();
+    const index = Number(button.dataset.unit);
+    editingUnitId = state.cases[currentCaseIndex].units[index].gold_id;
+    render();
+    scrollToUnit(index);
+  }));
+  $$(".finish-edit").forEach((button) => button.addEventListener("click", () => {
+    collectVisibleFields();
+    const index = Number(button.dataset.unit);
+    const unit = state.cases[currentCaseIndex].units[index];
+    if (unit.review_action === "UNREVIEWED") {
+      showNotice("请先选择修改后如何处理这条内容。", "error");
+      return;
+    }
+    advanceAfter(index);
+  }));
   $$('[data-field="review_action"]').forEach((select) => select.addEventListener("change", () => {
     collectVisibleFields();
     const unit = state.cases[currentCaseIndex].units[Number(select.dataset.unit)];
@@ -253,19 +351,32 @@ function bindDetailEvents() {
       unit.required = false;
       unit.destinations = ["HISTORY"];
     }
+    if (select.value === "UNREVIEWED") state.cases[currentCaseIndex].review_status = "PENDING";
     render();
+    scrollToUnit(Number(select.dataset.unit));
   }));
   $$(".remove-unit").forEach((button) => button.addEventListener("click", () => {
     collectVisibleFields();
+    editingUnitId = null;
     state.cases[currentCaseIndex].units.splice(Number(button.dataset.unit), 1);
     render();
   }));
   $$(".add-unit").forEach((button) => button.addEventListener("click", () => addUnit(button.dataset.addUnit)));
   $$(".mark-reviewed").forEach((button) => button.addEventListener("click", () => {
     collectVisibleFields();
-    state.cases[currentCaseIndex].review_status = button.dataset.caseStatus;
+    const reviewCase = state.cases[currentCaseIndex];
+    reviewCase.review_status = button.dataset.caseStatus;
+    if (button.dataset.caseStatus === "NO_REQUIREMENTS") {
+      reviewCase.units.forEach((unit) => {
+        unit.review_action = "DELETE";
+        unit.review_status = ACTION_STATUS.DELETE;
+        unit.required = false;
+        unit.destinations = ["NO_STRUCTURED_VIEW"];
+      });
+    }
+    editingUnitId = null;
     render();
-    showNotice(button.dataset.caseStatus === "NO_REQUIREMENTS" ? "已标记为本案没有需要模型识别的要求。" : "已标记本案审阅完成。", "ok");
+    showNotice("已标记为本案没有需要模型识别的要求。", "ok");
   }));
   $$(".quote").forEach((button) => button.addEventListener("click", () => {
     collectVisibleFields();
@@ -273,7 +384,7 @@ function bindDetailEvents() {
     const message = state.cases[currentCaseIndex].source.messages.find((item) => item.event_id === eventId);
     if (!message) return;
     addUnit("ADDED", message);
-    showNotice(`已创建补录单位并引用 ${eventId}，请填写其真实语义。`, "ok");
+    showNotice(`已创建补录内容并引用 ${eventId}，请填写其真实要求。`, "ok");
   }));
   $$(".add-evidence").forEach((button) => button.addEventListener("click", () => {
     collectVisibleFields();
