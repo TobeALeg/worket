@@ -133,6 +133,48 @@
       "packaged": true,
       "scale": null,
       "error": "upload must grow with changes, not full repeated history"
+    },
+    "packaged": {
+      "run": "2026-09-22T22-08-56-464Z",
+      "status": "PASSED",
+      "packaged": true,
+      "scale": {
+        "uploadedBytes": 504022,
+        "uploads": 1112,
+        "messages": 550,
+        "currentMessages": 554,
+        "ready": true
+      }
     }
+  },
+  "sourceCommit": "44dd3ba",
+  "package": {
+    "sourceCommit": "44dd3ba",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-44dd3ba.zip",
+    "sha256": "8bac6eee4293e05615c3039a0226ef0217c36efc9833dacb3f636dd3380b48c7",
+    "signatureVerified": true
+  },
+  "deployment": {
+    "release": "/opt/worket/releases/44dd3ba",
+    "previous": "/opt/worket/releases/5eecf20",
+    "rollbackContainer": "worket-before-44dd3ba-20260922-220937",
+    "dataBackup": "/opt/worket/backups/data-pre-44dd3ba-20260922-220937.tgz",
+    "health": {
+      "ok": true,
+      "configured": true
+    },
+    "configurationPreserved": true
+  },
+  "serverArchiveSha256": "d0f9bb2ea647c91ba0fcb6783bd37115956befedf99d0bc1853f02bb8bb36884",
+  "publicVerification": {
+    "health": 200,
+    "anonymousCapabilities": 401,
+    "admin": 404,
+    "authenticatedCapabilities": 200,
+    "recordingViewSchemaVersions": [
+      1,
+      2
+    ],
+    "runtimeMatchesCleanBuild": true
   }
 }

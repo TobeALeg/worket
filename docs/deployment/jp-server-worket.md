@@ -111,3 +111,11 @@ ssh jp-server 'sudo nginx -t'
 部署前无活跃/待领取请求，模块离线导入通过。前版 `/opt/worket/releases/58be614`，回滚容器 `worket-before-5eecf20-20260922-215249`，数据备份 `/opt/worket/backups/data-pre-5eecf20-20260922-215249.tgz`。配置逐项复核不变，无数据库迁移或密钥更新。初次普通 SSH 用户直接访问 Docker 被权限拒绝，改用既有 sudo 运维权限完成。
 
 公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内短期令牌只读认证能力 200，新能力 schema 1，令牌没有输出或离开服务器。recording-view.js、improvement.mjs、admin.js 运行 hash 与干净构建一致。没有生产样本写入或新增模型调用。详见 [样本视图验收](../acceptance/recording-sample-view.md)。
+
+## 2026-09-23 长记录增量视图与字节预算部署
+
+源码 `44dd3ba`，上传 schema v3 / recordingViewSchemaVersions:[1,2]，兼容旧 v1/v2。后台包 SHA-256 `d0f9bb2ea647c91ba0fcb6783bd37115956befedf99d0bc1853f02bb8bb36884`。增加可重算 sample_usage 字节计数，旧样本新写时惰性初始化，未重写旧事件；记录样本 10,000 事件和 20 MiB 双预算，其他范围保持旧限额。
+
+前版 `/opt/worket/releases/5eecf20`；回滚容器 `worket-before-44dd3ba-20260922-220937`；数据备份 `/opt/worket/backups/data-pre-44dd3ba-20260922-220937.tgz`。部署前无活跃/待领取请求，离线导入与健康检查通过，原容器配置逐项一致，无密钥变更。
+
+公网 health 200，匿名 capabilities 401、admin 404；服务器内部临时令牌核验新能力 2，凭据未输出/出机。recording-view.js、contracts/improvement.js、server/improvement.mjs、admin.js hash 与干净构建一致。无生产样本写入或新模型调用。解压客户端 550 次真实来源刷新验收见 [长记录结果](../acceptance/recording-sample-scale.md)。
