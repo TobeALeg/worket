@@ -1,5 +1,6 @@
+import { prepareMaterialPath, replaceMaterialDirectory } from './material-files.js';
 import { createHash } from 'node:crypto';
-import { lstatSync, realpathSync, readdirSync, readFileSync, mkdirSync, mkdtempSync, writeFileSync, renameSync, rmSync, existsSync } from 'node:fs';
+import { lstatSync, realpathSync, readdirSync, readFileSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { ensure, LIMITS } from '../contracts/definition.js';
 import type { Material } from './storage.js';
@@ -38,11 +39,13 @@ function tree(root: string) {
 /** Freeze only the explicitly selected directory; never follow external links or run scripts. */
 export function copySkill(directory: string, storeDirectory: string, role: string): Material {
   const root = realpathSync(resolve(directory)), source = tree(root);
-  mkdirSync(storeDirectory, { recursive: true, mode: 0o700 });
   const target = join(storeDirectory, `skill-${source.hash}`);
   const material: Material = { id: `skill:${source.hash}`, path: join(target, 'SKILL.md'), originalPath: root, role,
     hash: source.hash, size: source.total, bundle: { entrypoint: 'SKILL.md', files: source.files, directories: source.directories } };
-  if (!existsSync(target)) {
+  prepareMaterialPath(storeDirectory, target);
+  let valid = false;
+  try { verifySkill(material); valid = true; } catch { /* An explicit selection can repair its exact content hash. */ }
+  if (!valid) {
     const temporary = mkdtempSync(join(storeDirectory, '.skill-'));
     try {
       for (const directory of source.directories) mkdirSync(join(temporary, directory), { recursive: true, mode: 0o700 });
@@ -53,12 +56,23 @@ export function copySkill(directory: string, storeDirectory: string, role: strin
       }
       ensure(tree(root).hash === source.hash, 'SOURCE_CHANGED');
       ensure(tree(temporary).hash === source.hash, 'SOURCE_CHANGED');
-      renameSync(temporary, target);
+      replaceMaterialDirectory(temporary, target);
     } finally { if (existsSync(temporary)) rmSync(temporary, { recursive: true }); }
   }
   ensure(tree(root).hash === source.hash, 'SOURCE_CHANGED');
   verifySkill(material);
   return material;
+}
+
+export function restoreSkill(material: Material, directory: string, storeDirectory: string): void {
+  const root = realpathSync(resolve(directory)), source = tree(root);
+  ensure(source.hash === material.hash && source.total === material.size &&
+    JSON.stringify(source.files) === JSON.stringify(material.bundle?.files) &&
+    JSON.stringify(source.directories) === JSON.stringify(material.bundle?.directories),
+    'MATERIAL_VERSION_MISMATCH', '所选技能与固定版本不同，请选择原版本；升级技能请修订约定');
+  ensure(material.path === join(storeDirectory, `skill-${material.hash}`, 'SKILL.md'), 'INVALID_MATERIAL_PATH');
+  copySkill(root, storeDirectory, material.role);
+  verifySkill(material);
 }
 
 export function verifySkill(material: Material): void {

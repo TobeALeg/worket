@@ -1,3 +1,4 @@
+import { materialRecoveryStatus, recoverMaterial } from '../definitions/material-recovery.js';
 import { previewDocumentRevision, adoptDocumentRevision } from "../definitions/document-revision.js";
 import { distillationActivity } from "./activity.js";
 import type { Job } from "./service.js";
@@ -227,6 +228,11 @@ export class DistillationDesktop {
         }
         return this.app.dashboard(work.instance.id);
       }
+      case "materialRecovery":
+        return materialRecoveryStatus(r, input);
+      case "recoverMaterial":
+        recoverMaterial(r, input as Parameters<typeof recoverMaterial>[1]);
+        return materialRecoveryStatus(r, input);
       case "instanceFiles": {
         string(input.workId);
         const work = core.getWork(input.workId);

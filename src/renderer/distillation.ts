@@ -284,6 +284,18 @@ async function editDraft(draft: Draft): Promise<void> {
     await openDefinition(definition.id);
   });
 }
+async function openMaterialRecovery(context: { definitionId?: string; workId?: string }): Promise<void> {
+  const materials: { key: string; name: string; scope: string; hash: string; kind: string; available: boolean }[] = await api("materialRecovery", context);
+  show("修复固定资料", `<p class="consent">选择与原版本一致的文件或技能目录。恢复会核对完整内容；更新要求或技能请修订约定。</p>${materials.map((material, index) => `<div class="field" data-recovery-key="${esc(material.key)}"><span>${esc(material.name)} · ${esc(material.scope)}</span><span>${material.available ? "可用" : "缺失或损坏"} · ${esc(material.hash.slice(0, 12))}</span>${material.available ? "" : `<button id="recover-material-${index}">${material.kind === "SKILL" ? "选择原版技能目录" : "选择原版文件"}</button>`}</div>`).join("")}`);
+  for (const [index, material] of materials.entries()) if (!material.available) {
+    bind(`#recover-material-${index}`, async () => {
+      const path = await window.workpet.chooseDefinitionFile(material.kind === "SKILL" ? "SKILL" : undefined);
+      if (!path) return;
+      await api("recoverMaterial", { ...context, key: material.key, expectedHash: material.hash, path });
+      await openMaterialRecovery(context);
+    });
+  }
+}
 async function openDefinition(id: string): Promise<void> {
   const d: Definition = await api("definition", { id });
   const { content } = effectiveRules(d.content);
@@ -303,7 +315,7 @@ async function openDefinition(id: string): Promise<void> {
     `<label class="inline-field">版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><div class="definition-summary">${definitionSections
       .filter(key => sectionItems(content, key).length)
       .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(content, key).map(item => `<div class="state-item"><p>${esc(ruleText(item))}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
-      .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details><details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
+      .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details>${d.materials.length ? '<button id="repair-definition-materials">检查与恢复固定资料</button>' : ""}<details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
     `<button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button><button id="revise-definition">手工修改</button><button id="use-definition" class="primary">使用</button>`,
   );
   modal
@@ -313,6 +325,7 @@ async function openDefinition(id: string): Promise<void> {
       () => void openDefinition(value("#definition-version")),
     );
   bind("#use-definition", () => useDefinition(d));
+  bind("#repair-definition-materials", () => openMaterialRecovery({ definitionId: id }));
   if (additionalEvidence.length) {
     const details = document.createElement('details'); details.id = 'evolution-evidence';
     details.innerHTML = `<summary>此系列的补充依据 · ${additionalEvidence.length}</summary>${additionalEvidence.map((entry, index) => `<p>${esc(entry.label)} ${entry.ref.deleted ? '来源已删除' : `<button data-evolution-evidence="${index}">查看后续原文</button>`}</p>`).join('')}`;
@@ -416,6 +429,10 @@ export async function workDefinitionAction(
   work: WorkDetailView,
   action: string,
 ): Promise<boolean> {
+  if (action === "repair-materials") {
+    await openMaterialRecovery({ workId: work.id });
+    return true;
+  }
   if (action === "instance-files") {
     const binding = await api("instanceFiles", { workId: work.id });
     const files: Record<string, string> = {};

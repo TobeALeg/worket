@@ -42,7 +42,8 @@
     "ai:serve:env": "npm run build:server && node server/start-env.mjs",
     "release:mac": "node scripts/release-mac.mjs",
     "qa:instance-files": "npm run build && node scripts/qa-instance-files.mjs",
-    "qa:recording-idle": "npm run build && node scripts/qa-recording-idle.mjs && WORKET_SOURCE_ABSENCE=1 WORKET_RECORDING_VIEW=1 WORKET_RECORDING_IDLE=1 node scripts/qa-codex-history.mjs"
+    "qa:recording-idle": "npm run build && node scripts/qa-recording-idle.mjs && WORKET_SOURCE_ABSENCE=1 WORKET_RECORDING_VIEW=1 WORKET_RECORDING_IDLE=1 node scripts/qa-codex-history.mjs",
+    "qa:material-recovery": "npm run build && node scripts/qa-material-recovery.mjs && WORKET_MATERIAL_RECOVERY=1 node scripts/qa-instance-files.mjs"
   },
   "devDependencies": {
     "@electron/packager": "19.0.1",

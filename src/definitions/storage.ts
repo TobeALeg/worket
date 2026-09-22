@@ -1,7 +1,7 @@
-import { copySkill, verifySkill, removeSkill, type SkillBundle } from './skill-materials.js';
+import { prepareMaterialPath } from './material-files.js';
+import { copySkill, restoreSkill, verifySkill, removeSkill, type SkillBundle } from './skill-materials.js';
 import { createHash, randomUUID } from "node:crypto";
 import {
-  mkdirSync,
   readFileSync,
   lstatSync,
   writeFileSync,
@@ -9,7 +9,7 @@ import {
   existsSync,
   unlinkSync,
 } from "node:fs";
-import { join, basename, dirname } from "node:path";
+import { join, basename } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { ensure, LIMITS } from "../contracts/definition.js";
 export function canonical(value: unknown): string {
@@ -69,14 +69,22 @@ export class MaterialStore {
   freeze(bytes: Buffer, role: string, originalPath: string, filename?: string): Material {
     ensure(bytes.length <= LIMITS.maxMaterialBytes, "INPUT_TOO_LARGE");
     const digest = hash(bytes);
-    mkdirSync(this.directory, { recursive: true, mode: 0o700 });
     const target = filename ? join(this.directory, digest, basename(filename)) : join(this.directory, digest);
-    mkdirSync(dirname(target), { recursive: true, mode: 0o700 });
-    if (!existsSync(target)) {
+    prepareMaterialPath(this.directory, target);
+    let matches = false;
+    if (existsSync(target)) {
+      const stat = lstatSync(target);
+      ensure(stat.isFile() && !stat.isSymbolicLink(), 'INVALID_MATERIAL_PATH');
+      try { matches = stat.size === bytes.length && hash(readFileSync(target)) === digest; }
+      catch { matches = false; }
+    }
+    if (!matches) {
       const temporary = `${target}.${randomUUID()}.tmp`;
-      writeFileSync(temporary, bytes, { mode: 0o600, flag: "wx" });
-      ensure(hash(readFileSync(temporary)) === digest, "SOURCE_CHANGED");
-      renameSync(temporary, target);
+      try {
+        writeFileSync(temporary, bytes, { mode: 0o600, flag: "wx" });
+        ensure(hash(readFileSync(temporary)) === digest, "SOURCE_CHANGED");
+        renameSync(temporary, target);
+      } finally { if (existsSync(temporary)) unlinkSync(temporary); }
     }
     return {
       id: digest,
@@ -86,6 +94,16 @@ export class MaterialStore {
       size: bytes.length,
       role,
     };
+  }
+  restore(material: Material, selectedPath: string): void {
+    if (material.bundle) { restoreSkill(material, selectedPath, this.directory); return; }
+    const bytes = this.read(selectedPath);
+    ensure(hash(bytes) === material.hash && bytes.length === material.size, 'MATERIAL_VERSION_MISMATCH', '所选文件与固定版本不同；请选择原版本，更新内容请创建新版本或更换本次输入');
+    const flat = join(this.directory, material.hash), named = join(flat, basename(material.path));
+    ensure(material.path === flat || material.path === named, 'INVALID_MATERIAL_PATH');
+    ensure(hash(this.read(selectedPath)) === material.hash, 'SOURCE_CHANGED');
+    this.freeze(bytes, material.role, material.originalPath, material.path === flat ? undefined : basename(material.path));
+    this.verify(material);
   }
   verify(material: Material): void {
     if (material.bundle) { verifySkill(material); return; }

@@ -1,0 +1,59 @@
+{
+  "round": 18,
+  "tests": {
+    "passed": 225,
+    "failed": 0
+  },
+  "reproBefore": {
+    "error": "MATERIAL_MISSING: 固定资料副本缺失或校验不符",
+    "pinnedContent": "损坏的副本",
+    "originalContent": "第一期脚本"
+  },
+  "reproAfter": {
+    "error": null,
+    "pinnedContent": "第一期脚本",
+    "originalContent": "第一期脚本"
+  },
+  "previousClient": {
+    "run": "2026-09-22T22-53-50-983Z",
+    "status": "FAILED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-vSdrf1",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {},
+    "error": "locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#definition-dialog') to be hidden\u001b[22m\n\u001b[2m    15 × locator resolved to visible <dialog open=\"\" id=\"definition-dialog\" aria-labelledby=\"definition-title\">…</dialog>\u001b[22m\n\n    at /Users/dandi/YanGuan/scripts/qa-instance-files.mjs:83:47"
+  },
+  "sourceInputE2E": {
+    "run": "2026-09-22T22-56-57-461Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-d7gXMw",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "reselectionRepairsSameInputVersion": true,
+      "distinctInputsVersionsAndOverrides": true,
+      "explicitUpdateIsolatedAndReceiptReset": true,
+      "legacyBlockedAndExplicitlyRepaired": true
+    }
+  },
+  "sourceRecoveryE2E": {
+    "run": "2026-09-22T22-58-44-392Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-recovery-e2e-FdwcL8",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "definitionAndSkillExactVersion": true,
+      "inputsReferencesAndContractIdentityPreserved": true,
+      "mcpValidatesRecoveredMaterials": true
+    }
+  },
+  "actualProviderCalls": 0,
+  "externalAgent": false
+}

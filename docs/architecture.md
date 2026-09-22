@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：固定资料的精确版本恢复
+
+`material-recovery.ts` 按 definitionId 或 workId 从持久化定义/实例清单解析受管目标，renderer 只提交 target key、expectedHash 和用户选择的路径；不能指定任意写入位置。状态检查沿用 MaterialStore.verify。恢复核对完整文件 hash/size，技能核对整个清单、空目录和可执行位，再恢复同一目标；记录 MATERIAL_RESTORED 本地审计，不修改定义和实例清单。
+
+MaterialStore.freeze 对相同 hash 的损坏副本使用临时文件校验后原子 rename；目录通过完整暂存、原目录备份、切换和异常回滚，完成后删除备份。写入路径必须属于受管目录，拒绝被替换为符号链接的目录/目标；所选技能仍不跟随内部符号链接。普通异常回滚有测试，未宣称目录双 rename 对断电也原子；中途断电仍可能留下备份并需重新选择恢复，当前包校验继续阻止错误使用。
+
+恢复仅适用于已保存 hash 的版本；与更新内容、发布新版本和更换本次输入分开。客户端本地操作，无服务协议或模型变更。
+
 ## 2026-09-23：记录采集的持久化扫描检查点
 
 WorkCore.sourceCheckpoint 通过 work/status、活动绑定及 `source_events(work_instance_id,row_id)` 索引读取最新追加位置，不加载消息正文、状态或历史交接。recording_checkpoints 保存 sample 的 source_row_id；它与外部 sequence、远端 view.sequence 分离，支持迟到或重复来源序号。

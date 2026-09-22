@@ -994,6 +994,7 @@ export class AppService {
       ...(work.definition.kind === "REUSABLE"
         ? {
             reusableDefinitionId: work.definition.id,
+            hasPinnedMaterials: this.#core.definitions.get(work.definition.id).materials.length > 0 || (this.#core.definitions.inputs(work.instance.id).inputMaterials?.length ?? 0) > 0 || this.#core.definitions.inputs(work.instance.id).referenceExamples.some(reference => !!reference.material),
             hasInstanceFiles: this.#core.definitions.get(work.definition.id).content.inputs.some(spec => spec.valueType === "FILE") || this.#core.definitions.inputs(work.instance.id).referenceExamples.length > 0,
             dispatchStatus: work.activeBinding ? (work.activeBinding.conversationId.startsWith("pending:") ? "WAITING" : "BOUND") : String(dispatch?.status ?? "NOT_DISPATCHED"),
             dispatchReadAt: work.packageReadAt ?? null,

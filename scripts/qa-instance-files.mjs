@@ -73,6 +73,17 @@ try {
   assert.equal(old.definition.version, 1); assert.equal(secondPackage.definition.version, 2);
   assert.equal(secondPackage.ruleOverrides?.length ?? 0, 0); assert.equal(old.ruleOverrides.length, 1);
   assert.equal(secondPackage.inputs.subject, '第二期'); assert.equal(secondPackage.purpose, 'START');
+  if (process.env.WORKET_MATERIAL_RECOVERY === '1') {
+    writeFileSync(secondPackage.inputs.script, '损坏的第二期副本');
+    await assert.rejects(api('package', { workId: second }), /MATERIAL_MISSING/);
+    await select(second); await panel.locator('summary[aria-label="工作操作"]').click(); await panel.locator('[data-action="instance-files"]').click();
+    await panel.locator('[data-select-instance-file="script"]').click();
+    await panel.locator('[data-file-label="script"]').filter({ hasText: '待保存' }).waitFor();
+    await panel.locator('#save-instance-files').click();
+    await panel.locator('#definition-dialog').waitFor({ state: 'hidden', timeout: 5000 });
+    assert.equal(readFileSync((await api('package', { workId: second })).json.inputs.script, 'utf8'), '第二期脚本');
+    report.checks.reselectionRepairsSameInputVersion = true;
+  }
   unlinkSync(script); await api('package', { workId: first }); await api('package', { workId: second });
   report.checks.distinctInputsVersionsAndOverrides = true;
   await select(first);

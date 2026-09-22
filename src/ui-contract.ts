@@ -49,6 +49,7 @@ export interface WorkDetailView extends WorkSummaryView {
   latestActivity?: { text: string; sourceMessageId: string };
   reusableDefinitionId?: string;
   hasInstanceFiles?: boolean;
+  hasPinnedMaterials?: boolean;
   dispatchStatus?: string;
   dispatchReadAt?: string | null;
   state: WorkStateView;
