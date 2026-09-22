@@ -1,0 +1,156 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-1:r1",
+        "text": "本期输入脚本为“全新脚本 1”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r1",
+        "text": "本期不要背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r2",
+        "text": "下一期和以后仍按默认必须有背景音乐。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r3",
+        "text": "保持 MP4 交付。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "22f197c900c325730f7a7d442d8344c4ac2597576f2eb2835f81b57fc71e8660",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "no_music_this_instance",
+            "text": "本期视频不要添加背景音乐。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "仅这期不要背景音乐"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "仅本期"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.music",
+          "item": {
+            "key": "music",
+            "text": "每期视频必须添加背景音乐。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "下一期和以后仍按默认必须有背景音乐"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "deliverables",
+          "target": "deliverables.mp4",
+          "item": {
+            "key": "mp4",
+            "text": "成片交付 MP4。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "MP4 交付保持"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3972,
+    "completion_tokens": 4708,
+    "total_tokens": 8680,
+    "prompt_tokens_details": {
+      "cached_tokens": 3456
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4068
+    },
+    "prompt_cache_hit_tokens": 3456,
+    "prompt_cache_miss_tokens": 516
+  },
+  "configuredModel": "deepseek-flash"
+}

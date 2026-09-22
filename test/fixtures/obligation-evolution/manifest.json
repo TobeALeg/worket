@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Unmodified actual model responses on synthetic sources. Original failure and test false positive retained. Not blind or business acceptance.",
+  "cases": [
+    {
+      "id": "withdraw-mandatory",
+      "scenario": "withdraw-mandatory",
+      "run": "2026-09-22T23-08-29-087Z",
+      "outcome": "ACCEPTED_AFTER_HARNESS_FIX",
+      "sha256": {
+        "request-1.json": "34ddb17882bd2a54f762b5d4e15eca06c1d9f04c3bdeed3a3b9a762a6ac7720a",
+        "response-1.json": "afa21eb49fc32d6567184b4dcdead9652c6ddeebfa79d185d5972b7273dc2af4",
+        "request-2.json": "e8265449ee14fa7e4b9c36379f9254eaaa00bddeba4b93e9cd8434e4bdebeccc",
+        "response-2.json": "3707e8241875727689a9601e1c192356e28572b2559b086e75c1c463ee31cc5f",
+        "report.json": "b34280d5bda5b92b1dbc4c23181a4eb84edb031cf3951aace83402ae2301559b"
+      }
+    },
+    {
+      "id": "one-off-waiver",
+      "scenario": "one-off-waiver",
+      "run": "2026-09-22T23-08-29-087Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "14aa8423887abac50c2944c6f4d012087408d5d0a0681be912887e258ec75ebe",
+        "response-1.json": "dc9ff8babb532c920ca945c0c4c443ce29dd9ef717d827ad202e0b56ebd8b5f1",
+        "request-2.json": "bd7a26fe6bad6c497ec38586c89b4ea214cacbe6ce15f6580da1227cdfad3835",
+        "response-2.json": "f08b7da63093c78bb54a0fd029b85274e3f42e48c852c05aa2c4bbdf5fa7b378",
+        "report.json": "1656550d157226d61bcfc36cec4c4a9b989c4c16a6b2010b664fb48f59e29101"
+      }
+    },
+    {
+      "id": "enduring-ban-before",
+      "scenario": "enduring-ban",
+      "run": "2026-09-22T23-08-29-087Z",
+      "outcome": "RULE_SCOPE_MISMATCH",
+      "sha256": {
+        "request-1.json": "d6ae655294869288440d86593b654b6901cbeeb16751d30f8e9c73ab52c78082",
+        "response-1.json": "95f75dae0e53e7d3c713d9096ee2dcf8e04b32665be64086144a25e5361f45dd",
+        "request-2.json": "e75f7bb658e7d70fc7b1a0f1e3158d3b74fa2c76edb85fc291440e4ba01a2a92",
+        "response-2.json": "99f8ad74f7abaa1a5f95bce626b41cf2af136ff23355e1dbca220c2c79139506",
+        "report.json": "e2d6019027d22f16f332fe0b2c1688c49fd3f2f47fdd36cb1cb98b0a3b675049"
+      }
+    },
+    {
+      "id": "enduring-ban",
+      "scenario": "enduring-ban",
+      "run": "2026-09-22T23-12-27-707Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "d6ae655294869288440d86593b654b6901cbeeb16751d30f8e9c73ab52c78082",
+        "response-1.json": "06a1eb9b4f426038f0106fbe897c313a09e2686cd1fe378108545ace2e96cce7",
+        "request-2.json": "8ae0777116a4bd15f07488341719ce22b9531262cbf7a29958c6d6c11ae6001e",
+        "response-2.json": "5e43d1d40039b2f5a2c7d53d4ebf94728f9e2a00fb0e1b5521dbdec60e945811",
+        "report.json": "dcb093f0d806d81925b811b8e71fb85b857f3bdcad2c859e1745324ca182bce7"
+      }
+    },
+    {
+      "id": "conditions-after",
+      "scenario": "conditions-and-exception",
+      "suite": "platform",
+      "run": "2026-09-22T23-15-29-426Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "8ab4a0e9f8e9f22aff804d893522fbbaea913a71f3e8957e8650a7e762bd969d",
+        "response-1.json": "14fb577e2cfb5f1df137fc97b1b7d71780d4f040dbfa1bac213931d80fe803d3",
+        "request-2.json": "81fefee6bb6052dd8b477558c5a5b3ab84d02ba9d1a4456cfb6a470c1e37f7f0",
+        "response-2.json": "da3ae7e7b14df41f665c4cf62ce688413452519e7743dc1717f6cb18637aebb9",
+        "report.json": "04a1c7960ebd87e432a5c1423b9908e343b7c76311411eb38211723a8121ba66"
+      }
+    }
+  ]
+}

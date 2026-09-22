@@ -1,0 +1,42 @@
+{
+  "id": "conditions-and-exception",
+  "status": "PASSED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-yZbRwy",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-15-29-426Z/conditions-and-exception",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2682,
+      "completion_tokens": 4330,
+      "total_tokens": 7012,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4072
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 250
+    },
+    {
+      "prompt_tokens": 4275,
+      "completion_tokens": 8829,
+      "total_tokens": 13104,
+      "prompt_tokens_details": {
+        "cached_tokens": 3200
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7572
+      },
+      "prompt_cache_hit_tokens": 3200,
+      "prompt_cache_miss_tokens": 1075
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "PUBLISH",
+    "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+  }
+}

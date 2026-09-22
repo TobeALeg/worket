@@ -1,0 +1,61 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-1:r1",
+        "text": "本期输入脚本为“全新脚本 1”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r1",
+        "text": "本期不要背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r2",
+        "text": "下一期和以后仍按默认必须有背景音乐。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2:r3",
+        "text": "保持 MP4 交付。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2654,
+    "completion_tokens": 4133,
+    "total_tokens": 6787,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3908
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 222
+  },
+  "configuredModel": "deepseek-flash"
+}

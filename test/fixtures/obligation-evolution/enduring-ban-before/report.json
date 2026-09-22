@@ -1,0 +1,39 @@
+{
+  "id": "enduring-ban",
+  "status": "FAILED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-gZxNur",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/enduring-ban",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2660,
+      "completion_tokens": 2769,
+      "total_tokens": 5429,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2521
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 228
+    },
+    {
+      "prompt_tokens": 4001,
+      "completion_tokens": 6110,
+      "total_tokens": 10111,
+      "prompt_tokens_details": {
+        "cached_tokens": 3456
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 5406
+      },
+      "prompt_cache_hit_tokens": 3456,
+      "prompt_cache_miss_tokens": 545
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "RULE_SCOPE_MISMATCH\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+}

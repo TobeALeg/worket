@@ -157,7 +157,7 @@ export async function extractDefinition(
   onUsage(usage);
   result.versions = {
     schema: 1,
-    prompt: request.skillSchemaVersion === 1 ? (request.evolution ? 'work-definition-evolution-v1.6' : coordinated ? 'work-definition-v2.6' : 'work-definition-v1.6') : request.evolution ? (request.evidenceSchemaVersion === 1 ? 'work-definition-evolution-v1.5' : 'work-definition-evolution-v1.4') : coordinated ? (request.evidenceSchemaVersion === 1 ? 'work-definition-v2.5' : PROMPT_VERSION) : (request.evidenceSchemaVersion === 1 ? "work-definition-v1.5" : "work-definition-v1.4"),
+    prompt: request.skillSchemaVersion === 1 ? (request.evolution ? 'work-definition-evolution-v1.7' : coordinated ? 'work-definition-v2.6' : 'work-definition-v1.6') : request.evolution ? (request.evidenceSchemaVersion === 1 ? 'work-definition-evolution-v1.5.1' : 'work-definition-evolution-v1.4.1') : coordinated ? (request.evidenceSchemaVersion === 1 ? 'work-definition-v2.5' : PROMPT_VERSION) : (request.evidenceSchemaVersion === 1 ? "work-definition-v1.5" : "work-definition-v1.4"),
     model: provider.model,
   };
   result.coverage.processedChunks = chunks.length;

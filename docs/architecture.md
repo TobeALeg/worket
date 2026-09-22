@@ -1,5 +1,11 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：演进提示中的通用覆盖与限定条件
+
+`evolution-prompt.mjs` 区分 scope 的长期适用与 condition 的限定谓词。DUPLICATE/REPLACES 适用范围不变时要求沿用基准 condition 的原值，包括不设置 condition；“所有/每次/无论输入”等覆盖描述留在正文。真正范围改变继续进入审阅，不在程序中用词表自动删条件或放宽 RULE_SCOPE_MISMATCH。
+
+演进技能能力路径提示版本 v1.7，非技能路径 v1.5.1/v1.4.1；schema/capability 和客户端协议保持。新增真实响应冻结验收区分初始测试误报、真实条件校验失败与新模型复验成功。工作包是有效规则视图，验收工具使用其规则文本和 acceptanceChecks，不把导出视图再次当作完整历史规则图求值。
+
 ## 2026-09-23：固定资料的精确版本恢复
 
 `material-recovery.ts` 按 definitionId 或 workId 从持久化定义/实例清单解析受管目标，renderer 只提交 target key、expectedHash 和用户选择的路径；不能指定任意写入位置。状态检查沿用 MaterialStore.verify。恢复核对完整文件 hash/size，技能核对整个清单、空目录和可执行位，再恢复同一目标；记录 MATERIAL_RESTORED 本地审计，不修改定义和实例清单。

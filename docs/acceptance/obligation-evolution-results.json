@@ -1,0 +1,382 @@
+{
+  "round": 19,
+  "tests": {
+    "passed": 230,
+    "failed": 0
+  },
+  "realRuns": [
+    {
+      "run": "2026-09-22T23-08-29-087Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "withdraw-mandatory",
+          "status": "FAILED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-P2xN1n",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/withdraw-mandatory",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2657,
+              "completion_tokens": 3474,
+              "total_tokens": 6131,
+              "prompt_tokens_details": {
+                "cached_tokens": 2304
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 3118
+              },
+              "prompt_cache_hit_tokens": 2304,
+              "prompt_cache_miss_tokens": 353
+            },
+            {
+              "prompt_tokens": 4106,
+              "completion_tokens": 5090,
+              "total_tokens": 9196,
+              "prompt_tokens_details": {
+                "cached_tokens": 2304
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4398
+              },
+              "prompt_cache_hit_tokens": 2304,
+              "prompt_cache_miss_tokens": 1802
+            }
+          ],
+          "humanAcceptance": false,
+          "error": "withdrawal is not a ban"
+        },
+        {
+          "id": "enduring-ban",
+          "status": "FAILED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-gZxNur",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/enduring-ban",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2660,
+              "completion_tokens": 2769,
+              "total_tokens": 5429,
+              "prompt_tokens_details": {
+                "cached_tokens": 2432
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 2521
+              },
+              "prompt_cache_hit_tokens": 2432,
+              "prompt_cache_miss_tokens": 228
+            },
+            {
+              "prompt_tokens": 4001,
+              "completion_tokens": 6110,
+              "total_tokens": 10111,
+              "prompt_tokens_details": {
+                "cached_tokens": 3456
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 5406
+              },
+              "prompt_cache_hit_tokens": 3456,
+              "prompt_cache_miss_tokens": 545
+            }
+          ],
+          "humanAcceptance": false,
+          "error": "RULE_SCOPE_MISMATCH\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+        },
+        {
+          "id": "one-off-waiver",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-0FNU8S",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/one-off-waiver",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2654,
+              "completion_tokens": 4133,
+              "total_tokens": 6787,
+              "prompt_tokens_details": {
+                "cached_tokens": 2432
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 3908
+              },
+              "prompt_cache_hit_tokens": 2432,
+              "prompt_cache_miss_tokens": 222
+            },
+            {
+              "prompt_tokens": 3972,
+              "completion_tokens": 4708,
+              "total_tokens": 8680,
+              "prompt_tokens_details": {
+                "cached_tokens": 3456
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4068
+              },
+              "prompt_cache_hit_tokens": 3456,
+              "prompt_cache_miss_tokens": 516
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "expectedVersion": 1,
+            "reason": "no new reusable version for this-instance waiver"
+          }
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T23-12-27-707Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "enduring-ban",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-adh1iR",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-12-27-707Z/enduring-ban",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2660,
+              "completion_tokens": 4547,
+              "total_tokens": 7207,
+              "prompt_tokens_details": {
+                "cached_tokens": 2432
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4358
+              },
+              "prompt_cache_hit_tokens": 2432,
+              "prompt_cache_miss_tokens": 228
+            },
+            {
+              "prompt_tokens": 4104,
+              "completion_tokens": 7804,
+              "total_tokens": 11908,
+              "prompt_tokens_details": {
+                "cached_tokens": 2816
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 6880
+              },
+              "prompt_cache_hit_tokens": 2816,
+              "prompt_cache_miss_tokens": 1288
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "expectedVersion": 2,
+            "reason": "enduring music ban replaces mandatory use"
+          },
+          "acceptanceLabels": [
+            "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。"
+          ]
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T23-15-29-426Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-yZbRwy",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-15-29-426Z/conditions-and-exception",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2682,
+              "completion_tokens": 4330,
+              "total_tokens": 7012,
+              "prompt_tokens_details": {
+                "cached_tokens": 2432
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4072
+              },
+              "prompt_cache_hit_tokens": 2432,
+              "prompt_cache_miss_tokens": 250
+            },
+            {
+              "prompt_tokens": 4275,
+              "completion_tokens": 8829,
+              "total_tokens": 13104,
+              "prompt_tokens_details": {
+                "cached_tokens": 3200
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 7572
+              },
+              "prompt_cache_hit_tokens": 3200,
+              "prompt_cache_miss_tokens": 1075
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        }
+      ]
+    }
+  ],
+  "actualProviderCalls": 10,
+  "knownUsage": {
+    "prompt_tokens": 33771,
+    "completion_tokens": 51794,
+    "total_tokens": 85565
+  },
+  "cost": "not returned by provider; unknown",
+  "sourceReplay": {
+    "run": "2026-09-22T23-15-36-882Z",
+    "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+    "status": "PASSED",
+    "cases": [
+      {
+        "id": "withdraw-mandatory",
+        "status": "PASSED",
+        "packaged": false,
+        "credentialStorage": "OS safeStorage",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-lZGMaa",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-15-36-882Z/withdraw-mandatory",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "music optional; no ban; old mandatory acceptance removed"
+        },
+        "acceptanceLabels": [
+          "从以后开始，背景音乐不再作为必须项，是否添加由本期脚本决定；这不是禁止配乐。",
+          "不加背景音乐也应能通过验收。"
+        ]
+      },
+      {
+        "id": "enduring-ban",
+        "status": "PASSED",
+        "packaged": false,
+        "credentialStorage": "OS safeStorage",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-4QqmO2",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-15-36-882Z/enduring-ban",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "enduring music ban replaces mandatory use"
+        },
+        "acceptanceLabels": [
+          "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。"
+        ]
+      },
+      {
+        "id": "one-off-waiver",
+        "status": "PASSED",
+        "packaged": false,
+        "credentialStorage": "OS safeStorage",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-OOOIXr",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-15-36-882Z/one-off-waiver",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 1,
+          "reason": "no new reusable version for this-instance waiver"
+        },
+        "acceptanceLabels": [
+          "每期视频必须添加背景音乐。"
+        ]
+      }
+    ]
+  },
+  "packagedReplay": {
+    "run": "2026-09-22T23-17-42-010Z",
+    "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+    "status": "PASSED",
+    "cases": [
+      {
+        "id": "withdraw-mandatory",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-8E8STu",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-17-42-010Z/withdraw-mandatory",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "music optional; no ban; old mandatory acceptance removed"
+        },
+        "acceptanceLabels": [
+          "从以后开始，背景音乐不再作为必须项，是否添加由本期脚本决定；这不是禁止配乐。",
+          "不加背景音乐也应能通过验收。"
+        ]
+      },
+      {
+        "id": "enduring-ban",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-QGHEfd",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-17-42-010Z/enduring-ban",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "enduring music ban replaces mandatory use"
+        },
+        "acceptanceLabels": [
+          "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。"
+        ]
+      },
+      {
+        "id": "one-off-waiver",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-MvogkR",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-17-42-010Z/one-off-waiver",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 1,
+          "reason": "no new reusable version for this-instance waiver"
+        },
+        "acceptanceLabels": [
+          "每期视频必须添加背景音乐。"
+        ]
+      }
+    ]
+  },
+  "clientSourceCommit": "db8dfa2",
+  "humanBusinessAcceptance": false,
+  "harnessCorrections": [
+    "Negated must/ban wording is not a positive obligation or prohibition. Original withdrawal run false positive retained.",
+    "WorkPackage contains resolved rules; verifier must not resolve historical relations a second time."
+  ]
+}

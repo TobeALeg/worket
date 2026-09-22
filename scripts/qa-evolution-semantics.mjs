@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { _electron as electron } from 'playwright';
 import { createWorkCore } from '../dist/core/index.js';
 import { createAIService } from '../server/service.mjs';
-import { semanticCases, semanticBaseline } from './lib/evolution-semantic-cases.mjs';
+const { semanticCases, semanticBaseline } = await import(process.env.WORKET_SEMANTIC_SUITE === 'obligations' ? './lib/obligation-semantic-cases.mjs' : './lib/evolution-semantic-cases.mjs');
 import { recordedModelProvider } from './lib/recorded-model-provider.mjs';
 import { contractReplay } from './lib/contract-replay.mjs';
 assert.ok(process.env.WORKET_SEMANTIC_REPLAY_ROOT || process.env.WORKET_SEMANTIC_LIVE === '1', 'Select replay or explicitly set WORKET_SEMANTIC_LIVE=1');
@@ -120,7 +120,16 @@ for (const trial of selected) {
       const id = (await panel.evaluate(() => window.workpet.getDashboard())).selectedWorkId;
       const pkg = await panel.evaluate(workId => window.workpet.distillation('package', { workId }), id);
       writeFileSync(join(out, 'package.json'), JSON.stringify(pkg, null, 2));
-      assert.equal(pkg.json.definition.version, 2); assert.match(pkg.markdown, /下一期完全不同的脚本/);
+      assert.equal(pkg.json.definition.version, verdict.expectedVersion ?? 2);
+      // Export already contains effective rules; do not resolve its historical graph twice.
+      const effectiveRows = ['deliverables','constraints','acceptanceCriteria','methods'].flatMap(section => pkg.json.definition.content[section].map(item => ({address:section+'.'+item.key,text:item.text})));
+      trial.verifyPackage?.(pkg.json.definition.content, (pkg.json.acceptanceChecks ?? []).map(check => ({...check,text:effectiveRows.find(row=>row.address===check.rule)?.text ?? ''})));
+      if (trial.verifyAcceptance) {
+        await panel.locator('[data-action="complete"]').click();
+        const labels = await panel.locator('[data-criterion]').evaluateAll(elements => elements.map(element => [...element.parentElement.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim()));
+        trial.verifyAcceptance(labels); report.acceptanceLabels=labels;
+        await panel.locator('#definition-dialog [data-close]').click();
+      } assert.match(pkg.markdown, /下一期完全不同的脚本/);
       if (verdict.expected === 'BLOCK') {
         assert.match(pkg.markdown, /30 words/); assert.ok(!pkg.markdown.includes('50 words')); assert.ok(!pkg.markdown.includes('70 words'));
       }

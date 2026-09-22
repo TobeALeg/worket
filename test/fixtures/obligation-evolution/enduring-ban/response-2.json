@@ -1,0 +1,146 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1-event-2-req-1",
+        "text": "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-req-2",
+        "text": "保留人声口播和必要音效。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-req-3",
+        "text": "成片仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "22f197c900c325730f7a7d442d8344c4ac2597576f2eb2835f81b57fc71e8660",
+      "changes": [
+        {
+          "kind": "REPLACES",
+          "section": "constraints",
+          "item": {
+            "key": "music",
+            "text": "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          },
+          "target": "constraints.music"
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "voice_sfx",
+            "text": "保留人声口播和必要音效。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "保留人声口播和必要音效。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "deliverables",
+          "item": {
+            "key": "mp4",
+            "text": "成片仍然交付 MP4。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "成片仍然交付 MP4。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          },
+          "target": "deliverables.mp4"
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4104,
+    "completion_tokens": 7804,
+    "total_tokens": 11908,
+    "prompt_tokens_details": {
+      "cached_tokens": 2816
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6880
+    },
+    "prompt_cache_hit_tokens": 2816,
+    "prompt_cache_miss_tokens": 1288
+  },
+  "configuredModel": "deepseek-flash"
+}

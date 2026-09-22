@@ -1,0 +1,39 @@
+{
+  "id": "withdraw-mandatory",
+  "status": "FAILED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-P2xN1n",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/withdraw-mandatory",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2657,
+      "completion_tokens": 3474,
+      "total_tokens": 6131,
+      "prompt_tokens_details": {
+        "cached_tokens": 2304
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3118
+      },
+      "prompt_cache_hit_tokens": 2304,
+      "prompt_cache_miss_tokens": 353
+    },
+    {
+      "prompt_tokens": 4106,
+      "completion_tokens": 5090,
+      "total_tokens": 9196,
+      "prompt_tokens_details": {
+        "cached_tokens": 2304
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4398
+      },
+      "prompt_cache_hit_tokens": 2304,
+      "prompt_cache_miss_tokens": 1802
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "withdrawal is not a ban"
+}

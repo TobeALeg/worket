@@ -1,0 +1,189 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-2-r1",
+        "text": "发布到 Instagram 的文案长期上限仍不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r2",
+        "text": "发布到 Instagram 的文案必须带话题 #Acme。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r3",
+        "text": "发布到 TikTok 的文案不超过 80 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r4",
+        "text": "本期的 Instagram 赞助片文案上限特批到 70 words，仅限本期；不改变 Instagram 长期 50 words 上限。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "e8efc800eaf1a8594bd57425148233f68cf22cc4d783f1077a9da4f1c3ffe3b4",
+      "changes": [
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.instagram_limit",
+          "item": {
+            "key": "instagram_limit",
+            "text": "发布到 Instagram 的文案不超过 50 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后发布到 Instagram 的文案仍然不超过 50 words"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后 Instagram 的长期上限依旧是 50 words"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "发布到 Instagram"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "instagram_hashtag_acme",
+            "text": "发布到 Instagram 的文案必须带话题 #Acme。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "而且必须带话题 #Acme"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "发布到 Instagram"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.tiktok_limit",
+          "item": {
+            "key": "tiktok_limit",
+            "text": "发布到 TikTok 的文案不超过 80 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "TikTok 仍不超过 80 words"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "发布到 TikTok"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "instagram_sponsored_70_instance",
+            "text": "本期的 Instagram 赞助片文案上限特批到 70 words，仅限本期。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "本期的 Instagram 赞助片特批到 70 words，仅限本期"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本期的 Instagram 赞助片"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4275,
+    "completion_tokens": 8829,
+    "total_tokens": 13104,
+    "prompt_tokens_details": {
+      "cached_tokens": 3200
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7572
+    },
+    "prompt_cache_hit_tokens": 3200,
+    "prompt_cache_miss_tokens": 1075
+  },
+  "configuredModel": "deepseek-flash"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "one-off-waiver",
+  "status": "PASSED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-0FNU8S",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-08-29-087Z/one-off-waiver",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2654,
+      "completion_tokens": 4133,
+      "total_tokens": 6787,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3908
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 222
+    },
+    {
+      "prompt_tokens": 3972,
+      "completion_tokens": 4708,
+      "total_tokens": 8680,
+      "prompt_tokens_details": {
+        "cached_tokens": 3456
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4068
+      },
+      "prompt_cache_hit_tokens": 3456,
+      "prompt_cache_miss_tokens": 516
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "PUBLISH",
+    "expectedVersion": 1,
+    "reason": "no new reusable version for this-instance waiver"
+  }
+}

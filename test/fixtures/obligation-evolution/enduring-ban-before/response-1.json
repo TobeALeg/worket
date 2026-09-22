@@ -1,0 +1,61 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-1/script-instance",
+        "text": "本次任务提供的输入脚本为「全新脚本 1」。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/no-bgm",
+        "text": "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/keep-voice-sfx",
+        "text": "保留人声口播和必要音效。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/mp4-deliverable",
+        "text": "成片仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2660,
+    "completion_tokens": 2769,
+    "total_tokens": 5429,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2521
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 228
+  },
+  "configuredModel": "deepseek-flash"
+}

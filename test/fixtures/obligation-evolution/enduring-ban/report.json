@@ -1,0 +1,46 @@
+{
+  "id": "enduring-ban",
+  "status": "PASSED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-adh1iR",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-12-27-707Z/enduring-ban",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2660,
+      "completion_tokens": 4547,
+      "total_tokens": 7207,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4358
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 228
+    },
+    {
+      "prompt_tokens": 4104,
+      "completion_tokens": 7804,
+      "total_tokens": 11908,
+      "prompt_tokens_details": {
+        "cached_tokens": 2816
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 6880
+      },
+      "prompt_cache_hit_tokens": 2816,
+      "prompt_cache_miss_tokens": 1288
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "PUBLISH",
+    "expectedVersion": 2,
+    "reason": "enduring music ban replaces mandatory use"
+  },
+  "acceptanceLabels": [
+    "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。"
+  ]
+}

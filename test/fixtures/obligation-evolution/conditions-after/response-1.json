@@ -1,0 +1,61 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-2-r1",
+        "text": "发布到 Instagram 的文案长期上限仍不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r2",
+        "text": "发布到 Instagram 的文案必须带话题 #Acme。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r3",
+        "text": "发布到 TikTok 的文案不超过 80 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-r4",
+        "text": "本期的 Instagram 赞助片文案上限特批到 70 words，仅限本期；不改变 Instagram 长期 50 words 上限。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2682,
+    "completion_tokens": 4330,
+    "total_tokens": 7012,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4072
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 250
+  },
+  "configuredModel": "deepseek-flash"
+}

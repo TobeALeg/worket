@@ -1,0 +1,76 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-2/req-1",
+        "text": "从以后开始，背景音乐不再作为必须项；是否添加由本期脚本决定。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/req-2",
+        "text": "不加背景音乐也应能通过验收。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/req-3",
+        "text": "这不是禁止配乐。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/req-4",
+        "text": "MP4 交付要求保持。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": [
+      {
+        "id": "work-1/event-2/issue-1",
+        "type": "MISSING_INFORMATION",
+        "field": "requirements",
+        "message": "事件提到 MP4 交付要求保持，但未提供该要求的具体内容，需补充原始 MP4 交付要求。",
+        "blocking": false
+      },
+      {
+        "id": "work-1/event-2/issue-2",
+        "type": "MISSING_INFORMATION",
+        "field": "requirements",
+        "message": "事件说明背景音乐不再作为必须项，但未提供此前的强制背景音乐要求，因此无法建立替换关系。",
+        "blocking": false
+      }
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2657,
+    "completion_tokens": 3474,
+    "total_tokens": 6131,
+    "prompt_tokens_details": {
+      "cached_tokens": 2304
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3118
+    },
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 353
+  },
+  "configuredModel": "deepseek-flash"
+}

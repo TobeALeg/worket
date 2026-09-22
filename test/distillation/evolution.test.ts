@@ -149,7 +149,7 @@ test('evolution workflow sends a path-free baseline and validates new evidence t
       assert.deepEqual(body.baseline, request.evolution); assert.ok(messages[0].content.endsWith('No deletion by omission. No tool use. No generic rules unsupported by new evidence.'));
       return { result: expected };
     } }, new AbortController().signal);
-    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.6'); assert.equal(value.content, null);
+    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.7'); assert.equal(value.content, null);
   } finally { f.core.close(); }
 });
 

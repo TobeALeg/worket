@@ -1,0 +1,52 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-event-2-req-1",
+        "text": "以后所有视频都禁止使用背景音乐，包括开头和结尾，无论脚本怎么写。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-req-2",
+        "text": "保留人声口播和必要音效。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-req-3",
+        "text": "成片仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2660,
+    "completion_tokens": 4547,
+    "total_tokens": 7207,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4358
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 228
+  },
+  "configuredModel": "deepseek-flash"
+}
