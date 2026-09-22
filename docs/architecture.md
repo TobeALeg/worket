@@ -8,7 +8,7 @@
 
 `DistillationService.prepare → file role + immutable source snapshot → server/workflow → DefinitionDraft → publish/pinRuleDocuments → WorkDefinition version → instance inputs/overrides → resolveRuleDocuments → WorkPackage/MCP/copy → acceptanceChecks`。
 
-`contracts/rules.ts` 定义作用域、采纳状态、条件、重复/补充/替代/冲突关系与条款版本。规则地址使用 `collection.key`，避免不同字段同名误合并。模型负责语义判断；程序验证引用、范围一致性、无循环和有效保留目标，计算一份有效规则。无新领域实体或数据库迁移，新增信息保存在现有 JSON 契约中。旧定义缺少 rule 时沿用旧行为。
+`contracts/rules.ts` 定义作用域、采纳状态、条件、重复/补充/替代/冲突关系与条款版本。规则地址使用 `collection.key`，避免不同字段同名误合并。模型负责语义判断；程序验证引用、范围一致性、无循环和有效保留目标，先解析重复组再解析替代，计算一份有效规则；替代任一别名作用于全组，竞争替代阻断。旧规则来源保留在历史中，不合并进含义已改变的新规则依据。无新领域实体或数据库迁移，新增信息保存在现有 JSON 契约中。旧定义缺少 rule 时沿用旧行为。
 
 `definitions/document-rules.ts` 只从已授权且标为 NORMATIVE 的正文快照固定条款；文件 hash、行区间与 SourceRef 共同定位。完整正文按 hash 共用不可变 blob，执行时仅展开所选条款，不附加“遵循整份旧文件”覆盖新规则。资料缺失或校验失败时阻止执行包导出。来源名/位置用于追溯，不作为规则身份或跨机器依赖。
 

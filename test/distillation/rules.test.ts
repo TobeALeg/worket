@@ -58,6 +58,24 @@ test('cycles, missing keep targets, cross-condition deletion, and competing repl
   assert.throws(() => effectiveRules(c), /INVALID_RULE_TARGET/);
 });
 
+test('replacing any duplicate replaces its entire group without reattributing old evidence', () => {
+  const c = content();
+  const evidence = (eventId: string) => ({ type: 'SOURCE', origin: 'USER_STATED', refs: [{ snapshotId: 's', workId: 'w', eventId }] });
+  c.constraints[0].basis = evidence('old');
+  c.constraints.push({ ...item('alias', '五十个词', { kind: 'DUPLICATE', target: 'constraints.limit' }), basis: evidence('old-copy') });
+  c.constraints.push({ ...item('new', '三十个词', { kind: 'REPLACES', target: 'constraints.alias' }), basis: evidence('correction') });
+  c.constraints.push({ ...item('newAlias', '不超过 30 words', { kind: 'DUPLICATE', target: 'constraints.new' }), basis: evidence('new-copy') });
+  c.acceptanceCriteria = [item('check', '检查五十词限制', { kind: 'DUPLICATE', target: 'constraints.alias' })];
+  const effective = effectiveRules(c);
+  assert.deepEqual(effective.content.constraints.map(i => i.key), ['new']);
+  assert.deepEqual(effective.content.constraints[0].basis.refs.map(r => r.eventId).sort(), ['correction', 'new-copy']);
+  assert.deepEqual(acceptanceChecks(c), [{ key: 'check', rule: 'constraints.new', text: '三十个词' }]);
+  assert.equal(effective.omitted.find(r => r.address === 'constraints.alias').reason, '已替代');
+  assert.equal(c.constraints[1].basis.refs[0].eventId, 'old-copy', 'historical evidence is preserved');
+  c.constraints.push(item('competing', '四十个词', { kind: 'REPLACES', target: 'constraints.limit' }));
+  assert.throws(() => effectiveRules(c), /UNRESOLVED_RULE_CONFLICT/, 'different aliases cannot hide competing corrections');
+});
+
 async function setup() {
   const directory = mkdtempSync(join(tmpdir(), 'worket-rule-'));
   const core = createWorkCore({ databasePath: join(directory, 'work.sqlite') });
@@ -104,6 +122,25 @@ test('actual snapshot → local draft → published definition → instance → 
     assert.equal(changed.definition.content.constraints[0].text, '本次不超过 80 words');
     assert.equal(changed.ruleSources.length, 0, 'old clause is not sent as a second instruction');
     assert.equal(buildWorkPackage(f.create(definition), f.core.definitions).definition.content.constraints[0].text, '每个平台文案不超过 50 words。');
+  } finally { f.core.close(); }
+});
+
+test('published correction targeting an alias reaches new instance export and acceptance exactly once', async () => {
+  const f = await setup();
+  try {
+    const content = structuredClone(f.draft.content);
+    content.constraints.push(item('corrected', '今后文案不超过 30 words。', { kind: 'REPLACES', target: 'constraints.duplicate' }));
+    content.acceptanceCriteria = [item('check', '核对原条款', { kind: 'DUPLICATE', target: 'constraints.limit' })];
+    const draft = f.core.definitions.update({ draftId: f.draft.id, expectedRevision: f.draft.revision, content, issueResolutions: [] });
+    const definition = f.publish(draft), work = f.create(definition);
+    const pkg = f.core.createHandoffPackage(work.instance.id).workPackage;
+    assert.deepEqual(pkg.definition.content.constraints.map(i => i.key), ['corrected']);
+    assert.equal(pkg.ruleSources.length, 0, 'superseded document clause is audit history only');
+    assert.deepEqual(pkg.acceptanceChecks, [{ key: 'check', rule: 'constraints.corrected' }]);
+    const markdown = packageMarkdown(pkg);
+    assert.equal(markdown.split('今后文案不超过 30 words。').length - 1, 1);
+    assert.ok(!markdown.includes('50 words'));
+    assert.equal(definition.content.constraints.length, 3, 'raw history keeps all evidence');
   } finally { f.core.close(); }
 });
 

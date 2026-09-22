@@ -71,31 +71,39 @@ export type EffectiveRules = { content: DefinitionContent; omitted: { address: s
 export function effectiveRules(content: DefinitionContent, overrides: InstanceOverride[] = []): EffectiveRules {
   validateRuleGraph(content);
   const output = structuredClone(content), rows = ruleItems(output);
+  const nodes = new Map(rows.map(row => [row.address, row]));
   const active = new Map(rows.filter(({ item }) => (!item.rule || item.rule.scope === 'REUSABLE' && item.rule.status === 'ACTIVE')).map(row => [row.address, row]));
   const omitted: EffectiveRules['omitted'] = rows.filter(row => !active.has(row.address)).map(row => ({ address: row.address, reason: '仅本次、未确认或历史规则' }));
   for (const row of active.values()) ensure(row.item.rule?.relation?.kind !== 'CONFLICT', 'UNRESOLVED_RULE_CONFLICT', `尚有冲突：${row.address}`);
+  function duplicateRoot(address: string): string {
+    const row = nodes.get(address);
+    ensure(row, 'INVALID_RULE_TARGET');
+    return row.item.rule?.relation?.kind === 'DUPLICATE' ? duplicateRoot(row.item.rule.relation.target) : address;
+  }
   const replacement = new Map<string, string>();
   for (const row of active.values()) if (row.item.rule?.relation?.kind === 'REPLACES') {
-    const target = row.item.rule.relation.target;
+    const target = duplicateRoot(row.item.rule.relation.target);
     ensure(!replacement.has(target), 'UNRESOLVED_RULE_CONFLICT', `多条规则同时替代 ${target}`);
     replacement.set(target, row.address);
   }
   function survivor(address: string, seen = new Set<string>()): string {
+    address = duplicateRoot(address);
     ensure(!seen.has(address), 'RULE_CYCLE'); seen.add(address);
     const replacementTarget = replacement.get(address);
     if (replacementTarget) return survivor(replacementTarget, seen);
     const row = active.get(address);
     ensure(row, 'INVALID_RULE_TARGET', `被合并的规则没有有效保留目标：${address}`);
-    return row.item.rule?.relation?.kind === 'DUPLICATE' ? survivor(row.item.rule.relation.target, seen) : address;
+    return address;
   }
   const keep = new Set<string>();
   for (const row of active.values()) {
     const target = survivor(row.address);
     keep.add(target);
     if (target !== row.address) {
-      omitted.push({ address: row.address, reason: replacement.has(row.address) ? '已替代' : '重复', retained: target });
+      const equivalent = duplicateRoot(row.address) === target;
+      omitted.push({ address: row.address, reason: equivalent ? '重复' : '已替代', retained: target });
       // A duplicate contributes evidence; replaced old requirements do not become new evidence.
-      if (row.item.rule?.relation?.kind === 'DUPLICATE') {
+      if (equivalent && row.item.rule?.relation?.kind === 'DUPLICATE') {
         const winner = active.get(target)!.item;
         if (winner.basis.type !== 'USER_AUTHORED' && row.item.basis.type !== 'USER_AUTHORED')
           winner.basis.refs = [...new Map([...winner.basis.refs, ...row.item.basis.refs].map(ref => [JSON.stringify(ref), ref])).values()];
