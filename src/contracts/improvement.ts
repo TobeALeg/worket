@@ -5,6 +5,7 @@ export const IMPROVEMENT_POLICY = {
   purpose: "WORKET_PRODUCT_IMPROVEMENT",
   retentionDays: 90,
 } as const;
+export const RECORDING_LIMITS = { maxEvents: 10000, maxBytes: 20 * 1024 * 1024, maxViewEntries: 10000 } as const;
 export const SAMPLE_EVENT_KINDS = ["RECORDING", "MESSAGE", "RECORDING_VIEW", "SOURCE", "REUSE", "CANDIDATE", "EDIT", "PUBLISH", "STATUS", "ACCEPTANCE"] as const;
 export type SampleEvent = {
   id: string;
@@ -13,14 +14,14 @@ export type SampleEvent = {
   data: Record<string, unknown>;
 };
 export type SampleUpload = {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   sampleId: string;
   consent: { version: string; at: string; scope: "DISTILLATION" | "REUSE" | "RECORDING" };
   event: SampleEvent;
 };
 export function validateSample(value: unknown): asserts value is SampleUpload {
   object(value);
-  ensure(value.schemaVersion === 1 || value.schemaVersion === 2, "INVALID_INPUT");
+  ensure(value.schemaVersion === 1 || value.schemaVersion === 2 || value.schemaVersion === 3, "INVALID_INPUT");
   string(value.sampleId);
   ensure(/^[a-zA-Z0-9-]{1,100}$/.test(value.sampleId), "INVALID_INPUT");
   object(value.consent);
@@ -44,10 +45,11 @@ export function validateSample(value: unknown): asserts value is SampleUpload {
       ensure(Object.keys(data).every(k => ["workId", "title"].includes(k)), "INVALID_INPUT");
       string(data.workId); string(data.title);
     } else if (value.event.kind === "RECORDING_VIEW") {
-      ensure(value.schemaVersion === 2, "INVALID_INPUT");
-      ensure(Object.keys(data).every(k => ["sequence", "entries"].includes(k)), "INVALID_INPUT");
+      ensure(value.schemaVersion === 2 || value.schemaVersion === 3, "INVALID_INPUT");
+      ensure(Object.keys(data).every(k => ["sequence", "entries", ...(value.schemaVersion === 3 ? ["baseSequence"] : [])].includes(k)), "INVALID_INPUT");
       ensure(Number.isSafeInteger(data.sequence) && Number(data.sequence) >= 0, "INVALID_INPUT");
-      ensure(Array.isArray(data.entries) && data.entries.length <= 1000, "INPUT_TOO_LARGE");
+      ensure(Array.isArray(data.entries) && data.entries.length <= (value.schemaVersion === 3 ? RECORDING_LIMITS.maxViewEntries : 1000), "INPUT_TOO_LARGE");
+      if (data.baseSequence !== undefined) ensure(Number.isSafeInteger(data.baseSequence) && Number(data.baseSequence) >= 0 && Number(data.baseSequence) < Number(data.sequence), "INVALID_INPUT");
       const ids = new Set<string>();
       for (const entry of data.entries) {
         object(entry);
@@ -59,7 +61,7 @@ export function validateSample(value: unknown): asserts value is SampleUpload {
         if (entry.status === "SUPERSEDED") string(entry.supersededBy);
         else ensure(entry.supersededBy === undefined, "INVALID_INPUT");
       }
-      ensure(data.entries.every(entry => entry.status !== "SUPERSEDED" || entry.supersededBy !== entry.sourceEventId && ids.has(entry.supersededBy)), "INVALID_INPUT");
+      ensure(data.entries.every(entry => entry.status !== "SUPERSEDED" || entry.supersededBy !== entry.sourceEventId && (data.baseSequence !== undefined || ids.has(entry.supersededBy))), "INVALID_INPUT");
     } else {
       ensure(Object.keys(data).every(k => ["sourceEventId", "sequence", "kind", "timestamp", "content", "part", "parts"].includes(k)), "INVALID_INPUT");
       string(data.sourceEventId); string(data.timestamp); string(data.content);

@@ -63,3 +63,40 @@ test('versioned recording transport rejects unsupported fields and old servers r
     assert.deepEqual(saved.recordingView.current.map((m: any) => m.content), ['new']); assert.equal(c.list()[0].pending, 0);
   } finally { db.close(); remote.close(); }
 });
+
+test('delta views reconstruct in source order and never bridge a missing or conflicting baseline', () => {
+  const base = view(1, [{sourceEventId:'a',status:'CURRENT'}]);
+  const delta = (sequence: number, baseSequence: number, entries: any[]) => ({...view(sequence,entries),data:{sequence,baseSequence,entries}});
+  const changed = delta(2,1,[{sourceEventId:'a',status:'SUPERSEDED',supersededBy:'b'},{sourceEventId:'b',status:'CURRENT'}]);
+  const absent = delta(3,2,[{sourceEventId:'b',status:'ABSENT'}]);
+  const messages = [event('a',1,'old'),event('b',2,'new')];
+  assert.equal(projectRecordingSample([...messages,base,absent] as any).ready,false);
+  let result=projectRecordingSample([absent,...messages,changed,base,changed] as any);
+  assert.equal(result.ready,true);assert.equal(result.current.length,0);assert.equal(result.messages[0].status,'SUPERSEDED');
+  const restored=delta(4,3,[{sourceEventId:'b',status:'SUPERSEDED',supersededBy:'c'},{sourceEventId:'c',status:'CURRENT'}]);
+  result=projectRecordingSample([...messages,event('c',4,'new'),restored,absent,changed,base] as any);
+  assert.equal(result.ready,true);assert.deepEqual(result.current.map(m=>m.content),['new']);
+  assert.throws(()=>validateSample(input(changed,2)),/INVALID_INPUT/);
+  assert.doesNotThrow(()=>validateSample(input(changed,3)));
+  assert.throws(()=>validateSample(input(delta(2,2,[]),3)),/INVALID_INPUT/);
+  const recovery=view(5,[{sourceEventId:'a',status:'SUPERSEDED',supersededBy:'b'},{sourceEventId:'b',status:'ABSENT'}]);
+  assert.equal(projectRecordingSample([...messages,base,absent,recovery] as any).ready,true);
+});
+
+test('recording byte quota initializes from legacy evidence, counts UTF-8 once, and keeps idempotent retries valid', () => {
+  const remote=new ImprovementStore(':memory:');
+  try {
+    const source=input({id:'source',kind:'RECORDING',at,data:{workId:'scope',title:'中文😀'}},3);
+    const saved=remote.receive('qa',source);
+    remote.db.prepare('DELETE FROM sample_usage').run(); // Simulate an existing database before this release.
+    const message=input(event('a',1,'中文😀'),3);remote.receive('qa',message);
+    const bytes=Buffer.byteLength(JSON.stringify(source.event))+Buffer.byteLength(JSON.stringify(message.event));
+    assert.equal(remote.db.prepare('SELECT bytes FROM sample_usage').get().bytes,bytes);
+    remote.receive('qa',message);assert.equal(remote.db.prepare('SELECT bytes FROM sample_usage').get().bytes,bytes);
+    remote.db.prepare('UPDATE sample_usage SET bytes=?').run(20*1024*1024);
+    assert.throws(()=>remote.receive('qa',input(event('b',2,'limit'),3)),/QUOTA_EXCEEDED/);
+    assert.equal(remote.get(saved.id).events.length,2);
+    assert.doesNotThrow(()=>remote.receive('qa',message));
+    remote.delete(saved.id);assert.equal(remote.db.prepare('SELECT count(*) n FROM sample_usage').get().n,0);
+  } finally {remote.close();}
+});

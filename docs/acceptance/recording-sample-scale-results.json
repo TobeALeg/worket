@@ -1,0 +1,138 @@
+{
+  "round": 15,
+  "tests": {
+    "passed": 213,
+    "failed": 0
+  },
+  "before": [
+    {
+      "count": 200,
+      "online": true,
+      "wireBytes": 1691636,
+      "calls": 402,
+      "queuedBytes": 0,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 402,
+      "currentMessages": 200,
+      "viewReady": true
+    },
+    {
+      "count": 400,
+      "online": true,
+      "wireBytes": 6422936,
+      "calls": 802,
+      "queuedBytes": 0,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 802,
+      "currentMessages": 400,
+      "viewReady": true
+    },
+    {
+      "count": 550,
+      "online": true,
+      "wireBytes": 9890275,
+      "calls": 1001,
+      "queuedBytes": 0,
+      "state": "STOPPED",
+      "error": "QUOTA_EXCEEDED",
+      "remoteEvents": 1000,
+      "currentMessages": 499,
+      "viewReady": true
+    },
+    {
+      "count": 550,
+      "online": false,
+      "wireBytes": 9890275,
+      "calls": 1001,
+      "queuedBytes": 11966411,
+      "state": "STOPPED",
+      "error": "QUOTA_EXCEEDED",
+      "remoteEvents": 1000,
+      "currentMessages": 499,
+      "viewReady": true
+    }
+  ],
+  "after": [
+    {
+      "count": 200,
+      "online": true,
+      "wireBytes": 182926,
+      "calls": 402,
+      "queuedBytes": 0,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 402,
+      "currentMessages": 200,
+      "viewReady": true
+    },
+    {
+      "count": 400,
+      "online": true,
+      "wireBytes": 365626,
+      "calls": 802,
+      "queuedBytes": 0,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 802,
+      "currentMessages": 400,
+      "viewReady": true
+    },
+    {
+      "count": 550,
+      "online": true,
+      "wireBytes": 502651,
+      "calls": 1102,
+      "queuedBytes": 0,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 1102,
+      "currentMessages": 550,
+      "viewReady": true
+    },
+    {
+      "count": 550,
+      "online": false,
+      "wireBytes": 502651,
+      "calls": 1102,
+      "queuedBytes": 502651,
+      "state": "ACTIVE",
+      "error": null,
+      "remoteEvents": 1102,
+      "currentMessages": 550,
+      "viewReady": true
+    }
+  ],
+  "comparable400MessageReductionPercent": 94.31,
+  "actualProviderCalls": 0,
+  "runs": {
+    "qaInstrumentationFailure": {
+      "run": "2026-09-22T22-01-27-185Z",
+      "status": "FAILED",
+      "packaged": false,
+      "scale": null,
+      "error": "[{\"id\":\"6535b54d-75d4-48bb-95cc-d1b0608bb91e\",\"scope\":\"RECORDING\",\"label\":\"分页来源验收\",\"state\":\"ACTIVE\",\"error\":\"INVALID_INPUT\",\"consent\":\"{\\\"version\\\":\\\"worket-recording-v1\\\",\\\"at\\\":\\\"2026-09-22T22:01:29.442Z\\\",\\\"scope\\\":\\\"RECORDING\\\"}\",\"pending\":6}]"
+    },
+    "final": {
+      "run": "2026-09-22T22-03-05-971Z",
+      "status": "PASSED",
+      "packaged": false,
+      "scale": {
+        "uploadedBytes": 504022,
+        "uploads": 1112,
+        "messages": 550,
+        "currentMessages": 554,
+        "ready": true
+      },
+      "error": null
+    },
+    "oldClientExpectedFailure": {
+      "run": "2026-09-22T22-03-35-275Z",
+      "status": "FAILED",
+      "packaged": true,
+      "scale": null,
+      "error": "upload must grow with changes, not full repeated history"
+    }
+  }
+}

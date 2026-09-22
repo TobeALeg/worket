@@ -10,6 +10,8 @@ export class RecordingCollection {
     collector.db.exec(`CREATE TABLE IF NOT EXISTS recording_samples (
       sample_id TEXT PRIMARY KEY, work_id TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS recording_samples_work ON recording_samples(work_id);
+      CREATE TABLE IF NOT EXISTS recording_views (
+        sample_id TEXT PRIMARY KEY, view_json TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS recording_notice (
         id INTEGER PRIMARY KEY CHECK(id=1), version TEXT NOT NULL);`);
   }
@@ -62,7 +64,16 @@ export class RecordingCollection {
         }
       }
       const view = recordingView(work.sourceArchive);
-      this.collector.record(id, `view-${view.sequence}`, "RECORDING_VIEW", { ...view });
+      const previous = this.collector.db.prepare("SELECT view_json FROM recording_views WHERE sample_id=?").get(id);
+      const baseline = previous ? JSON.parse(String(previous.view_json)) as import('../contracts/recording-view.js').RecordingView : undefined;
+      if (baseline?.sequence === view.sequence) continue;
+      const old = new Map(baseline?.entries.map(entry => [entry.sourceEventId, JSON.stringify(entry)]) ?? []);
+      const wire = baseline ? { sequence: view.sequence, baseSequence: baseline.sequence,
+        entries: view.entries.filter(entry => old.get(entry.sourceEventId) !== JSON.stringify(entry)) } : view;
+      // Queue and baseline advance atomically: restart cannot skip an unsent change.
+      this.collector.record(id, `view-${view.sequence}`, "RECORDING_VIEW", wire, () => {
+        this.collector.db.prepare("INSERT INTO recording_views VALUES (?,?) ON CONFLICT(sample_id) DO UPDATE SET view_json=excluded.view_json").run(id, JSON.stringify(view));
+      });
     }
   }
 }

@@ -414,7 +414,7 @@ async function sampleDetail(id) {
     element("h3", "当前有效原文", panel);
     element("p", view.ready ? `截至同步序号 ${view.throughSequence}；${view.current.length} 条当前消息。` : "来源关系或消息尚未完整，暂不作为当前要求使用。", panel);
     if (!view.ready) {
-      const issues = { VIEW_UNAVAILABLE: "旧样本尚无来源有效性信息", CONFLICTING_VIEW: "来源视图存在冲突", MISSING_MESSAGE: "部分消息尚未到达", SOURCE_PENDING: "来源变化待复核", INVALID_REVISION: "修订关系不完整", INCOMPLETE_MESSAGE: "消息分片未齐", VIEW_BEHIND_MESSAGES: "等待匹配的新来源视图", CONFLICTING_MESSAGE: "消息内容存在冲突" };
+      const issues = { VIEW_CHAIN_INCOMPLETE: "来源增量尚未连续到齐", VIEW_UNAVAILABLE: "旧样本尚无来源有效性信息", CONFLICTING_VIEW: "来源视图存在冲突", MISSING_MESSAGE: "部分消息尚未到达", SOURCE_PENDING: "来源变化待复核", INVALID_REVISION: "修订关系不完整", INCOMPLETE_MESSAGE: "消息分片未齐", VIEW_BEHIND_MESSAGES: "等待匹配的新来源视图", CONFLICTING_MESSAGE: "消息内容存在冲突" };
       element("p", view.issues.map(issue => issues[issue] ?? issue).join(" · "), panel);
     }
     for (const message of view.current) {

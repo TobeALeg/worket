@@ -335,7 +335,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 `src/contracts/improvement.ts` 集中定义协议与 90 天期限；`server/improvement.mjs` 在独立私有 `improvement.sqlite` 保存授权、事件、评审及接收开关，正文不会进入 `metadata.sqlite`。样本键从认证主体和客户端样本 ID 推导；同事件 ID 重传幂等，正文变化拒绝。客户端只可提交或删除自己的样本，读取正文与写评审须后台会话及 CSRF。Provider 无样本库查询权限，上传接口与模型配置、调用和 ack 无依赖。
 
-`recordingView()` 从本地不可变档案生成只含可上传消息内部 ID 的完整视图，schemaVersion:2 / RECORDING_VIEW；整份记录队列先协商 recordingViewSchemaVersions。后台 projectRecordingSample 合并分片并校验视图覆盖、状态与修订顺序，当前列表保持逻辑会话顺序；旧数据或不完整关系不标为 ready。管理员优先显示当前原文，历史和原始事件折叠。详见 [样本视图](specs/recording-sample-view.md)。
+`recordingView()` 从本地不可变档案生成只含可上传消息内部 ID 的完整视图，schemaVersion:2 / RECORDING_VIEW；整份记录队列先协商 recordingViewSchemaVersions。后台 projectRecordingSample 合并分片并校验视图覆盖、状态与修订顺序，当前列表保持逻辑会话顺序；旧数据或不完整关系不标为 ready。管理员优先显示当前原文，历史和原始事件折叠。当前上传为 schemaVersion:3，recording_views 基线与 outbox 增量同事务推进；后台按 baseSequence 重建，缺链不 ready。sample_usage 事务维护 UTF-8 字节预算，旧样本惰性回填、删除清理。详见 [样本视图](specs/recording-sample-view.md) 与 [长记录同步](specs/recording-sample-scale.md)。
 
 `ImprovementCollector` 在工作库中维护明确授权的 subscriptions 与 outbox，以及单行 `improvement_preferences` 持久偏好（缺省开启）；桌面通过 `improvementPreference` / `setImprovementPreference` 读取和修改。取消勾选或停止全部时，以同一事务保存关闭偏好、停止全部活动订阅并清空待发正文；停止单个样本不改变全局偏好，重新开启不复活旧订阅。范围页直接展示选项，提交前等待设置保存，重启后从工作库恢复；仅排队固定范围，已收到的队列项清空正文。同步选择队列及 HTTP 异步连接后，通过 beforeSend 再次校验订阅状态、授权期限和原服务/凭据指纹；身份变化暂停发送。删除不受全局退出限制，但保留目的地约束。改进授权的代次与身份在能力查询后及本地动作前核验，停止再开使原待定授权失效。见 [发送边界](specs/improvement-send-boundary.md)。`DistillationService.collectFeedback` 从已授权任务、原始候选及持久化 `review_events` 补齐修改、发布、验收，因此应用在保存后退出也能恢复反馈。复用文件输入被替换为仅选择标记，不上传路径或内容；沉淀快照排除 `reasoning.summary`，本地旧记录不修改。
 

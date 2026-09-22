@@ -114,8 +114,27 @@ try {
     }
   }
 
+  const scale = Number(process.env.WORKET_RECORDING_SCALE ?? 0);
+  if (scale) {
+    assert.ok(sampleService && Number.isInteger(scale) && scale <= 1000);
+    for (let n = 1; n <= scale; n++) {
+      fixture.turns[0].items.push({ id: `scale-${n}`, type: 'userMessage', content: [{type:'text',text:`合成负载 ${n}：保持本期输入与通用约定分离。`}] });
+      writeFileSync(dataPath, JSON.stringify(fixture));
+      await panel.evaluate(id => window.workpet.refreshWork(id), workId);
+      await sampleService.sync(panel, false);
+      if (n % 100 === 0) console.log(`scale progress: ${n}/${scale}`);
+    }
+    const sample = await sampleService.sync(panel);
+    assert.equal(sample.recordingView.ready, true);
+    assert.equal(sample.recordingView.current.filter(e => e.content.startsWith('合成负载')).length, scale);
+    const metrics = sampleService.metrics();
+    report.scale = {...metrics, messages:scale, currentMessages:sample.recordingView.current.length, ready:true};
+    assert.ok(metrics.uploadedBytes < scale * 1300 + 30000, 'upload must grow with changes, not full repeated history');
+    await sampleService.inspect(app, output, 'admin-long-recording');
+  }
+
   report.rpc = readFileSync(rpcLog, 'utf8').trim().split('\n').map(JSON.parse).map(r => ({ method: r.method, cursor: r.params?.cursor, includeTurns: r.params?.includeTurns, error: r.error }));
   assert.ok(report.rpc.some(r => r.method === 'thread/items/list' && r.cursor));
   report.status = 'PASSED';
 } catch(error) { report.status = 'FAILED'; report.error = error instanceof Error ? error.message : String(error); if(panel) await panel.screenshot({path:join(output,'failure.png')}).catch(()=>{}); process.exitCode=1; }
-finally { if(app) await app.close().catch(()=>{}); await sampleService?.close(); writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); console.log(JSON.stringify(report)); }
+finally { if(app) await app.close().catch(()=>{}); await sampleService?.close(); writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); console.log(JSON.stringify({ ...report, rpc: report.rpc ? { count: report.rpc.length } : undefined })); }

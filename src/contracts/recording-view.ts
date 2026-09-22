@@ -1,11 +1,26 @@
 import type { SampleEvent } from './improvement.js';
 export type RecordingEntry = { sourceEventId: string; status: 'CURRENT' | 'SUPERSEDED' | 'PENDING' | 'ABSENT'; supersededBy?: string };
-export type RecordingView = { sequence: number; entries: RecordingEntry[] };
+export type RecordingView = { sequence: number; baseSequence?: number; entries: RecordingEntry[] };
 type Message = { sourceEventId: string; sequence: number; kind: string; timestamp: string; content: string; parts: number; part: number };
 /** A complete view is required; raw append-only messages alone cannot prove currentness. */
 export function projectRecordingSample(events: SampleEvent[]) {
-  const views = events.filter(e => e.kind === 'RECORDING_VIEW').map(e => e.data as unknown as RecordingView).sort((a, b) => b.sequence - a.sequence);
-  const view = views[0], issues = new Set<string>();
+  const views = events.filter(e => e.kind === 'RECORDING_VIEW').map(e => e.data as unknown as RecordingView).sort((a, b) => a.sequence - b.sequence);
+  const issues = new Set<string>(), checkpoint = views.findLast(view => view.baseSequence === undefined);
+  let view = checkpoint;
+  const effective = new Map(checkpoint?.entries.map(entry => [entry.sourceEventId, entry]) ?? []);
+  const seen = new Map<number, string>();
+  for (const next of views.filter(next => !checkpoint || next.sequence >= checkpoint.sequence)) {
+    const fingerprint = JSON.stringify(next);
+    if (seen.has(next.sequence)) {
+      if (seen.get(next.sequence) !== fingerprint) issues.add('CONFLICTING_VIEW');
+      continue;
+    }
+    seen.set(next.sequence, fingerprint);
+    if (next.baseSequence === undefined) continue;
+    if (!view || next.baseSequence !== view.sequence) { issues.add('VIEW_CHAIN_INCOMPLETE'); continue; }
+    for (const entry of next.entries) effective.set(entry.sourceEventId, entry);
+    view = { sequence: next.sequence, entries: [...effective.values()] };
+  }
   const groups = new Map<string, { header: string; value: Message; pieces: Map<number, string> }>();
   for (const event of events) {
     if (event.kind !== 'MESSAGE') continue;
@@ -18,7 +33,6 @@ export function projectRecordingSample(events: SampleEvent[]) {
     group.pieces.set(part, content);
   }
   if (!view) issues.add('VIEW_UNAVAILABLE');
-  if (view && views.some(other => other.sequence === view.sequence && JSON.stringify(other) !== JSON.stringify(view))) issues.add('CONFLICTING_VIEW');
   const entries = new Map(view?.entries.map(entry => [entry.sourceEventId, entry]) ?? []);
   for (const entry of entries.values()) {
     if (!groups.has(entry.sourceEventId)) issues.add('MISSING_MESSAGE');

@@ -68,12 +68,12 @@ export class ImprovementCollector {
   list() {
     return this.db.prepare("SELECT id,scope,label,state,error,consent,(SELECT COUNT(*) FROM improvement_outbox WHERE sample_id=improvement_subscriptions.id AND payload IS NOT NULL) AS pending FROM improvement_subscriptions ORDER BY rowid DESC").all();
   }
-  record(id: string, key: string, kind: SampleEvent["kind"], data: Record<string, unknown>): void {
+  record(id: string, key: string, kind: SampleEvent["kind"], data: Record<string, unknown>, onRecorded?: () => void): void {
     const s = this.db.prepare("SELECT * FROM improvement_subscriptions WHERE id=? AND state='ACTIVE'").get(id) as Subscription | undefined;
     if (!s || this.db.prepare("SELECT event_key FROM improvement_outbox WHERE sample_id=? AND event_key=?").get(id, key)) return;
     if (Date.parse(JSON.parse(s.consent).at) + IMPROVEMENT_POLICY.retentionDays * 86400000 <= Date.now()) { this.stop(id); return; }
     const event = { id: randomUUID(), kind, at: new Date().toISOString(), data };
-    const upload: SampleUpload = { schemaVersion: s.scope === "RECORDING" ? 2 : 1, sampleId: id, consent: JSON.parse(s.consent), event };
+    const upload: SampleUpload = { schemaVersion: s.scope === "RECORDING" ? 3 : 1, sampleId: id, consent: JSON.parse(s.consent), event };
     try { validateSample(upload); }
     catch (error) {
       // Collection limits must not make a valid local edit or publication fail.
@@ -82,7 +82,12 @@ export class ImprovementCollector {
       this.db.prepare("UPDATE improvement_subscriptions SET error=? WHERE id=?").run(code, id);
       return;
     }
-    this.db.prepare("INSERT INTO improvement_outbox VALUES (?,?,?)").run(id, key, JSON.stringify(upload));
+    const save = () => {
+      this.db.prepare("INSERT INTO improvement_outbox VALUES (?,?,?)").run(id, key, JSON.stringify(upload));
+      onRecorded?.();
+    };
+    if (onRecorded) transaction(this.db, save);
+    else save();
   }
   stop(id?: string): void {
     this.#authorizationGeneration++;
@@ -133,7 +138,7 @@ export class ImprovementCollector {
           if (s.scope === "RECORDING") {
             const capabilities = await this.client.capabilities() as { improvement?: { recordingViewSchemaVersions?: number[] } };
             beforeSend();
-            ensure(capabilities.improvement?.recordingViewSchemaVersions?.includes(1), "COLLECTION_UPDATE_REQUIRED", "后台需更新后才能接收带来源关系的记录样本");
+            ensure(capabilities.improvement?.recordingViewSchemaVersions?.includes(2), "COLLECTION_UPDATE_REQUIRED", "后台需更新后才能接收带来源关系的记录样本");
           }
           for (const row of queue) {
             if (this.closed || this.db.prepare("SELECT state FROM improvement_subscriptions WHERE id=?").get(s.id)?.state !== "ACTIVE") break;

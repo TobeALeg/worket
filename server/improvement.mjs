@@ -1,7 +1,7 @@
 import { projectRecordingSample } from "../dist/contracts/recording-view.js";
 import { DatabaseSync } from "node:sqlite";
 import { chmodSync } from "node:fs";
-import { IMPROVEMENT_POLICY, validateSample } from "../dist/contracts/improvement.js";
+import { IMPROVEMENT_POLICY, RECORDING_LIMITS, validateSample } from "../dist/contracts/improvement.js";
 import { ensure } from "../dist/contracts/definition.js";
 import { canonical, hash, transaction } from "../dist/definitions/storage.js";
 
@@ -15,11 +15,12 @@ export class ImprovementStore {
       INSERT OR IGNORE INTO settings VALUES (1,1);
       CREATE TABLE IF NOT EXISTS samples (id TEXT PRIMARY KEY, subject TEXT NOT NULL, client_id TEXT NOT NULL, consent TEXT NOT NULL, created INTEGER NOT NULL, expires INTEGER NOT NULL, review TEXT NOT NULL DEFAULT '{"status":"DRAFT","note":""}', UNIQUE(subject,client_id));
       CREATE TABLE IF NOT EXISTS events (sample_id TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(sample_id,id));
+      CREATE TABLE IF NOT EXISTS sample_usage (sample_id TEXT PRIMARY KEY, bytes INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS tombstones (id TEXT PRIMARY KEY);
     `);
     this.expire();
   }
-  policy() { return { ...IMPROVEMENT_POLICY, recordingViewSchemaVersions: [1], enabled: !!this.db.prepare("SELECT enabled FROM settings WHERE id=1").get().enabled }; }
+  policy() { return { ...IMPROVEMENT_POLICY, recordingViewSchemaVersions: [1, 2], enabled: !!this.db.prepare("SELECT enabled FROM settings WHERE id=1").get().enabled }; }
   setEnabled(enabled) {
     ensure(typeof enabled === "boolean", "INVALID_INPUT");
     this.db.prepare("UPDATE settings SET enabled=? WHERE id=1").run(Number(enabled));
@@ -48,8 +49,17 @@ export class ImprovementStore {
       const digest = hash(input.event);
       if (previous) ensure(previous.digest === digest, "IDEMPOTENCY_CONFLICT");
       else {
-        ensure(this.db.prepare("SELECT COUNT(*) AS n FROM events WHERE sample_id=?").get(id).n < 1000, "QUOTA_EXCEEDED");
-        this.db.prepare("INSERT INTO events VALUES (?,?,?,?)").run(id, input.event.id, JSON.stringify(input.event), digest);
+        const payload = JSON.stringify(input.event), recording = input.consent.scope === "RECORDING";
+        ensure(this.db.prepare("SELECT COUNT(*) AS n FROM events WHERE sample_id=?").get(id).n < (recording ? RECORDING_LIMITS.maxEvents : 1000), "QUOTA_EXCEEDED");
+        if (recording) {
+          // Lazy initialization covers old databases without rewriting retained evidence.
+          const usage = this.db.prepare("SELECT bytes FROM sample_usage WHERE sample_id=?").get(id)?.bytes ??
+            this.db.prepare("SELECT COALESCE(SUM(length(CAST(payload AS BLOB))),0) bytes FROM events WHERE sample_id=?").get(id).bytes;
+          const bytes = usage + Buffer.byteLength(payload);
+          ensure(bytes <= RECORDING_LIMITS.maxBytes, "QUOTA_EXCEEDED");
+          this.db.prepare("INSERT INTO sample_usage VALUES (?,?) ON CONFLICT(sample_id) DO UPDATE SET bytes=excluded.bytes").run(id, bytes);
+        }
+        this.db.prepare("INSERT INTO events VALUES (?,?,?,?)").run(id, input.event.id, payload, digest);
       }
       return { id, received: true };
     });
@@ -76,6 +86,7 @@ export class ImprovementStore {
   delete(id) {
     transaction(this.db, () => {
       this.db.prepare("INSERT OR IGNORE INTO tombstones VALUES (?)").run(id);
+      this.db.prepare("DELETE FROM sample_usage WHERE sample_id=?").run(id);
       this.db.prepare("DELETE FROM events WHERE sample_id=?").run(id);
       this.db.prepare("DELETE FROM samples WHERE id=?").run(id);
     });
