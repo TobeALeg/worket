@@ -89,9 +89,9 @@ export class WorkPetMcpHandler {
         const work = this.#core.getWork(workId);
         if (!work) throw new Error("WORK_NOT_FOUND");
         if (name === "get_work_context") {
-          const handoff =
-            this.#core.getLatestHandoffPackage(workId) ??
-            this.#core.createHandoffPackage(workId);
+          // Historical handoffs stay immutable; a current read must also recheck
+          // the pinned materials and input files before recording read success.
+          const handoff = this.#core.createHandoffPackage(workId);
           const result = toolResult({
             ...handoff,
             executionEpisodes: work.episodes,

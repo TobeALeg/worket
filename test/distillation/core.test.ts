@@ -811,3 +811,43 @@ test('MCP read preceding Hook is retained independently of the later session bin
 test('cancel while reading capabilities never submits source content afterward',async()=>{
  const f=await setup();let release!:()=>void;f.client.capabilities=async()=>{await new Promise<void>(resolve=>release=resolve);return {};};const job=f.service.start({preparationId:f.snapshot.id,expectedContentHash:f.snapshot.contentHash,consentVersion:'worket-data-v1',commandId:cid()});await f.service.cancel(job.id);release();await new Promise(r=>setImmediate(r));assert.equal(f.client.calls,0);assert.equal((await f.service.get(job.id)).status,'CANCELLED');f.core.close();
 });
+
+test("MCP current context includes later state and artifacts without rewriting old handoffs", async () => {
+  const f = await setup();
+  try {
+    const definition = publish(f, await review(f)), work = create(f, definition);
+    const previous = f.core.createHandoffPackage(work.instance.id);
+    const oldRow = f.core.definitions.db.prepare('SELECT payload_json FROM handoff_packages WHERE id=?').get(previous.id);
+    f.core.applyExtractorPatch(work.instance.id, { pendingActions: [{ id: cid(), text: '等待核验新版报告', origin: 'USER_STATED', sourceMessageIds: [work.sourceArchive[1].id] }] });
+    f.core.addArtifactRef(work.instance.id, { path: join(f.directory, 'report.md'), filename: 'report.md', role: 'OUTPUT', mimeType: 'text/markdown', size: 0, sha256: '0'.repeat(64), lastModifiedAt: new Date().toISOString(), availability: 'MISSING' });
+    const { WorkPetMcpHandler } = await import('../../dist/bridge/mcp-handler.js');
+    const response: any = new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
+    assert.ok(!response.error);
+    const current = JSON.parse(response.result.content[0].text);
+    assert.equal(current.nextStep, '等待核验新版报告');
+    assert.equal(current.workPackage.nextStep, current.nextStep);
+    assert.equal(current.neededArtifacts.length, 1);
+    assert.equal(current.neededArtifacts[0].availability, 'MISSING');
+    assert.equal(current.workPackage.definition.id, definition.id);
+    assert.deepEqual(f.core.definitions.db.prepare('SELECT payload_json FROM handoff_packages WHERE id=?').get(previous.id), oldRow);
+  } finally { f.core.close(); }
+});
+
+test("MCP refuses a cached package after material loss and does not acknowledge dispatch", async () => {
+  const f = await setup();
+  try {
+    const draft = await review(f);
+    draft.content.materialRoles = [{ key: 'template', text: '报告模板', required: true, basis: draft.content.purpose.basis }];
+    f.core.definitions.write('definition_drafts', draft);
+    const path = join(f.directory, 'template.md'); writeFileSync(path, 'immutable report template');
+    const definition = publish(f, draft, { template: path }), work = create(f, definition);
+    const previous = f.core.createHandoffPackage(work.instance.id);
+    f.core.definitions.db.prepare("INSERT INTO pending_dispatches VALUES (?,?,'WAITING',NULL)").run(work.instance.id, cid());
+    unlinkSync(definition.materials[0].path);
+    const { WorkPetMcpHandler } = await import('../../dist/bridge/mcp-handler.js');
+    const response: any = new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
+    assert.match(response.error?.message ?? '', /MATERIAL_MISSING/);
+    assert.equal(f.core.getWork(work.instance.id)!.packageReadAt, null);
+    assert.equal(f.core.getLatestHandoffPackage(work.instance.id)!.id, previous.id);
+  } finally { f.core.close(); }
+});

@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-23",
+  "runs": [
+    {
+      "run": "2026-09-22T19-29-57-640Z",
+      "status": "FAILED",
+      "packaged": true,
+      "kind": "synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-mcp-context-YOpl13",
+      "actualProviderCalls": 0,
+      "checks": {},
+      "error": "current state must replace cached state\n\nnull !== '核验本次报告来源'\n"
+    },
+    {
+      "run": "2026-09-22T19-30-32-586Z",
+      "status": "PASSED",
+      "packaged": false,
+      "kind": "synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-mcp-context-NxmL16",
+      "actualProviderCalls": 0,
+      "checks": {
+        "freshStateArtifactsAndPinnedVersion": true,
+        "missingMaterialBlocked": true,
+        "corruptMaterialBlocked": true,
+        "immutableHistoryAndNoFalseReceipt": true
+      }
+    }
+  ]
+}
