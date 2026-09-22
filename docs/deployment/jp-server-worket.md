@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- Worket 服务代码来自提交 `858c677`（2026-09-23 更新），版本目录为 `/opt/worket/releases/858c677`，`/opt/worket/current` 指向当前版本。
+- Worket 服务代码来自提交 `5e1800e`（2026-09-23 更新），版本目录为 `/opt/worket/releases/5e1800e`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -79,3 +79,11 @@ ssh jp-server 'sudo nginx -t'
 部署前检查无活跃/待领取请求，离线容器模块导入成功；保留所有原容器配置并备份数据。前版 `/opt/worket/releases/813a758`，回滚容器 `worket-before-858c677-20260922-172802`，数据备份 `/opt/worket/backups/data-pre-858c677-20260922-172802.tgz`。没有数据库迁移。
 
 公网 HTTPS health 200 且 configured=true，未授权 capabilities 401，admin 404。实际运行 rules.js 的 SHA-256 `fbdb121592f4471323923c736615f82db725b9ae2a383a6cc41b85bf8c095934` 与已提交源码 server 构建一致。未额外运行真实模型任务；功能与打包态端到端证据见 [优化检查点](../acceptance/worket-improvement-loop.md)。
+
+## 2026-09-23 增量比较部署
+
+`5e1800e` 增加 `evolutionSchemaVersions:[1]`，使用 `work-definition-evolution-v1.0` 处理基准约定与后续交互的明确差异。旧请求保持原流程。后台包 SHA-256 `9219b466f86ac3072167b0d73db4a128722f9845555a4c76866cd39b630ec9e6`。
+
+部署前无活跃/待领取请求，离线模块加载通过。前版 `/opt/worket/releases/858c677`；回滚容器 `worket-before-5e1800e-20260922-181226`；数据备份 `/opt/worket/backups/data-pre-5e1800e-20260922-181226.tgz`。保留全部容器配置，无数据库迁移或模型密钥变更。
+
+公网 HTTPS health 200，未授权 capabilities 401，admin 404；服务器内生成一分钟临时只读检查令牌，认证能力接口 200，rule/evolution schema 均为 1。未输出令牌或密钥、未修改账户数据。四次真实模型调用发生在隔离 HTTP/桌面验收链路；部署后只做健康/能力检查，没有重复执行供应商调用。客户端 ZIP 解压态回放亦通过，见 [检查点](../acceptance/worket-improvement-loop.md)。
