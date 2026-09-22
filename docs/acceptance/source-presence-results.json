@@ -30,6 +30,29 @@
       "status": "PASSED",
       "packaged": false,
       "error": null
+    },
+    "packagedSource": {
+      "run": "2026-09-22T21-27-20-939Z",
+      "status": "PASSED",
+      "packaged": true
+    },
+    "packagedReceipts": {
+      "run": "2026-09-22T21-27-26-812Z",
+      "status": "PASSED",
+      "packaged": true
+    },
+    "packagedContinuous": {
+      "run": "2026-09-22T21-27-53-965Z",
+      "status": "PASSED",
+      "packaged": true
     }
-  }
+  },
+  "sourceCommit": "9fd7124",
+  "package": {
+    "sourceCommit": "9fd7124",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-9fd7124.zip",
+    "sha256": "143d7b784b0ebd9c623d0a295d728e3ef9bd76016e687de3351ab81120784115",
+    "signatureVerified": true
+  },
+  "backendSourceCommit": "58be614"
 }
