@@ -73,7 +73,7 @@ export class ImprovementCollector {
     if (!s || this.db.prepare("SELECT event_key FROM improvement_outbox WHERE sample_id=? AND event_key=?").get(id, key)) return;
     if (Date.parse(JSON.parse(s.consent).at) + IMPROVEMENT_POLICY.retentionDays * 86400000 <= Date.now()) { this.stop(id); return; }
     const event = { id: randomUUID(), kind, at: new Date().toISOString(), data };
-    const upload: SampleUpload = { schemaVersion: 1, sampleId: id, consent: JSON.parse(s.consent), event };
+    const upload: SampleUpload = { schemaVersion: s.scope === "RECORDING" ? 2 : 1, sampleId: id, consent: JSON.parse(s.consent), event };
     try { validateSample(upload); }
     catch (error) {
       // Collection limits must not make a valid local edit or publication fail.
@@ -129,6 +129,12 @@ export class ImprovementCollector {
             continue;
           }
           const queue = this.db.prepare("SELECT event_key,payload FROM improvement_outbox WHERE sample_id=? AND payload IS NOT NULL ORDER BY rowid LIMIT 20").all(s.id);
+          if (!queue.length) continue;
+          if (s.scope === "RECORDING") {
+            const capabilities = await this.client.capabilities() as { improvement?: { recordingViewSchemaVersions?: number[] } };
+            beforeSend();
+            ensure(capabilities.improvement?.recordingViewSchemaVersions?.includes(1), "COLLECTION_UPDATE_REQUIRED", "后台需更新后才能接收带来源关系的记录样本");
+          }
           for (const row of queue) {
             if (this.closed || this.db.prepare("SELECT state FROM improvement_subscriptions WHERE id=?").get(s.id)?.state !== "ACTIVE") break;
             beforeSend();

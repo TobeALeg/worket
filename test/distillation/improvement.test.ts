@@ -246,7 +246,7 @@ test("collection size errors stop the sample without breaking local work", async
 test('real HTTP upload rechecks stop, removal, expiry and destination after connection; only authorized retries send', async () => {
   const { createServer } = await import('node:http');
   const received: string[] = [];
-  const server = createServer(async (req, res) => { for await (const _ of req) {} received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end('{}'); });
+  const server = createServer(async (req, res) => { for await (const _ of req) {} if (req.method !== 'GET') received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end(req.method === 'GET' ? JSON.stringify({ improvement: { recordingViewSchemaVersions: [1] } }) : '{}'); });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const url = `http://127.0.0.1:${(server.address() as any).port}`;
   try {
@@ -254,6 +254,7 @@ test('real HTTP upload rechecks stop, removal, expiry and destination after conn
       const db = new DatabaseSync(':memory:');
       let config = { url, token: 'synthetic', development: true }, release!: () => void, gate = true;
       const client = new WorketAIClient(() => config, async () => { if (gate) await new Promise<void>(r => release = r); });
+      client.capabilities = async () => ({ improvement: { recordingViewSchemaVersions: [1] } });
       const c = new ImprovementCollector(db, client);
       try {
         c.enroll('work', 'RECORDING', 'synthetic', { workId: 'work', title: 'synthetic' });
@@ -262,6 +263,7 @@ test('real HTTP upload rechecks stop, removal, expiry and destination after conn
           db.prepare('UPDATE improvement_subscriptions SET consent=?').run(JSON.stringify(consent));
         }
         const before = received.length, pending = c.flush();
+        await new Promise<void>(r => setImmediate(r));
         if (mutation === 'stop') c.stop();
         if (mutation === 'sample-stop') c.stop('work');
         if (mutation === 'stop-enable') { c.stop(); c.setEnabled(true); }
@@ -292,7 +294,7 @@ test('real HTTP upload rechecks stop, removal, expiry and destination after conn
 test('pending deletion remains bound to the original service and can finish after opt-out', async () => {
   const { createServer } = await import('node:http');
   const received: string[] = [];
-  const server = createServer(async (req, res) => { for await (const _ of req) {} received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end('{}'); });
+  const server = createServer(async (req, res) => { for await (const _ of req) {} if (req.method !== 'GET') received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end(req.method === 'GET' ? JSON.stringify({ improvement: { recordingViewSchemaVersions: [1] } }) : '{}'); });
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const db = new DatabaseSync(':memory:');
   const url = `http://127.0.0.1:${(server.address() as any).port}`;

@@ -1,3 +1,4 @@
+import { recordingView } from "./recording-view.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import { randomUUID } from "node:crypto";
 import type { WorkCore } from "../core/index.js";
@@ -60,6 +61,8 @@ export class RecordingCollection {
           });
         }
       }
+      const view = recordingView(work.sourceArchive);
+      this.collector.record(id, `view-${view.sequence}`, "RECORDING_VIEW", { ...view });
     }
   }
 }

@@ -45,6 +45,7 @@ test("record selection uploads messages over HTTP without distillation; durable 
   let offline = true;
   const client: any = {
     improvementIdentity: () => http.improvementIdentity(),
+    capabilities: () => http.capabilities(),
     uploadSample: (v: any) => { if (offline) throw Error("offline"); return http.uploadSample(v); },
     deleteSample: (id: string) => { if (offline) throw Error("offline"); return http.deleteSample(id); },
   };
@@ -85,7 +86,7 @@ test("record selection uploads messages over HTTP without distillation; durable 
     const workId = selected.selectedWorkId!;
     assert.equal(desktop!.service.recordings.noticeRequired(), false);
     await desktop!.call("syncImprovement");
-    assert.equal(desktop!.service.improvement.list()[0].pending, 3);
+    assert.equal(desktop!.service.improvement.list()[0].pending, 4);
     assert.equal(app.core().getWork(workId)!.sourceArchive.length, 5);
     desktop!.service.close(); app.close(); app = open();
     assert.equal(desktop!.service.recordings.noticeRequired(), false);

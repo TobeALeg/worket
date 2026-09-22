@@ -336,7 +336,7 @@ document.querySelectorAll("[data-tab]").forEach(
 void session().catch((error) => message(error.message, true));
 
 let collectionPolicy;
-const eventLabels = { RECORDING: "所选工作对话", MESSAGE: "用户消息 / AI 回复", SOURCE: "所选材料与来源证据", REUSE: "新工作范围", CANDIDATE: "模型候选原稿", EDIT: "用户保存的修改", PUBLISH: "用户确认发布", STATUS: "任务状态与结果", ACCEPTANCE: "用户验收" };
+const eventLabels = { RECORDING: "所选工作对话", MESSAGE: "用户消息 / AI 回复", RECORDING_VIEW: "来源有效性视图", SOURCE: "所选材料与来源证据", REUSE: "新工作范围", CANDIDATE: "模型候选原稿", EDIT: "用户保存的修改", PUBLISH: "用户确认发布", STATUS: "任务状态与结果", ACCEPTANCE: "用户验收" };
 function element(tag, text, parent) {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -408,8 +408,34 @@ async function sampleDetail(id) {
       catch (error) { message(error.message, true); yes.disabled = false; }
     };
   };
+  let archive = panel;
+  if (sample.recordingView) {
+    const view = sample.recordingView;
+    element("h3", "当前有效原文", panel);
+    element("p", view.ready ? `截至同步序号 ${view.throughSequence}；${view.current.length} 条当前消息。` : "来源关系或消息尚未完整，暂不作为当前要求使用。", panel);
+    if (!view.ready) {
+      const issues = { VIEW_UNAVAILABLE: "旧样本尚无来源有效性信息", CONFLICTING_VIEW: "来源视图存在冲突", MISSING_MESSAGE: "部分消息尚未到达", SOURCE_PENDING: "来源变化待复核", INVALID_REVISION: "修订关系不完整", INCOMPLETE_MESSAGE: "消息分片未齐", VIEW_BEHIND_MESSAGES: "等待匹配的新来源视图", CONFLICTING_MESSAGE: "消息内容存在冲突" };
+      element("p", view.issues.map(issue => issues[issue] ?? issue).join(" · "), panel);
+    }
+    for (const message of view.current) {
+      const item = element("section", undefined, panel);
+      element("h4", message.kind === "user.prompt" ? "用户" : "Agent", item);
+      element("pre", message.content, item);
+    }
+    const history = element("details", undefined, panel);
+    element("summary", `历史与来源状态 · ${view.messages.length} 条消息`, history);
+    const labels = { CURRENT: "当前", SUPERSEDED: "已修订", PENDING: "待复核", ABSENT: "当前来源缺失", UNKNOWN: "有效性未知" };
+    for (const message of view.messages) {
+      const item = element("details", undefined, history);
+      element("summary", `${labels[message.status] ?? message.status} · ${message.kind === "user.prompt" ? "用户" : "Agent"} · ${message.sourceEventId}`, item);
+      element("pre", message.complete ? message.content : "消息分片尚未完整", item);
+      if (message.supersededBy) element("p", `修订为 ${message.supersededBy}`, item);
+    }
+    archive = element("details", undefined, panel);
+    element("summary", "原始上传证据", archive);
+  }
   for (const event of sample.events) {
-    const detail = element("details", undefined, panel);
+    const detail = element("details", undefined, archive);
     element("summary", `${eventLabels[event.kind] ?? event.kind} · ${new Date(event.at).toLocaleString()}`, detail);
     renderData(event.data, detail);
   }

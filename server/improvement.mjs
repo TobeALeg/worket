@@ -1,3 +1,4 @@
+import { projectRecordingSample } from "../dist/contracts/recording-view.js";
 import { DatabaseSync } from "node:sqlite";
 import { chmodSync } from "node:fs";
 import { IMPROVEMENT_POLICY, validateSample } from "../dist/contracts/improvement.js";
@@ -18,7 +19,7 @@ export class ImprovementStore {
     `);
     this.expire();
   }
-  policy() { return { ...IMPROVEMENT_POLICY, enabled: !!this.db.prepare("SELECT enabled FROM settings WHERE id=1").get().enabled }; }
+  policy() { return { ...IMPROVEMENT_POLICY, recordingViewSchemaVersions: [1], enabled: !!this.db.prepare("SELECT enabled FROM settings WHERE id=1").get().enabled }; }
   setEnabled(enabled) {
     ensure(typeof enabled === "boolean", "INVALID_INPUT");
     this.db.prepare("UPDATE settings SET enabled=? WHERE id=1").run(Number(enabled));
@@ -61,7 +62,10 @@ export class ImprovementStore {
     this.expire();
     const row = this.db.prepare("SELECT * FROM samples WHERE id=?").get(id);
     ensure(row, "NOT_FOUND");
-    return { ...row, consent: JSON.parse(row.consent), review: JSON.parse(row.review), events: this.db.prepare("SELECT payload FROM events WHERE sample_id=? ORDER BY rowid").all(id).map(e => JSON.parse(e.payload)) };
+    const events = this.db.prepare("SELECT payload FROM events WHERE sample_id=? ORDER BY rowid").all(id).map(e => JSON.parse(e.payload));
+    const consent = JSON.parse(row.consent);
+    return { ...row, consent, review: JSON.parse(row.review), events,
+      ...(consent.scope === "RECORDING" ? { recordingView: projectRecordingSample(events) } : {}) };
   }
   review(id, input) {
     this.get(id);

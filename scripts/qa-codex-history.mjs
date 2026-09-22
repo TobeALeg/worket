@@ -1,3 +1,4 @@
+import { recordingViewService } from './lib/qa-recording-view.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -8,6 +9,8 @@ const run = new Date().toISOString().replace(/[:.]/g, '-'), output = join(proces
 const directory = mkdtempSync(join(tmpdir(), 'worket-history-e2e-')), fixture = historyFixture();
 const { dataPath, rpcLog, binary } = writeHistoryFixture(directory, fixture);
 const report = { run, status: 'RUNNING', packaged: !!process.env.WORKPET_EXECUTABLE_PATH, directory, actualProviderCalls: 0, externalAgent: false, sourceAbsence: process.env.WORKET_SOURCE_ABSENCE === '1', checks: {} };
+const sampleService = process.env.WORKET_RECORDING_VIEW === "1" ? await recordingViewService(directory) : null;
+report.recordingView = !!sampleService;
 let app, panel;
 try {
   app = await electron.launch({ executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'), args: [...(process.env.WORKPET_EXECUTABLE_PATH ? ['--use-mock-keychain'] : ['.']), `--user-data-dir=${directory}`, '--dev'], cwd: process.cwd(), env: { ...process.env, WORKPET_DATA_DIR: directory, WORKPET_BRIDGE_CONFIG: join(directory, 'bridge.json'), WORKPET_SKIP_INTEGRATIONS: '1' } });
@@ -26,7 +29,8 @@ try {
     for (const [path, name] of [['workbuddy/desktop-client', 'WorkBuddyDesktopClient'], ['zcode/source', 'ZCodeSource'], ['antigravity/source', 'AntigravitySource']]) require('./dist/adapters/' + path + '.js')[name].prototype.listThreadPage = async function() { return { threads: [], nextCursor: null }; };
     const window = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')); window.setSize(840, 820); window.show();
   }, { binary, thread: fixture.thread });
-  await panel.evaluate(() => window.workpet.distillation('setImprovementPreference', { enabled: false }));
+  if (sampleService) await sampleService.configure(panel);
+  else await panel.evaluate(() => window.workpet.distillation('setImprovementPreference', { enabled: false }));
   await panel.reload(); await panel.locator('#tab-recent').click();
   await panel.locator(`[data-thread-id="${fixture.thread.id}"]`).getByRole('button', { name: '开始记录' }).click();
   await panel.locator('#back-to-list').waitFor();
@@ -41,6 +45,12 @@ try {
   assert.ok(snapshot.sources[0].events.some(e => e.content.includes('最早来源')));
   assert.ok(snapshot.sources[0].events.some(e => e.content.includes('分页末尾')));
   report.checks.allPagesToStateAndExtraction = true;
+  if (sampleService) {
+    const sample = await sampleService.sync(panel);
+    assert.equal(sample.recordingView.ready, true);
+    assert.ok(sample.recordingView.current.some(e => e.content.includes('最早来源')));
+    assert.ok(sample.recordingView.current.some(e => e.content.includes('分页末尾')));
+  }
   // The first page changes, but the second fails: no partial new observations may enter the record.
   fixture.mode = 'failure'; fixture.turns[0].items[0].content[0].text = '每次必须保留修订后的最早要求。'; writeFileSync(dataPath, JSON.stringify(fixture));
   const failure = await panel.evaluate(async id => { try { await window.workpet.refreshWork(id); return null; } catch(error) { return String(error); } }, workId);
@@ -52,6 +62,13 @@ try {
   after = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
   assert.ok(after.selectedWork.state.constraints.some(i => i.text.includes('修订后')));
   report.checks.failedPageAtomicAndRetry = true;
+  if (sampleService) {
+    const sample = await sampleService.sync(panel);
+    assert.equal(sample.recordingView.ready, true);
+    assert.ok(sample.recordingView.current.some(e => e.content.includes('修订后')));
+    assert.ok(!sample.recordingView.current.some(e => e.content.includes('最早来源')));
+    assert.ok(sample.recordingView.messages.some(e => e.status === 'SUPERSEDED' && e.content.includes('最早来源')));
+  }
   if (report.sourceAbsence) {
     const removed = fixture.turns.pop(); writeFileSync(dataPath, JSON.stringify(fixture));
     await panel.evaluate(id => window.workpet.refreshWork(id), workId);
@@ -73,16 +90,32 @@ try {
     assert.ok(context.sourceNotice); assert.ok(!context.state.constraints.some(i => i.text.includes('分页末尾')));
     await panel.locator('#back-to-list').click(); await panel.locator(`[data-work-id="${workId}"]`).click();
     await panel.locator('.source-notice').waitFor(); await panel.screenshot({ path: join(output, 'source-absent.png') });
+    if (sampleService) {
+      const sample = await sampleService.sync(panel);
+      assert.equal(sample.recordingView.ready, true);
+      assert.ok(!sample.recordingView.current.some(e => e.content.includes('分页末尾')));
+      assert.ok(sample.recordingView.messages.some(e => e.status === 'ABSENT' && e.content.includes('分页末尾')));
+      const visible = await sampleService.inspect(app, output, 'admin-source-absent');
+      assert.ok(visible.includes('修订后')); assert.ok(visible.includes('当前有效原文'));
+      assert.ok(!visible.includes('每次必须保留分页末尾'));
+    }
     fixture.turns.push(removed); writeFileSync(dataPath, JSON.stringify(fixture));
     await panel.evaluate(id => window.workpet.refreshWork(id), workId);
     const restored = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
     assert.ok(restored.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')));
     assert.equal(restored.selectedWork.sourceNotice, undefined);
     report.checks.absenceArchiveCurrentViewAndRestoration = true;
+    if (sampleService) {
+      const sample = await sampleService.sync(panel);
+      assert.equal(sample.recordingView.ready, true);
+      assert.ok(sample.recordingView.current.some(e => e.content.includes('分页末尾')));
+      await sampleService.inspect(app, output, 'admin-source-restored');
+      report.checks.remoteSampleRevisionAbsenceRestoration = true;
+    }
   }
 
   report.rpc = readFileSync(rpcLog, 'utf8').trim().split('\n').map(JSON.parse).map(r => ({ method: r.method, cursor: r.params?.cursor, includeTurns: r.params?.includeTurns, error: r.error }));
   assert.ok(report.rpc.some(r => r.method === 'thread/items/list' && r.cursor));
   report.status = 'PASSED';
 } catch(error) { report.status = 'FAILED'; report.error = error instanceof Error ? error.message : String(error); if(panel) await panel.screenshot({path:join(output,'failure.png')}).catch(()=>{}); process.exitCode=1; }
-finally { if(app) await app.close().catch(()=>{}); writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); console.log(JSON.stringify(report)); }
+finally { if(app) await app.close().catch(()=>{}); await sampleService?.close(); writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); console.log(JSON.stringify(report)); }

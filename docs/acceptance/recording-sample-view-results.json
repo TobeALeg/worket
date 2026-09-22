@@ -1,0 +1,101 @@
+{
+  "round": 14,
+  "tests": {
+    "passed": 210,
+    "failed": 0
+  },
+  "actualProviderCalls": 0,
+  "runs": {
+    "initial": {
+      "run": "2026-09-22T21-46-08-718Z",
+      "status": "PASSED",
+      "packaged": false,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true,
+        "absenceArchiveCurrentViewAndRestoration": true,
+        "remoteSampleRevisionAbsenceRestoration": true
+      },
+      "error": null
+    },
+    "final": {
+      "run": "2026-09-22T21-47-56-087Z",
+      "status": "PASSED",
+      "packaged": false,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true,
+        "absenceArchiveCurrentViewAndRestoration": true,
+        "remoteSampleRevisionAbsenceRestoration": true
+      },
+      "error": null
+    },
+    "oldClientExpectedFailure": {
+      "run": "2026-09-22T21-46-49-302Z",
+      "status": "FAILED",
+      "packaged": true,
+      "checks": {
+        "allPagesToStateAndExtraction": true
+      },
+      "error": "Expected values to be strictly equal:\n\nfalse !== true\n"
+    },
+    "boundary": {
+      "run": "2026-09-22T21-48-02-504Z",
+      "status": "PASSED",
+      "packaged": false,
+      "checks": {
+        "stopBeforeSend": true,
+        "originalDestinationRetry": true,
+        "deleteOriginalDespiteOptOut": true
+      },
+      "error": null
+    }
+  },
+  "before": {
+    "events": [
+      "RECORDING",
+      "MESSAGE",
+      "MESSAGE"
+    ],
+    "bothConflictingMessagesRetained": true,
+    "recordingView": null
+  },
+  "after": {
+    "events": [
+      "RECORDING",
+      "MESSAGE",
+      "RECORDING_VIEW",
+      "MESSAGE",
+      "RECORDING_VIEW",
+      "RECORDING_VIEW"
+    ],
+    "bothConflictingMessagesRetained": true,
+    "recordingView": {
+      "ready": true,
+      "throughSequence": 3,
+      "issues": [],
+      "messages": [
+        {
+          "sourceEventId": "7ac28389-2d1b-4977-a514-80b6f52b92dd",
+          "sequence": 1,
+          "kind": "user.prompt",
+          "timestamp": "2026-09-22T21:46:28.616Z",
+          "content": "每期最多 50 words。",
+          "complete": true,
+          "status": "SUPERSEDED",
+          "supersededBy": "e49e41a7-d115-498f-9d63-c62c953a2fb1"
+        },
+        {
+          "sourceEventId": "e49e41a7-d115-498f-9d63-c62c953a2fb1",
+          "sequence": 2,
+          "kind": "user.prompt",
+          "timestamp": "2026-09-22T21:46:28.647Z",
+          "content": "每期最多 30 words。",
+          "complete": true,
+          "status": "ABSENT"
+        }
+      ],
+      "current": []
+    }
+  }
+}
