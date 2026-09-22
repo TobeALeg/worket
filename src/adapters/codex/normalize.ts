@@ -79,7 +79,7 @@ function event(
   };
 }
 
-export function normalizeCodexThread(thread: CodexThreadPayload): NormalizedThread {
+export function normalizeCodexThread(thread: CodexThreadPayload, includeUnsettled = false): NormalizedThread {
   const events: NormalizedSourceEvent[] = [];
   let sequence = 0;
 
@@ -107,7 +107,7 @@ export function normalizeCodexThread(thread: CodexThreadPayload): NormalizedThre
       }
 
       // User input is stable immediately; other items may still stream within a running turn.
-      if (turn.status === "inProgress") continue;
+      if (turn.status === "inProgress" && !includeUnsettled) continue;
 
       if (item.type === "agentMessage" && typeof item.text === "string") {
         sequence += 1;

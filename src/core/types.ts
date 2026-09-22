@@ -118,6 +118,8 @@ export type SourceEventKind =
   | "work.definition_applied"
   | "work.input_provided"
   | "conversation.title"
+  | "source.check"
+  | "source.absent"
   | "user.prompt"
   | "agent.response"
   | "tool.call"
@@ -163,6 +165,7 @@ export interface WorkSnapshot {
 }
 
 export interface HandoffPackage {
+  sourceNotice?: string;
   workPackage?: WorkPackage;
   id: string;
   workInstanceId: string;

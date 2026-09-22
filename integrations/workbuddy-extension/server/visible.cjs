@@ -19,7 +19,7 @@ function summary(info) {
     status: info.state,
   };
 }
-function visibleThread(info, requests) {
+function visibleThread(info, requests, includeUnsettled = false) {
   const events = [];
   let sequence = 0;
   const emit = (req, index, kind, content, metadata = {}) => {
@@ -46,7 +46,7 @@ function visibleThread(info, requests) {
       ["assistant", req.assistantMessage],
     ]) {
       // Finalize replies once, avoiding archiving partial streaming text as a final reply.
-      if (role === "assistant" && message?.state !== "completed") continue;
+      if (role === "assistant" && message?.state !== "completed" && !includeUnsettled) continue;
       for (const [i, block] of (message?.content || []).entries()) {
         const key = `${role}:${i}`;
         if (

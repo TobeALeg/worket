@@ -1,4 +1,4 @@
-import { currentSourceState, sourceRoots } from "./source-revisions.js";
+import { currentSourceState, sourceRoots, sourceAvailabilityNotice, assertSourcePresenceReady } from "./source-revisions.js";
 import { PackageReceipts } from './package-receipts.js';
 import { existsSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -645,9 +645,12 @@ export class SqliteWorkCore implements WorkCore {
 
   createHandoffPackage(workInstanceId: string): HandoffPackage {
     const work = this.#requireWork(workInstanceId);
+    assertSourcePresenceReady(work.sourceArchive);
     const latestArtifacts = new Map<string, ArtifactRef>();
     for (const artifact of work.artifactRefs) latestArtifacts.set(artifact.path, artifact);
+    const sourceNotice = sourceAvailabilityNotice(work.sourceArchive);
     const handoff: HandoffPackage = {
+      ...(sourceNotice ? { sourceNotice } : {}),
       id: this.#id(),
       workInstanceId,
       ...(work.definition.kind === "REUSABLE" ? { workPackage: buildWorkPackage(work, this.definitions) } : {}),

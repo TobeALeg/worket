@@ -193,3 +193,17 @@ test('continuous comparison batches only current source revisions while preservi
     assert.equal(f.core.getWork(work.instance.id)!.sourceArchive.some(e => e.content === previous.content), true, 'original observation stays local and immutable');
   } finally { f.service.close(); f.core.close(); }
 });
+
+test('pending source checks do not trigger automatic comparison or spend its daily attempt budget', async () => {
+  const f = await setup();
+  try {
+    const work = f.create(); await f.enable(); f.append(work, '每次必须保留待核验要求');
+    const original = f.core.getWork(work.instance.id)!.sourceArchive.at(-1)!;
+    const identity = { adapter: 'codex', conversationId: f.core.getWork(work.instance.id)!.activeBinding!.conversationId, externalId: original.externalId };
+    f.core.appendSourceEvents(work.instance.id, [{ externalId: id(), sequence: original.sequence + 1, kind: 'source.check', content: '', timestamp: new Date().toISOString(), executorType: 'TOOL', environmentType: 'WORKPET_LOCAL', metadata: { worketSource: { ...identity, previousEventId: original.id } }, artifactRefs: [] }]);
+    await f.trigger(); assert.equal(f.client.calls, 1); assert.equal(f.service.continuous.status(f.base.id).remaining, 3);
+    const pending = f.core.getWork(work.instance.id)!.sourceArchive.at(-1)!;
+    f.core.appendSourceEvents(work.instance.id, [{ externalId: id(), sequence: pending.sequence + 1, kind: 'user.prompt', content: original.content, timestamp: new Date().toISOString(), executorType: 'HUMAN', environmentType: 'CODEX_DESKTOP', metadata: { worketSource: { ...identity, previousEventId: pending.id } }, artifactRefs: [] }]);
+    await f.trigger(); assert.equal(f.client.calls, 2); assert.match(JSON.stringify(f.client.request), /待核验要求/);
+  } finally { f.service.close(); f.core.close(); }
+});

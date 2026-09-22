@@ -151,7 +151,7 @@ export class CodexAppServerClient {
   async readThread(threadId: string): Promise<NormalizedThread> {
     await this.connect();
     const thread = await readCodexHistory((method, params) => this.#request(method, params), threadId);
-    return normalizeCodexThread(thread);
+    return { ...normalizeCodexThread(thread), ...(thread.worketHistoryComplete === true ? { history: { complete: true as const, observedExternalIds: normalizeCodexThread(thread, true).events.map(event => event.externalId) } } : {}) };
   }
 
   close(): void {

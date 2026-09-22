@@ -45,6 +45,7 @@ export interface WorkSummaryView {
 }
 
 export interface WorkDetailView extends WorkSummaryView {
+  sourceNotice?: string;
   latestActivity?: { text: string; sourceMessageId: string };
   reusableDefinitionId?: string;
   dispatchStatus?: string;

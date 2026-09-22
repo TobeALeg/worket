@@ -37,8 +37,11 @@ module.exports = async function handle(input, invoke) {
       if (!Array.isArray(result?.items))
         throw new Error("WORKBUDDY_INCOMPATIBLE: missing visible requests");
       for (const request of result.items) requests.set(request.id, request);
-      if (!result.hasOlder)
-        return visibleThread(snapshot.info, [...requests.values()]);
+      if (!result.hasOlder) {
+        const all = [...requests.values()];
+        return { ...visibleThread(snapshot.info, all), ...(ready.historyReady === true && result.hasOlder === false ? { history: { complete: true,
+          observedExternalIds: visibleThread(snapshot.info, all, true).events.map(event => event.externalId) } } : {}) };
+      }
       const oldest = [...requests.values()].sort(
         (a, b) => a.requestSeq - b.requestSeq || a.timestamp - b.timestamp,
       )[0]?.id;

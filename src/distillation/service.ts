@@ -1,4 +1,4 @@
-import { currentSourceEvents } from "../core/source-revisions.js";
+import { currentSourceEvents, assertSourcePresenceReady } from "../core/source-revisions.js";
 import { ContinuousEvolution, eventIdentity, type AutomaticComparison } from './continuous-evolution.js';
 import { type DocumentRole } from "../contracts/rules.js";
 import { evolutionBaseline, mergeEvolution } from '../definitions/evolution.js';
@@ -194,6 +194,7 @@ export class DistillationService {
     const sources = input.workIds.map((id, index) => {
       const work = this.core.getWork(id);
       ensure(work, "SOURCE_DELETED");
+      assertSourcePresenceReady(work.sourceArchive);
       const events = currentSourceEvents(work.sourceArchive)
         .filter(e => !allowedEvents || allowedEvents.has(eventIdentity(id, e)))
         .filter((e) => e.kind !== "reasoning.summary" && e.content?.trim())
@@ -385,6 +386,7 @@ export class DistillationService {
       const work = this.core.getWork(source.workId);
       ensure(work && !source.deleted, "SOURCE_DELETED");
       if (unchanged) {
+        assertSourcePresenceReady(work.sourceArchive);
         const events = currentSourceEvents(work.sourceArchive).filter((e) => e.kind !== "reasoning.summary" && e.content?.trim());
         ensure(
           snapshot.baseDefinitionId

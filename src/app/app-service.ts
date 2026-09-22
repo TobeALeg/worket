@@ -1,5 +1,6 @@
-import { sourceDelta } from "./source-delta.js";
-import { currentSourceEvents, sourceIdentity } from "../core/source-revisions.js";
+import { SourcePresence } from "./source-presence.js";
+import { sourceDelta, unavailableSourceRange } from "./source-delta.js";
+import { currentSourceEvents, sourceIdentity, sourceAvailabilityNotice, hasPendingSourceChecks } from "../core/source-revisions.js";
 import { basename, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import { conversationProjectLabel } from "../executors/project-label.js";
@@ -76,6 +77,7 @@ export interface AppServiceOptions {
 type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] } | null;
 
 export class AppService {
+  readonly #sourcePresence = new SourcePresence();
   readonly #core: WorkCore;
   readonly #executors: ExecutorRegistry;
   readonly #foreground: ForegroundApplicationDetector;
@@ -306,7 +308,7 @@ export class AppService {
       : null;
     work = this.#core.appendSourceEvents(work.instance.id, [
       ...(titleEvent ? [titleEvent] : []),
-      ...this.#sourceInputs(thread.events),
+      ...this.#sourceInputs(thread.events, { adapter: adapter.id, conversationId: thread.threadId }),
     ]).work;
     if (titleEvent) work = this.#applyObjective(work, titleEvent);
     work = await this.#artifacts.attach(work, thread.events);
@@ -332,6 +334,11 @@ export class AppService {
     // Archived evidence is enough to choose a split point; no need to contact the old application.
     const binding = work.activeBinding ?? work.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
+    if (work.activeBinding && unavailableSourceRange(work)) {
+      const thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId);
+      if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致");
+      return thread.events.filter(event => event.kind === 'user.prompt' && event.content.trim()).map(event => ({ externalId: event.externalId, label: event.content.replace(/\s+/gu, ' ').slice(0, 100), timestamp: event.timestamp })).reverse();
+    }
     return currentSourceEvents(work.sourceArchive)
       .filter(
         (event) =>
@@ -357,8 +364,8 @@ export class AppService {
     if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致，未创建新记录");
     const selected = currentSourceEvents(sourceWork.sourceArchive).find(event =>
       event.externalId === request.startExternalId && event.episodeId === binding.episodeId && event.kind === "user.prompt");
-    if (!selected) throw new Error("所选消息已改变，请重新选择");
-    const originalId = sourceIdentity(selected)?.externalId ?? selected.externalId;
+    if (!selected && !(sourceWork.activeBinding && unavailableSourceRange(sourceWork))) throw new Error("所选消息已改变，请重新选择");
+    const originalId = selected ? sourceIdentity(selected)?.externalId ?? selected.externalId : request.startExternalId;
     const start = thread.events.findIndex(event => event.externalId === originalId && event.kind === "user.prompt");
     if (start < 0) throw new Error("未找到指定的用户消息");
     if (
@@ -380,7 +387,7 @@ export class AppService {
       createdId = work.instance.id;
       work = this.#core.appendSourceEvents(
         work.instance.id,
-        this.#sourceInputs(events),
+        this.#sourceInputs(events, { adapter: adapter.id, conversationId: thread.threadId, scopeStartExternalId: originalId }),
       ).work;
       work = await this.#artifacts.attach(work, events);
       const allowCloud = this.#cloudExtractionEnabledFor(
@@ -421,11 +428,10 @@ export class AppService {
       current.instance.status !== "OPEN" ||
       !binding ||
       /^(pending|waiting):/.test(binding.conversationId)
-    )
-      return null;
-    const thread = await this.#executors
-      .get(binding.adapter)
-      .source.readThread(binding.conversationId);
+    ) { this.#sourcePresence.reset(workId); return null; }
+    let thread: NormalizedThread;
+    try { thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId); }
+    catch (error) { this.#sourcePresence.reset(workId); throw error; }
     const latest = this.#core.getWork(workId);
     if (
       !latest ||
@@ -433,8 +439,10 @@ export class AppService {
       latest.activeBinding?.id !== binding.id
     )
       return null;
-    if (thread.threadId !== binding.conversationId)
+    if (thread.threadId !== binding.conversationId) {
+      this.#sourcePresence.reset(workId);
       throw new Error("来源会话身份不一致，已拒绝同步");
+    }
     const adapter = this.#executors.get(binding.adapter);
     const result = await this.#ingestDelta(
       latest,
@@ -445,20 +453,21 @@ export class AppService {
   }
 
   async #updateRecordedState(work: WorkSnapshot): Promise<void> {
+    if (hasPendingSourceChecks(work.sourceArchive)) return;
     const workId = work.instance.id;
     const extracted = this.#core.extractedSequence(workId);
     const pending = work.sourceArchive.filter(event => event.sequence > extracted);
     const revised = pending.some(event => sourceIdentity(event)?.previousEventId);
     const events = currentSourceEvents(work.sourceArchive).filter(event => revised || event.sequence > extracted);
-    if (!events.length) return;
-    const patch = await this.#extractor(this.#cloudExtractionEnabledFor(workId)).extract({
+    if (!pending.length) return;
+    const patch = events.length ? await this.#extractor(this.#cloudExtractionEnabledFor(workId)).extract({
       previousState: work.state,
       events,
-    });
+    }) : {};
     if (work.state.objective.length) patch.objective = [];
     const current = this.#core.getWork(workId);
     if (current?.instance.status === "OPEN" && current.activeBinding?.id === work.activeBinding?.id) {
-      this.#core.applyExtractorPatch(workId, patch, Math.max(...events.map((event) => event.sequence)));
+      this.#core.applyExtractorPatch(workId, patch, Math.max(...pending.map((event) => event.sequence)));
     }
   }
 
@@ -916,6 +925,7 @@ export class AppService {
 
   #sourceInputs(
     events: Array<NormalizedSourceEvent | SourceEventInput | SourceEvent>,
+    source?: { adapter: string; conversationId: string; scopeStartExternalId?: string },
   ): SourceEventInput[] {
     return events.map((event) => ({
       externalId: event.externalId,
@@ -925,7 +935,7 @@ export class AppService {
       timestamp: event.timestamp,
       executorType: event.executorType,
       environmentType: event.environmentType,
-      metadata: event.metadata ?? {},
+      metadata: { ...event.metadata, ...(source ? { worketSource: { ...source, externalId: event.externalId } } : {}) },
       artifactRefs: "artifactRefs" in event ? event.artifactRefs : [],
     }));
   }
@@ -934,7 +944,7 @@ export class AppService {
     current: WorkSnapshot,
     thread: NormalizedThread,
   ): Promise<{ work: WorkSnapshot; newEvents: NormalizedSourceEvent[] }> {
-    const newEvents = sourceDelta(current, thread);
+    const newEvents = sourceDelta(current, thread, this.#sourcePresence.observe(current, thread));
     let work = this.#core.appendSourceEvents(
       current.instance.id,
       this.#sourceInputs(newEvents),
@@ -975,6 +985,7 @@ export class AppService {
   }
 
   #detail(work: WorkSnapshot): WorkDetailView {
+    const sourceNotice = work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
     const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
       .prepare("SELECT status,read_at FROM pending_dispatches WHERE work_id=?")
@@ -988,6 +999,7 @@ export class AppService {
           }
         : {}),
       ...this.#summary(work),
+      ...(sourceNotice ? { sourceNotice } : {}),
       ...(latestReply?.content ? { latestActivity: { text: latestReply.content, sourceMessageId: latestReply.externalId } } : {}),
       state: {
         ...work.state,

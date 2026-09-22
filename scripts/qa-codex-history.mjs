@@ -7,7 +7,7 @@ import { historyFixture, writeHistoryFixture } from './lib/codex-history-fixture
 const run = new Date().toISOString().replace(/[:.]/g, '-'), output = join(process.cwd(), 'output/codex-history', run); mkdirSync(output, { recursive: true });
 const directory = mkdtempSync(join(tmpdir(), 'worket-history-e2e-')), fixture = historyFixture();
 const { dataPath, rpcLog, binary } = writeHistoryFixture(directory, fixture);
-const report = { run, status: 'RUNNING', packaged: !!process.env.WORKPET_EXECUTABLE_PATH, directory, actualProviderCalls: 0, externalAgent: false, checks: {} };
+const report = { run, status: 'RUNNING', packaged: !!process.env.WORKPET_EXECUTABLE_PATH, directory, actualProviderCalls: 0, externalAgent: false, sourceAbsence: process.env.WORKET_SOURCE_ABSENCE === '1', checks: {} };
 let app, panel;
 try {
   app = await electron.launch({ executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'), args: [...(process.env.WORKPET_EXECUTABLE_PATH ? ['--use-mock-keychain'] : ['.']), `--user-data-dir=${directory}`, '--dev'], cwd: process.cwd(), env: { ...process.env, WORKPET_DATA_DIR: directory, WORKPET_BRIDGE_CONFIG: join(directory, 'bridge.json'), WORKPET_SKIP_INTEGRATIONS: '1' } });
@@ -52,6 +52,35 @@ try {
   after = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
   assert.ok(after.selectedWork.state.constraints.some(i => i.text.includes('修订后')));
   report.checks.failedPageAtomicAndRetry = true;
+  if (report.sourceAbsence) {
+    const removed = fixture.turns.pop(); writeFileSync(dataPath, JSON.stringify(fixture));
+    await panel.evaluate(id => window.workpet.refreshWork(id), workId);
+    await panel.evaluate(id => window.workpet.refreshWork(id), workId);
+    const absent = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
+    assert.ok(!absent.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')));
+    assert.ok(absent.selectedWork.sourceNotice);
+    const snapshot = await panel.evaluate(id => window.workpet.distillation('prepare', { workIds: [id], includedFileIds: [] }), workId);
+    assert.ok(!snapshot.sources[0].events.some(e => e.content.includes('分页末尾')));
+    const bridge = JSON.parse(readFileSync(join(directory, 'bridge.json'), 'utf8'));
+    const mcp = async name => {
+      const response = await fetch(`http://${bridge.host}:${bridge.port}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-workpet-token': bridge.token }, body: JSON.stringify({ jsonrpc: '2.0', id: name, method: 'tools/call', params: { name, arguments: { work_id: workId } } }) });
+      const result = await response.json(); assert.ok(!result.error); return JSON.parse(result.result.content[0].text);
+    };
+    const archive = await mcp('get_work_archive'), context = await mcp('get_work_context');
+    const current = new Set(archive.currentEventIds);
+    assert.ok(archive.events.some(e => e.content?.includes('分页末尾') && !current.has(e.id)));
+    assert.ok(archive.events.some(e => e.kind === 'source.absent'));
+    assert.ok(context.sourceNotice); assert.ok(!context.state.constraints.some(i => i.text.includes('分页末尾')));
+    await panel.locator('#back-to-list').click(); await panel.locator(`[data-work-id="${workId}"]`).click();
+    await panel.locator('.source-notice').waitFor(); await panel.screenshot({ path: join(output, 'source-absent.png') });
+    fixture.turns.push(removed); writeFileSync(dataPath, JSON.stringify(fixture));
+    await panel.evaluate(id => window.workpet.refreshWork(id), workId);
+    const restored = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
+    assert.ok(restored.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')));
+    assert.equal(restored.selectedWork.sourceNotice, undefined);
+    report.checks.absenceArchiveCurrentViewAndRestoration = true;
+  }
+
   report.rpc = readFileSync(rpcLog, 'utf8').trim().split('\n').map(JSON.parse).map(r => ({ method: r.method, cursor: r.params?.cursor, includeTurns: r.params?.includeTurns, error: r.error }));
   assert.ok(report.rpc.some(r => r.method === 'thread/items/list' && r.cursor));
   report.status = 'PASSED';

@@ -1,0 +1,35 @@
+{
+  "round": 12,
+  "tests": {
+    "passed": 204,
+    "failed": 0
+  },
+  "actualProviderCalls": 0,
+  "externalAgentExecution": false,
+  "runs": {
+    "sourcePresence": {
+      "run": "2026-09-22T21-17-31-235Z",
+      "status": "PASSED",
+      "packaged": false,
+      "error": null
+    },
+    "oldClientExpectedFailure": {
+      "run": "2026-09-22T21-22-54-851Z",
+      "status": "FAILED",
+      "packaged": true,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!absent.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')))\n"
+    },
+    "receipts": {
+      "run": "2026-09-22T21-23-39-769Z",
+      "status": "PASSED",
+      "packaged": false,
+      "error": null
+    },
+    "continuous": {
+      "run": "2026-09-22T21-23-48-612Z",
+      "status": "PASSED",
+      "packaged": false,
+      "error": null
+    }
+  }
+}

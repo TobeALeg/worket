@@ -22,4 +22,5 @@ export interface NormalizedThread {
   createdAt: string;
   updatedAt: string;
   events: NormalizedSourceEvent[];
+  history?: { complete: true; observedExternalIds: string[] };
 }

@@ -1,3 +1,4 @@
+import { sourceAvailabilityNotice, assertSourcePresenceReady } from "../core/source-revisions.js";
 import { dirname } from 'node:path';
 import { resolveRuleDocuments } from "./document-rules.js";
 import { ruleText, acceptanceChecks, type InstanceOverride } from "../contracts/rules.js";
@@ -21,11 +22,13 @@ export type WorkPackage = {
   nextStep: string | null;
   acceptanceRequired: boolean;
   fileAccess: string;
+  sourceNotice?: string;
 };
 export function buildWorkPackage(
   work: WorkSnapshot,
   repository: DefinitionRepository,
 ): WorkPackage {
+  assertSourcePresenceReady(work.sourceArchive);
   const definition =
     work.definition.kind === "REUSABLE"
       ? repository.get(work.definition.id)
@@ -54,6 +57,7 @@ export function buildWorkPackage(
   for (const spec of definition?.content.inputs ?? [])
     if (spec.valueType === "FILE" && binding.inputs[spec.key])
       repository.materials.read(String(binding.inputs[spec.key]));
+  const sourceNotice = sourceAvailabilityNotice(work.sourceArchive);
   return {
     packageVersion: 1,
     purpose:
@@ -74,6 +78,7 @@ export function buildWorkPackage(
     ])) as WorkState,
     nextStep: work.state.pendingActions[0]?.text ?? null,
     acceptanceRequired: !!definition,
+    ...(sourceNotice ? { sourceNotice } : {}),
     fileAccess:
       "规范条款已按固定版本展开，下列要求是本次有效约定。本机二进制资料仍须另行传递。完成须由用户关联本次交付物并逐项验收。",
   };
@@ -85,6 +90,7 @@ export function packageMarkdown(value: WorkPackage): string {
     `# ${escapeMarkdown(value.definition?.content.name ?? value.state.objective[0]?.text ?? "工作")}`,
     `意图：${value.purpose} · 工作 ID：${value.workId}`,
     value.fileAccess,
+    ...(value.sourceNotice ? [`来源变化：${value.sourceNotice}`] : []),
   ];
   const content = value.definition?.content;
   if (content) {

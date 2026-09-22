@@ -117,7 +117,7 @@ export class WorkPetMcpHandler {
             result: toolResult({
               workInstanceId: workId,
               currentEventIds: currentSourceEvents(work.sourceArchive).map(event => event.id),
-              revisionPolicy: "events 保留观察历史；当前有效内容按 currentEventIds 顺序读取，修订的 metadata.worketSource.previousEventId 指向旧观察。",
+              revisionPolicy: "events 保留观察历史；当前有效内容按 currentEventIds 顺序读取，修订的 metadata.worketSource.previousEventId 指向旧观察；source.absent 仅表示当前来源中不可见，不表示撤销已确认约定。",
               events: work.sourceArchive.filter(
                 (event) => event.sequence > after,
               ),

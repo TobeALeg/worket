@@ -18,7 +18,8 @@ export function fixtureReply(method, params, fixture) {
   if (method === 'thread/turns/list') {
     if (fixture.mode === 'legacy') return fail('Method not found', -32601);
     if (params.cursor && fixture.mode === 'failure') return fail('synthetic second page failure');
-    return { result: { data: [fixture.turns[params.cursor ? 1 : 0]], nextCursor: params.cursor ? null : 'turn-page-two' } };
+    const index = params.cursor ? 1 : 0;
+    return { result: { data: fixture.turns.slice(index, index + 1), nextCursor: index + 1 < fixture.turns.length ? 'turn-page-two' : null } };
   }
   if (method === 'thread/items/list') return { result: { data: [{ turnId: 'turn-new', item: fixture.items[params.cursor ? 1 : 0] }], nextCursor: params.cursor ? null : 'item-page-two' } };
   return fail('Method not found', -32601);

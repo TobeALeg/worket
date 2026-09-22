@@ -87,3 +87,12 @@ test("WorkBuddy history reads all older pages and rejects stalled pagination", a
     /INCOMPLETE/,
   );
 });
+test('WorkBuddy complete coverage includes live visible IDs without exposing their partial content', async () => {
+  const data = request('live', 1); data.assistantMessage.state = 'streaming';
+  const invoke = (hasOlder: boolean | undefined) => async (method: string) => method === 'get' ? { info } : method === 'requestEntries' ? { historyReady: true } : { items: [data], hasOlder };
+  const complete = await handle({ method: 'read', id: 'session' }, invoke(false));
+  assert.ok(complete.history.observedExternalIds.includes('workbuddy:session:live:assistant:1'));
+  assert.equal(JSON.stringify(complete).includes('answer 1'), false);
+  const unknown = await handle({ method: 'read', id: 'session' }, invoke(undefined));
+  assert.equal(unknown.history, undefined);
+});

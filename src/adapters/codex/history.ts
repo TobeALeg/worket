@@ -52,7 +52,7 @@ export async function readCodexHistory(request: HistoryRequest, threadId: string
       if (turn.itemsView !== undefined && turn.itemsView !== 'full') incomplete('旧接口只返回了摘要，未导入部分历史');
       turn.items = uniqueItems(turn.items);
     }
-    return legacy.thread;
+    return { ...legacy.thread, worketHistoryComplete: legacy.thread.turns.length > 0 && legacy.thread.turns.every(turn => turn.itemsView === "full") };
   }
   const turns = new Map<string, Turn>(), cursors = new Set<string>();
   let current = first;
@@ -88,5 +88,5 @@ export async function readCodexHistory(request: HistoryRequest, threadId: string
     }
     turn.items = uniqueItems(items); turn.itemsView = 'full';
   }
-  return { ...initial.thread, turns: [...turns.values()] };
+  return { ...initial.thread, turns: [...turns.values()], worketHistoryComplete: true };
 }

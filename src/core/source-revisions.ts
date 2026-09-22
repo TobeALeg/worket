@@ -1,6 +1,6 @@
 import type { SourceEvent, WorkState } from './types.js';
 
-export type SourceIdentity = { adapter: string; conversationId: string; externalId: string; previousEventId?: string };
+export type SourceIdentity = { adapter: string; conversationId: string; externalId: string; previousEventId?: string; scopeStartExternalId?: string };
 export function sourceIdentity(event: Pick<SourceEvent, 'metadata'>): SourceIdentity | null {
   const source = event.metadata.worketSource as Partial<SourceIdentity> | undefined;
   return source && typeof source.adapter === 'string' && typeof source.conversationId === 'string' && typeof source.externalId === 'string' ? source as SourceIdentity : null;
@@ -9,13 +9,16 @@ export function sourceIdentity(event: Pick<SourceEvent, 'metadata'>): SourceIden
 export function supersededSources(events: readonly SourceEvent[]): Set<string> {
   const seen = new Map<string, SourceEvent>(), superseded = new Set<string>();
   for (const event of events) {
-    const previous = seen.get(sourceIdentity(event)?.previousEventId ?? '');
-    if (previous) { superseded.add(previous.id); superseded.add(previous.externalId); }
+    let previous = event.kind === 'source.check' ? undefined : seen.get(sourceIdentity(event)?.previousEventId ?? '');
+    while (previous) {
+      superseded.add(previous.id); superseded.add(previous.externalId);
+      previous = previous.kind === 'source.check' ? seen.get(sourceIdentity(previous)?.previousEventId ?? '') : undefined;
+    }
     seen.set(event.id, event);
   }
   return superseded;
 }
-export function currentSourceEvents(events: readonly SourceEvent[]): SourceEvent[] {
+export function currentSourceObservations(events: readonly SourceEvent[]): SourceEvent[] {
   const current: SourceEvent[] = [], positions = new Map<string, number>();
   for (const event of events) {
     const previous = sourceIdentity(event)?.previousEventId;
@@ -24,6 +27,26 @@ export function currentSourceEvents(events: readonly SourceEvent[]): SourceEvent
     current[index] = event; positions.set(event.id, index);
   }
   return current;
+}
+export function currentSourceEvents(events: readonly SourceEvent[]): SourceEvent[] {
+  const byId = new Map(events.map(event => [event.id, event]));
+  return currentSourceObservations(events).flatMap(event => {
+    let visible: SourceEvent | undefined = event;
+    while (visible?.kind === 'source.check') visible = byId.get(sourceIdentity(visible)?.previousEventId ?? '');
+    return visible && visible.kind !== 'source.absent' ? [visible] : [];
+  });
+}
+export function hasPendingSourceChecks(events: readonly SourceEvent[]): boolean {
+  return currentSourceObservations(events).some(event => event.kind === 'source.check');
+}
+export function assertSourcePresenceReady(events: readonly SourceEvent[]): void {
+  if (hasPendingSourceChecks(events))
+    throw new Error('SOURCE_CHECK_PENDING: 来源变化待复核，请刷新记录后再交接或提炼');
+}
+export function sourceAvailabilityNotice(events: readonly SourceEvent[]): string | undefined {
+  if (hasPendingSourceChecks(events)) return '来源变化待复核，暂缓交接和提炼。请刷新记录继续核对。';
+  const count = currentSourceObservations(events).filter(event => event.kind === 'source.absent').length;
+  return count ? `${count} 条历史记录已不在当前来源中，已停止自动采用。已确认约定仍按原版本执行。` : undefined;
 }
 export function currentSourceState(state: WorkState, events: readonly SourceEvent[]): WorkState {
   const superseded = supersededSources(events);
