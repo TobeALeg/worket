@@ -149,7 +149,7 @@ test('evolution workflow sends a path-free baseline and validates new evidence t
       assert.deepEqual(body.baseline, request.evolution); assert.ok(messages[0].content.endsWith('No deletion by omission. No tool use. No generic rules unsupported by new evidence.'));
       return { result: expected };
     } }, new AbortController().signal);
-    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.0'); assert.equal(value.content, null);
+    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.2'); assert.equal(value.content, null);
   } finally { f.core.close(); }
 });
 
@@ -171,5 +171,21 @@ test('replacing a fixed material role requires a fresh binding while the old ins
     const next = f.core.definitions.publish({ draftId: draft.id, expectedRevision: draft.revision, materialBindings: { logo: newPath }, commandId: id() });
     assert.equal(next.materials.find(m => m.role === 'logo').hash, hash('new brand'));
     assert.equal(buildWorkPackage(work, f.core.definitions).fixedMaterials.find(m => m.role === 'logo').hash, hash('old brand'));
+  } finally { f.core.close(); }
+});
+
+test('explicit adoption keeps a separate Agent context reference through local receive and immutable publication', async () => {
+  const f = await setup();
+  try {
+    const work = f.create(); f.append(work, '字幕按你建议的，以后每期都加。');
+    f.core.appendSourceEvents(work.instance.id, [{ externalId: id(), sequence: f.core.getWork(work.instance.id).sourceArchive.length + 1, kind: 'agent.response', content: '建议逐句字幕。', timestamp: new Date().toISOString(), executorType: 'AGENT', environmentType: 'CODEX_DESKTOP', metadata: {}, artifactRefs: [] }]);
+    const snapshot = f.prepare(work), value = f.changesFor(snapshot, [{ kind: 'ADD', section: 'constraints', item: { key: 'subtitles', text: '每期逐句字幕', rule: active } }]);
+    const agent = snapshot.sources[0].events.find(e => e.kind === 'agent.response');
+    value.evolution.changes[0].item.basis.refs.push({ snapshotId: 'wire', workId: 'work-1', eventId: agent.key, excerpt: '建议逐句字幕。', role: 'CONTEXT' });
+    f.mock(value); const draft = await f.run(snapshot);
+    const rule = draft.content.constraints.find(i => i.key === 'subtitles');
+    assert.equal(rule.basis.origin, 'USER_STATED'); assert.equal(rule.basis.refs[1].role, 'CONTEXT');
+    assert.equal(rule.basis.refs[1].workId, work.instance.id); assert.equal(rule.basis.refs[1].eventId, agent.id);
+    const saved = f.publish(draft); assert.equal(saved.content.constraints.find(i => i.key === 'subtitles').basis.refs[1].role, 'CONTEXT');
   } finally { f.core.close(); }
 });

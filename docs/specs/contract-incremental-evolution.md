@@ -15,7 +15,7 @@
 - `prepare` 可带 `baseDefinitionId`。快照绑定不可变版本和 hash，确认范围的 hash 同时包含来源与基准身份。准备与开始提交时要求最新版本。
 - 请求可带 `evolution:{contentHash,content}`。content 只含有效约定和输入/资料角色，不含本地路径、历史源 ID、旧对话摘录或未选条款。原固定资料由本机验证，模型比较其有效条款文字。
 - 后台声明 `evolutionSchemaVersions:[1]`。未支持时客户端在提交前失败，原记录和定义不变。普通新建沉淀与旧客户端保持原协议。
-- 分块提取仍只处理新事件。最终协调使用 `work-definition-evolution-v1.0`，返回 `content:null` 和 `evolution:{baseHash,changes}`；每条 change 明确 section、item、kind 和可选基准 target。引用只能来自本次请求。
+- 分块提取仍只处理新事件。最终协调使用 新版 `work-definition-evolution-v1.2`（来源角色请求），返回 `content:null` 和 `evolution:{baseHash,changes}`；每条 change 明确 section、item、kind 和可选基准 target。引用只能来自本次请求。
 - `contracts/evolution.ts` 验证目标、范围、采纳状态、输入规格和来源；`definitions/evolution.ts` 合并差异。规则替代使用现有关系图，输入/资料角色的规格变化不能伪装成重复；替代固定资料角色要求重新绑定，不自动继承含义已改变的资料。
 - 草稿确认使用同一 SQL 事务写定义/证据、标记任务 SAVED、记录已确认事件的 ID 与内容 hash。断点由持久记录恢复；来源内容改变仍可再次比较。发布时若基准已不是最新版本，明确拒绝覆盖，保留草稿供核对。
 - 删除来源沿用现有脱敏：移除快照正文和引用摘录，补充依据显示来源已删除；已确认约定继续保留。没有扩大改进样本授权或自动上传其他会话。
@@ -26,4 +26,4 @@
 
 `test/distillation/evolution.test.ts` 覆盖版本隔离、断点持久化、来源脱敏、伪造目标、跨范围重复、旧服务拒绝和过期基准；`npm run qa:contract:evolution` 走 Electron/HTTP/真实渲染/发布/新实例/原文查看的冻结响应回放。回放只在全部内容、来源与中间结果一致时重绑定测试数据库随机生成的基准 hash，不修改语义输出；原始响应以 SHA-256 冻结。
 
-此处真实模型证据只证明主动增量比较链路能运行，不证明跨业务普遍准确或实际成片收益。持续触发机制另有工程端到端验收；更复杂的纠正、条件、多工作冲突及实际第二次交付仍待验证。
+此处真实模型证据只证明主动增量比较链路能运行，不证明跨业务普遍准确或实际成片收益。持续触发机制另有工程端到端验收；有限的平台条件、多工作冲突与部分采纳案例已有 [新增语义证据](../acceptance/contract-semantic-trials.md)，跨业务普遍正确性及实际第二次交付仍待验证。

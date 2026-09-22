@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "evidence": "New synthetic inputs and unmodified configured provider outputs. Not blind grading or business acceptance. Failures retained; no response repair.",
+  "cases": [
+    {
+      "id": "conditions-and-exception",
+      "scenario": "conditions-and-exception",
+      "run": "2026-09-22T18-47-54-959Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "9bb6cf83dd7df40990a6e1664b30282fca9d8deacf8e89a8918c0053709bb5f0",
+        "response-1.json": "3980b6b24ac8963a2e6eba3206d6ca41b25b38960bef5b719ed6dc43d6fca179",
+        "request-2.json": "c420c717eeec16161b9311b94f349761657dfe85181dd2623db90bfb9135a3f3",
+        "response-2.json": "3cef2fafa1cbbefd25d5c97e65eee5b8aa1ad7f1d519330e25527d78180fcad4",
+        "report.json": "d610792ac89d636e9f43ec2e7f07383f59e138b8de1e34f691dae92941260793"
+      }
+    },
+    {
+      "id": "cross-instance-conflict",
+      "scenario": "cross-instance-conflict",
+      "run": "2026-09-22T18-47-54-959Z",
+      "outcome": "BLOCKED_CONFLICT",
+      "sha256": {
+        "request-1.json": "a4fcab4a33d9c6c67c65d4d51f5e28fbee903ef61d085bae1941efc4c1484a51",
+        "response-1.json": "cf489289d9da337577afc02f2eba7938839856c8d7b5f36ccb7639a955d5a8a9",
+        "request-2.json": "58e9bae08985d9a557087a9e227ed651dc01700542f454e0374b41cac79413d1",
+        "response-2.json": "4d8b7b44fbdad55542d0a08bb8bff8da8abf848dd60b67fa9c505a22f041c69d",
+        "report.json": "c0aace4608cd69ea8e993d3930fbda888714ee49b1328f715683465dccedb0e7"
+      }
+    },
+    {
+      "id": "partial-adoption-service-failure",
+      "scenario": "partial-adoption",
+      "run": "2026-09-22T18-47-54-959Z",
+      "outcome": "SERVICE_FAILURE",
+      "sha256": {
+        "request-1.json": "a1765f4bd51eda7b77ce575f767a3ed3e4b8a1f1985befb4d999acd33a220d4a",
+        "response-1.json": "3122b0ac7d6dfb53ceda66ed705c2ce454d2eb601ac14e736041a67e3947c859",
+        "request-2.json": "7732b8a38480679a2f639cec01174d54f0af38aad5e49ad823b7e96b248776f9",
+        "report.json": "4e6aaeff51b0385ed3e5c63518c68fdc2f393942ba5531b828bb34ede6a39ae2"
+      }
+    },
+    {
+      "id": "partial-adoption-excluded",
+      "scenario": "partial-adoption",
+      "run": "2026-09-22T18-52-57-814Z",
+      "outcome": "INCOMPLETE_COVERAGE",
+      "sha256": {
+        "request-1.json": "a1765f4bd51eda7b77ce575f767a3ed3e4b8a1f1985befb4d999acd33a220d4a",
+        "response-1.json": "7996319228986ea23f134d819dbac14529b08384874b514bfa33ee16661f5f52",
+        "request-2.json": "fdbed5550880ae05c815f7339cb1f3702166d7ebe74a2c1d0baaa3b513e45dd1",
+        "response-2.json": "64cde4d47af8a43dc5031efe20da3ee66f9bf999435c9b976cd37c626d8f9116",
+        "report.json": "627bb1217c469de30d703609bf452a6e2d880b48ddd20e0c52e19252603fdbee"
+      }
+    },
+    {
+      "id": "partial-adoption-mixed-origin",
+      "scenario": "partial-adoption",
+      "run": "2026-09-22T18-56-26-498Z",
+      "outcome": "UNSUPPORTED_SOURCE",
+      "sha256": {
+        "request-1.json": "41baf6aed730bb94cb79fe045b04bd7133f357c226261bfc50420958f28d746b",
+        "request-2.json": "01e218fb18fbe398d287fe068c9393b5eabafc05b02ce5b3efea3b399c053c62",
+        "response-1.json": "ba4a47b0ea802d04dde231c3b9992e13aa952f613c9c3d02357e9f0c921c11c6",
+        "response-2.json": "1191f346792f2a4463685642c2e5ceceba38168e82fc576df0874a48fdb7a7df",
+        "report.json": "db7b4bc641f52958541462fca01ad6c45ef85d8d1b53a4cafb994481c58da69d"
+      }
+    },
+    {
+      "id": "partial-adoption",
+      "scenario": "partial-adoption",
+      "run": "2026-09-22T19-04-49-118Z",
+      "outcome": "ACCEPTED",
+      "evidenceSchemaVersion": 1,
+      "sha256": {
+        "request-1.json": "275e145a7f6e0bb58da7065284051b7c6746c98fc7207125479ef712e537b3be",
+        "request-2.json": "2693bc2bcf59149990ef050969ce3e179fea2215bade577ab67244e08215910c",
+        "response-1.json": "b5655f0d69ca905d836669671578f2598f23a6bbf25637df211fee03b3503856",
+        "response-2.json": "f61e2c55cb4c82d871d82c87e1c84778f7e90de79ecb48b6ef0053c0c783e596",
+        "report.json": "2855af9b5128860ca7957b0b7f108a689af32239618c38a8f46d2e25356da356"
+      }
+    }
+  ]
+}

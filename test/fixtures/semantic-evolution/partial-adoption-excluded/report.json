@@ -1,0 +1,37 @@
+{
+  "id": "partial-adoption",
+  "status": "FAILED",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-lQzYm8",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-52-57-814Z/partial-adoption",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2084,
+      "completion_tokens": 4704,
+      "total_tokens": 6788,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4464
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 164
+    },
+    {
+      "prompt_tokens": 3450,
+      "completion_tokens": 13157,
+      "total_tokens": 16607,
+      "prompt_tokens_details": {
+        "cached_tokens": 3072
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 11959
+      },
+      "prompt_cache_hit_tokens": 3072,
+      "prompt_cache_miss_tokens": 378
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "INCOMPLETE_COVERAGE\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+}

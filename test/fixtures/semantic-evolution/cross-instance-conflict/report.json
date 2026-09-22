@@ -1,0 +1,40 @@
+{
+  "id": "cross-instance-conflict",
+  "status": "PASSED",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-Et6d7S",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-47-54-959Z/cross-instance-conflict",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2154,
+      "completion_tokens": 7154,
+      "total_tokens": 9308,
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 6789
+      },
+      "prompt_cache_hit_tokens": 1664,
+      "prompt_cache_miss_tokens": 490
+    },
+    {
+      "prompt_tokens": 3646,
+      "completion_tokens": 13503,
+      "total_tokens": 17149,
+      "prompt_tokens_details": {
+        "cached_tokens": 2688
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 12474
+      },
+      "prompt_cache_hit_tokens": 2688,
+      "prompt_cache_miss_tokens": 958
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "BLOCK",
+    "reason": "cross-instance contradiction is unresolved; original version retained"
+  }
+}

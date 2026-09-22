@@ -1,0 +1,55 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-3/subtitles-reusable",
+        "text": "逐句字幕：以后每期都加。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3/logo-music-instance-exclusion",
+        "text": "本期先不要加片头 Logo 和背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/logo-music-uncertain-proposal",
+        "text": "片头 Logo 和背景音乐是否设为每期长期标准尚未决定；代理曾建议与逐句字幕一起设为长期标准。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/event-3"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2084,
+    "completion_tokens": 4704,
+    "total_tokens": 6788,
+    "prompt_tokens_details": {
+      "cached_tokens": 1920
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4464
+    },
+    "prompt_cache_hit_tokens": 1920,
+    "prompt_cache_miss_tokens": 164
+  },
+  "configuredModel": "deepseek-flash"
+}

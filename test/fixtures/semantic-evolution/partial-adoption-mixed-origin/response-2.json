@@ -1,0 +1,194 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [
+      {
+        "id": "issue-logo-bgm-uncertain",
+        "type": "UNCERTAIN_GENERALIZATION",
+        "field": "constraints.logo_bgm_proposed",
+        "message": "片头 Logo 和背景音乐尚未决定是否每期添加，无法确认可复用范围。",
+        "blocking": true
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1-event-1-script-input",
+        "text": "本次视频制作使用脚本：全新脚本 1",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-subtitle-reusable",
+        "text": "每期视频添加逐句字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-3-no-logo-bgm-instance",
+        "text": "本次不添加片头 Logo 和背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-logo-bgm-proposal",
+        "text": "建议以后每期添加片头 Logo 和背景音乐（尚未决定）。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 3,
+      "processedEvents": 3,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "e8efc800eaf1a8594bd57425148233f68cf22cc4d783f1077a9da4f1c3ffe3b4",
+      "changes": [
+        {
+          "kind": "DUPLICATE",
+          "section": "inputs",
+          "item": {
+            "key": "script",
+            "text": "本期新脚本",
+            "valueType": "TEXT",
+            "required": true,
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-1",
+                  "excerpt": "全新脚本 1"
+                }
+              ]
+            }
+          },
+          "target": "inputs.script"
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "subtitles",
+            "text": "每期视频添加逐句字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "逐句字幕"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "字幕按你建议的，以后每期都加"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "no_logo_bgm_this_time",
+            "text": "本次不添加片头 Logo 和背景音乐。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "片头 Logo 和背景音乐我还没决定，这次也先不要加"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "logo_bgm_proposed",
+            "text": "建议以后每期添加片头 Logo 和背景音乐（尚未决定）。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "AGENT_PROPOSED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后每期都加逐句字幕、片头 Logo 和背景音乐，三项一起设成长期标准"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "UNCERTAIN",
+              "status": "PROPOSED",
+              "condition": "尚未决定，未来可能采用"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3562,
+    "completion_tokens": 18200,
+    "total_tokens": 21762,
+    "prompt_tokens_details": {
+      "cached_tokens": 1536
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 16894
+    },
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 2026
+  },
+  "configuredModel": "deepseek-flash"
+}

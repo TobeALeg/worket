@@ -49,7 +49,37 @@ test("new coordination is opt-in; legacy clients keep a compatible effective con
   assert.equal(old.value.content.constraints[0].rule, undefined);
   const modern = await run("user.prompt", () => {}, true);
   assert.ok(modern.prompts.every(p => p.includes('RULE COORDINATION')));
-  assert.equal(modern.value.versions.prompt, 'work-definition-v2.0');
+  assert.equal(modern.value.versions.prompt, 'work-definition-v2.1');
   assert.equal(modern.value.content.constraints[0].rule.scope, 'UNCERTAIN');
   assert.ok(modern.value.issues.some(i => i.blocking));
+});
+
+test('explicit user adoption can cite an Agent proposal as context without treating it as user speech', async () => {
+  const source = request('user.prompt'); source.evidenceSchemaVersion = 1;
+  source.sources[0].events[0].content = '来源按你建议的，以后每条都加。';
+  source.sources[0].events.push({ key: 'event-2', sequence: 2, kind: 'agent.response', content: '建议每条事实标注来源。', hash: 'agent' });
+  async function extract(change = (_: any) => {}, contextual = true) {
+    const input = structuredClone(source); if (!contextual) delete input.evidenceSchemaVersion;
+    return extractDefinition(input, { model: 'fixture', async call(messages: any) {
+      const body = JSON.parse(messages[1].content);
+      if (body.phase === 'extract') return { result: { requirements: [], issues: [], eventKeys: ['work-1/event-1', 'work-1/event-2'] } };
+      if (contextual) assert.match(messages[0].content, /EVIDENCE ROLES/);
+      else assert.ok(!messages[0].content.includes('EVIDENCE ROLES'));
+      const out = result(input);
+      out.content.constraints[0].basis.refs.push({ snapshotId: 'wire', workId: 'work-1', eventId: 'event-2', excerpt: '建议每条事实标注来源。', role: 'CONTEXT' });
+      change(out);
+      return { result: out };
+    } }, new AbortController().signal);
+  }
+  const accepted = await extract();
+  assert.equal(accepted.content.constraints[0].basis.origin, 'USER_STATED');
+  assert.equal(accepted.content.constraints[0].basis.refs[1].role, 'CONTEXT');
+  assert.equal(accepted.issues.length, 0);
+  await assert.rejects(extract(r => r.content.constraints[0].basis.refs.shift()), { code: 'INVALID_SOURCE_REF' });
+  await assert.rejects(extract(r => r.content.constraints[0].basis.refs[1].eventId = 'missing'), { code: 'INVALID_SOURCE_REF' });
+  await assert.rejects(extract(r => r.content.constraints[0].basis.refs[1].excerpt = 'invented'), { code: 'INVALID_SOURCE_REF' });
+  await assert.rejects(extract(() => {}, false), { code: 'INVALID_SOURCE_REF' });
+  const unmarked = await extract(r => delete r.content.constraints[0].basis.refs[1].role);
+  assert.equal(unmarked.content.constraints[0].basis.type, 'INFERRED');
+  assert.ok(unmarked.issues.some(i => i.blocking && i.type === 'UNSUPPORTED_SOURCE'));
 });

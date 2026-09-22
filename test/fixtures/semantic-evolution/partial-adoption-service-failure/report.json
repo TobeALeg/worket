@@ -1,0 +1,24 @@
+{
+  "id": "partial-adoption",
+  "status": "FAILED",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-plyQuz",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-47-54-959Z/partial-adoption",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2084,
+      "completion_tokens": 5887,
+      "total_tokens": 7971,
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 5557
+      },
+      "prompt_cache_hit_tokens": 1664,
+      "prompt_cache_miss_tokens": 420
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "MODEL_UNAVAILABLE\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+}

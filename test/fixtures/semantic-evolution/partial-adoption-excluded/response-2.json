@@ -1,0 +1,169 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [
+      {
+        "id": "issue-logo-music-uncertain",
+        "type": "UNCERTAIN_GENERALIZATION",
+        "field": "constraints.logo_music_longterm_uncertain",
+        "message": "用户尚未决定是否将片头 Logo 和背景音乐设为每期长期标准；该代理建议仍为未接受状态，不能作为已启用的可复用规则。",
+        "blocking": true
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-3/subtitles-reusable",
+        "text": "逐句字幕：以后每期视频都加。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3/logo-music-instance-exclusion",
+        "text": "本期先不要加片头 Logo 和背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/logo-music-uncertain-proposal",
+        "text": "片头 Logo 和背景音乐是否每期都加尚未决定；代理曾建议与逐句字幕一起设为长期标准。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 3,
+      "processedEvents": 3,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3"
+      ],
+      "exclusions": [
+        {
+          "key": "work-1/event-1",
+          "reason": "仅提供本期脚本输入值，未产生可复用规则变更"
+        }
+      ]
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "unknown",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "e8efc800eaf1a8594bd57425148233f68cf22cc4d783f1077a9da4f1c3ffe3b4",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "subtitles",
+            "text": "以后每期视频都加逐句字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "字幕按你建议的，以后每期都加。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "每期视频"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "logo_music_this_time_exclusion",
+            "text": "本期先不要加片头 Logo 和背景音乐。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "片头 Logo 和背景音乐我还没决定，这次也先不要加。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本期"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "logo_music_longterm_uncertain",
+            "text": "片头 Logo 和背景音乐是否每期都加尚未决定。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "AGENT_PROPOSED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "我建议以后每期都加逐句字幕、片头 Logo 和背景音乐，三项一起设成长期标准。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "片头 Logo 和背景音乐我还没决定"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "UNCERTAIN",
+              "status": "PROPOSED",
+              "condition": "每期"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3450,
+    "completion_tokens": 13157,
+    "total_tokens": 16607,
+    "prompt_tokens_details": {
+      "cached_tokens": 3072
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 11959
+    },
+    "prompt_cache_hit_tokens": 3072,
+    "prompt_cache_miss_tokens": 378
+  },
+  "configuredModel": "deepseek-flash"
+}

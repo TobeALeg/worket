@@ -1,0 +1,41 @@
+{
+  "id": "partial-adoption",
+  "status": "FAILED",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-MY5gYG",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-56-26-498Z/partial-adoption",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2167,
+      "completion_tokens": 5891,
+      "total_tokens": 8058,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 5622
+      },
+      "prompt_cache_hit_tokens": 1536,
+      "prompt_cache_miss_tokens": 631
+    },
+    {
+      "prompt_tokens": 3562,
+      "completion_tokens": 18200,
+      "total_tokens": 21762,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 16894
+      },
+      "prompt_cache_hit_tokens": 1536,
+      "prompt_cache_miss_tokens": 2026
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "REVIEW_PROPOSALS",
+    "reason": "only subtitles adopted; unaccepted suggestions never execute"
+  },
+  "error": "unexpected issue cannot be auto-resolved: 此条原被标为用户要求，但引用包含非用户发言，已改为系统推断。请核验来源并明确处理。"
+}

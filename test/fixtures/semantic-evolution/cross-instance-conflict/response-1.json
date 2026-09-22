@@ -1,0 +1,71 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-event-1-input-script",
+        "text": "本次工作的一次性输入：script 为“全新脚本 2”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-ig-limit-70",
+        "text": "发布到 Instagram 的文案上限从 50 words 改为 70 words；其他已有约定保持。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-2-event-1-input-script",
+        "text": "本次工作的一次性输入：script 为“全新脚本 1”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-2/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-2-event-2-ig-limit-30",
+        "text": "发布到 Instagram 的文案上限从 50 words 改为 30 words；其他已有约定保持。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-2/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-2/event-1",
+      "work-2/event-2"
+    ],
+    "issues": [
+      {
+        "id": "issue-ig-limit-conflict",
+        "type": "CONFLICT",
+        "field": "Instagram caption limit",
+        "message": "work-1/event-2 要求将 Instagram 文案上限从 50 words 改为 70 words，work-2/event-2 要求改为 30 words；两者均为长期规则且无优先级，需用户裁决。",
+        "blocking": true
+      }
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2154,
+    "completion_tokens": 7154,
+    "total_tokens": 9308,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6789
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 490
+  },
+  "configuredModel": "deepseek-flash"
+}

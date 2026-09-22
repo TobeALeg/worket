@@ -66,7 +66,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const basis = original.basis;
     return `<div class="dr-evidence"><span>${basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "AI 提议", SYSTEM_INFERRED: "系统推断", DOCUMENT_STATED: "已采用规范" }[basis.origin] : basis.type === "INFERRED" ? "系统推断" : "用户编写"}</span>${basis.type === "INFERRED" ? `<p>${escape(basis.rationale)}</p>` : ""}${basis.type !== "USER_AUTHORED" ? basis.refs.map((ref, i) => {
       const cacheKey = JSON.stringify(ref);
-      return `<div>${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ""}${ref.deleted ? '<p>来源已删除</p>' : evidenceCache.has(cacheKey) ? `<pre>${escape(evidenceCache.get(cacheKey))}</pre>` : `<button data-review-action="load-evidence" data-address="${escape(idOf(address))}" data-ref="${i}">查看原文${basis.refs.length > 1 ? ` ${i + 1}` : ""}</button>`}</div>`;
+      return `<div>${ref.role === "CONTEXT" ? '<span class="dr-meta">背景引用（不作为直接依据）</span>' : basis.refs.some(r => r.role === "CONTEXT") ? '<span class="dr-meta">直接依据</span>' : ""}${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ""}${ref.deleted ? '<p>来源已删除</p>' : evidenceCache.has(cacheKey) ? `<pre>${escape(evidenceCache.get(cacheKey))}</pre>` : `<button data-review-action="load-evidence" data-address="${escape(idOf(address))}" data-ref="${i}">查看原文${basis.refs.length > 1 ? ` ${i + 1}` : ""}</button>`}</div>`;
     }).join("") : ""}</div>`;
   }
   function ruleHtml(item: Item, address: ItemAddress): string {
@@ -102,7 +102,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const entries = [...draft.evolution.evidence.map(entry => ({ ...entry, label: `重复于：${entry.baselineText}` })),
       ...draft.evolution.ignored.map(entry => ({ ...entry, label: entry.reason === 'RETIRED' ? '已撤销，不修改约定' : '仅本次，不修改约定' }))];
     if (!entries.length) return '';
-    return `<details class="dr-evidence" id="evolution-provenance"><summary>查看重复与未纳入要求 · ${entries.length}</summary>${entries.map((entry, index) => `<p>${escape(entry.label)}</p>${entry.refs.map((ref, refIndex) => `${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ''}${ref.deleted ? '<p>来源已删除</p>' : `<button data-review-action="evolution-evidence" data-entry="${index}" data-ref="${refIndex}">查看原文</button>`}`).join('')}`).join('')}</details>`;
+    return `<details class="dr-evidence" id="evolution-provenance"><summary>查看重复与未纳入要求 · ${entries.length}</summary>${entries.map((entry, index) => `<p>${escape(entry.label)}</p>${entry.refs.map((ref, refIndex) => `${ref.role === 'CONTEXT' ? '<span class="dr-meta">背景引用</span>' : ''}${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ''}${ref.deleted ? '<p>来源已删除</p>' : `<button data-review-action="evolution-evidence" data-entry="${index}" data-ref="${refIndex}">查看原文</button>`}`).join('')}`).join('')}</details>`;
   }
   function render(): void {
     if (closed) return;

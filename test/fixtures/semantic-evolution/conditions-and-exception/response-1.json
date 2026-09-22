@@ -1,0 +1,61 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-2-instagram-50-words",
+        "text": "以后发布到 Instagram 的文案仍然不超过 50 words；以后 Instagram 的长期上限依旧是 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-instagram-hashtag-acme",
+        "text": "以后发布到 Instagram 的文案必须带话题 #Acme。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-tiktok-80-words",
+        "text": "TikTok 仍不超过 80 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-instagram-sponsored-70-words-current",
+        "text": "本期的 Instagram 赞助片特批到 70 words，仅限本期。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2009,
+    "completion_tokens": 1728,
+    "total_tokens": 3737,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1452
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 345
+  },
+  "configuredModel": "deepseek-flash"
+}

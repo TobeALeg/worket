@@ -1,0 +1,143 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "CONFLICTING",
+    "content": null,
+    "issues": [
+      {
+        "id": "issue-instagram-limit-conflict",
+        "type": "CONFLICT",
+        "field": "constraints.instagram_limit",
+        "message": "work-1/event-2 要求将 Instagram 文案上限从 50 words 改为 70 words，work-2/event-2 要求改为 30 words；两处均为长期规则且条件相同，无法同时生效，需用户裁决后才能更新基准约束。",
+        "blocking": true
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "req-work1-script",
+        "text": "本次工作的一次性输入：script 为“全新脚本 2”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work1-instagram-limit-70",
+        "text": "发布到 Instagram 的文案上限从 50 words 改为 70 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work2-script",
+        "text": "本次工作的一次性输入：script 为“全新脚本 1”。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-2/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work2-instagram-limit-30",
+        "text": "发布到 Instagram 的文案上限从 50 words 改为 30 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-2/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 4,
+      "processedEvents": 4,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-2/event-1",
+        "work-2/event-2"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "contract-evolution",
+      "model": "assistant"
+    },
+    "evolution": {
+      "baseHash": "e8efc800eaf1a8594bd57425148233f68cf22cc4d783f1077a9da4f1c3ffe3b4",
+      "changes": [
+        {
+          "kind": "CONFLICT",
+          "section": "constraints",
+          "item": {
+            "key": "instagram_limit_70",
+            "text": "将发布到 Instagram 的文案上限从 50 words 改为 70 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后发布到 Instagram 的文案上限从 50 words 改为 70 words，其他已有约定保持。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "发布到 Instagram"
+            }
+          },
+          "target": "constraints.instagram_limit"
+        },
+        {
+          "kind": "CONFLICT",
+          "section": "constraints",
+          "item": {
+            "key": "instagram_limit_30",
+            "text": "将发布到 Instagram 的文案上限从 50 words 改为 30 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-2",
+                  "eventId": "event-2",
+                  "excerpt": "以后发布到 Instagram 的文案上限从 50 words 改为 30 words，其他已有约定保持。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "发布到 Instagram"
+            }
+          },
+          "target": "constraints.instagram_limit"
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3646,
+    "completion_tokens": 13503,
+    "total_tokens": 17149,
+    "prompt_tokens_details": {
+      "cached_tokens": 2688
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 12474
+    },
+    "prompt_cache_hit_tokens": 2688,
+    "prompt_cache_miss_tokens": 958
+  },
+  "configuredModel": "deepseek-flash"
+}

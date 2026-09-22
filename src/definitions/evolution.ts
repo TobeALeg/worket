@@ -63,7 +63,12 @@ export function mergeEvolution(base: Definition, result: ExtractionResult) {
   for (const issue of result.issues) {
     const key = issue.field.replace(/^content\./u, '');
     const matches = [...addresses].filter(([candidate]) => candidate.split('.')[1] === key);
-    issues.push({ ...issue, field: addresses.get(key) ?? (matches.length === 1 ? matches[0]![1] : issue.field) });
+    const field = addresses.get(key) ?? (matches.length === 1 ? matches[0]![1] : issue.field);
+    // Prefer the specific source-grounded question over our generic fallback for the
+    // same decision. Other kinds of concern and nonblocking notes cannot erase it.
+    const fallback = issues.findIndex(existing => existing.id === `evolution-${field}` && existing.type === issue.type && issue.blocking);
+    if (fallback !== -1) issues.splice(fallback, 1);
+    issues.push({ ...issue, field });
   }
   return { content, issues, evolution: review };
 }

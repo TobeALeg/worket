@@ -7,6 +7,7 @@ export type SourceRef = {
   workId: string;
   eventId: string;
   excerpt?: string;
+  role?: "CONTEXT";
   deleted?: boolean;
 };
 export type Basis =
@@ -58,6 +59,7 @@ export type WireEvent = {
 export type ExtractionRequest = {
   schemaVersion: 1;
   ruleSchemaVersion?: 1;
+  evidenceSchemaVersion?: 1;
   evolution?: EvolutionBaseline;
   snapshotHash: string;
   sources: { key: string; events: WireEvent[] }[];
@@ -182,6 +184,7 @@ export function validateContent(
       array(basis.refs);
       if (basis.type === "SOURCE") {
         ensure(basis.refs.length > 0);
+        ensure(basis.refs.some(ref => !!ref && typeof ref === "object" && (!("role" in ref) || ref.role !== "CONTEXT")), "INVALID_SOURCE_REF", "背景引用不能代替直接依据");
         ensure(
           ["USER_STATED", "AGENT_PROPOSED", "SYSTEM_INFERRED", "DOCUMENT_STATED"].includes(
             String(basis.origin),
@@ -194,6 +197,7 @@ export function validateContent(
         string(ref.workId);
         string(ref.eventId);
         if (ref.excerpt !== undefined) string(ref.excerpt);
+        ensure(ref.role === undefined || ref.role === "CONTEXT", "INVALID_SOURCE_REF");
         if (options.refs)
           ensure(
             options.refs.has(`${ref.workId}/${ref.eventId}`),
@@ -249,6 +253,7 @@ export function validateRequest(
   value: unknown,
 ): asserts value is ExtractionRequest {
   object(value);
+  ensure(value.evidenceSchemaVersion === undefined || value.evidenceSchemaVersion === 1, "INVALID_INPUT");
   ensure(value.schemaVersion === 1);
   string(value.snapshotHash);
   if (value.ruleSchemaVersion !== undefined) ensure(value.ruleSchemaVersion === 1);

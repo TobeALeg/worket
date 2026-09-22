@@ -326,6 +326,7 @@ export class DistillationService {
     return {
       schemaVersion: 1,
       ruleSchemaVersion: 1,
+      evidenceSchemaVersion: 1,
       snapshotHash: snapshot.contentHash,
       ...(base ? { evolution: evolutionBaseline(base, resolveRuleDocuments(base.content, base.materials, this.repository.materials).content) } : {}),
       sources: snapshot.sources.map((s) => ({
@@ -621,7 +622,7 @@ export class DistillationService {
             );
           if (
             item.basis.type === "SOURCE" &&
-            item.basis.origin === "USER_STATED"
+            item.basis.origin === "USER_STATED" && ref.role !== "CONTEXT"
           )
             ensure(
               e?.kind === "user.prompt" || e?.kind.startsWith("work."),
@@ -632,6 +633,7 @@ export class DistillationService {
             workId: s.workId,
             eventId: e?.id ?? f!.id,
             ...(ref.excerpt ? { excerpt: ref.excerpt } : {}),
+            ...(ref.role ? { role: ref.role } : {}),
           };
         });
       }

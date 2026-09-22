@@ -1,0 +1,442 @@
+{
+  "date": "2026-09-23",
+  "kind": "Synthetic inputs; real provider trials and frozen desktop replay distinguished. Not blind or human business acceptance.",
+  "attemptedProviderCalls": 12,
+  "usageAvailableCalls": 11,
+  "knownTokens": {
+    "input": 30715,
+    "output": 93957,
+    "total": 124672
+  },
+  "unknownUsageCalls": 1,
+  "cost": "not returned by provider; unknown, not zero",
+  "runs": [
+    {
+      "run": "2026-09-22T18-47-54-959Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-Om96IP",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-47-54-959Z/conditions-and-exception",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2009,
+              "completion_tokens": 1728,
+              "total_tokens": 3737,
+              "prompt_tokens_details": {
+                "cached_tokens": 1664
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 1452
+              },
+              "prompt_cache_hit_tokens": 1664,
+              "prompt_cache_miss_tokens": 345
+            },
+            {
+              "prompt_tokens": 3414,
+              "completion_tokens": 6776,
+              "total_tokens": 10190,
+              "prompt_tokens_details": {
+                "cached_tokens": 2304
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 5898
+              },
+              "prompt_cache_hit_tokens": 2304,
+              "prompt_cache_miss_tokens": 1110
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        },
+        {
+          "id": "cross-instance-conflict",
+          "status": "PASSED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-Et6d7S",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-47-54-959Z/cross-instance-conflict",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2154,
+              "completion_tokens": 7154,
+              "total_tokens": 9308,
+              "prompt_tokens_details": {
+                "cached_tokens": 1664
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 6789
+              },
+              "prompt_cache_hit_tokens": 1664,
+              "prompt_cache_miss_tokens": 490
+            },
+            {
+              "prompt_tokens": 3646,
+              "completion_tokens": 13503,
+              "total_tokens": 17149,
+              "prompt_tokens_details": {
+                "cached_tokens": 2688
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 12474
+              },
+              "prompt_cache_hit_tokens": 2688,
+              "prompt_cache_miss_tokens": 958
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "BLOCK",
+            "reason": "cross-instance contradiction is unresolved; original version retained"
+          }
+        },
+        {
+          "id": "partial-adoption",
+          "status": "FAILED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-plyQuz",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-47-54-959Z/partial-adoption",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2084,
+              "completion_tokens": 5887,
+              "total_tokens": 7971,
+              "prompt_tokens_details": {
+                "cached_tokens": 1664
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 5557
+              },
+              "prompt_cache_hit_tokens": 1664,
+              "prompt_cache_miss_tokens": 420
+            }
+          ],
+          "humanAcceptance": false,
+          "error": "MODEL_UNAVAILABLE\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T18-52-57-814Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "partial-adoption",
+          "status": "FAILED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-lQzYm8",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-52-57-814Z/partial-adoption",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2084,
+              "completion_tokens": 4704,
+              "total_tokens": 6788,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4464
+              },
+              "prompt_cache_hit_tokens": 1920,
+              "prompt_cache_miss_tokens": 164
+            },
+            {
+              "prompt_tokens": 3450,
+              "completion_tokens": 13157,
+              "total_tokens": 16607,
+              "prompt_tokens_details": {
+                "cached_tokens": 3072
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 11959
+              },
+              "prompt_cache_hit_tokens": 3072,
+              "prompt_cache_miss_tokens": 378
+            }
+          ],
+          "humanAcceptance": false,
+          "error": "INCOMPLETE_COVERAGE\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T18-56-26-498Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "partial-adoption",
+          "status": "FAILED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-MY5gYG",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T18-56-26-498Z/partial-adoption",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2167,
+              "completion_tokens": 5891,
+              "total_tokens": 8058,
+              "prompt_tokens_details": {
+                "cached_tokens": 1536
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 5622
+              },
+              "prompt_cache_hit_tokens": 1536,
+              "prompt_cache_miss_tokens": 631
+            },
+            {
+              "prompt_tokens": 3562,
+              "completion_tokens": 18200,
+              "total_tokens": 21762,
+              "prompt_tokens_details": {
+                "cached_tokens": 1536
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 16894
+              },
+              "prompt_cache_hit_tokens": 1536,
+              "prompt_cache_miss_tokens": 2026
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          },
+          "error": "unexpected issue cannot be auto-resolved: 此条原被标为用户要求，但引用包含非用户发言，已改为系统推断。请核验来源并明确处理。"
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T19-02-08-307Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "partial-adoption",
+          "status": "FAILED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-CYQUT6",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-02-08-307Z/partial-adoption",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "error": "The expression evaluated to a falsy value:\n\n  assert.ok(panel)\n"
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T19-04-49-118Z",
+      "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "partial-adoption",
+          "status": "PASSED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-TDFiBF",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-04-49-118Z/partial-adoption",
+          "actualProviderCalls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 2372,
+              "completion_tokens": 4910,
+              "total_tokens": 7282,
+              "prompt_tokens_details": {
+                "cached_tokens": 1536
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 4679
+              },
+              "prompt_cache_hit_tokens": 1536,
+              "prompt_cache_miss_tokens": 836
+            },
+            {
+              "prompt_tokens": 3773,
+              "completion_tokens": 12047,
+              "total_tokens": 15820,
+              "prompt_tokens_details": {
+                "cached_tokens": 1792
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 11078
+              },
+              "prompt_cache_hit_tokens": 1792,
+              "prompt_cache_miss_tokens": 1981
+            }
+          ],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          }
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T19-07-52-446Z",
+      "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+      "status": "FAILED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-8JEujX",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-07-52-446Z/conditions-and-exception",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        },
+        {
+          "id": "cross-instance-conflict",
+          "status": "FAILED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-tvINMY",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-07-52-446Z/cross-instance-conflict",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "BLOCK",
+            "reason": "cross-instance contradiction is unresolved; original version retained"
+          },
+          "reviewDecision": "Synthetic user explicitly chooses 30 words after the unresolved conflict was blocked",
+          "error": "unexpected blocking questions remain"
+        },
+        {
+          "id": "partial-adoption",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-6evJwC",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-07-52-446Z/partial-adoption",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          }
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T19-09-05-534Z",
+      "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-8tJqvR",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-09-05-534Z/conditions-and-exception",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        },
+        {
+          "id": "cross-instance-conflict",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-WIo1op",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-09-05-534Z/cross-instance-conflict",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "BLOCK",
+            "reason": "cross-instance contradiction is unresolved; original version retained"
+          },
+          "reviewDecision": "Synthetic user explicitly chooses 30 words after the unresolved conflict was blocked"
+        },
+        {
+          "id": "partial-adoption",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-oSku30",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-09-05-534Z/partial-adoption",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          }
+        }
+      ]
+    },
+    {
+      "run": "2026-09-22T19-14-18-849Z",
+      "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+      "status": "PASSED",
+      "cases": [
+        {
+          "id": "conditions-and-exception",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-pNTi5A",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-14-18-849Z/conditions-and-exception",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "PUBLISH",
+            "reason": "two thresholds retained once; conditional addition retained; one-off waiver excluded"
+          }
+        },
+        {
+          "id": "cross-instance-conflict",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-GIIIju",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-14-18-849Z/cross-instance-conflict",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "BLOCK",
+            "reason": "cross-instance contradiction is unresolved; original version retained"
+          },
+          "reviewDecision": "Synthetic user explicitly chooses 30 words after the unresolved conflict was blocked"
+        },
+        {
+          "id": "partial-adoption",
+          "status": "PASSED",
+          "packaged": false,
+          "credentialStorage": "OS safeStorage",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-KaX4DS",
+          "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T19-14-18-849Z/partial-adoption",
+          "actualProviderCalls": 0,
+          "usage": [],
+          "humanAcceptance": false,
+          "semantic": {
+            "expected": "REVIEW_PROPOSALS",
+            "reason": "only subtitles adopted; unaccepted suggestions never execute"
+          }
+        }
+      ]
+    }
+  ]
+}

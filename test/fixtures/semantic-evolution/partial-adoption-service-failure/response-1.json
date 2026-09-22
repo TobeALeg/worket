@@ -1,0 +1,74 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-event-3-subtitles",
+        "text": "以后每期都添加逐句字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-logo-proposal",
+        "text": "代理建议以后每期都添加片头 Logo，作为长期标准；用户尚未决定。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-bgm-proposal",
+        "text": "代理建议以后每期都添加背景音乐，作为长期标准；用户尚未决定。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-3-no-logo-instance",
+        "text": "本次制作先不添加片头 Logo。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-3-no-bgm-instance",
+        "text": "本次制作先不添加背景音乐。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/event-3"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2084,
+    "completion_tokens": 5887,
+    "total_tokens": 7971,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5557
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 420
+  },
+  "configuredModel": "deepseek-flash"
+}
