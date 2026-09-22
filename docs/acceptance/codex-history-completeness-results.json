@@ -1,0 +1,214 @@
+{
+  "round": 11,
+  "sourceCommit": null,
+  "tests": {
+    "passed": 198,
+    "failed": 0
+  },
+  "liveReadOnlyProbe": {
+    "readOnly": true,
+    "source": "user-referenced-task",
+    "startedAt": "2026-09-22T20:54:04.087Z",
+    "comparison": {
+      "turnPages": 8,
+      "probePageSize": 2,
+      "legacyTurns": 16,
+      "pagedTurns": 16,
+      "legacyEvents": 774,
+      "pagedEvents": 774,
+      "legacyHash": "e21e85fb903511b4a6f47598e5886ba50697458c01396c50dfa227a54270cba4",
+      "pagedHash": "e21e85fb903511b4a6f47598e5886ba50697458c01396c50dfa227a54270cba4",
+      "exactMatch": true
+    },
+    "probes": [
+      {
+        "method": "thread/read",
+        "status": "SUCCESS",
+        "threadMatches": true,
+        "turnCount": 16,
+        "itemCount": 1225,
+        "views": [
+          "full"
+        ],
+        "statuses": [
+          "completed"
+        ],
+        "hasNext": false
+      },
+      {
+        "method": "thread/turns/list",
+        "status": "SUCCESS",
+        "turnCount": 2,
+        "itemCount": 300,
+        "views": [
+          "full"
+        ],
+        "statuses": [
+          "completed"
+        ],
+        "hasNext": true
+      }
+    ]
+  },
+  "runs": [
+    {
+      "run": "2026-09-22T20-52-56-766Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-jfq75n",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true
+      },
+      "rpc": [
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two",
+          "error": "synthetic second page failure"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        }
+      ],
+      "case": "e2e"
+    },
+    {
+      "run": "2026-09-22T20-54-33-947Z",
+      "status": "FAILED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-fc60LQ",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {},
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(dashboard.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')))\n",
+      "case": "old",
+      "expectedFailure": true,
+      "sourceCommit": "a971268"
+    },
+    {
+      "run": "2026-09-22T20-55-57-357Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-9A6nR5",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true
+      },
+      "rpc": [
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two",
+          "error": "synthetic second page failure"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        }
+      ],
+      "case": "e2e-final"
+    }
+  ],
+  "actualProviderCalls": 0,
+  "externalAgent": false
+}

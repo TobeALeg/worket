@@ -1,3 +1,4 @@
+import { readCodexHistory } from "./history.js";
 import { access } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
@@ -18,10 +19,6 @@ interface JsonRpcFailure {
 interface ThreadListResponse {
   data: Array<CodexThreadPayload & { turns: [] }>;
   nextCursor?: string | null;
-}
-
-interface ThreadReadResponse {
-  thread: CodexThreadPayload;
 }
 
 export interface CodexThreadSummary {
@@ -153,11 +150,8 @@ export class CodexAppServerClient {
 
   async readThread(threadId: string): Promise<NormalizedThread> {
     await this.connect();
-    const response = await this.#request<ThreadReadResponse>("thread/read", {
-      threadId,
-      includeTurns: true,
-    });
-    return normalizeCodexThread(response.thread);
+    const thread = await readCodexHistory((method, params) => this.#request(method, params), threadId);
+    return normalizeCodexThread(thread);
   }
 
   close(): void {
@@ -216,7 +210,7 @@ export class CodexAppServerClient {
     this.#pending.delete(message.id);
     if ("error" in message) {
       pending.reject(
-        new Error(`${message.error.message} (${message.error.code})`),
+        Object.assign(new Error(`${message.error.message} (${message.error.code})`), { code: message.error.code }),
       );
     } else {
       pending.resolve(message.result);

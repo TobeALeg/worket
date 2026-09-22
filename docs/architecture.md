@@ -91,7 +91,7 @@ macOS Helper 返回应用身份和可用窗口标题。只有前台 PID 为 Work
 
 ### Codex Adapter
 
-App Server 提供列表与完整可见历史；共享连接初始化，单请求超时 30 秒。Hook 仅触发已绑定来源同步或确认本次交付。交付使用官方 `codex://new?prompt=...&path=...` 打开预填新聊天，用户在 Codex 确认发送，不由 Worket 启动独立模型执行进程。用户级 Worket MCP 提供工作包读取。
+App Server 提供列表与可见历史；history.ts 先核验会话元数据，再升序读取回合和必要的消息页，全部成功后才归一化。显式不支持分页方法才回退旧全量接口，摘要、游标循环、跨页冲突或超限整次失败。共享连接初始化，单请求超时 30 秒。详见 [历史完整读取](specs/codex-history-completeness.md)。Hook 仅触发已绑定来源同步或确认本次交付。交付使用官方 `codex://new?prompt=...&path=...` 打开预填新聊天，用户在 Codex 确认发送，不由 Worket 启动独立模型执行进程。用户级 Worket MCP 提供工作包读取。
 
 ### WorkBuddy Adapter
 
