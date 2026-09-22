@@ -18,6 +18,7 @@ type Subscription = {
 export class ImprovementCollector {
   busy = false;
   closed = false;
+  #authorizationGeneration = 0;
   constructor(readonly db: DatabaseSync, readonly client: AIClient) {
     db.exec(`PRAGMA secure_delete=ON;
       CREATE TABLE IF NOT EXISTS improvement_subscriptions (
@@ -36,13 +37,20 @@ export class ImprovementCollector {
     if (!enabled) { this.stop(); return; }
     this.db.prepare("INSERT INTO improvement_preferences VALUES (1,1) ON CONFLICT(id) DO UPDATE SET enabled=1").run();
   }
-  async authorize(version: unknown): Promise<void> {
+  async authorize(version: unknown): Promise<(() => void) | undefined> {
     if (version === undefined) return;
     ensure(this.enabled(), "COLLECTION_DISABLED", "参与改进已关闭，请先开启后再提交");
     ensure(version === IMPROVEMENT_POLICY.version, "CONSENT_REQUIRED");
     ensure(this.client.improvementIdentity && this.client.uploadSample && this.client.deleteSample, "COLLECTION_UNAVAILABLE");
+    const destination = this.client.improvementIdentity(), generation = this.#authorizationGeneration;
+    const authorized = () => {
+      ensure(!this.closed && this.enabled() && generation === this.#authorizationGeneration, "COLLECTION_STOPPED");
+      ensure(this.client.improvementIdentity?.() === destination, "SERVICE_CHANGED");
+    };
     const c = await this.client.capabilities() as { improvement?: { version: string; enabled: boolean; retentionDays: number } };
+    authorized();
     ensure(c.improvement?.enabled && c.improvement.version === version && c.improvement.retentionDays === IMPROVEMENT_POLICY.retentionDays, "COLLECTION_UNAVAILABLE", "后台当前不接收此版本的改进样本");
+    return authorized;
   }
   enroll(id: string, scope: SampleUpload["consent"]["scope"], label: string, data: Record<string, unknown>): void {
     ensure(this.enabled(), "COLLECTION_DISABLED");
@@ -77,6 +85,7 @@ export class ImprovementCollector {
     this.db.prepare("INSERT INTO improvement_outbox VALUES (?,?,?)").run(id, key, JSON.stringify(upload));
   }
   stop(id?: string): void {
+    this.#authorizationGeneration++;
     transaction(this.db, () => {
       if (id) {
         this.db.prepare("UPDATE improvement_subscriptions SET state='STOPPED',error=NULL WHERE id=? AND state='ACTIVE'").run(id);
@@ -92,6 +101,16 @@ export class ImprovementCollector {
     this.stop(id);
     this.db.prepare("UPDATE improvement_subscriptions SET state='DELETE_PENDING' WHERE id=? AND state!='DELETED'").run(id);
   }
+  #assertSending(subscription: Subscription): void {
+    ensure(!this.closed, "COLLECTION_STOPPED");
+    const current = this.db.prepare("SELECT state,destination FROM improvement_subscriptions WHERE id=?").get(subscription.id);
+    ensure(current?.state === subscription.state && current.destination === subscription.destination, "COLLECTION_STOPPED");
+    ensure(this.client.improvementIdentity?.() === subscription.destination, "SERVICE_CHANGED", "请连接授权时使用的服务和凭据后同步");
+    if (subscription.state === "ACTIVE") {
+      ensure(this.enabled(), "COLLECTION_STOPPED");
+      ensure(Date.parse(JSON.parse(subscription.consent).at) + IMPROVEMENT_POLICY.retentionDays * 86400000 > Date.now(), "CONSENT_EXPIRED");
+    }
+  }
   async flush(): Promise<void> {
     if (this.busy || this.closed) return;
     this.busy = true;
@@ -100,9 +119,10 @@ export class ImprovementCollector {
       for (const s of rows) {
         if (this.closed) return;
         try {
-          ensure(this.client.improvementIdentity?.() === s.destination, "SERVICE_CHANGED", "请连接授权时使用的服务和凭据后同步");
+          const beforeSend = () => this.#assertSending(s);
+          beforeSend();
           if (s.state === "DELETE_PENDING") {
-            await this.client.deleteSample!(s.id);
+            await this.client.deleteSample!(s.id, beforeSend);
             if (this.closed) return;
             this.db.prepare("UPDATE improvement_subscriptions SET state='DELETED',label='已删除样本',error=NULL WHERE id=?").run(s.id);
             this.db.prepare("DELETE FROM improvement_outbox WHERE sample_id=?").run(s.id);
@@ -111,8 +131,8 @@ export class ImprovementCollector {
           const queue = this.db.prepare("SELECT event_key,payload FROM improvement_outbox WHERE sample_id=? AND payload IS NOT NULL ORDER BY rowid LIMIT 20").all(s.id);
           for (const row of queue) {
             if (this.closed || this.db.prepare("SELECT state FROM improvement_subscriptions WHERE id=?").get(s.id)?.state !== "ACTIVE") break;
-            ensure(this.client.improvementIdentity?.() === s.destination, "SERVICE_CHANGED");
-            await this.client.uploadSample!(JSON.parse(row.payload as string));
+            beforeSend();
+            await this.client.uploadSample!(JSON.parse(row.payload as string), beforeSend);
             if (this.closed) return;
             this.db.prepare("UPDATE improvement_outbox SET payload=NULL WHERE sample_id=? AND event_key=?").run(s.id, row.event_key as string);
           }
@@ -120,6 +140,7 @@ export class ImprovementCollector {
         } catch (error) {
           if (this.closed) return;
           const code = error && typeof error === "object" && "code" in error ? String(error.code) : "SYNC_FAILED";
+          if (code === "COLLECTION_STOPPED" || this.db.prepare("SELECT state FROM improvement_subscriptions WHERE id=?").get(s.id)?.state !== s.state) continue;
           if (["SAMPLE_DELETED", "CONSENT_EXPIRED"].includes(code) || (s.scope === "RECORDING" && code === "QUOTA_EXCEEDED")) this.stop(s.id);
           this.db.prepare("UPDATE improvement_subscriptions SET error=? WHERE id=?").run(code, s.id);
         }

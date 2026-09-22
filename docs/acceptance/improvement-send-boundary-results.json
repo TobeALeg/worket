@@ -1,0 +1,62 @@
+{
+  "round": 13,
+  "tests": {
+    "passed": 207,
+    "failed": 0
+  },
+  "actualProviderCalls": 0,
+  "runs": {
+    "desktop": {
+      "run": "2026-09-22T21-34-05-144Z",
+      "status": "PASSED",
+      "packaged": false,
+      "actualProviderCalls": 0,
+      "syntheticEnrollment": true,
+      "controlledConnectionDelay": true,
+      "checks": {
+        "stopBeforeSend": true,
+        "originalDestinationRetry": true,
+        "deleteOriginalDespiteOptOut": true
+      },
+      "requestMethods": [
+        [
+          "POST",
+          "DELETE"
+        ],
+        [
+          "POST"
+        ]
+      ]
+    },
+    "oldClientExpectedFailure": {
+      "run": "2026-09-22T21-34-37-270Z",
+      "status": "FAILED",
+      "packaged": true,
+      "actualProviderCalls": 0,
+      "syntheticEnrollment": true,
+      "controlledConnectionDelay": true,
+      "checks": {},
+      "error": "stopped upload must not reach either service\n+ actual - expected\n\n  [\n+   [\n+     'POST'\n+   ],\n    [],\n-   []\n  ]\n"
+    },
+    "continuous": {
+      "run": "2026-09-22T21-35-00-514Z",
+      "status": "PASSED",
+      "packaged": false,
+      "actualProviderCalls": 0,
+      "continuous": true
+    }
+  },
+  "before": {
+    "stopped": "STOPPED",
+    "received": [
+      {
+        "method": "POST",
+        "bytes": 283
+      }
+    ]
+  },
+  "after": {
+    "stopped": "STOPPED",
+    "received": []
+  }
+}

@@ -17,8 +17,8 @@ export type RemoteJob = {
 export interface AIClient {
   capabilities(): Promise<unknown>;
   improvementIdentity?(): string;
-  uploadSample?(input: SampleUpload): Promise<unknown>;
-  deleteSample?(id: string): Promise<unknown>;
+  uploadSample?(input: SampleUpload, beforeSend?: () => void): Promise<unknown>;
+  deleteSample?(id: string, beforeSend?: () => void): Promise<unknown>;
   submit(request: ExtractionRequest, key: string, beforeSend?: () => void): Promise<RemoteJob>;
   get(id: string, beforeSend?: () => void): Promise<RemoteJob>;
   cancel(id: string, beforeSend?: () => void): Promise<unknown>;
@@ -83,11 +83,11 @@ export class WorketAIClient implements AIClient {
     const c = this.config();
     return hash([c.url.replace(/\/$/, ""), c.recoveryCode ?? c.userId ?? c.installationSecret ?? c.token]);
   }
-  uploadSample(input: SampleUpload) {
-    return this.request("/v1/improvement-samples", "POST", input);
+  uploadSample(input: SampleUpload, beforeSend?: () => void) {
+    return this.request("/v1/improvement-samples", "POST", input, undefined, beforeSend);
   }
-  deleteSample(id: string) {
-    return this.request(`/v1/improvement-samples/${encodeURIComponent(id)}`, "DELETE");
+  deleteSample(id: string, beforeSend?: () => void) {
+    return this.request(`/v1/improvement-samples/${encodeURIComponent(id)}`, "DELETE", undefined, undefined, beforeSend);
   }
   capabilities() {
     return this.request("/v1/capabilities");

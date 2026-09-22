@@ -93,9 +93,10 @@ export class DistillationDesktop {
         await this.service.improvement.flush();
         return this.service.improvement.list();
       case "start": {
-        await this.service.improvement.authorize(
+        const improvementAuthorized = await this.service.improvement.authorize(
           input.improvementConsentVersion,
         );
+        improvementAuthorized?.();
         const job = this.service.start(
           input as Parameters<DistillationService["start"]>[0],
         );
@@ -190,9 +191,10 @@ export class DistillationDesktop {
       case "deleteDefinition":
         return r.delete(input as Parameters<typeof r.delete>[0]);
       case "create": {
-        await this.service.improvement.authorize(
+        const improvementAuthorized = await this.service.improvement.authorize(
           input.improvementConsentVersion,
         );
+        improvementAuthorized?.();
         const work = core.createWorkFromDefinition(
           input as Parameters<typeof core.createWorkFromDefinition>[0],
         );

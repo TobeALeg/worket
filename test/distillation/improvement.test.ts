@@ -242,3 +242,84 @@ test("collection size errors stop the sample without breaking local work", async
     assert.equal(c.list()[0].pending, 0);
   } finally { db.close(); }
 });
+
+test('real HTTP upload rechecks stop, removal, expiry and destination after connection; only authorized retries send', async () => {
+  const { createServer } = await import('node:http');
+  const received: string[] = [];
+  const server = createServer(async (req, res) => { for await (const _ of req) {} received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end('{}'); });
+  await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
+  const url = `http://127.0.0.1:${(server.address() as any).port}`;
+  try {
+    for (const mutation of ['stop', 'sample-stop', 'stop-enable', 'remove', 'destination', 'account', 'close', 'expired']) {
+      const db = new DatabaseSync(':memory:');
+      let config = { url, token: 'synthetic', development: true }, release!: () => void, gate = true;
+      const client = new WorketAIClient(() => config, async () => { if (gate) await new Promise<void>(r => release = r); });
+      const c = new ImprovementCollector(db, client);
+      try {
+        c.enroll('work', 'RECORDING', 'synthetic', { workId: 'work', title: 'synthetic' });
+        if (mutation === 'expired') {
+          const consent = JSON.parse(String(c.list()[0].consent)); consent.at = new Date(Date.now() - 90 * 86400000 + 1000).toISOString();
+          db.prepare('UPDATE improvement_subscriptions SET consent=?').run(JSON.stringify(consent));
+        }
+        const before = received.length, pending = c.flush();
+        if (mutation === 'stop') c.stop();
+        if (mutation === 'sample-stop') c.stop('work');
+        if (mutation === 'stop-enable') { c.stop(); c.setEnabled(true); }
+        if (mutation === 'remove') c.remove('work');
+        if (mutation === 'destination') config = { ...config, url: url + '/other' };
+        if (mutation === 'account') config = { ...config, token: 'other-account' };
+        if (mutation === 'close') c.closed = true;
+        const originalNow = Date.now;
+        try {
+          if (mutation === 'expired') Date.now = () => originalNow() + 2000;
+          release(); await pending;
+        } finally { Date.now = originalNow; }
+        assert.equal(received.length, before, mutation);
+        if (['destination', 'account'].includes(mutation)) {
+          assert.equal(c.list()[0].pending, 1); assert.equal(c.list()[0].error, 'SERVICE_CHANGED');
+          config = { url, token: 'synthetic', development: true }; gate = false; await c.flush();
+          assert.equal(received.length, before + 1); assert.equal(c.list()[0].pending, 0);
+        } else if (mutation !== 'close') {
+          assert.equal(c.list()[0].pending, 0);
+          assert.equal(c.list()[0].state, mutation === 'remove' ? 'DELETE_PENDING' : 'STOPPED');
+          assert.equal(c.list()[0].error, mutation === 'expired' ? 'CONSENT_EXPIRED' : null);
+        }
+      } finally { db.close(); }
+    }
+  } finally { await new Promise<void>(r => server.close(() => r())); }
+});
+
+test('pending deletion remains bound to the original service and can finish after opt-out', async () => {
+  const { createServer } = await import('node:http');
+  const received: string[] = [];
+  const server = createServer(async (req, res) => { for await (const _ of req) {} received.push(req.method!); res.setHeader('Content-Type', 'application/json'); res.end('{}'); });
+  await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
+  const db = new DatabaseSync(':memory:');
+  const url = `http://127.0.0.1:${(server.address() as any).port}`;
+  let config = { url, token: 'synthetic', development: true }, release!: () => void, gate = true;
+  const c = new ImprovementCollector(db, new WorketAIClient(() => config, async () => { if (gate) await new Promise<void>(r => release = r); }));
+  try {
+    c.enroll('work', 'RECORDING', 'synthetic', { workId: 'work', title: 'synthetic' }); c.remove('work'); c.stop();
+    const pending = c.flush(); config = { ...config, token: 'other-account' }; release(); await pending;
+    assert.deepEqual(received, []); assert.equal(c.list()[0].state, 'DELETE_PENDING');
+    config = { url, token: 'synthetic', development: true }; gate = false; await c.flush();
+    assert.deepEqual(received, ['DELETE']); assert.equal(c.list()[0].state, 'DELETED');
+  } finally { db.close(); await new Promise<void>(r => server.close(() => r())); }
+});
+
+test('pending improvement consent cannot survive a stop and re-enable or move to a different service', async () => {
+  for (const mutation of ['stop-enable', 'destination', 'after-capabilities']) {
+    const db = new DatabaseSync(':memory:'); let destination = 'first', resolve!: (v: any) => void;
+    const c = new ImprovementCollector(db, { improvementIdentity: () => destination, uploadSample: async () => {}, deleteSample: async () => {}, capabilities: () => new Promise(r => resolve = r) } as any);
+    try {
+      const pending = c.authorize(IMPROVEMENT_POLICY.version);
+      if (mutation === 'stop-enable') { c.stop(); c.setEnabled(true); }
+      if (mutation === 'destination') destination = 'second';
+      resolve({ improvement: { ...IMPROVEMENT_POLICY, enabled: true } });
+      if (mutation === 'after-capabilities') {
+        const guard = await pending; c.stop(); c.setEnabled(true); assert.throws(() => guard!(), /COLLECTION_STOPPED/);
+      } else await assert.rejects(pending, /COLLECTION_STOPPED|SERVICE_CHANGED/);
+      assert.equal(c.list().length, 0);
+    } finally { db.close(); }
+  }
+});
