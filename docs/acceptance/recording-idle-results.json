@@ -1,0 +1,109 @@
+{
+  "round": 17,
+  "tests": {
+    "passed": 221,
+    "failed": 0
+  },
+  "benchmarkBefore": {
+    "kind": "synthetic local collector benchmark",
+    "providerCalls": 0,
+    "results": [
+      {
+        "messagesPerWork": 200,
+        "works": 3,
+        "idlePasses": 30,
+        "snapshots": 90,
+        "recordAttempts": 18000,
+        "medianMs": 17.232375000000047,
+        "maxMs": 18.842916000000002,
+        "totalMs": 515.531375
+      },
+      {
+        "messagesPerWork": 2000,
+        "works": 3,
+        "idlePasses": 30,
+        "snapshots": 90,
+        "recordAttempts": 180000,
+        "medianMs": 232.97420799999963,
+        "maxMs": 338.7651670000005,
+        "totalMs": 7250.000877000001
+      }
+    ]
+  },
+  "benchmarkAfter": {
+    "kind": "synthetic local collector benchmark",
+    "providerCalls": 0,
+    "results": [
+      {
+        "messagesPerWork": 200,
+        "works": 3,
+        "idlePasses": 30,
+        "snapshots": 0,
+        "recordAttempts": 0,
+        "medianMs": 0.056958000000008724,
+        "maxMs": 0.11412500000000136,
+        "totalMs": 1.767041000000006
+      },
+      {
+        "messagesPerWork": 2000,
+        "works": 3,
+        "idlePasses": 30,
+        "snapshots": 0,
+        "recordAttempts": 0,
+        "medianMs": 0.05512499999986176,
+        "maxMs": 0.16699999999991633,
+        "totalMs": 1.821705999999267
+      }
+    ]
+  },
+  "sourceE2E": {
+    "run": "2026-09-22T22-43-37-471Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-HPQ4FF",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "sourceAbsence": true,
+    "checks": {
+      "allPagesToStateAndExtraction": true,
+      "idleSkipsArchiveAndQueue": true,
+      "failedPageAtomicAndRetry": true,
+      "absenceArchiveCurrentViewAndRestoration": true,
+      "remoteSampleRevisionAbsenceRestoration": true
+    },
+    "recordingView": true,
+    "idle": {
+      "depth": 0,
+      "passes": 40,
+      "snapshots": 0,
+      "recordAttempts": 0,
+      "totalMs": 2.0530819999985397
+    },
+    "rpc": {
+      "count": 34
+    }
+  },
+  "previousClientE2E": {
+    "run": "2026-09-22T22-45-29-800Z",
+    "status": "FAILED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-E0UJPX",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "sourceAbsence": true,
+    "checks": {
+      "allPagesToStateAndExtraction": true
+    },
+    "recordingView": true,
+    "idle": {
+      "depth": 0,
+      "passes": 40,
+      "snapshots": 40,
+      "recordAttempts": 8160,
+      "totalMs": 190.26608400000077
+    },
+    "error": "idle collection must not load full work snapshots\n\n40 !== 0\n"
+  },
+  "actualProviderCalls": 0,
+  "externalAgent": false
+}

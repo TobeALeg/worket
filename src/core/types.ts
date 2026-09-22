@@ -211,6 +211,7 @@ export interface WorkCore {
   createWorkFromDefinition(input: CreateFromDefinition): WorkSnapshot;
   createWork(input: CreateWorkInput): WorkSnapshot;
   getWork(workInstanceId: string): WorkSnapshot | null;
+  sourceCheckpoint(workInstanceId: string): { rowId: number; recording: boolean } | null;
   listWorks(status?: WorkStatus): WorkSnapshot[];
   findWorkByBinding(adapter: string, conversationId: string): WorkSnapshot | null;
   findWorkBySourceLocator(adapter: string, sourceLocator: string): WorkSnapshot | null;

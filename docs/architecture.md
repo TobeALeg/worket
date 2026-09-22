@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：记录采集的持久化扫描检查点
+
+WorkCore.sourceCheckpoint 通过 work/status、活动绑定及 `source_events(work_instance_id,row_id)` 索引读取最新追加位置，不加载消息正文、状态或历史交接。recording_checkpoints 保存 sample 的 source_row_id；它与外部 sequence、远端 view.sequence 分离，支持迟到或重复来源序号。
+
+每轮先检查生命周期及授权到期，再比较追加位置。变化时仍使用完整有效关系投影；旧 view 已覆盖的消息不再重复尝试分片入队。新增 view、outbox 与检查点同事务写入；只有工具事件变化时，单独推进本地检查点。旧数据库无检查点时执行一次兼容扫描。view sequence 必须递增且不小于消息最大来源序号，不因迟到消息使用旧序号而遗漏视图。
+
+失败的分片排队会保留旧检查点，重启幂等补齐；事务失败不提前推进 view 或检查点。新来源场景仍读取全量 WorkSnapshot，未宣称完全消除长记录扫描成本。客户端新增表/索引，无服务器协议或模型变更。
+
 ## 2026-09-23：实例文件固定与显式更新
 
 `definitions/instance-files.ts` 管理 `materials/instances/<workId>/<hash>/<filename>`，与定义共享资料分离；`instance_inputs` JSON 增加可选 inputMaterials，referenceExamples 增加 material 清单，无表迁移。创建事务保存副本路径与 hash；失败创建清理该实例目录。`buildWorkPackage` 每次校验输入/参考副本，旧数据缺清单时明确阻止使用。

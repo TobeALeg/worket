@@ -7,6 +7,9 @@ import { _electron as electron } from 'playwright';
 import { historyFixture, writeHistoryFixture } from './lib/codex-history-fixture.mjs';
 const run = new Date().toISOString().replace(/[:.]/g, '-'), output = join(process.cwd(), 'output/codex-history', run); mkdirSync(output, { recursive: true });
 const directory = mkdtempSync(join(tmpdir(), 'worket-history-e2e-')), fixture = historyFixture();
+if (process.env.WORKET_RECORDING_IDLE === '1') {
+  fixture.turns[0].items.push(...Array.from({length:200}, (_, n) => ({id:`idle-${n}`,type:'userMessage',content:[{type:'text',text:`合成长历史 ${n}：规则保持通用，实例输入单独提供。`}]})));
+}
 const { dataPath, rpcLog, binary } = writeHistoryFixture(directory, fixture);
 const report = { run, status: 'RUNNING', packaged: !!process.env.WORKPET_EXECUTABLE_PATH, directory, actualProviderCalls: 0, externalAgent: false, sourceAbsence: process.env.WORKET_SOURCE_ABSENCE === '1', checks: {} };
 const sampleService = process.env.WORKET_RECORDING_VIEW === "1" ? await recordingViewService(directory) : null;
@@ -50,6 +53,30 @@ try {
     assert.equal(sample.recordingView.ready, true);
     assert.ok(sample.recordingView.current.some(e => e.content.includes('最早来源')));
     assert.ok(sample.recordingView.current.some(e => e.content.includes('分页末尾')));
+  }
+  if (process.env.WORKET_RECORDING_IDLE === '1') {
+    assert.ok(sampleService);
+    const before = sampleService.metrics();
+    await app.evaluate(({app}) => {
+      const require = process.getBuiltinModule('module').createRequire(app.getAppPath() + '/package.json');
+      const {RecordingCollection} = require('./dist/improvement/recording.js');
+      const {ImprovementCollector} = require('./dist/improvement/collector.js');
+      const {SqliteWorkCore} = require('./dist/core/work-core.js');
+      const collect = RecordingCollection.prototype.collect, record = ImprovementCollector.prototype.record, getWork = SqliteWorkCore.prototype.getWork;
+      globalThis.qaIdle = {depth:0,passes:0,snapshots:0,recordAttempts:0,totalMs:0};
+      RecordingCollection.prototype.collect = function(...args) {
+        const start=performance.now();globalThis.qaIdle.depth++;globalThis.qaIdle.passes++;
+        try{return collect.apply(this,args);}finally{globalThis.qaIdle.depth--;globalThis.qaIdle.totalMs+=performance.now()-start;}
+      };
+      ImprovementCollector.prototype.record = function(...args) {if(globalThis.qaIdle.depth)globalThis.qaIdle.recordAttempts++;return record.apply(this,args);};
+      SqliteWorkCore.prototype.getWork = function(...args) {if(globalThis.qaIdle.depth)globalThis.qaIdle.snapshots++;return getWork.apply(this,args);};
+    });
+    for(let n=0;n<40;n++) await panel.evaluate(() => window.workpet.distillation('syncImprovement'));
+    report.idle = await app.evaluate(() => globalThis.qaIdle);
+    assert.equal(report.idle.snapshots,0,'idle collection must not load full work snapshots');
+    assert.equal(report.idle.recordAttempts,0,'idle collection must not retry every known message');
+    assert.deepEqual(sampleService.metrics(),before,'idle collection sends no additional data');
+    report.checks.idleSkipsArchiveAndQueue = true;
   }
   // The first page changes, but the second fails: no partial new observations may enter the record.
   fixture.mode = 'failure'; fixture.turns[0].items[0].content[0].text = '每次必须保留修订后的最早要求。'; writeFileSync(dataPath, JSON.stringify(fixture));

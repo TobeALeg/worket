@@ -12,6 +12,8 @@ export class RecordingCollection {
       CREATE INDEX IF NOT EXISTS recording_samples_work ON recording_samples(work_id);
       CREATE TABLE IF NOT EXISTS recording_views (
         sample_id TEXT PRIMARY KEY, view_json TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS recording_checkpoints (
+        sample_id TEXT PRIMARY KEY, source_row_id INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS recording_notice (
         id INTEGER PRIMARY KEY CHECK(id=1), version TEXT NOT NULL);`);
   }
@@ -43,17 +45,26 @@ export class RecordingCollection {
     }
   }
   collect(): void {
-    const rows = this.collector.db.prepare(`SELECT r.sample_id,r.work_id FROM recording_samples r
-      JOIN improvement_subscriptions s ON s.id=r.sample_id WHERE s.state='ACTIVE'`).all();
+    const rows = this.collector.db.prepare(`SELECT r.sample_id,r.work_id,s.consent,c.source_row_id FROM recording_samples r
+      JOIN improvement_subscriptions s ON s.id=r.sample_id
+      LEFT JOIN recording_checkpoints c ON c.sample_id=r.sample_id WHERE s.state='ACTIVE'`).all();
     for (const row of rows) {
-      const id = String(row.sample_id), work = this.core.getWork(String(row.work_id));
-      if (!work || work.instance.status !== "OPEN" || !work.activeBinding) {
+      const id = String(row.sample_id), workId = String(row.work_id);
+      const checkpoint = this.core.sourceCheckpoint(workId);
+      const expiresAt = Date.parse(JSON.parse(String(row.consent)).at) + IMPROVEMENT_POLICY.retentionDays * 86400000;
+      // Lifecycle and consent are checked even when the archive has not changed.
+      if (!checkpoint?.recording || expiresAt <= Date.now()) {
         this.collector.stop(id);
         continue;
       }
+      if (row.source_row_id === checkpoint.rowId) continue;
+      const work = this.core.getWork(workId)!;
+      const previous = this.collector.db.prepare("SELECT view_json FROM recording_views WHERE sample_id=?").get(id);
+      const baseline = previous ? JSON.parse(String(previous.view_json)) as import('../contracts/recording-view.js').RecordingView : undefined;
+      const old = new Map(baseline?.entries.map(entry => [entry.sourceEventId, JSON.stringify(entry)]) ?? []);
       for (const event of work.sourceArchive) {
-        if (!["user.prompt", "agent.response"].includes(event.kind) || !event.content?.trim()) continue;
-        // Split long messages without truncating text; identifiers keep replay idempotent.
+        // A saved view proves all pieces of this immutable source were queued first.
+        if (old.has(event.id) || !["user.prompt", "agent.response"].includes(event.kind) || !event.content?.trim()) continue;
         const parts = Math.ceil(event.content.length / 16000);
         for (let part = 0; part < parts; part++) {
           this.collector.record(id, `${event.id}-${part}`, "MESSAGE", {
@@ -64,15 +75,17 @@ export class RecordingCollection {
         }
       }
       const view = recordingView(work.sourceArchive);
-      const previous = this.collector.db.prepare("SELECT view_json FROM recording_views WHERE sample_id=?").get(id);
-      const baseline = previous ? JSON.parse(String(previous.view_json)) as import('../contracts/recording-view.js').RecordingView : undefined;
-      if (baseline?.sequence === view.sequence) continue;
-      const old = new Map(baseline?.entries.map(entry => [entry.sourceEventId, JSON.stringify(entry)]) ?? []);
-      const wire = baseline ? { sequence: view.sequence, baseSequence: baseline.sequence,
-        entries: view.entries.filter(entry => old.get(entry.sourceEventId) !== JSON.stringify(entry)) } : view;
-      // Queue and baseline advance atomically: restart cannot skip an unsent change.
+      const changed = view.entries.filter(entry => old.get(entry.sourceEventId) !== JSON.stringify(entry));
+      const saveCheckpoint = () => this.collector.db.prepare(`INSERT INTO recording_checkpoints VALUES (?,?)
+        ON CONFLICT(sample_id) DO UPDATE SET source_row_id=excluded.source_row_id`).run(id, checkpoint.rowId);
+      if (baseline && !changed.length) { saveCheckpoint(); continue; }
+      // Source ordinals are not an append cursor: a late message may reuse an older ordinal.
+      if (baseline) view.sequence = Math.max(view.sequence, baseline.sequence + 1);
+      const wire = baseline ? { sequence: view.sequence, baseSequence: baseline.sequence, entries: changed } : view;
+      // View, outbox and scan checkpoint commit together. Partial message queues safely replay.
       this.collector.record(id, `view-${view.sequence}`, "RECORDING_VIEW", wire, () => {
         this.collector.db.prepare("INSERT INTO recording_views VALUES (?,?) ON CONFLICT(sample_id) DO UPDATE SET view_json=excluded.view_json").run(id, JSON.stringify(view));
+        saveCheckpoint();
       });
     }
   }

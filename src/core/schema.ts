@@ -101,6 +101,7 @@ export function createSchema(database: DatabaseSync): void {
 }
 
 export function migrateStateProgress(database: DatabaseSync): void {
+  database.exec('CREATE INDEX IF NOT EXISTS source_events_by_work_row ON source_events(work_instance_id,row_id)');
   const recordColumns = database.prepare("PRAGMA table_info(work_records)").all() as Array<{ name: string }>;
   if (!recordColumns.some((column) => column.name === "extracted_sequence")) {
     database.exec("ALTER TABLE work_records ADD COLUMN extracted_sequence INTEGER NOT NULL DEFAULT 0");

@@ -207,6 +207,15 @@ export class SqliteWorkCore implements WorkCore {
     }
   }
 
+  /** Append position and lifecycle without loading message bodies, state or handoff packages. */
+  sourceCheckpoint(workInstanceId: string): { rowId: number; recording: boolean } | null {
+    const row = this.#database.prepare(`SELECT i.status,
+      EXISTS(SELECT 1 FROM capture_bindings_v2 WHERE work_instance_id=i.id AND status='ACTIVE') AS capturing,
+      COALESCE((SELECT MAX(row_id) FROM source_events WHERE work_instance_id=i.id),0) AS last_row
+      FROM work_instances i WHERE i.id=?`).get(workInstanceId);
+    return row ? { rowId: Number(row.last_row), recording: row.status === 'OPEN' && row.capturing === 1 } : null;
+  }
+
   getWork(workInstanceId: string): WorkSnapshot | null {
     const instanceRow = this.#database
       .prepare(
