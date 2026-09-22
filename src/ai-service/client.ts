@@ -19,10 +19,10 @@ export interface AIClient {
   improvementIdentity?(): string;
   uploadSample?(input: SampleUpload): Promise<unknown>;
   deleteSample?(id: string): Promise<unknown>;
-  submit(request: ExtractionRequest, key: string): Promise<RemoteJob>;
-  get(id: string): Promise<RemoteJob>;
-  cancel(id: string): Promise<unknown>;
-  ack(id: string): Promise<unknown>;
+  submit(request: ExtractionRequest, key: string, beforeSend?: () => void): Promise<RemoteJob>;
+  get(id: string, beforeSend?: () => void): Promise<RemoteJob>;
+  cancel(id: string, beforeSend?: () => void): Promise<unknown>;
+  ack(id: string, beforeSend?: () => void): Promise<unknown>;
 }
 export class WorketAIClient implements AIClient {
   constructor(
@@ -34,8 +34,10 @@ export class WorketAIClient implements AIClient {
     method = "GET",
     body?: unknown,
     key?: string,
+    beforeSend?: () => void,
   ): Promise<any> {
     await this.connect?.();
+    beforeSend?.();
     const config = this.config();
     ensure(config.url, "MODEL_UNAVAILABLE", "请先配置 Worket 服务并登录");
     ensure(config.token, "AUTH_REQUIRED");
@@ -90,22 +92,22 @@ export class WorketAIClient implements AIClient {
   capabilities() {
     return this.request("/v1/capabilities");
   }
-  submit(request: ExtractionRequest, key: string): Promise<RemoteJob> {
-    return this.request("/v1/definition-extractions", "POST", request, key);
+  submit(request: ExtractionRequest, key: string, beforeSend?: () => void): Promise<RemoteJob> {
+    return this.request("/v1/definition-extractions", "POST", request, key, beforeSend);
   }
-  get(id: string): Promise<RemoteJob> {
-    return this.request(`/v1/definition-extractions/${encodeURIComponent(id)}`);
+  get(id: string, beforeSend?: () => void): Promise<RemoteJob> {
+    return this.request(`/v1/definition-extractions/${encodeURIComponent(id)}`, "GET", undefined, undefined, beforeSend);
   }
-  cancel(id: string) {
+  cancel(id: string, beforeSend?: () => void) {
     return this.request(
       `/v1/definition-extractions/${encodeURIComponent(id)}`,
-      "DELETE",
+      "DELETE", undefined, undefined, beforeSend,
     );
   }
-  ack(id: string) {
+  ack(id: string, beforeSend?: () => void) {
     return this.request(
       `/v1/definition-extractions/${encodeURIComponent(id)}/ack`,
-      "POST",
+      "POST", undefined, undefined, beforeSend,
     );
   }
 }

@@ -1,3 +1,4 @@
+import { continuousFixture, qaContinuousEvolution } from './lib/qa-continuous-evolution.mjs';
 // Isolated desktop + HTTP + real model + persistence + dispatch acceptance.
 // Uses synthetic records only. QA confirmation is not a human acceptance of real work.
 import assert from 'node:assert/strict';
@@ -27,6 +28,8 @@ const scenarios = {
 };
 const scenario = process.env.WORKET_E2E_SCENARIO ?? 'video';
 const evolution = process.env.WORKET_E2E_EVOLUTION === '1';
+const continuous = process.env.WORKET_E2E_CONTINUOUS === '1';
+assert.ok(!(evolution && continuous), 'run incremental and continuous suites separately');
 if (evolution) assert.equal(scenario, 'video');
 assert.ok(scenarios[scenario], 'unknown QA scenario');
 const { norm, unit, supplement, conversation } = scenarios[scenario];
@@ -43,7 +46,7 @@ const usage = [], errors = [];
 const remoteCode = `import {readFileSync} from 'node:fs'; import {AdminStore} from '/app/server/admin/store.mjs'; import {ModelProvider} from '/app/server/workflow.mjs'; const store=Object.create(AdminStore.prototype); store.data=JSON.parse(readFileSync('/data/settings.json','utf8')); store.master=readFileSync('/data/encryption.key'); const config=store.data.provider; const provider=new ModelProvider({baseUrl:config.baseUrl,model:config.model,apiKey:store.apiKey()}); const chunks=[]; for await(const chunk of process.stdin)chunks.push(chunk); try {const value=await provider.call(JSON.parse(Buffer.concat(chunks)).messages,AbortSignal.timeout(180000)); process.stdout.write(JSON.stringify(value));}catch{process.stderr.write('MODEL_CALL_FAILED');process.exitCode=1;}`;
 const quote = text => "'" + text.replaceAll("'", "'\\''") + "'";
 const provider = { model: 'deepseek-flash', async call(messages, signal) {
-  assert.ok(++calls <= (evolution ? 6 : 2), 'E2E provider call budget exceeded; no hidden retries');
+  assert.ok(++calls <= (evolution ? 6 : continuous ? 4 : 2), 'E2E provider call budget exceeded; no hidden retries');
   writeFileSync(join(output, `request-${calls}.json`), JSON.stringify(messages, null, 2));
   if (process.env.WORKET_E2E_REPLAY && calls <= 2) {
     const response = replay(messages, calls);
@@ -54,6 +57,11 @@ const provider = { model: 'deepseek-flash', async call(messages, signal) {
     const response = replayEvolution(process.env.WORKET_E2E_EVOLUTION_REPLAY, messages, calls);
     writeFileSync(join(output, `response-${calls}.json`), JSON.stringify(response, null, 2));
     usage.push({ replay: true, baselineIdentityRebound: true }); return response;
+  }
+  if (continuous && calls > 2) {
+    const response = continuousFixture(messages);
+    writeFileSync(join(output, `response-${calls}.json`), JSON.stringify(response, null, 2));
+    usage.push({ controlledFixture: true }); return response;
   }
   liveCalls++;
   console.log(`provider call ${calls} started`);
@@ -70,7 +78,7 @@ const provider = { model: 'deepseek-flash', async call(messages, signal) {
   console.log(`provider call ${calls} finished`); return response;
 } };
 const secret = 'isolated-contract-e2e';
-const service = createAIService({ mode: 'development', devSecret: secret, issuer: 'qa', audience: 'qa', provider, providerName: '真实模型端到端验收', limits: { dailyCalls: evolution ? 6 : 2 } });
+const service = createAIService({ mode: 'development', devSecret: secret, issuer: 'qa', audience: 'qa', provider, providerName: '真实模型端到端验收', limits: { dailyCalls: evolution ? 6 : continuous ? 4 : 2 } });
 await new Promise(r => service.server.listen(0, '127.0.0.1', r));
 const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
 const body = Buffer.from(JSON.stringify({ sub: 'qa-contract', iss: 'qa', aud: 'qa', exp: Date.now()/1000+3600 })).toString('base64url');
@@ -221,7 +229,9 @@ try {
   mark('synthetic attachment → needs-revision stays open → explicit checklist pass completes instance');
   if (evolution) await qaContractEvolution({ panel, directory, definition: v2, oldId: v2Id, mark, output });
 
+  if (continuous) await qaContinuousEvolution({ panel, directory, definition: v2, oldId: v2Id, mark, output });
+
   assert.deepEqual(errors,[]);
   report.status='PASSED';
 } catch(error) { report.status='FAILED'; report.error=error.message; if(panel) { await panel.screenshot({path:join(output,'failure.png')}).catch(()=>{}); writeFileSync(join(output,'failure-dom.txt'),await panel.locator('body').innerText().catch(()=>'')); } process.exitCode=1; console.error(error.message); }
-finally { report.calls=calls;report.usage=usage;report.evolution=evolution;report.actualProviderCalls=liveCalls;writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); await app?.close(); await service.close(); console.log(JSON.stringify(report)); }
+finally { report.calls=calls;report.usage=usage;report.evolution=evolution;report.continuous=continuous;report.actualProviderCalls=liveCalls;writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); await app?.close(); await service.close(); console.log(JSON.stringify(report)); }

@@ -291,6 +291,7 @@ async function openDefinition(id: string): Promise<void> {
     key: d.definitionKey,
   });
   const history: EvolutionReview[] = await api('evolutionHistory', { definitionId: id });
+  const continuous = await api('continuousEvolution', { definitionId: id });
   const additionalEvidence = history.flatMap(review => {
     const base = versions.find(version => version.contentHash === review.baseHash);
     return review.evidence.flatMap(entry => entry.refs.map(ref => ({ ref,
@@ -324,6 +325,21 @@ async function openDefinition(id: string): Promise<void> {
       });
     });
   }
+  const continuousPanel = document.createElement('details');
+  continuousPanel.id = 'continuous-evolution';
+  const continuousState = !continuous.enabled ? '未开启' : continuous.destinationChanged ? '服务已变更，需重新开启' : continuous.error ? '上次比较未完成' : continuous.pendingStatus === 'AWAITING_REVIEW' || continuous.pendingStatus === 'NEEDS_SELECTION' ? '等待审阅' : ['PREPARED', 'SUBMITTED', 'RUNNING'].includes(continuous.pendingStatus) ? '正在比较' : continuous.remaining === 0 ? '已达今日上限' : '等待新交互';
+  continuousPanel.innerHTML = `<summary>持续比较 · ${esc(continuousState)}</summary><p class="consent">开启后，此约定现有及未来实例中新记录的用户消息、Agent 回复和本次输入会连同最新已确认约定发送到当前 Worket 服务。新交互稳定 2 分钟后比较，每份约定每 24 小时最多 3 次；需保持 Worket 打开。附件正文仍需手动选择，结果经你确认后生效。停止后不再发起新比较，已发送的比较仍可查看。</p>${continuous.error ? `<p class="notice">${esc(jobError(continuous.error))}</p>` : ''}${continuous.enabled ? `<button id="stop-continuous">停止持续比较</button>` : ''}${!continuous.enabled || continuous.destinationChanged ? `<label class="file-choice"><input type="checkbox" id="continuous-consent">允许持续发送以上范围</label><button id="enable-continuous">开启持续比较</button>` : ''}${continuous.pendingJobId && continuous.pendingStatus !== 'SAVED' ? `<button id="open-continuous-job">查看最近比较</button>` : ''}`;
+  modal.querySelector('.definition-card')!.append(continuousPanel);
+  bind('#enable-continuous', async () => {
+    if (!modal.querySelector<HTMLInputElement>('#continuous-consent')?.checked) throw new Error('请先确认持续比较的发送范围');
+    await api('setContinuousEvolution', { definitionId: id, enabled: true, consentVersion: continuous.consentVersion });
+    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
+  });
+  bind('#stop-continuous', async () => {
+    await api('setContinuousEvolution', { definitionId: id, enabled: false });
+    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
+  });
+  bind('#open-continuous-job', () => openJob(continuous.pendingJobId));
   bind('#evolve-definition', async () => {
     const sources: { workId: string; title: string; count: number; status: string }[] = await api('evolutionSources', { definitionId: id });
     const available = sources.filter(source => source.count > 0);

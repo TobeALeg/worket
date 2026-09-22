@@ -55,6 +55,13 @@ export class DistillationDesktop {
         return this.service.prepare(
           input as Parameters<DistillationService["prepare"]>[0],
         );
+      case 'continuousEvolution':
+        string(input.definitionId);
+        return this.service.continuous.status(input.definitionId);
+      case 'setContinuousEvolution':
+        string(input.definitionId);
+        ensure(typeof input.enabled === 'boolean', 'INVALID_INPUT');
+        return this.service.continuous.set(input.definitionId, input.enabled as boolean, input.consentVersion);
       case 'evolutionSources':
         string(input.definitionId);
         return this.service.evolutionSources(input.definitionId);

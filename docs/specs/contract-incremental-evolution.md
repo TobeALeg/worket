@@ -1,6 +1,6 @@
 # Working contract 增量比较
 
-2026-09-23：已实现用户主动选择后续工作、比较增量并确认的首条链路。自动触发与长期订阅尚未实现。本功能沿用 WorkDefinition、WorkInstance、SourceSnapshot、DefinitionDraft 与 review_events，不新建记忆实体。
+2026-09-23：已实现用户主动选择后续工作、比较增量并确认的首条链路。明确授权下的持续触发现另见 [持续比较](continuous-contract-evolution.md)。本功能沿用 WorkDefinition、WorkInstance、SourceSnapshot、DefinitionDraft 与 review_events，不新建记忆实体。
 
 ## 产品行为
 
@@ -26,4 +26,4 @@
 
 `test/distillation/evolution.test.ts` 覆盖版本隔离、断点持久化、来源脱敏、伪造目标、跨范围重复、旧服务拒绝和过期基准；`npm run qa:contract:evolution` 走 Electron/HTTP/真实渲染/发布/新实例/原文查看的冻结响应回放。回放只在全部内容、来源与中间结果一致时重绑定测试数据库随机生成的基准 hash，不修改语义输出；原始响应以 SHA-256 冻结。
 
-这证明主动增量比较链路能运行，不证明自动持续学习、跨业务普遍准确或实际成片收益。下一步是明确范围内的持续触发与低打扰待审，再验证更复杂的纠正、条件和多工作冲突。
+此处真实模型证据只证明主动增量比较链路能运行，不证明跨业务普遍准确或实际成片收益。持续触发机制另有工程端到端验收；更复杂的纠正、条件、多工作冲突及实际第二次交付仍待验证。

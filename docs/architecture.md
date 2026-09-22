@@ -1,10 +1,14 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：本地持续比较队列
+
+新增 continuous_evolution 表，仅保存每系列的明确授权、服务身份 hash、开启边界及触发去重/限额信息。桌面原有串行 tick 驱动，默认关闭；稳定合批、待审阻塞、持久化尝试防重与原增量发布游标分离。发送和远程任务操作均在连接恢复后核对目的地，提交前再核对授权与来源。没有后台协议、模型提示或服务器数据库变更。
+
 ## 2026-09-23：基于已确认版本的增量协调
 
 `evolutionSources → prepare(baseDefinitionId) → 无本地路径/旧引用的有效基准 + 新来源 → 两阶段模型 → EvolutionResult → mergeEvolution → 差异草稿 → publish/EVOLUTION_CONFIRMED → 下一实例`。新增 `contracts/evolution.ts` 的运行时协议验证和 `definitions/evolution.ts` 的确定性合并，不迁移数据库。后台能力 `evolutionSchemaVersions:[1]` 显式协商，增量提示版本为 `work-definition-evolution-v1.0`。
 
-旧约定由程序完整保留，模型仅返回明确操作；重复在 review_events 追加依据，不写重复条目或相同内容的新版本。事件 ID/hash 在用户确认后记入账本，用于后续范围过滤与重启恢复。准备、提交和发布检查基准新旧；资料角色被替代时排除旧绑定，固定规范沿用验证过的 blob。来源删除对账本引用同步脱敏。renderer 默认只呈现差异，支持完整内容、重复/本次要求与补充依据原文查看。当前为主动入口，未启用自动后台比较。详见 [增量比较](specs/contract-incremental-evolution.md)。
+旧约定由程序完整保留，模型仅返回明确操作；重复在 review_events 追加依据，不写重复条目或相同内容的新版本。事件 ID/hash 在用户确认后记入账本，用于后续范围过滤与重启恢复。准备、提交和发布检查基准新旧；资料角色被替代时排除旧绑定，固定规范沿用验证过的 blob。来源删除对账本引用同步脱敏。renderer 默认只呈现差异，支持完整内容、重复/本次要求与补充依据原文查看。持续入口另由本地 ContinuousEvolution 队列触发，详见 [订阅与发送守卫](specs/continuous-contract-evolution.md)。详见 [增量比较](specs/contract-incremental-evolution.md)。
 
 ## 2026-09-23：可复现验收基线
 

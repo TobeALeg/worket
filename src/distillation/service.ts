@@ -1,3 +1,4 @@
+import { ContinuousEvolution, eventIdentity, type AutomaticComparison } from './continuous-evolution.js';
 import { type DocumentRole } from "../contracts/rules.js";
 import { evolutionBaseline, mergeEvolution } from '../definitions/evolution.js';
 import { resolveRuleDocuments } from '../definitions/document-rules.js';
@@ -57,6 +58,8 @@ export type Snapshot = {
   }[];
 };
 export type Job = {
+  automatic?: AutomaticComparison;
+  remoteDestination?: string;
   progress?: import("./activity.js").ExtractionProgress;
   seenStatus?: string;
   id: string;
@@ -93,6 +96,7 @@ export class DistillationService {
   readonly repository: DefinitionRepository;
   readonly improvement: ImprovementCollector;
   readonly recordings: RecordingCollection;
+  readonly continuous: ContinuousEvolution;
   readonly active = new Set<string>();
   closed = false;
   close(): void {
@@ -107,14 +111,17 @@ export class DistillationService {
       if (!terminal.has(job.status) || job.ackPending || job.cancelPending)
         await this.get(job.id).catch(() => {});
     }
+    this.continuous.tick();
   }
   constructor(
     readonly core: WorkCore,
     readonly client: AIClient,
+    now = Date.now,
   ) {
     this.repository = core.definitions;
     this.improvement = new ImprovementCollector(this.repository.db, client);
     this.recordings = new RecordingCollection(core, this.improvement);
+    this.continuous = new ContinuousEvolution(this, now);
   }
   collectFeedback(): void {
     this.recordings.collect();
@@ -161,7 +168,7 @@ export class DistillationService {
       count: work.sourceArchive.filter(e => e.kind !== 'reasoning.summary' && e.kind !== 'work.definition_applied' && e.content?.trim() && !seen.has(`${work.instance.id}/${e.id}/${hash(e.content)}`)).length,
     }));
   }
-  prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole>; baseDefinitionId?: string }): Snapshot {
+  prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole>; baseDefinitionId?: string }, allowedEvents?: Set<string>): Snapshot {
     array(input.workIds);
     array(input.includedFileIds);
     input.workIds.forEach(string);
@@ -187,6 +194,7 @@ export class DistillationService {
       const work = this.core.getWork(id);
       ensure(work, "SOURCE_DELETED");
       const events = work.sourceArchive
+        .filter(e => !allowedEvents || allowedEvents.has(eventIdentity(id, e)))
         .filter((e) => e.kind !== "reasoning.summary" && e.content?.trim())
         .filter(e => !base || e.kind !== 'work.definition_applied' && !seen.has(`${id}/${e.id}/${hash(e.content!)}`))
         .map((e, i) => ({
@@ -395,7 +403,8 @@ export class DistillationService {
     expectedContentHash: string;
     consentVersion: string;
     commandId: string;
-  }): Job {
+  }, automatic?: AutomaticComparison): Job {
+    if (automatic) this.continuous.assertAuthorized(automatic);
     ensure(input.consentVersion === "worket-data-v1", "CONSENT_REQUIRED");
     const id = this.repository.command(
       input.commandId,
@@ -412,6 +421,7 @@ export class DistillationService {
         );
         this.assertSources(snapshot, true);
         const job: Job = {
+          ...(automatic ? { automatic } : {}),
           id: randomUUID(),
           snapshotId: snapshot.id,
           status: "PREPARED",
@@ -429,6 +439,13 @@ export class DistillationService {
     if (job.status === "PREPARED") void this.submit(job);
     return job;
   }
+  private matchesDestination(job: Job): boolean {
+    const destination = job.remoteDestination ?? job.automatic?.destination;
+    return !destination || destination === this.client.improvementIdentity?.();
+  }
+  private destinationGuard(job: Job): (() => void) | undefined {
+    return job.automatic || job.remoteDestination ? () => ensure(this.matchesDestination(job), "CONTINUOUS_STOPPED", "服务身份已改变") : undefined;
+  }
   async submit(job: Job): Promise<void> {
     if (this.active.has(job.id)) return;
     this.active.add(job.id);
@@ -438,6 +455,7 @@ export class DistillationService {
         "source_snapshots",
         job.snapshotId,
       );
+      if (job.automatic) this.continuous.assertAuthorized(job.automatic);
       this.assertSources(snapshot, false);
       job.status = "SUBMITTED";
       this.repository.write("distillation_jobs", job);
@@ -457,17 +475,25 @@ export class DistillationService {
             (capability.limits?.maxBytes ?? LIMITS.maxBytes),
         "INPUT_TOO_LARGE",
       );
+      const beforeSend = job.automatic || job.remoteDestination ? () => {
+        this.destinationGuard(job)?.();
+        if (job.automatic) this.continuous.assertAuthorized(job.automatic);
+        ensure(this.repository.read<Job>("distillation_jobs", job.id).status !== "CANCELLED", "JOB_CANCELLED");
+        this.assertSources(snapshot, true);
+      } : undefined;
+      beforeSend?.();
       dispatched = true;
       const remote = await this.client.submit(
         this.wire(snapshot),
         job.commandId,
+        beforeSend,
       );
       if (this.closed) return;
       const current = this.repository.read<Job>("distillation_jobs", job.id);
       current.requestId = remote.requestId;
       this.repository.write("distillation_jobs", current);
       if (current.status === "CANCELLED") {
-        await this.client.cancel(remote.requestId);
+        await this.client.cancel(remote.requestId, this.destinationGuard(current));
         return;
       }
       current.status = "RUNNING";
@@ -477,7 +503,8 @@ export class DistillationService {
       if (this.closed) return;
       const current = this.repository.read<Job>("distillation_jobs", job.id);
       if (current.status !== "CANCELLED" && current.status !== "SAVED") {
-        current.status = current.requestId || !dispatched ? "FAILED" : "INTERRUPTED";
+        const localRejection = error instanceof ContractError && ["CONTINUOUS_STOPPED", "SOURCE_DELETED", "SOURCE_CHANGED", "BASE_DEFINITION_CHANGED", "JOB_CANCELLED"].includes(error.code);
+        current.status = current.requestId || !dispatched || localRejection ? "FAILED" : "INTERRUPTED";
         current.error =
           error instanceof Error ? error.message : "MODEL_UNAVAILABLE";
         this.repository.write("distillation_jobs", current);
@@ -488,9 +515,15 @@ export class DistillationService {
   }
   async get(id: string): Promise<Job> {
     let job = this.repository.read<Job>("distillation_jobs", id);
+    // Remote job identifiers belong to the destination that accepted this automatic request.
+    if (!this.matchesDestination(job)) return job;
+    if (job.automatic && job.status === "PREPARED" && !this.active.has(id)) {
+      await this.submit(job);
+      job = this.repository.read<Job>("distillation_jobs", id);
+    }
     if (job.cancelPending && job.requestId) {
       try {
-        await this.client.cancel(job.requestId);
+        await this.client.cancel(job.requestId, this.destinationGuard(job));
         if (this.closed) return job;
         job = this.repository.read<Job>("distillation_jobs", id);
         job.cancelPending = false;
@@ -501,7 +534,7 @@ export class DistillationService {
     }
     if (job.ackPending && job.requestId) {
       try {
-        await this.client.ack(job.requestId);
+        await this.client.ack(job.requestId, this.destinationGuard(job));
         if (this.closed) return job;
         job.ackPending = false;
         this.repository.write("distillation_jobs", job);
@@ -516,7 +549,7 @@ export class DistillationService {
     if (job.requestId && !terminal.has(job.status) && !this.active.has(id)) {
       this.active.add(id);
       try {
-        await this.receive(job, await this.client.get(job.requestId));
+        await this.receive(job, await this.client.get(job.requestId, this.destinationGuard(job)));
       } catch (error) {
         if (this.closed) return job;
         job = this.repository.read<Job>("distillation_jobs", id);
@@ -686,9 +719,9 @@ export class DistillationService {
       this.repository.write("distillation_jobs", job);
       return job;
     });
-    if (job.status === "CANCELLED" && job.requestId)
+    if (job.status === "CANCELLED" && job.requestId && this.matchesDestination(job))
       try {
-        await this.client.cancel(job.requestId);
+        await this.client.cancel(job.requestId, this.destinationGuard(job));
       } catch {}
     return job;
   }
@@ -703,6 +736,7 @@ export class DistillationService {
       input.jobId,
       () => {
         const old = this.repository.read<Job>("distillation_jobs", input.jobId);
+        ensure(this.matchesDestination(old), "CONTINUOUS_STOPPED", "服务身份已改变，请重新选择范围提交");
         ensure(["FAILED", "INTERRUPTED"].includes(old.status), "INVALID_STATE");
         const snapshot = this.repository.read<Snapshot>(
           "source_snapshots",
@@ -715,6 +749,7 @@ export class DistillationService {
         this.assertSources(snapshot, false);
         const job: Job = {
           id: randomUUID(),
+          ...((old.remoteDestination ?? old.automatic?.destination) ? { remoteDestination: old.remoteDestination ?? old.automatic!.destination } : {}),
           snapshotId: old.snapshotId,
           status: "PREPARED",
           attempt: old.attempt + 1,
