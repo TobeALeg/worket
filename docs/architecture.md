@@ -1,5 +1,19 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-22：规则协调与固定规范条款
+
+`DistillationService.prepare → file role + immutable source snapshot → server/workflow → DefinitionDraft → publish/pinRuleDocuments → WorkDefinition version → instance inputs/overrides → resolveRuleDocuments → WorkPackage/MCP/copy → acceptanceChecks`。
+
+`contracts/rules.ts` 定义作用域、采纳状态、条件、重复/补充/替代/冲突关系与条款版本。规则地址使用 `collection.key`，避免不同字段同名误合并。模型负责语义判断；程序验证引用、范围一致性、无循环和有效保留目标，计算一份有效规则。无新领域实体或数据库迁移，新增信息保存在现有 JSON 契约中。旧定义缺少 rule 时沿用旧行为。
+
+`definitions/document-rules.ts` 只从已授权且标为 NORMATIVE 的正文快照固定条款；文件 hash、行区间与 SourceRef 共同定位。完整正文按 hash 共用不可变 blob，执行时仅展开所选条款，不附加“遵循整份旧文件”覆盖新规则。资料缺失或校验失败时阻止执行包导出。来源名/位置用于追溯，不作为规则身份或跨机器依赖。
+
+`definitions/document-revision.ts` 预览新文本，采用时重验预览 hash 与草稿 revision；保存新来源快照并更新指定条款，直接依赖关系退回 PROPOSED 并要求审阅。发布创建新定义版本。修改条款文字会解除其文件正文绑定，避免导出时把用户修改覆盖回旧原文。
+
+`effectiveRules` 用于创建实例及所有工作包出口；本次覆盖存入 `instance_inputs`，不改 Definition。`acceptanceChecks` 将被合并的验收项指向保留规则；新版定义没有独立验收文字时，从有效交付与约束生成引用式清单。旧定义仍要求原有显式验收项。验收结果不因文字去重而被跳过。
+
+新客户端请求携带 `ruleSchemaVersion:1`，后台 capabilities 声明 `ruleSchemaVersions:[1]`。未声明支持的旧后台会在提交前被新客户端拒绝；旧客户端请求仍使用 v1.4 提示，不接收需要新版程序解释的候选范围。v2.0 聚合阶段保留原始正文、说话人和文件角色，仍受 96 KB 聚合预算约束，超限明确失败，不静默截断。模型语义错误不会被结构校验完全发现，仍须保留草稿审阅与真实任务评测。
+
 > 2026-09-16：`adapters/zcode` 只读 tasks-index 与 CLI SQLite，使用消息/片段 ID 规范化历史，排除隐藏消息、reasoning 与未完成回复。通过默认注册表进入通用记录路径；`manual-delivery` 只复制带 workId/deliveryId 的启动指令并打开应用，回执仍为 pending。用户配置合并保留已有 MCP 和 Hook，接入脚本只向本机通知会话身份与交付标识。当前聊天无法可靠定位时明确选择。
 
 > 同日：`adapters/antigravity` 以只读 summary 库发现本机顶层会话，从官方 Hook 使用的 transcript.jsonl 读取已完成事件，按 step_index 去重并保留截断提示；摘要不替代正文。`ConversationUpdated` 通知仅在已有记录或该执行者存在待确认交付时才读取正文，用用户消息开头的 workId/deliveryId 核验交付；异步读取结束后重查绑定，迟到、取消和重复通知不能误绑。普通增量沿用后台轮询。安装配置使用可执行 Node 的绝对路径，支持空配置、原子替换及重复安装，保留既有服务器、Hook 与禁用偏好。

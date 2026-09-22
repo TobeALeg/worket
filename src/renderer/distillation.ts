@@ -1,3 +1,4 @@
+import { effectiveRules, acceptanceChecks, ruleItems, ruleText } from "../contracts/rules.js";
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import { definitionSections, sectionItems } from "../definitions/review.js";
@@ -186,14 +187,15 @@ export async function openPreparation(workIds: string[]): Promise<void> {
     const { enabled } = await api("improvementPreference");
     show(
       "确认沉淀范围",
-      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
+      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
       '<button id="start-distillation" class="primary">开始沉淀</button>',
     );
     bind("#apply-range", async () => {
       const ids = [
         ...modal.querySelectorAll<HTMLInputElement>("[data-file-id]:checked"),
       ].map((e) => e.dataset.fileId!);
-      snapshot = await api("prepare", { workIds, includedFileIds: ids });
+      const fileRoles = Object.fromEntries(ids.map(id => [id, modal.querySelector<HTMLSelectElement>(`[data-file-role="${CSS.escape(id)}"]`)?.value ?? "REFERENCE"]));
+      snapshot = await api("prepare", { workIds, includedFileIds: ids, fileRoles });
       await render();
     });
     const id = commandId();
@@ -209,7 +211,7 @@ export async function openPreparation(workIds: string[]): Promise<void> {
           s.files.filter((f) => f.content !== undefined).map((f) => f.id),
         )
         .sort();
-      if (JSON.stringify(selected) !== JSON.stringify(prepared))
+      if (JSON.stringify(selected) !== JSON.stringify(prepared) || snapshot.sources.some(s => s.files.some(f => f.content !== undefined && (modal.querySelector<HTMLSelectElement>(`[data-file-role="${CSS.escape(f.id)}"]`)?.value ?? "REFERENCE") !== (f.role ?? "REFERENCE"))))
         throw new Error("附件选择已变化，请先更新范围");
       await api("start", {
         preparationId: snapshot.id,
@@ -281,14 +283,15 @@ async function editDraft(draft: Draft): Promise<void> {
 }
 async function openDefinition(id: string): Promise<void> {
   const d: Definition = await api("definition", { id });
+  const { content } = effectiveRules(d.content);
   const versions: Definition[] = await api("versions", {
     key: d.definitionKey,
   });
   show(
     d.content.name,
     `<label class="inline-field">版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><div class="definition-summary">${definitionSections
-      .filter(key => sectionItems(d.content, key).length)
-      .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(d.content, key).map(item => `<div class="state-item"><p>${esc(item.text)}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
+      .filter(key => sectionItems(content, key).length)
+      .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(content, key).map(item => `<div class="state-item"><p>${esc(ruleText(item))}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
       .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details><details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
     '<button id="revise-definition">修改为新版本</button><button id="use-definition" class="primary">使用</button>',
   );
@@ -315,11 +318,12 @@ async function openDefinition(id: string): Promise<void> {
   });
 }
 async function useDefinition(d: Definition): Promise<void> {
+  const activeRules = ruleItems(effectiveRules(d.content).content);
   const examples: any[] = await api("examples", { definitionId: d.id });
   const { enabled } = await api("improvementPreference");
   show(
     `使用：${d.content.name}`,
-    `<p class="consent">v${d.version}</p>${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${i.key}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${i.key}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${i.key}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${i.key}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc(d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料")} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}${improvementConsent("REUSE", enabled)}`,
+    `<p class="consent">v${d.version}</p>${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${i.key}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${i.key}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${i.key}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${i.key}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc(d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料")} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}<details><summary>仅本次的特殊要求</summary>${activeRules.map(({ address, item }) => `<label class="field">${esc(ruleText(item))}<textarea data-rule-override="${esc(address)}" aria-label="仅本次替代：${esc(item.text)}"></textarea></label>`).join("")}</details>${improvementConsent("REUSE", enabled)}`,
     '<button id="create-defined-work" class="primary">创建本次工作</button>',
   );
   modal.querySelectorAll<HTMLElement>("[data-input-file]").forEach(
@@ -349,6 +353,7 @@ async function useDefinition(d: Definition): Promise<void> {
     }
     const dashboard = await api("create", {
       definitionId: d.id,
+      ruleOverrides: [...modal.querySelectorAll<HTMLTextAreaElement>("[data-rule-override]")].filter(el => el.value.trim()).map(el => ({ target: el.dataset.ruleOverride!, text: el.value.trim() })),
       improvementConsentVersion: improvementVersion(),
       inputs,
       referenceExampleIds: [
@@ -385,7 +390,7 @@ export async function workDefinitionAction(
     let artifacts: any[] = await api("artifacts", { workId: work.id });
     show(
       "验收本次交付",
-      `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.acceptanceCriteria.map((c) => `<label class="field">${esc(c.text)}<select data-criterion="${c.key}"><option value="">请选择</option><option value="PASS">通过</option><option value="NEEDS_REVISION">需要修改</option></select></label>`).join("")}<h3><span class="category-icon" aria-hidden="true">↗</span> 本次交付物</h3><div id="acceptance-artifacts"></div><button id="attach-output">关联本次交付物</button>`,
+      `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${acceptanceChecks(d.content, (await api("package", { workId: work.id })).json.ruleOverrides ?? []).map((c) => `<label class="field">${esc(c.text)}<select data-criterion="${c.key}"><option value="">请选择</option><option value="PASS">通过</option><option value="NEEDS_REVISION">需要修改</option></select></label>`).join("")}<h3><span class="category-icon" aria-hidden="true">↗</span> 本次交付物</h3><div id="acceptance-artifacts"></div><button id="attach-output">关联本次交付物</button>`,
       '<button id="accept-output" class="primary">保存验收结果</button>',
     );
     const renderArtifacts = () => {

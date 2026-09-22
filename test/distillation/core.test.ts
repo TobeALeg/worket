@@ -66,6 +66,16 @@ test("A01/A02 prepare, viewing and completion never call definition model", asyn
   assert.equal(f.client.calls, 0);
   f.core.close();
 });
+test("a modern client refuses extraction on a backend without rule coordination", async () => {
+  const f = await setup();
+  try {
+    f.client.capabilities = async () => ({});
+    const job = f.service.start({ preparationId: f.snapshot.id, expectedContentHash: f.snapshot.contentHash, consentVersion: 'worket-data-v1', commandId: cid() });
+    await new Promise(r => setImmediate(r));
+    assert.match((await f.service.get(job.id)).error!, /^SERVICE_UPGRADE_REQUIRED/);
+    assert.equal(f.client.calls, 0);
+  } finally { f.core.close(); }
+});
 test("A10/A15 candidate publication and new instance leave source untouched and contain only new inputs", async () => {
   const f = await setup(),
     before = f.core.getWork(f.work.instance.id),

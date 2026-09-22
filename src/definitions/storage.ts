@@ -59,6 +59,12 @@ export class MaterialStore {
   }
   copy(path: string, role: string): Material {
     const bytes = this.read(path);
+    const material = this.freeze(bytes, role, path);
+    ensure(hash(this.read(path)) === material.hash, "SOURCE_CHANGED");
+    return material;
+  }
+  freeze(bytes: Buffer, role: string, originalPath: string): Material {
+    ensure(bytes.length <= LIMITS.maxMaterialBytes, "INPUT_TOO_LARGE");
     const digest = hash(bytes);
     mkdirSync(this.directory, { recursive: true, mode: 0o700 });
     const target = join(this.directory, digest);
@@ -68,11 +74,10 @@ export class MaterialStore {
       ensure(hash(readFileSync(temporary)) === digest, "SOURCE_CHANGED");
       renameSync(temporary, target);
     }
-    ensure(hash(this.read(path)) === digest, "SOURCE_CHANGED");
     return {
       id: digest,
       path: target,
-      originalPath: path,
+      originalPath,
       hash: digest,
       size: bytes.length,
       role,

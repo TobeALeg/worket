@@ -1,3 +1,5 @@
+import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
+import { effectiveRules, acceptanceChecks, ruleText, type InstanceOverride } from "../contracts/rules.js";
 import { randomUUID } from "node:crypto";
 import { reviewFieldValue, reviewFingerprint, resolveReviewField } from "./review.js";
 import type { DatabaseSync } from "node:sqlite";
@@ -50,6 +52,7 @@ export type CreateFromDefinition = {
   definitionId: string;
   inputs: Inputs;
   referenceExampleIds: string[];
+  ruleOverrides?: InstanceOverride[];
   commandId: string;
 };
 export class DefinitionRepository {
@@ -216,6 +219,7 @@ export class DefinitionRepository {
             !old ||
             canonical({ ...old, basis: null }) !==
               canonical({ ...item, basis: null });
+          if (old && old.text !== item.text && canonical(old.document) === canonical(item.document)) delete item.document;
           item.basis = changed
             ? { type: "USER_AUTHORED", reviewEventId: reviewId }
             : old.basis;
@@ -302,6 +306,7 @@ export class DefinitionRepository {
       const old = inherited.find((m) => m.role === role.key);
       return path ? [this.materials.copy(path, role.key)] : old ? [old] : [];
     });
+    materials.push(...pinRuleDocuments(draft.content, inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
     ensure(
       materials.reduce((n, m) => n + m.size, 0) <= LIMITS.maxMaterialBytes,
       "INPUT_TOO_LARGE",
@@ -327,8 +332,8 @@ export class DefinitionRepository {
           ensure(job.status === "AWAITING_REVIEW", "JOB_NOT_PUBLISHABLE");
         }
         ensure(
-          current.content.deliverables.length &&
-            current.content.acceptanceCriteria.length,
+          effectiveRules(current.content).content.deliverables.length &&
+            acceptanceChecks(current.content).length,
           "MISSING_INFORMATION",
         );
         ensure(
@@ -343,12 +348,13 @@ export class DefinitionRepository {
             "MATERIAL_MISSING",
           );
         materials.forEach((m) => this.materials.verify(m));
+        resolveRuleDocuments(current.content, materials, this.materials);
         for (const method of current.content.methods)
           ensure(
             method.obligation !== "REQUIRED" ||
               method.basis.type === "USER_AUTHORED" ||
               (method.basis.type === "SOURCE" &&
-                method.basis.origin === "USER_STATED") ||
+                ["USER_STATED", "DOCUMENT_STATED"].includes(method.basis.origin)) ||
               current.resolutions.some(
                 (r) =>
                   r.action === "CHOOSE" &&
@@ -448,6 +454,7 @@ export class DefinitionRepository {
   create(input: CreateFromDefinition): string {
     object(input.inputs);
     array(input.referenceExampleIds);
+    if (input.ruleOverrides !== undefined) array(input.ruleOverrides);
     ensure(
       new Set(input.referenceExampleIds).size ===
         input.referenceExampleIds.length,
@@ -460,6 +467,7 @@ export class DefinitionRepository {
       () => {
         const definition = this.get(input.definitionId);
         definition.materials.forEach((m) => this.materials.verify(m));
+        const resolved = resolveRuleDocuments(definition.content, definition.materials, this.materials, input.ruleOverrides ?? []);
         const values: Inputs = {};
         ensure(
           Object.keys(input.inputs).every((key) =>
@@ -538,11 +546,11 @@ export class DefinitionRepository {
           sourceMessageIds: [event],
         });
         state.objective = [item(definition.content.purpose.text)];
-        state.constraints = definition.content.constraints.map((i) =>
-          item(i.text),
+        state.constraints = resolved.content.constraints.map((i) =>
+          item(ruleText(i)),
         );
-        state.successCriteria = definition.content.acceptanceCriteria.map((i) =>
-          item(i.text),
+        state.successCriteria = resolved.content.acceptanceCriteria.map((i) =>
+          item(ruleText(i)),
         );
         state.facts = Object.entries(values).map(([key, value]) =>
           item(`${key}: ${value}`, provided),
@@ -557,7 +565,7 @@ export class DefinitionRepository {
           .prepare("INSERT INTO instance_inputs VALUES (?,?)")
           .run(
             id,
-            JSON.stringify({ inputs: values, referenceExamples: examples }),
+            JSON.stringify({ inputs: values, referenceExamples: examples, ...(input.ruleOverrides?.length ? { ruleOverrides: input.ruleOverrides } : {}) }),
           );
         for (const [eventId, kind, content, sequence] of [
           [
@@ -569,7 +577,7 @@ export class DefinitionRepository {
             }),
             1,
           ],
-          [provided, "work.input_provided", JSON.stringify(values), 2],
+          [provided, "work.input_provided", JSON.stringify({ inputs: values, ruleOverrides: input.ruleOverrides ?? [] }), 2],
         ] as const)
           this.db
             .prepare(
@@ -580,7 +588,7 @@ export class DefinitionRepository {
       },
     );
   }
-  inputs(workId: string): { inputs: Inputs; referenceExamples: unknown[] } {
+  inputs(workId: string): { inputs: Inputs; referenceExamples: unknown[]; ruleOverrides?: InstanceOverride[] } {
     const row = this.db
       .prepare("SELECT payload_json FROM instance_inputs WHERE work_id=?")
       .get(workId);
@@ -606,7 +614,7 @@ export class DefinitionRepository {
           .get(input.workId);
         ensure(work?.status === "OPEN", "WORK_NOT_OPEN");
         const definition = this.get(work.definition_id as string);
-        const criteria = definition.content.acceptanceCriteria;
+        const criteria = acceptanceChecks(definition.content, this.inputs(input.workId).ruleOverrides ?? []);
         ensure(
           Object.keys(input.criteriaResults).length === criteria.length &&
             criteria.every((c) =>

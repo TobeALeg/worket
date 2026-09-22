@@ -10,6 +10,7 @@ export type DistillationActivity = {
 };
 export const runningJob = (status: string): boolean => ["PREPARED", "SUBMITTED", "RUNNING"].includes(status);
 export function jobError(error?: string): string {
+  if (error?.includes("SERVICE_UPGRADE_REQUIRED")) return "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。";
   if (error?.includes("INVALID_SOURCE_REF")) return "生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。";
   if (error?.includes("MODEL_TIMEOUT")) return "模型处理超时，可以重试，原始记录仍然保留。";
   if (error?.includes("INVALID_MODEL_OUTPUT")) return "生成结果格式不完整，可以重试。";
@@ -41,6 +42,11 @@ const commandErrorText: Record<string, string> = {
   IDEMPOTENCY_CONFLICT: "同一操作已用不同内容提交过，请重新发起。",
   DRAFT_NOT_EDITABLE: "该候选已失效或已确认，不能继续编辑。",
   UNRESOLVED_ISSUES: "仍有必须处理的问题，请先修改相关要求并选择处理方式。",
+  INVALID_RULE_TARGET: "规则关联的保留目标不存在或未生效，请重新选择有效规则。",
+  RULE_CYCLE: "规则之间形成了循环关联，请保留一个明确的最终目标。",
+  RULE_SCOPE_MISMATCH: "适用范围或条件不同的要求不能直接合并或替代，请分别保留。",
+  UNRESOLVED_RULE_CONFLICT: "规则仍有冲突，请先明确保留、修改或删除的内容。",
+  MISSING_INFORMATION: "请补充有效交付要求和可检查的验收要求后保存。",
   INPUT_REQUIRED: "请补充必填输入后再继续。",
   CONFIRMATION_REQUIRED: "请按要求输入确认文字后再继续。",
   JOB_NOT_PUBLISHABLE: "该沉淀任务当前状态不允许保存，请刷新任务后再试。",

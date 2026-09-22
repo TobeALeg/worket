@@ -1,3 +1,4 @@
+import { ruleSections, ruleItems, type RulePolicy } from "../contracts/rules.js";
 import { validateContent, type DefinitionContent, type DefinedItem, type InputSpec, type Issue, type Resolution, type SourceRef } from "../contracts/definition.js";
 import type { Draft, Definition } from "../definitions/repository.js";
 import { definitionSections, resolveReviewField, reviewFieldValue, reviewFingerprint, sameAddress, sectionItems, type DefinitionSection, type ItemAddress } from "../definitions/review.js";
@@ -17,11 +18,12 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
   let bindings: Record<string, string> = {}, editMode = false, busy = false, closed = false;
   let undo: { content: DefinitionContent; resolutions: Resolution[]; bindings: Record<string, string> } | null = null;
   let savedState = "", message = "";
+  let documentPreview: { address: string; path: string; text: string; hash: string; previousText: string; name: string; previous: { startLine: number; endLine: number } } | null = null;
   const evidenceOpen = new Set<string>(), settingsOpen = new Set<string>();
   const evidenceCache = new Map<string, string>();
   const explanations = new Map<string, string>();
   const abort = new AbortController(), signal = abort.signal;
-  const targets = new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field)]));
+  let targets = new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field)]));
   const signature = () => JSON.stringify({ content, resolutions, bindings });
   savedState = signature();
   const byAddress = (address: string): { address: ItemAddress; item: Item | undefined } => {
@@ -60,10 +62,20 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     // Saving edits replaces basis with USER_AUTHORED. Retain original evidence for inspection.
     const original = sectionItems(draft.originalContent, address.section).find(i => i.key === address.key) ?? item;
     const basis = original.basis;
-    return `<div class="dr-evidence"><span>${basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "AI 提议", SYSTEM_INFERRED: "系统推断" }[basis.origin] : basis.type === "INFERRED" ? "系统推断" : "用户编写"}</span>${basis.type === "INFERRED" ? `<p>${escape(basis.rationale)}</p>` : ""}${basis.type !== "USER_AUTHORED" ? basis.refs.map((ref, i) => {
+    return `<div class="dr-evidence"><span>${basis.type === "SOURCE" ? { USER_STATED: "用户原话", AGENT_PROPOSED: "AI 提议", SYSTEM_INFERRED: "系统推断", DOCUMENT_STATED: "已采用规范" }[basis.origin] : basis.type === "INFERRED" ? "系统推断" : "用户编写"}</span>${basis.type === "INFERRED" ? `<p>${escape(basis.rationale)}</p>` : ""}${basis.type !== "USER_AUTHORED" ? basis.refs.map((ref, i) => {
       const cacheKey = JSON.stringify(ref);
       return `<div>${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ""}${ref.deleted ? '<p>来源已删除</p>' : evidenceCache.has(cacheKey) ? `<pre>${escape(evidenceCache.get(cacheKey))}</pre>` : `<button data-review-action="load-evidence" data-address="${escape(idOf(address))}" data-ref="${i}">查看原文${basis.refs.length > 1 ? ` ${i + 1}` : ""}</button>`}</div>`;
     }).join("") : ""}</div>`;
+  }
+  function ruleHtml(item: Item, address: ItemAddress): string {
+    if (!(ruleSections as readonly string[]).includes(address.section)) return "";
+    const r = item.rule ?? { scope: "REUSABLE", status: "ACTIVE" };
+    const meta = `${({ REUSABLE: "同类工作", INSTANCE: "仅原实例", UNCERTAIN: "范围待确认" })[r.scope]} · ${({ ACTIVE: "有效", PROPOSED: "未采纳", RETIRED: "历史" })[r.status]}`;
+    const source = item.document ? `${item.document.name} L${item.document.startLine}–${item.document.endLine} · ${item.document.hash.slice(0, 10)}` : "";
+    if (!editMode) return `<p class="dr-meta">${escape(meta)}${r.condition ? ` · 当 ${escape(r.condition)}` : ""}${r.relation ? ` · ${({ DUPLICATE: "合并到", SUPPLEMENTS: "补充", REPLACES: "替代", CONFLICT: "冲突于" })[r.relation.kind]} ${escape(ruleItems(content).find(row => row.address === r.relation!.target)?.item.text ?? r.relation.target)}` : ""}${source ? ` · ${escape(source)}` : ""}</p>${item.document ? `<button data-review-action="document-version" data-address="${escape(idOf(address))}">检查 / 更新规范版本</button>` : ""}`;
+    const id = escape(idOf(address));
+    const select = (prop: string, value: string, entries: string[][]) => `<select data-property="${prop}" data-address="${id}">${entries.map(([v,l]) => `<option value="${v}" ${value === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+    return `<div class="dr-settings"><label>适用范围${select("scope",r.scope, [["REUSABLE","同类工作"],["INSTANCE","仅原实例"],["UNCERTAIN","待确认"]])}</label><label>状态${select("status",r.status,[["ACTIVE","有效"],["PROPOSED","未采纳"],["RETIRED","历史"]])}</label><label>适用条件<input data-property="condition" data-address="${id}" value="${escape(r.condition ?? "")}"></label><label>与已有规则的关系${select("relation",r.relation?.kind ?? "", [["","独立"],["DUPLICATE","重复"],["SUPPLEMENTS","补充"],["REPLACES","替代"],["CONFLICT","冲突"]])}</label>${r.relation ? `<label>对应规则<select data-property="target" data-address="${id}"><option value="">选择规则</option>${ruleItems(content).filter(row => row.address !== idOf(address)).map(row => `<option value="${escape(row.address)}" ${row.address === r.relation?.target ? "selected" : ""}>${escape(row.item.text)}</option>`).join("")}</select></label>` : ""}<span>${source ? escape(source) : ""}</span></div>`;
   }
   function settingsHtml(item: Item, address: ItemAddress): string {
     const id = idOf(address);
@@ -75,7 +87,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const input = address.section === "inputs", material = address.section === "materialRoles";
     const required = input || material ? `${item.required ? "必" : "选"}${input ? "填" : "需"}` : "";
     const meta = required || (address.section === "methods" ? item.obligation === "REQUIRED" ? "必须" : "参考" : "");
-    return `<div class="dr-item ${removed ? "dr-removed" : ""}" data-section="${address.section}" data-key="${escape(item.key)}"><div class="dr-row">${editMode && !removed ? `<textarea class="dr-text" rows="1" data-text data-address="${escape(id)}" aria-label="${escape(labels[address.section][1])}条目">${escape(item.text)}</textarea>` : `<span class="dr-text-read">${escape(item.text)}</span>`}${meta ? editMode && !removed ? `<button data-review-action="toggle-property" data-address="${escape(id)}" class="dr-meta-toggle">${meta} ⇅</button>` : `<span class="dr-meta">${meta}</span>` : ""}<button class="dr-source" data-review-action="evidence" data-address="${escape(id)}" aria-label="查看依据：${escape(item.text)}" aria-expanded="${evidenceOpen.has(id)}">${quoteIcon}</button>${editMode && !removed ? `${input ? `<button class="dr-mini" data-review-action="settings" data-address="${escape(id)}" aria-label="输入设置：${escape(item.text)}">⋯</button>` : ""}${address.section !== "purpose" ? `<button class="dr-mini" data-review-action="delete" data-address="${escape(id)}" aria-label="删除：${escape(item.text)}">×</button>` : ""}` : ""}</div>${evidenceOpen.has(id) ? evidenceHtml(item, address) : ""}${editMode && settingsOpen.has(id) && !removed ? settingsHtml(item, address) : ""}${material && !removed ? `<div class="dr-material"><button data-review-action="material" data-address="${escape(id)}">${bindings[item.key] ? "更换资料" : "选择资料"}</button>${bindings[item.key] ? `<span title="${escape(bindings[item.key])}">${escape(bindings[item.key]!.split(/[\\/]/u).at(-1))}</span>` : ""}</div>` : ""}<div data-issues-for="${escape(id)}">${related.map(issueHtml).join("")}</div></div>`;
+    return `<div class="dr-item ${removed ? "dr-removed" : ""}" data-section="${address.section}" data-key="${escape(item.key)}"><div class="dr-row">${editMode && !removed ? `<textarea class="dr-text" rows="1" data-text data-address="${escape(id)}" aria-label="${escape(labels[address.section][1])}条目">${escape(item.text)}</textarea>` : `<span class="dr-text-read">${escape(item.text)}</span>`}${meta ? editMode && !removed ? `<button data-review-action="toggle-property" data-address="${escape(id)}" class="dr-meta-toggle">${meta} ⇅</button>` : `<span class="dr-meta">${meta}</span>` : ""}<button class="dr-source" data-review-action="evidence" data-address="${escape(id)}" aria-label="查看依据：${escape(item.text)}" aria-expanded="${evidenceOpen.has(id)}">${quoteIcon}</button>${editMode && !removed ? `${input ? `<button class="dr-mini" data-review-action="settings" data-address="${escape(id)}" aria-label="输入设置：${escape(item.text)}">⋯</button>` : ""}${address.section !== "purpose" ? `<button class="dr-mini" data-review-action="delete" data-address="${escape(id)}" aria-label="删除：${escape(item.text)}">×</button>` : ""}` : ""}</div>${!removed ? ruleHtml(item, address) : ""}${evidenceOpen.has(id) ? evidenceHtml(item, address) : ""}${editMode && settingsOpen.has(id) && !removed ? settingsHtml(item, address) : ""}${material && !removed ? `<div class="dr-material"><button data-review-action="material" data-address="${escape(id)}">${bindings[item.key] ? "更换资料" : "选择资料"}</button>${bindings[item.key] ? `<span title="${escape(bindings[item.key])}">${escape(bindings[item.key]!.split(/[\\/]/u).at(-1))}</span>` : ""}</div>` : ""}<div data-issues-for="${escape(id)}">${related.map(issueHtml).join("")}</div></div>`;
   }
   function render(): void {
     if (closed) return;
@@ -84,7 +96,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const focus = active?.dataset.address, property = active?.dataset.property, text = active?.hasAttribute("data-text");
     const selection = text ? [active?.selectionStart, active?.selectionEnd] : null;
     modal.classList.add("draft-review");
-    modal.innerHTML = `<div class="dr-shell"><header class="dr-bar">${worketBrand}<span>审阅</span><button data-review-action="close" aria-label="关闭" class="dr-close">×</button></header><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span><button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${definitionSections.filter(s => s === "purpose" || editMode || sectionItems(content, s).length || draft.issues.some(i => targets.get(i.id)?.section === s)).map(section => {
+    modal.innerHTML = `<div class="dr-shell"><header class="dr-bar">${worketBrand}<span>审阅</span><button data-review-action="close" aria-label="关闭" class="dr-close">×</button></header><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span><button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${documentPreview ? `<section class="dr-settings"><h3>${escape(documentPreview.name)} · 采用新版条款</h3><p>当前条款：${escape(documentPreview.previousText)}</p><pre>${escape(documentPreview.text.split("\n").map((line, i) => `${i + 1}  ${line}`).join("\n"))}</pre><label>起始行<input id="doc-start-line" type="number" min="1" value="${documentPreview.previous.startLine}"></label><label>结束行<input id="doc-end-line" type="number" min="1" value="${documentPreview.previous.endLine}"></label><button data-review-action="adopt-document">采用所选行（保存到草稿）</button><button data-review-action="cancel-document">取消</button></section>` : ""}${definitionSections.filter(s => s === "purpose" || editMode || sectionItems(content, s).length || draft.issues.some(i => targets.get(i.id)?.section === s)).map(section => {
       const items = sectionItems(content, section);
       const deleted = sectionItems(draft.originalContent, section).filter(i => !items.some(n => n.key === i.key) && issuesAt(section, i.key).length);
       return `<section class="dr-group"><div class="dr-label"><span aria-hidden="true">${labels[section][0]}</span>${labels[section][1]}</div><div class="dr-items">${items.map(item => rowHtml(item, { section, key: item.key })).join("")}${deleted.map(item => rowHtml(item, { section, key: item.key }, true)).join("")}<div data-issues-for="${section}">${issuesAt(section).map(issueHtml).join("")}</div>${editMode && section !== "purpose" ? `<button class="dr-add" data-review-action="add" data-section="${section}">＋ 添加${labels[section][1]}</button>` : ""}</div></section>`;
@@ -166,6 +178,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     }
     if (item && address) {
       if (action === "keep" || action === "reference") {
+        if (item.rule && item.rule.relation?.kind !== "CONFLICT") mutate(address, () => { item.rule!.scope = "REUSABLE"; item.rule!.status = "ACTIVE"; });
         if (address.section === "methods") {
           mutate(address, () => { item.obligation = action === "keep" ? "REQUIRED" : "REFERENCE"; });
         }
@@ -199,6 +212,14 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     if (!el.dataset.property) return;
     const { item, address } = byAddress(el.dataset.address!); if (!item) return;
     mutate(address, () => {
+      if (["scope", "status", "condition", "relation", "target"].includes(el.dataset.property!)) {
+        item.rule ??= { scope: "REUSABLE", status: "ACTIVE" };
+        if (el.dataset.property === "scope") item.rule.scope = el.value as RulePolicy["scope"];
+        if (el.dataset.property === "status") item.rule.status = el.value as RulePolicy["status"];
+        if (el.dataset.property === "condition") { if (el.value.trim()) item.rule.condition = el.value.trim(); else delete item.rule.condition; }
+        if (el.dataset.property === "relation") { if (el.value) item.rule.relation = { kind: el.value as NonNullable<RulePolicy["relation"]>["kind"], target: item.rule.relation?.target ?? "" }; else delete item.rule.relation; }
+        if (el.dataset.property === "target" && item.rule.relation) item.rule.relation.target = el.value.trim();
+      }
       switch (el.dataset.property) {
         case "valueType": item.valueType = el.value as InputSpec["valueType"]; delete item.defaultValue; if (item.valueType !== "CHOICE") delete item.choices; else item.choices ??= []; break;
         case "choices": item.choices = el.value.split("\n").map(v => v.trim()).filter(Boolean); break;
@@ -212,6 +233,19 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const action = button.dataset.reviewAction!, addressId = button.dataset.address;
     void (async () => {
       if (action === "close") return close();
+      if (action === "cancel-document") { documentPreview = null; render(); return; }
+      if (action === "document-version") {
+        await save();
+        const path = await window.workpet.chooseDefinitionFile();
+        if (!path) return;
+        const preview = await api("previewDocumentRevision", { draftId: draft.id, address: button.dataset.address, path });
+        if (!preview.changed) { message = "内容未变化，继续引用当前固定版本"; render(); return; }
+        documentPreview = { ...preview, address: button.dataset.address!, path }; render(); return;
+      }
+      if (action === "adopt-document" && documentPreview) {
+        const next = await api("adoptDocumentRevision", { draftId: draft.id, expectedRevision: draft.revision, address: documentPreview.address, path: documentPreview.path, expectedHash: documentPreview.hash, startLine: Number(modal.querySelector<HTMLInputElement>("#doc-start-line")!.value), endLine: Number(modal.querySelector<HTMLInputElement>("#doc-end-line")!.value) });
+        draft = next; targets = new Map(draft.issues.map(issue => [issue.id, resolveReviewField(draft.originalContent, issue.field)])); content = structuredClone(next.content); resolutions = structuredClone(next.resolutions); savedState = signature(); documentPreview = null; undo = null; message = "新版条款已保存到草稿，发布后用于新实例"; render(); return;
+      }
       if (action === "edit-all") { if (editMode) validate(); editMode = !editMode; render(); return; }
       if (action === "undo" && undo) { ({ content, resolutions, bindings } = undo); undo = null; render(); return; }
       if (button.dataset.issue) { decide(draft.issues.find(i => i.id === button.dataset.issue)!, action); return; }

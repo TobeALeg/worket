@@ -1,5 +1,6 @@
+import { validateRule, validateRuleGraph, clauseText, type RulePolicy, type DocumentClause, type DocumentRole } from "./rules.js";
 // Versioned, runtime-validated data contract shared by desktop and service.
-export type Origin = "USER_STATED" | "AGENT_PROPOSED" | "SYSTEM_INFERRED";
+export type Origin = "USER_STATED" | "AGENT_PROPOSED" | "SYSTEM_INFERRED" | "DOCUMENT_STATED";
 export type SourceRef = {
   snapshotId: string;
   workId: string;
@@ -11,7 +12,7 @@ export type Basis =
   | { type: "SOURCE"; origin: Origin; refs: SourceRef[] }
   | { type: "INFERRED"; refs: SourceRef[]; rationale: string }
   | { type: "USER_AUTHORED"; reviewEventId: string };
-export type DefinedItem = { key: string; text: string; basis: Basis };
+export type DefinedItem = { key: string; text: string; basis: Basis; rule?: RulePolicy; document?: DocumentClause };
 export type InputSpec = DefinedItem & {
   valueType: "TEXT" | "NUMBER" | "BOOLEAN" | "CHOICE" | "FILE";
   required: boolean;
@@ -46,6 +47,7 @@ export type Resolution = {
   explanation: string;
 };
 export type WireEvent = {
+  document?: { name: string; role: DocumentRole };
   key: string;
   sequence: number;
   kind: string;
@@ -54,6 +56,7 @@ export type WireEvent = {
 };
 export type ExtractionRequest = {
   schemaVersion: 1;
+  ruleSchemaVersion?: 1;
   snapshotHash: string;
   sources: { key: string; events: WireEvent[] }[];
 };
@@ -159,6 +162,7 @@ export function validateContent(
     string(item.key);
     ensure(/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(item.key));
     string(item.text);
+    validateRule(item as DefinedItem);
     object(item.basis);
     for (const match of item.text.matchAll(/\{\{([^}]+)\}\}/g))
       ensure(
@@ -176,7 +180,7 @@ export function validateContent(
       if (basis.type === "SOURCE") {
         ensure(basis.refs.length > 0);
         ensure(
-          ["USER_STATED", "AGENT_PROPOSED", "SYSTEM_INFERRED"].includes(
+          ["USER_STATED", "AGENT_PROPOSED", "SYSTEM_INFERRED", "DOCUMENT_STATED"].includes(
             String(basis.origin),
           ),
         );
@@ -195,6 +199,11 @@ export function validateContent(
       }
     }
   }
+  for (const item of [value.purpose, ...(value.inputs as DefinedItem[]), ...(value.materialRoles as DefinedItem[])]) {
+    const nonRule = item as DefinedItem;
+    ensure(nonRule.rule === undefined && nonRule.document === undefined, "INVALID_INPUT", "范围与条款引用仅用于交付、约束、验收或方法");
+  }
+  validateRuleGraph(value as DefinitionContent);
   for (const c of collections) {
     const items = value[c] as DefinedItem[];
     ensure(new Set(items.map((i) => i.key)).size === items.length);
@@ -239,6 +248,7 @@ export function validateRequest(
   object(value);
   ensure(value.schemaVersion === 1);
   string(value.snapshotHash);
+  if (value.ruleSchemaVersion !== undefined) ensure(value.ruleSchemaVersion === 1);
   array(value.sources);
   ensure(
     value.sources.length > 0 && value.sources.length <= LIMITS.maxSources,
@@ -264,6 +274,7 @@ export function validateRequest(
       string(event.kind);
       string(event.content);
       string(event.hash);
+      if (event.document !== undefined) { object(event.document); string(event.document.name); ensure(["NORMATIVE", "REFERENCE", "INPUT"].includes(String(event.document.role))); ensure(event.kind === "file.content"); }
       ensure(
         typeof event.sequence === "number" &&
           Number.isFinite(event.sequence) &&
@@ -382,6 +393,19 @@ function validateModelResult(
   if (value.compatibility === "UNRELATED")
     ensure(value.content === null && value.groups.length > 0);
   else validateContent(value.content, { model: true, refs });
+  if (value.content) {
+    const content = value.content as DefinitionContent;
+    for (const item of [content.purpose, ...content.inputs, ...content.deliverables, ...content.constraints, ...content.acceptanceCriteria, ...content.methods, ...content.materialRoles]) {
+      if (item.document) {
+        const d = item.document;
+        const event = request.sources.find(s => s.key === d.source.workId)?.events.find(e => e.key === d.source.eventId);
+        ensure(event?.kind === "file.content" && event.document?.role === "NORMATIVE" && event.hash === d.hash, "INVALID_SOURCE_REF", "条款引用必须指向已选择采用的规范正文版本");
+        clauseText(event.content, d);
+        ensure(item.basis.type !== "USER_AUTHORED" && item.basis.refs.some(r => r.workId === d.source.workId && r.eventId === d.source.eventId), "INVALID_SOURCE_REF");
+      }
+      if (item.basis.type === "SOURCE" && item.basis.origin === "DOCUMENT_STATED") ensure(item.document, "INVALID_SOURCE_REF");
+    }
+  }
   if (value.compatibility === "CONFLICTING")
     ensure(
       value.issues.some(

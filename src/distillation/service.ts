@@ -1,3 +1,4 @@
+import { type DocumentRole } from "../contracts/rules.js";
 import { RecordingCollection } from "../improvement/recording.js";
 import { ImprovementCollector } from "../improvement/collector.js";
 import { randomUUID } from "node:crypto";
@@ -45,6 +46,7 @@ export type Snapshot = {
       hash: string;
       availability?: "AVAILABLE" | "CHANGED" | "MISSING";
       content?: string;
+      role?: DocumentRole;
     }[];
     deleted?: boolean;
   }[];
@@ -146,7 +148,7 @@ export class DistillationService {
       }
     }
   }
-  prepare(input: { workIds: string[]; includedFileIds: string[] }): Snapshot {
+  prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole> }): Snapshot {
     array(input.workIds);
     array(input.includedFileIds);
     input.workIds.forEach(string);
@@ -157,6 +159,9 @@ export class DistillationService {
         new Set(input.workIds).size === input.workIds.length,
       "INVALID_INPUT",
     );
+    const roles = input.fileRoles ?? {};
+    object(roles);
+    for (const [id, role] of Object.entries(roles)) ensure(input.includedFileIds.includes(id) && ["NORMATIVE", "REFERENCE", "INPUT"].includes(role), "INVALID_INPUT");
     const chosen = new Set(input.includedFileIds),
       found = new Set<string>(),
       // A selection may name a superseded reference, for example when the range was confirmed
@@ -238,7 +243,7 @@ export class DistillationService {
         ensure(hash(bytes) === a.sha256, "SOURCE_CHANGED");
         let content: string;
         try {
-          content = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+          content = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
         } catch {
           throw new ContractError(
             "UNSUPPORTED_FILE",
@@ -252,6 +257,7 @@ export class DistillationService {
           hash: hash(bytes),
           availability: a.availability,
           content,
+          role: roles[a.id] ?? "REFERENCE",
         };
       });
       return {
@@ -291,6 +297,7 @@ export class DistillationService {
   wire(snapshot: Snapshot): ExtractionRequest {
     return {
       schemaVersion: 1,
+      ruleSchemaVersion: 1,
       snapshotHash: snapshot.contentHash,
       sources: snapshot.sources.map((s) => ({
         key: s.key,
@@ -317,6 +324,7 @@ export class DistillationService {
                       : {}),
                   }),
             hash: f.hash,
+            ...(f.content !== undefined ? { document: { name: f.name, role: f.role ?? "REFERENCE" } } : {}),
           })),
         ],
       })),
@@ -412,8 +420,10 @@ export class DistillationService {
       this.repository.write("distillation_jobs", job);
       const capability = (await this.client.capabilities()) as {
         limits?: { maxSources?: number; maxBytes?: number };
+        ruleSchemaVersions?: number[];
       };
       if (this.closed || this.repository.read<Job>("distillation_jobs", job.id).status === "CANCELLED") return;
+      ensure(capability.ruleSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。");
       const wire = this.wire(snapshot);
       ensure(
         snapshot.sources.length <=
@@ -538,6 +548,14 @@ export class DistillationService {
             "INVALID_MODEL_OUTPUT",
             "模型返回了只允许用户编辑产生的依据",
           );
+        if (item.document) {
+          const doc = item.document;
+          const source = snapshot.sources.find(s => s.key === doc.source.workId);
+          const file = source?.files[Number(doc.source.eventId.slice(5)) - 1];
+          ensure(source && file && file.content !== undefined && file.role === "NORMATIVE" && file.hash === doc.hash, "INVALID_SOURCE_REF");
+          doc.source = { snapshotId: snapshot.id, workId: source.workId, eventId: file.id };
+          doc.name = file.name;
+        }
         item.basis.refs = item.basis.refs.map((ref) => {
           const s = snapshot.sources.find((s) => s.key === ref.workId);
           ensure(s, "INVALID_SOURCE_REF");
@@ -589,7 +607,7 @@ export class DistillationService {
             if (
               method.obligation === "REQUIRED" &&
               (method.basis.type !== "SOURCE" ||
-                method.basis.origin !== "USER_STATED")
+                !["USER_STATED", "DOCUMENT_STATED"].includes(method.basis.origin))
             )
               draft.issues.push({
                 id: randomUUID(),

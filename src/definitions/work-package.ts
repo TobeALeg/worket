@@ -1,3 +1,5 @@
+import { resolveRuleDocuments } from "./document-rules.js";
+import { ruleText, acceptanceChecks, type InstanceOverride } from "../contracts/rules.js";
 import type { WorkSnapshot, WorkState } from "../core/types.js";
 import type { Definition, DefinitionRepository, Inputs } from "./repository.js";
 import type { Material } from "./storage.js";
@@ -8,6 +10,9 @@ export type WorkPackage = {
   generatedAt: string;
   definition: Definition | null;
   inputs: Inputs;
+  ruleOverrides?: InstanceOverride[];
+  acceptanceChecks?: { key: string; rule: string }[];
+  ruleSources?: { rule: string; name: string; hash: string; startLine: number; endLine: number }[];
   fixedMaterials: Material[];
   referenceExamples: unknown[];
   state: WorkState;
@@ -36,6 +41,9 @@ export function buildWorkPackage(
   if (definition)
     definition.materials.forEach((m) => repository.materials.verify(m));
   const binding = repository.inputs(work.instance.id);
+  const checks = definition ? acceptanceChecks(definition.content, binding.ruleOverrides ?? []).map(({ key, rule }) => ({ key, rule })) : [];
+  const resolved = definition ? resolveRuleDocuments(definition.content, definition.materials, repository.materials, binding.ruleOverrides ?? []) : null;
+  if (definition && resolved) { definition.content = resolved.content; definition.materials = definition.materials.filter(m => !m.role.startsWith("document:")); }
   for (const spec of definition?.content.inputs ?? [])
     if (spec.valueType === "FILE" && binding.inputs[spec.key])
       repository.materials.read(String(binding.inputs[spec.key]));
@@ -50,12 +58,16 @@ export function buildWorkPackage(
     generatedAt: new Date().toISOString(),
     definition,
     ...binding,
-    fixedMaterials: definition?.materials ?? [],
-    state: work.state,
+    ...(resolved ? { ruleSources: resolved.sources, acceptanceChecks: checks } : {}),
+    fixedMaterials: (definition?.materials ?? []).filter(m => !m.role.startsWith("document:")),
+    state: Object.fromEntries(Object.entries(work.state).map(([field, items]) => [field,
+      definition && ["constraints", "successCriteria"].includes(field)
+        ? items.filter(i => !i.sourceMessageIds.length || !i.sourceMessageIds.every(id => work.sourceArchive.some(e => e.id === id && e.kind === "work.definition_applied"))) : items
+    ])) as WorkState,
     nextStep: work.state.pendingActions[0]?.text ?? null,
     acceptanceRequired: !!definition,
     fileAccess:
-      "资料为本机引用；另一台电脑需要另行传递文件。完成须由用户关联本次交付物并逐项验收。",
+      "规范条款已按固定版本展开，下列要求是本次有效约定。本机二进制资料仍须另行传递。完成须由用户关联本次交付物并逐项验收。",
   };
 }
 const escapeMarkdown = (value: string) =>
@@ -76,9 +88,10 @@ export function packageMarkdown(value: WorkPackage): string {
       ["方法", content.methods],
     ] as const)
       lines.push(
-        `\n## ${label}\n${items.map((i) => `- ${escapeMarkdown(i.text)}${"obligation" in i ? ` (${i.obligation})` : ""}`).join("\n")}`,
+        `\n## ${label}\n${items.map((i) => `- ${escapeMarkdown(ruleText(i))}${"obligation" in i ? ` (${i.obligation})` : ""}`).join("\n")}`,
       );
   }
+  if (value.ruleSources?.length) lines.push(`\n## 规范来源（版本固定）\n${value.ruleSources.map(s => `- ${escapeMarkdown(s.name)} L${s.startLine}–${s.endLine} · SHA256 ${s.hash}`).join("\n")}`);
   lines.push(
     `\n## 本次输入\n${Object.entries(value.inputs)
       .map(([k, v]) => `- ${escapeMarkdown(k)}: ${escapeMarkdown(String(v))}`)

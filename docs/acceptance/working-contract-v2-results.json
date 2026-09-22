@@ -1,0 +1,459 @@
+{
+  "generatedAt": "2026-09-22",
+  "data": "Synthetic inputs; real model calls where replay is null. QA confirmation is not human acceptance. Early aborted call usage is unknown.",
+  "runs": [
+    {
+      "run": "2026-09-22T11-18-38-115Z",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-18-38-115Z",
+      "calls": 1,
+      "usage": [],
+      "humanAcceptance": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'RUNNING'\n- 'AWAITING_REVIEW'\n",
+      "replay": null
+    },
+    {
+      "run": "2026-09-22T11-19-20-624Z",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-19-20-624Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1263,
+          "completion_tokens": 6885,
+          "total_tokens": 8148,
+          "prompt_tokens_details": {
+            "cached_tokens": 512
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 6210
+          },
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 751
+        },
+        {
+          "prompt_tokens": 1889,
+          "completion_tokens": 12327,
+          "total_tokens": 14216,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 10380
+          },
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 1121
+        }
+      ],
+      "humanAcceptance": false,
+      "error": "INVALID_MODEL_OUTPUT\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n",
+      "replay": null
+    },
+    {
+      "run": "2026-09-22T11-23-07-217Z",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "real model → grounded clauses + dedup + reusable/instance separation"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-23-07-217Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1877,
+          "completion_tokens": 6253,
+          "total_tokens": 8130,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5906
+          },
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 1109
+        },
+        {
+          "prompt_tokens": 2332,
+          "completion_tokens": 16119,
+          "total_tokens": 18451,
+          "prompt_tokens_details": {
+            "cached_tokens": 1280
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 14672
+          },
+          "prompt_cache_hit_tokens": 1280,
+          "prompt_cache_miss_tokens": 1052
+        }
+      ],
+      "humanAcceptance": false,
+      "error": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#use-definition') to be visible\u001b[22m\n"
+    },
+    {
+      "run": "2026-09-22T11-29-13-812Z",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": "output/contract-e2e/2026-09-22T11-23-07-217Z",
+      "stages": [],
+      "output": "output/contract-e2e/2026-09-22T11-29-13-812Z",
+      "calls": 0,
+      "usage": [],
+      "humanAcceptance": false,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(panel)\n"
+    },
+    {
+      "run": "2026-09-22T11-29-37-965Z",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "output/contract-e2e/2026-09-22T11-23-07-217Z",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "real model → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-29-37-965Z",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-31-17-293Z",
+      "scenario": "report",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "real model → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-31-17-293Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1866,
+          "completion_tokens": 5534,
+          "total_tokens": 7400,
+          "prompt_tokens_details": {
+            "cached_tokens": 1408
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5120
+          },
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 458
+        },
+        {
+          "prompt_tokens": 2388,
+          "completion_tokens": 18342,
+          "total_tokens": 20730,
+          "prompt_tokens_details": {
+            "cached_tokens": 1536
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 16373
+          },
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 852
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-31-20-947Z",
+      "scenario": "code",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-31-20-947Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1862,
+          "completion_tokens": 7705,
+          "total_tokens": 9567,
+          "prompt_tokens_details": {
+            "cached_tokens": 1408
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 7345
+          },
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 454
+        },
+        {
+          "prompt_tokens": 2330,
+          "completion_tokens": 15929,
+          "total_tokens": 18259,
+          "prompt_tokens_details": {
+            "cached_tokens": 1536
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 14686
+          },
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 794
+        }
+      ],
+      "humanAcceptance": false,
+      "error": "INVALID_SOURCE_REF\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+    },
+    {
+      "run": "2026-09-22T11-32-27-131Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "output/contract-e2e/2026-09-22T11-23-07-217Z",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-32-27-131Z",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-35-11-383Z",
+      "scenario": "code",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "real model → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-35-11-383Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1980,
+          "completion_tokens": 2926,
+          "total_tokens": 4906,
+          "prompt_tokens_details": {
+            "cached_tokens": 1024
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 2544
+          },
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 956
+        },
+        {
+          "prompt_tokens": 2470,
+          "completion_tokens": 16557,
+          "total_tokens": 19027,
+          "prompt_tokens_details": {
+            "cached_tokens": 1408
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 14770
+          },
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 1062
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-35-15-147Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-35-15-147Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 1995,
+          "completion_tokens": 8609,
+          "total_tokens": 10604,
+          "prompt_tokens_details": {
+            "cached_tokens": 1536
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 8194
+          },
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 459
+        },
+        {
+          "prompt_tokens": 2518,
+          "completion_tokens": 21042,
+          "total_tokens": 23560,
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 19422
+          },
+          "prompt_cache_hit_tokens": 1664,
+          "prompt_cache_miss_tokens": 854
+        }
+      ],
+      "humanAcceptance": false,
+      "error": "one effective copy limit\n\n2 !== 1\n"
+    },
+    {
+      "run": "2026-09-22T11-39-19-669Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": null,
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "real model → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-39-19-669Z",
+      "calls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 2042,
+          "completion_tokens": 6606,
+          "total_tokens": 8648,
+          "prompt_tokens_details": {
+            "cached_tokens": 896
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 6296
+          },
+          "prompt_cache_hit_tokens": 896,
+          "prompt_cache_miss_tokens": 1146
+        },
+        {
+          "prompt_tokens": 2460,
+          "completion_tokens": 12672,
+          "total_tokens": 15132,
+          "prompt_tokens_details": {
+            "cached_tokens": 1536
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 11328
+          },
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 924
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-39-23-593Z",
+      "scenario": "code",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "output/contract-e2e/2026-09-22T11-35-11-383Z",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-39-23-593Z",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-39-27-364Z",
+      "scenario": "report",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "output/contract-e2e/2026-09-22T11-31-17-293Z",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T11-39-27-364Z",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false
+    }
+  ]
+}

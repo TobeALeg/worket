@@ -1,3 +1,4 @@
+import { previewDocumentRevision, adoptDocumentRevision } from "../definitions/document-revision.js";
 import { distillationActivity } from "./activity.js";
 import type { Job } from "./service.js";
 import { randomUUID } from "node:crypto";
@@ -44,6 +45,10 @@ export class DistillationDesktop {
           event?.content ?? file?.content ?? "仅引用文件元数据，未分析内容"
         );
       }
+      case "previewDocumentRevision":
+        return previewDocumentRevision(r, input as Parameters<typeof previewDocumentRevision>[1]);
+      case "adoptDocumentRevision":
+        return adoptDocumentRevision(r, input as Parameters<typeof adoptDocumentRevision>[1]);
       case "capabilities":
         return this.client.capabilities();
       case "prepare":

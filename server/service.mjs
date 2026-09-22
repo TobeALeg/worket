@@ -213,6 +213,7 @@ export function createAIService(config) {
         res.end(
           JSON.stringify({
             schemaVersions: [1],
+            ruleSchemaVersions: [1],
             improvement: config.improvement?.policy() ?? null,
             limits,
             fileTypes: ["UTF-8 text"],
