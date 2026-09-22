@@ -30,4 +30,4 @@
 
 ## 下一步已复现问题
 
-执行路径预检查发现 `get_work_context` 直接返回旧交接包：交接后新增资料，MCP 返回 neededArtifacts 仍为 0，而当前工作已为 1。隔离复现证据 [已保存复现](mcp-context-freshness-repro.json)。这是下一轮优先修复项；本轮不宣称目标 Agent 已经读取最新完整工作包或完成业务交付。
+执行路径预检查发现 `get_work_context` 直接返回旧交接包：交接后新增资料，MCP 返回 neededArtifacts 仍为 0，而当前工作已为 1。隔离复现证据 [已保存复现](mcp-context-freshness-repro.json)。后续第 7 轮已修复并通过源码与解压客户端 MCP 验收，见 [当前工作包](mcp-context-freshness.md)；该证据仍不等于目标 Agent 完成业务交付。

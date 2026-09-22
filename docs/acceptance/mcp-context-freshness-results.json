@@ -24,6 +24,28 @@
         "corruptMaterialBlocked": true,
         "immutableHistoryAndNoFalseReceipt": true
       }
+    },
+    {
+      "run": "2026-09-22T19-33-10-970Z",
+      "status": "PASSED",
+      "packaged": true,
+      "kind": "synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-mcp-context-xoaIUo",
+      "actualProviderCalls": 0,
+      "checks": {
+        "freshStateArtifactsAndPinnedVersion": true,
+        "missingMaterialBlocked": true,
+        "corruptMaterialBlocked": true,
+        "immutableHistoryAndNoFalseReceipt": true
+      }
     }
-  ]
+  ],
+  "release": {
+    "source": "bc5aaac",
+    "zip": "release/Worket-loop-bc5aaac.zip",
+    "sha256": "030741b4ef8df9d8646c7c903159cb908a310e6b02a51602a91169c50416e558",
+    "signatureVerification": "original and extracted passed",
+    "credentialStorage": "isolated mock keychain; normal OS approval not tested",
+    "backend": "46b2c1a unchanged"
+  }
 }
