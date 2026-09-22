@@ -1,3 +1,5 @@
+import { updateInstanceFiles, type UpdateInstanceFiles } from './instance-file-update.js';
+import { InstanceFiles, type InstanceInputs } from "./instance-files.js";
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
 import { invalidateRuleDependents } from "./rule-review.js";
 import type { EvolutionReview } from './evolution.js';
@@ -60,11 +62,13 @@ export type CreateFromDefinition = {
 };
 export class DefinitionRepository {
   readonly materials: MaterialStore;
+  readonly instanceFiles: InstanceFiles;
   constructor(
     readonly db: DatabaseSync,
     directory: string,
   ) {
     this.materials = new MaterialStore(directory);
+    this.instanceFiles = new InstanceFiles(directory);
   }
   read<T>(
     table: "source_snapshots" | "distillation_jobs" | "definition_drafts",
@@ -479,7 +483,8 @@ export class DefinitionRepository {
         input.referenceExampleIds.length,
       "INVALID_INPUT",
     );
-    return this.command(
+    let createdId: string | undefined;
+    try { return this.command(
       input.commandId,
       { op: "create", ...input },
       input.definitionId,
@@ -487,6 +492,8 @@ export class DefinitionRepository {
         const definition = this.get(input.definitionId);
         definition.materials.forEach((m) => this.materials.verify(m));
         const resolved = resolveRuleDocuments(definition.content, definition.materials, this.materials, input.ruleOverrides ?? []);
+        const id = randomUUID(), inputMaterials: Material[] = [];
+        createdId = id;
         const values: Inputs = {};
         ensure(
           Object.keys(input.inputs).every((key) =>
@@ -517,31 +524,29 @@ export class DefinitionRepository {
               "INVALID_INPUT",
               spec.key,
             );
-          if (spec.valueType === "FILE") this.materials.read(value as string);
-          values[spec.key] = value;
+          if (spec.valueType === "FILE") {
+            const material = this.instanceFiles.copy(id, value as string, spec.key);
+            inputMaterials.push(material); values[spec.key] = material.path;
+          } else values[spec.key] = value;
         }
-        const examples = input.referenceExampleIds.map((id) => {
-          string(id);
+        const examples = input.referenceExampleIds.map((referenceId) => {
+          string(referenceId);
           const r = this.db
             .prepare(
               "SELECT path,sha256,filename FROM artifact_refs WHERE id = ?",
             )
-            .get(id);
+            .get(referenceId);
           ensure(r, "MATERIAL_MISSING");
           ensure(
             hash(this.materials.read(r.path as string)) === r.sha256,
             "MATERIAL_MISSING",
           );
-          return {
-            id,
-            path: r.path,
-            hash: r.sha256,
-            filename: r.filename,
-            role: "REFERENCE_EXAMPLE",
-          };
+          return this.instanceFiles.reference(id, {
+            id: referenceId,
+            path: String(r.path), hash: String(r.sha256), filename: String(r.filename), role: "REFERENCE_EXAMPLE",
+          });
         });
-        const id = randomUUID(),
-          at = new Date().toISOString(),
+        const at = new Date().toISOString(),
           adopted = randomUUID(),
           provided = randomUUID();
         const interpolate = (text: string) =>
@@ -584,7 +589,7 @@ export class DefinitionRepository {
           .prepare("INSERT INTO instance_inputs VALUES (?,?)")
           .run(
             id,
-            JSON.stringify({ inputs: values, referenceExamples: examples, ...(input.ruleOverrides?.length ? { ruleOverrides: input.ruleOverrides } : {}) }),
+            JSON.stringify({ inputs: values, inputMaterials, referenceExamples: examples, ...(input.ruleOverrides?.length ? { ruleOverrides: input.ruleOverrides } : {}) }),
           );
         for (const [eventId, kind, content, sequence] of [
           [
@@ -605,9 +610,13 @@ export class DefinitionRepository {
             .run(id, eventId, eventId, sequence, kind, content, at);
         return id;
       },
-    );
+    ); } catch (error) {
+      if (createdId && !this.db.prepare("SELECT id FROM work_instances WHERE id=?").get(createdId)) this.instanceFiles.remove(createdId);
+      throw error;
+    }
   }
-  inputs(workId: string): { inputs: Inputs; referenceExamples: unknown[]; ruleOverrides?: InstanceOverride[] } {
+  updateInstanceFiles(input: UpdateInstanceFiles): void { updateInstanceFiles(this, input); }
+  inputs(workId: string): InstanceInputs {
     const row = this.db
       .prepare("SELECT payload_json FROM instance_inputs WHERE work_id=?")
       .get(workId);

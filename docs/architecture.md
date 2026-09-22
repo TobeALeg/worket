@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：实例文件固定与显式更新
+
+`definitions/instance-files.ts` 管理 `materials/instances/<workId>/<hash>/<filename>`，与定义共享资料分离；`instance_inputs` JSON 增加可选 inputMaterials，referenceExamples 增加 material 清单，无表迁移。创建事务保存副本路径与 hash；失败创建清理该实例目录。`buildWorkPackage` 每次校验输入/参考副本，旧数据缺清单时明确阻止使用。
+
+`instance-file-update.ts` 在 command 幂等事务中检查 OPEN 与 binding hash，固定用户重新选择的文件/按已有 hash 确认参考，追加 work.input_provided 修订并更新未手改的派生状态。旧来源、旧文件及交接快照不重写；所有该实例读取回执置空，旧兼容读取须晚于最新输入事件。界面 instanceFiles/updateInstanceFiles 接入同一仓库逻辑，未增加模型调用、自动文件监听或上传范围。
+
+永久删除实例同时移除实例目录；更换文件保留旧副本供历史包追溯。副本只在本机可用，尚不解决远端执行者的跨机器文件传递。
+
 ## 2026-09-23：来源引用角色
 
 请求以 evidenceSchemaVersion:1 声明客户端支持 SourceRef.role=CONTEXT；省略角色为直接依据。服务仅为声明支持的请求启用角色提示，所有来源与摘录仍验证，SOURCE 至少有一个直接引用，USER_STATED 直接引用必须是用户事件。客户端映射引用时保留角色，审阅区分背景与直接依据；无数据库迁移或新领域实体。同字段同类型的具体阻塞说明替代 mergeEvolution 的通用兜底，其他问题保持。详见 [来源角色](specs/evidence-roles.md)。

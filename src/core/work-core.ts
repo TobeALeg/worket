@@ -294,7 +294,8 @@ export class SqliteWorkCore implements WorkCore {
     const legacyBindings = activeBinding && !receipt ? new Set(bindings.filter(binding =>
       binding.adapter === activeBinding.adapter && binding.conversationId === activeBinding.conversationId &&
       !/^(pending|waiting):/.test(binding.conversationId)).map(binding => binding.id)) : new Set<string>();
-    const legacyRead = sourceArchive.findLast(event => event.kind === 'tool.result' &&
+    const lastInputs = sourceArchive.findLast(event => event.kind === 'work.input_provided');
+    const legacyRead = sourceArchive.findLast(event => event.sequence > (lastInputs?.sequence ?? 0) && event.kind === 'tool.result' &&
       event.metadata.toolName === 'get_work_context' && event.metadata.outcome === 'success' &&
       event.metadata.deliveryMatched === undefined && legacyBindings.has(String(event.metadata.bindingId)));
     return {
@@ -752,6 +753,7 @@ export class SqliteWorkCore implements WorkCore {
         if (this.#databasePath !== ":memory:" && existsSync(backup)) unlinkSync(backup);
       }
       this.definitions.redactSource(workInstanceId);
+      this.definitions.instanceFiles.remove(workInstanceId);
       this.#database.prepare("DELETE FROM work_instances WHERE id = ?").run(workInstanceId);
     });
   }

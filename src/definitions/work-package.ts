@@ -12,6 +12,7 @@ export type WorkPackage = {
   generatedAt: string;
   definition: Definition | null;
   inputs: Inputs;
+  inputMaterials?: Material[];
   ruleOverrides?: InstanceOverride[];
   acceptanceChecks?: { key: string; rule: string }[];
   ruleSources?: { rule: string; name: string; hash: string; startLine: number; endLine: number }[];
@@ -54,9 +55,7 @@ export function buildWorkPackage(
   const checks = definition ? acceptanceChecks(definition.content, binding.ruleOverrides ?? []).map(({ key, rule }) => ({ key, rule })) : [];
   const resolved = definition ? resolveRuleDocuments(definition.content, definition.materials, repository.materials, binding.ruleOverrides ?? []) : null;
   if (definition && resolved) { definition.content = resolved.content; definition.materials = definition.materials.filter(m => !m.role.startsWith("document:") && !m.bundle); }
-  for (const spec of definition?.content.inputs ?? [])
-    if (spec.valueType === "FILE" && binding.inputs[spec.key])
-      repository.materials.read(String(binding.inputs[spec.key]));
+  if (definition) repository.instanceFiles.verify(work.instance.id, definition, binding);
   const sourceNotice = sourceAvailabilityNotice(work.sourceArchive);
   return {
     packageVersion: 1,
@@ -111,6 +110,7 @@ export function packageMarkdown(value: WorkPackage): string {
       .map(([k, v]) => `- ${escapeMarkdown(k)}: ${escapeMarkdown(String(v))}`)
       .join("\n")}`,
   );
+  if (value.inputMaterials?.length) lines.push(`\n输入文件已固定为本次版本，请读取上列副本路径；原始文件后续变化不会更新本次输入。`);
   if (value.skills?.length) lines.push(`\n## 执行技能\n${value.skills.map(skill => `- ${escapeMarkdown(skill.name)}（${skill.required ? "必需" : "参考"}）\n  入口：${escapeMarkdown(skill.entrypoint)}\n  目录：${escapeMarkdown(skill.directory)} · SHA256 ${skill.hash} · ${skill.files.length} 个文件`).join("\n")}\n先读取技能入口，按该固定目录解析配套文件。这里只验证目录文件完整性；技能依赖的其他插件、工具和运行环境仍需执行者核验，缺少时应明确报告。`);
   lines.push(
     `\n## 固定资料\n${value.fixedMaterials.map((m) => `- ${escapeMarkdown(m.role)}: ${escapeMarkdown(m.path)} (SHA256 ${m.hash})`).join("\n")}`,

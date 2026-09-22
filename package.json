@@ -40,7 +40,8 @@
     "ai:serve": "npm run build:server && node server/start.mjs",
     "build:server": "tsc -p server/tsconfig.json",
     "ai:serve:env": "npm run build:server && node server/start-env.mjs",
-    "release:mac": "node scripts/release-mac.mjs"
+    "release:mac": "node scripts/release-mac.mjs",
+    "qa:instance-files": "npm run build && node scripts/qa-instance-files.mjs"
   },
   "devDependencies": {
     "@electron/packager": "19.0.1",

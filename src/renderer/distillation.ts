@@ -416,6 +416,29 @@ export async function workDefinitionAction(
   work: WorkDetailView,
   action: string,
 ): Promise<boolean> {
+  if (action === "instance-files") {
+    const binding = await api("instanceFiles", { workId: work.id });
+    const files: Record<string, string> = {};
+    show("本次文件", `<p class="consent">重新选择只更新本次工作。保存后，Agent 需要重新读取工作包。</p>${binding.specs.map((spec: any) => `<div class="field"><span>${esc(spec.text)}</span><span data-file-label="${esc(spec.key)}">${esc(String(binding.inputs[spec.key] ?? "未选择").split(/[\\/]/).pop())} · ${binding.inputMaterials?.some((m: any) => m.role === spec.key) ? "已固定" : "需重新选择"}</span><button data-select-instance-file="${esc(spec.key)}">选择文件</button></div>`).join("")}${binding.referenceExamples.length ? `<h3>本次参考</h3>${binding.referenceExamples.map((reference: any) => `<label class="file-choice"><input type="checkbox" data-remove-reference="${esc(reference.id)}">移除 ${esc(reference.filename)} · ${reference.material ? "已固定" : "待确认固定"}</label>`).join("")}` : ""}`, '<button id="save-instance-files" class="primary">保存本次文件</button>');
+    for (const button of modal.querySelectorAll<HTMLButtonElement>("[data-select-instance-file]")) {
+      button.addEventListener("click", async () => {
+        const path = await window.workpet.chooseDefinitionFile();
+        if (!path) return;
+        const key = button.dataset.selectInstanceFile!;
+        files[key] = path;
+        const label = [...modal.querySelectorAll<HTMLElement>("[data-file-label]")].find(element => element.dataset.fileLabel === key)!;
+        label.textContent = `${path.split(/[\\/]/).pop()} · 待保存`;
+      });
+    }
+    bind("#save-instance-files", async () => {
+      const dashboard = await api("updateInstanceFiles", { workId: work.id, files,
+        removeReferenceIds: [...modal.querySelectorAll<HTMLInputElement>("[data-remove-reference]:checked")].map(element => element.dataset.removeReference!),
+        expectedHash: binding.expectedHash, commandId: commandId(),
+      });
+      modal.close(); changed(dashboard);
+    });
+    return true;
+  }
   if (action === "distill") {
     await openPreparation([work.id]);
     return true;

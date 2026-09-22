@@ -1,0 +1,43 @@
+{
+  "round": 16,
+  "tests": {
+    "passed": 217,
+    "failed": 0
+  },
+  "before": {
+    "firstInstanceReads": "第二期脚本",
+    "sameMutablePath": true
+  },
+  "after": {
+    "firstInstanceReads": "第一期脚本",
+    "sameMutablePath": false
+  },
+  "source": {
+    "run": "2026-09-22T22-32-38-849Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-Ec69qr",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "distinctInputsVersionsAndOverrides": true,
+      "explicitUpdateIsolatedAndReceiptReset": true,
+      "legacyBlockedAndExplicitlyRepaired": true
+    }
+  },
+  "previousClient": {
+    "run": "2026-09-22T22-33-49-879Z",
+    "status": "FAILED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-JD552F",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {},
+    "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'第二期脚本' !== '第一期脚本'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-instance-files.mjs:71:10"
+  },
+  "package": null,
+  "actualProviderCalls": 0,
+  "externalAgent": false
+}

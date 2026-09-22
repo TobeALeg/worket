@@ -227,6 +227,16 @@ export class DistillationDesktop {
         }
         return this.app.dashboard(work.instance.id);
       }
+      case "instanceFiles": {
+        string(input.workId);
+        const work = core.getWork(input.workId);
+        ensure(work, "WORK_NOT_FOUND");
+        const binding = r.inputs(input.workId);
+        return { ...binding, expectedHash: hash(binding), specs: r.get(work.definition.id).content.inputs.filter(spec => spec.valueType === "FILE") };
+      }
+      case "updateInstanceFiles":
+        r.updateInstanceFiles(input as Parameters<typeof r.updateInstanceFiles>[0]);
+        return this.app.dashboard(input.workId as string);
       case "package": {
         string(input.workId);
         const work = core.getWork(input.workId);

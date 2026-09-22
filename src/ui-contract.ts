@@ -48,6 +48,7 @@ export interface WorkDetailView extends WorkSummaryView {
   sourceNotice?: string;
   latestActivity?: { text: string; sourceMessageId: string };
   reusableDefinitionId?: string;
+  hasInstanceFiles?: boolean;
   dispatchStatus?: string;
   dispatchReadAt?: string | null;
   state: WorkStateView;
