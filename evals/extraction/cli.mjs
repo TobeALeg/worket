@@ -6,7 +6,7 @@ import { createDefinitionServiceAdapter } from "./adapters/definition-service.mj
 import { createMockAdapter } from "./adapters/mock.mjs";
 import { createWorkStateAdapter } from "./adapters/work-state.mjs";
 import { curateCases } from "./curation.mjs";
-import { gradeAdjudication } from "./grader.mjs";
+import { gradeDocument } from "./grader.mjs";
 import { importCodexConversations } from "./importers/codex-conversations.mjs";
 import { parseArgs, readJson, writeJson, writeJsonl } from "./lib.mjs";
 import { approvalDocument, preflight } from "./policy.mjs";
@@ -79,7 +79,7 @@ async function main() {
   if (command === "grade") {
     for (const key of ["run", "gold", "adjudication"]) if (!values[key]) throw new Error(`grade 缺少 --${key}`);
     const runDirectory = resolve(root, values.run);
-    const grade = gradeAdjudication(readJson(resolve(root, values.gold)), readJson(resolve(root, values.adjudication)));
+    const grade = gradeDocument(readJson(resolve(root, values.gold)), readJson(resolve(root, values.adjudication)));
     writeJson(resolve(runDirectory, "grade.json"), grade, { exclusive: true });
     console.log(JSON.stringify(grade, null, 2));
     return;

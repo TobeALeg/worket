@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gradeAdjudication } from "../grader.mjs";
+import { gradeAdjudication, gradeDocument } from "../grader.mjs";
 
 const gold = { units: [
   { gold_id: "g1", criticality: "CRITICAL" },
@@ -83,4 +83,41 @@ test("输出自称已通过不能改变外部 grader 结论", () => {
   const score = gradeAdjudication(gold, { output_units: [], model_claim: "PASSED" });
   assert.equal(score.required_recall, 0);
   assert.equal(score.human_review_status, "PENDING");
+});
+
+test("风险确认格式只发布人工确认的召回，精确率保持未定", () => {
+  const approvedGold = {
+    status: "HUMAN_APPROVED",
+    cases: [{ case_id: "c1", units: [
+      { gold_id: "g1", criticality: "CRITICAL" },
+      { gold_id: "g2", criticality: "NORMAL" },
+    ] }],
+  };
+  const adjudication = {
+    status: "HUMAN_RISK_REVIEWED",
+    run_id: "run-1",
+    cases: [{
+      case_id: "c1",
+      gold_assessments: [
+        { gold_id: "g1", final_verdict: "MATCH", reviewer_status: "CONFIRMED" },
+        { gold_id: "g2", final_verdict: "MISS", reviewer_status: "CORRECTED" },
+      ],
+      output_assessments: [
+        { output_id: "o1", final_verdict: "USEFUL", reviewer_status: "MODEL_ONLY" },
+        { output_id: "o2", final_verdict: "REDUNDANT", reviewer_status: "CONFIRMED" },
+      ],
+      errors: [],
+    }],
+  };
+  const score = gradeDocument(approvedGold, adjudication);
+  assert.equal(score.status, "RISK_REVIEWED_GRADE");
+  assert.equal(score.required_recall, 0.5);
+  assert.equal(score.critical_recall, 1);
+  assert.equal(score.useful_precision, null);
+  assert.equal(score.noise_rate, null);
+  assert.equal(score.risk_reviewed_useful_precision_estimate, 0.5);
+  assert.equal(score.confirmed_noise_rate_lower_bound, 0.5);
+  assert.equal(score.model_only_useful_count, 1);
+  assert.equal(score.human_reviewed_output_count, 1);
+  assert.equal(score.correction_count, 1);
 });

@@ -248,6 +248,8 @@ H1 使用 `evals/extraction/review-server.mjs` 提供的本机 HTML。server 显
 
 真实输出裁定使用 `evals/extraction/adjudication-server.mjs`。server 从已确认 gold、不可覆盖 run、模型 proposal 和独立 draft 构造确认状态；每条必需 Gold 覆盖与模型标记为非 `USEFUL` 的输出进入人工队列，`USEFUL` 输出在最终文件中固定标记为 `MODEL_ONLY`。最终保存要求队列全部离开 `PENDING`、评审人签名一致，并以独占创建写入完整 proposal 与人工修正；页面和校验逻辑均不硬编码 VideoCreator 案例。
 
+`grader.mjs` 同时接受旧版全量人工裁定和 `HUMAN_RISK_REVIEWED` 文档。风险确认格式只把逐项人工确认的 Gold 覆盖发布为正式召回；正向 `USEFUL` 输出仍为 `MODEL_ONLY` 时，正式精确率、噪音率和不支持率保持 `null`，另行输出诊断估计与已确认噪音下限。这样可以自动生成阶段性结论，又不会把模型自评升级为人工证据。
+
 ### Data flow
 
 ```text
