@@ -229,7 +229,9 @@ case manifest → policy/freeze → runner → product adapter → raw trial
 
 source case JSONL + review draft → local H1 review HTML → immutable approved gold
 
-sealed raw trial + approved gold + human adjudication → grader → metrics/report
+approved gold + sealed real trial → model proposal → local risk review HTML → final adjudication
+
+sealed raw trial + approved gold + final adjudication → grader → metrics/report
 ```
 
 授权 Codex 对话通过独立 importer 进入 manifest：只接受显式工作区内的根对话，合并同一 thread 的续聊文件并投影为 Worket 原生 `user.prompt / agent.response`。Codex 交互式问题回复包装会拆回助手问题与用户答案，避免把问题文本误标为用户约束。curation plan 再登记 `split`、共享项目/模板 `group_id` 与盲法状态；同组跨 split 会被阻断。真实来源还必须在冻结配置中声明 `allowed_splits`，因此校准运行不能因 case 列表误配而读取试点保留集。
@@ -243,6 +245,8 @@ H1 使用 `evals/extraction/review-server.mjs` 提供的本机 HTML。server 显
 评审 UI 将稳定枚举翻译为面向决策的问题：`required` 是“本轮要求模型识别吗”，`criticality` 是“模型漏掉它会怎样”，`destinations` 是“识别后应该保存到哪里”。映射只存在于浏览器显示层，保存与 grader 继续使用原枚举，避免文案调整改变评分合同。
 
 单条评审采用渐进披露状态：`UNREVIEWED` 先只读展示 `semantic_content` 与自动分类摘要；确认正确直接转为 `KEEP/CONFIRMED` 并定位下一条；选择不正确才打开可编辑字段、证据和最终动作。全部单位离开 `UNREVIEWED` 后 case 自动转为 `REVIEWED`。这个状态只影响浏览器交互，最终 server 校验仍是唯一写入门禁。
+
+真实输出裁定使用 `evals/extraction/adjudication-server.mjs`。server 从已确认 gold、不可覆盖 run、模型 proposal 和独立 draft 构造确认状态；每条必需 Gold 覆盖与模型标记为非 `USEFUL` 的输出进入人工队列，`USEFUL` 输出在最终文件中固定标记为 `MODEL_ONLY`。最终保存要求队列全部离开 `PENDING`、评审人签名一致，并以独占创建写入完整 proposal 与人工修正；页面和校验逻辑均不硬编码 VideoCreator 案例。
 
 ### Data flow
 

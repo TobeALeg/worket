@@ -12,6 +12,7 @@ npm run eval:extraction -- preflight --config evals/extraction/manifests/synthet
 npm run eval:extraction -- run --config <local-config.json> --adapter work-state-local
 npm run eval:extraction -- run --config <local-config.json> --adapter definition-service --approval <approval.json>
 npm run eval:extraction:review -- --source <source-cases.jsonl> --draft <review-draft.json> --output <human-approved-gold.json>
+npm run eval:extraction:adjudicate -- --gold <human-approved-gold.json> --run <run-directory> --proposal <model-proposal.json> --draft <review-draft.json> --output <final-adjudication.json>
 npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adjudication <adjudication.json>
 ```
 
@@ -22,6 +23,8 @@ npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adju
 `curate` 用本地计划登记 `split`、近重复/共享模板 `group_id` 与盲法状态，并阻断同组跨 split。计划和真实清单必须留在被忽略的本地路径；四份试点保留集在 H1 前不运行、不查看正文。曾参与这些历史工作的操作者即使本轮不打开正文，也必须将其标成非严格盲法，不能作为最终独立封存证据。
 
 `eval:extraction:review` 启动只监听本机的 [H1 人工确认页](review/README.md)。页面从任意 source case JSONL 自动读取案例与原始可见消息，再把独立 review draft 填入表单；同一界面可用于本轮两份校准记录和后续测试。草稿可反复保存，最终 gold 只有所有单位完成确认、证据可在同案原文精确定位且评审人签名完整时才会写入，并且不会覆盖已有最终文件。source、draft、output 都应放在被忽略的 `runs/` 下。
+
+`eval:extraction:adjudicate` 启动只监听本机的 [真实输出对比确认页](adjudication/README.md)。它自动读取已确认 gold、真实 trial 和模型裁定 proposal，按“检查内容 → 自动判断 → 人工确认”展示；Gold 覆盖和模型标为非 `USEFUL` 的输出进入确认队列，标为 `USEFUL` 的输出保留为 `MODEL_ONLY`，不会冒充已逐项人工复核。草稿可续评，最终裁定独占写入且不会覆盖。
 
 ## Adapter
 

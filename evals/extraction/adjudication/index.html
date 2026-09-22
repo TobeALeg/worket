@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Worket Working Context 对比确认</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">WORKET / WORKING CONTEXT EVALUATION</div>
+      <h1>真实 Working Context 对比确认</h1>
+      <p id="review-summary">真实模型已经完成抽取和自动对比；你只确认系统挑出的高风险判断。</p>
+    </div>
+    <div class="actions">
+      <label>评审人<input id="reviewer-id" placeholder="姓名或标识"></label>
+      <button id="save-draft" class="secondary">保存草稿</button>
+      <button id="save-final" class="primary">完成确认</button>
+    </div>
+  </header>
+  <div id="notice" class="notice" role="status"></div>
+  <main class="layout">
+    <aside>
+      <div class="aside-title">案例 <span id="case-count"></span></div>
+      <div id="case-list"></div>
+      <div id="run-meta" class="run-meta"></div>
+    </aside>
+    <section id="workspace"></section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

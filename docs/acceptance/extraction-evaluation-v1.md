@@ -52,7 +52,7 @@ run `E0-synthetic-pilot-2026-09-21T10-13-00-466Z-9a49e534` 对 12/12 个案例�
 
 用户已授权本轮真实模型调用和费用。运行前冻结人民币 10 元授权范围与最多 20 次 provider 调用；runner 实际按 trial 硬性预留并用完 20 次。托管接口不返回 token、失败前实际调用数或账单金额，因此 token/cost 保持 `null`，10 元不能表述为已实时核销的硬账单值。
 
-当前结论：runner 已可重复执行、失败可追溯，E0 已定位至少三个明确错误族——WorkState 捕获/投影不足、Definition 替代链与范围泛化风险、冲突案例结构可靠性失败。真实案例已有 H0 授权与 H1 gold，但尚未完成模型输出到 gold 的逐项裁定；因此仍不能给出正式召回/精确率，也不能宣称抽取质量或业务收益已提升。
+当前结论：runner 已可重复执行、失败可追溯，E0 已定位至少三个明确错误族——WorkState 捕获/投影不足、Definition 替代链与范围泛化风险、冲突案例结构可靠性失败。真实案例已有 H0 授权、H1 gold、真实 Working Context 与模型裁定 proposal；人工风险裁定尚未完成，因此仍不能给出正式召回/精确率，也不能宣称抽取质量或业务收益已提升。
 
 下一步最小工作是先分别裁定真实 WorkState/Handoff Package（S 轨道，即产品里的 Working Context）与 Definition 首稿（D 轨道），生成可复核的匹配、漏项、噪音和错误清单；再以这些缺陷为依据做 E1 的单因素提示/上下文对照，不直接增加审核阶段。
 
@@ -67,6 +67,12 @@ run `E0-synthetic-pilot-2026-09-21T10-13-00-466Z-9a49e534` 对 12/12 个案例�
 用户于 2026-09-22 明确要求调用真实模型生成 Working Context。run `E0-videocreator-workstate-real-2026-09-22T08-49-15Z-b7769344` 使用服务器已配置的 `deepseek-flash`，对两份已授权校准记录各调用一次，2/2 成功；随后在本机走真实 Work Core 持久化与 Handoff Package 导出。共观察到 2 次 provider 调用、9,238 input tokens、16,692 output tokens；供应商未返回币种费用，因此 cost 保持 `null`。API Key 只在服务器容器内解密使用，没有回传或写入运行文件。
 
 这次调用通过受控运维诊断通道复用当前 `openai-compatible-work-state-v1` 提示词，尚不是正式托管 WorkState API，因此证据标记为 `AUTHORIZED_REAL_DIRECT_DIAGNOSTIC`，不能表述为线上客户端完整路径。初查显示：第二份记录已保留最终“每个平台不超过 50 words”及“不附加免责声明”；第一份结果的 Handoff `currentTask` 为空，仍把导出体积核算留作下一步；两份结果都有同义内容跨字段重复，且存在把 Agent 提议写成 `USER_STATED` 的来源归属风险。正式召回、精确率与噪音率仍须以 H1 gold 做逐项裁定。
+
+## H3 自动差异与人工风险确认
+
+同一 `deepseek-flash` 对 H1 Gold 与真实 Working Context 进行了逐项语义对比，proposal 状态为 `MODEL_PROPOSED`。两份案例共 5 条必需 Gold 均被自动判为 `MATCH`；102 个模型输出中，61 条判为 `USEFUL`，其余 41 条判为 `PARTIAL`、`REDUNDANT` 或 `IRRELEVANT`。自动判断还汇总出未解决内容误写为规格、未支持变体、历史规则残留、来源重复、缺少结构化视图、过期规则保留与当前规则重复等风险族。
+
+本机确认页只把 5 条 Gold 覆盖和 41 条非 `USEFUL` 输出组成 46 项高风险队列，按“检查内容 → 自动判断 → 人工确认”显示；判断正确直接进入下一条，分歧时才修改分类、对应关系和原因。61 条 `USEFUL` 输出在最终文件中标记为 `MODEL_ONLY`，因此这条路径降低了本轮人工阅读量，但不把模型自评冒充人工证据。proposal 使用 2 次可观察 provider 调用、16,702 input tokens、51,920 output tokens；供应商仍未返回币种费用。人工确认尚未完成，正式指标继续保持未发布。
 
 ## H0 真实资料登记（VideoCreator）
 
