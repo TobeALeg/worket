@@ -1,6 +1,6 @@
 {
   "round": 10,
-  "sourceCommit": null,
+  "sourceCommit": "a971268",
   "reproduction": {
     "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-stream-repro-WsILgu",
     "before": "已完成",
@@ -164,9 +164,102 @@
       "continuous": true,
       "actualProviderCalls": 0,
       "case": "continuous"
+    },
+    {
+      "run": "2026-09-22T20-46-23-884Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-vOzRRp",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": false,
+      "checks": {
+        "noPartialReply": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true
+      },
+      "case": "packaged-current"
+    },
+    {
+      "run": "2026-09-22T20-46-30-851Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-kpyCxA",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": true,
+      "checks": {
+        "legacyPartialSeeded": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true
+      },
+      "case": "packaged-legacy"
+    },
+    {
+      "run": "2026-09-22T20-46-31-974Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-delivery-e2e-qXFMRL",
+      "providerCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "readBeforeHookRetained": true,
+        "noInheritedOrUncorrelatedReceipt": true
+      },
+      "case": "packaged-receipts"
+    },
+    {
+      "run": "2026-09-22T20-46-34-675Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "test/fixtures/contracts/video",
+      "packaged": true,
+      "credentialStorage": "isolated mock keychain; OS keychain approval not tested",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "explicit future-only consent → persisted idle queue → real HTTP + controlled provider → one review → user-confirmed version → stopped; no live model call"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T20-46-34-675Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-EZl3X5",
+      "calls": 4,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "controlledFixture": true
+        },
+        {
+          "controlledFixture": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": false,
+      "continuous": true,
+      "actualProviderCalls": 0,
+      "case": "packaged-continuous"
     }
   ],
   "actualProviderCalls": 0,
   "externalAgent": false,
-  "businessAcceptance": false
+  "businessAcceptance": false,
+  "package": {
+    "sourceCommit": "a971268",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-a971268.zip",
+    "sha256": "8e90fe1070917b7056a1fdb86027ca558faffa8b5199ff3fcdfa787fee7fb75f",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-revisions-extract-fhwf4zo1/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  }
 }

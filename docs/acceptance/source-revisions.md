@@ -1,6 +1,6 @@
 # 来源修订验收
 
-2026-09-23，第 10 轮。源码已验收，干净打包待验。
+2026-09-23，第 10 轮。源码、干净构建及 ZIP 解压客户端已验收。
 
 原问题：Codex 回合运行中保存 agentMessage 的半句“已完成”和 commandExecution 的 inProgress 状态；最终内容沿用同一 externalId，被增量去重跳过。独立 AppService 复现与旧版 ZIP 解压客户端同路径失败均保留。
 
@@ -17,3 +17,7 @@
 所有来源为合成载荷，经真实 Codex normalizer、Electron、SQLite、认证本机 HTTP；持续提炼使用冻结真实模型响应/受控协议结果。新增供应商调用为零；没有创建外部 Agent 任务、获得新业务验收或宣称新增语义准确率。打包测试采用隔离钥匙串，正常系统钥匙串批准仍未验证。
 
 方案与限制见 [来源修订](../specs/source-revisions.md)，机器记录见 [JSON](source-revisions-results.json)。
+
+## 交付
+
+源码 `a971268`，试用包 `release/Worket-loop-a971268.zip`，SHA-256 `8e90fe1070917b7056a1fdb86027ca558faffa8b5199ff3fcdfa787fee7fb75f`。原包和解压签名通过。解压客户端的新记录、旧半句修复、交接回执、视频持续提炼分别通过 `2026-09-22T20-46-23-884Z / 2026-09-22T20-46-30-851Z / 2026-09-22T20-46-31-974Z / 2026-09-22T20-46-34-675Z`。后台维持 `58be614`，本轮无服务端修改；未替换已安装应用或发布 GitHub Release。
