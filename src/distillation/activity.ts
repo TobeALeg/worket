@@ -10,7 +10,7 @@ export type DistillationActivity = {
 };
 export const runningJob = (status: string): boolean => ["PREPARED", "SUBMITTED", "RUNNING"].includes(status);
 export function jobError(error?: string): string {
-  if (error?.includes("SERVICE_UPGRADE_REQUIRED")) return "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。";
+  if (error?.includes("SERVICE_UPGRADE_REQUIRED")) return "当前后台尚不支持这项约定分析功能，请升级后台后重试。原始记录保持不变。";
   if (error?.includes("INVALID_SOURCE_REF")) return "生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。";
   if (error?.includes("MODEL_TIMEOUT")) return "模型处理超时，可以重试，原始记录仍然保留。";
   if (error?.includes("INVALID_MODEL_OUTPUT")) return "生成结果格式不完整，可以重试。";
@@ -21,6 +21,7 @@ export function jobError(error?: string): string {
 // Commands fail for actionable reasons; the user sees this text instead of an error code.
 const commandErrorText: Record<string, string> = {
   SOURCE_CHANGED: "来源记录或附件在确认后发生变化，请重新确认范围再开始。",
+  BASE_DEFINITION_CHANGED: "约定已有更新版本，请返回最新版重新比较。当前草稿不会覆盖已有版本。",
   SOURCE_DELETED: "来源工作或附件已被删除，不能继续沉淀。",
   MATERIAL_MISSING: "所需附件在本地已不可用。请取消勾选该附件，或恢复文件后重试。",
   INPUT_TOO_LARGE: "本次材料超出后台限额，请减少来源或附件后重试。",

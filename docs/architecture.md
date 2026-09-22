@@ -1,5 +1,11 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：基于已确认版本的增量协调
+
+`evolutionSources → prepare(baseDefinitionId) → 无本地路径/旧引用的有效基准 + 新来源 → 两阶段模型 → EvolutionResult → mergeEvolution → 差异草稿 → publish/EVOLUTION_CONFIRMED → 下一实例`。新增 `contracts/evolution.ts` 的运行时协议验证和 `definitions/evolution.ts` 的确定性合并，不迁移数据库。后台能力 `evolutionSchemaVersions:[1]` 显式协商，增量提示版本为 `work-definition-evolution-v1.0`。
+
+旧约定由程序完整保留，模型仅返回明确操作；重复在 review_events 追加依据，不写重复条目或相同内容的新版本。事件 ID/hash 在用户确认后记入账本，用于后续范围过滤与重启恢复。准备、提交和发布检查基准新旧；资料角色被替代时排除旧绑定，固定规范沿用验证过的 blob。来源删除对账本引用同步脱敏。renderer 默认只呈现差异，支持完整内容、重复/本次要求与补充依据原文查看。当前为主动入口，未启用自动后台比较。详见 [增量比较](specs/contract-incremental-evolution.md)。
+
 ## 2026-09-23：可复现验收基线
 
 `test/fixtures/contracts` 固定三份成功和两份失败的原始真实模型响应及请求，用 hash 验证不可变性。`npm run qa:contract` 在独立 Electron profile 和 SQLite 内回放三类完整桌面路径；回放核对输入与中间结果，不允许历史答案冒充新输入结果。语义失败保留为已知失败，不计入质量通过率。详见 [持续优化检查点](acceptance/worket-improvement-loop.md)。

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Synthetic inputs, unmodified real model responses. Four new provider calls; no human business acceptance. Replays may rebind only the opaque baseline hash after exact content/evidence matching.",
+  "cases": [
+    {
+      "id": "video",
+      "run": "2026-09-22T17-50-59-469Z",
+      "sha256": {
+        "request-3.json": "0dc50a2f48882cdb0f55da6a8a30e7fb8406a835ba9f950c297f3231b4c7f1c8",
+        "response-3.json": "2564340d3c707a42667a11b2595b913d00b3bc59bb850d8f9ef6ec70ded56e18",
+        "request-4.json": "463ca5aaa85acf5c978e583855ff3cdc2fd62530a0b714ef0d8080f6bacb9d77",
+        "response-4.json": "1eae475336e28ef5ccda7ffcffad26efca79ad92e42efaa2508c3e463f7872cf",
+        "request-5.json": "ba3e51569f653feb14aaf3e47f9a35b18b682815bcf49e83dda10dbe9e431933",
+        "response-5.json": "76859482f4dd05eb64c6efd3cb0d8b9e8ddad951e76d1ffc44ea87157845220a",
+        "request-6.json": "a0b7b06937d58310f4c19854fc408c48d5a580778966033bfba01a3a89b120c3",
+        "response-6.json": "a62f4cf74b7ce6af436f0d971fb2f2aa76f970ec8960c04111aa2624685be6e7"
+      }
+    }
+  ]
+}

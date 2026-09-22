@@ -55,6 +55,12 @@ export class DistillationDesktop {
         return this.service.prepare(
           input as Parameters<DistillationService["prepare"]>[0],
         );
+      case 'evolutionSources':
+        string(input.definitionId);
+        return this.service.evolutionSources(input.definitionId);
+      case 'evolutionHistory':
+        string(input.definitionId);
+        return r.evolutionHistory(r.get(input.definitionId).definitionKey);
       case "improvementSamples":
         return this.service.improvement.list();
       case "recordingNotice":

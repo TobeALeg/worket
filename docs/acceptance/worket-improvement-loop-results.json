@@ -1,6 +1,6 @@
 {
   "date": "2026-09-23",
-  "evidence": "Synthetic sources and frozen real model responses; no new provider calls. Not blind semantic grading or human business acceptance.",
+  "evidence": "Synthetic sources. Initial baselines replay recorded real model responses; incremental run 2026-09-22T17-50-59-469Z adds four real provider calls. Not blind grading or human business acceptance.",
   "runs": [
     {
       "run": "2026-09-22T17-13-41-979Z",
@@ -412,6 +412,421 @@
       "iteration": "packaged-e2e",
       "actualProviderCalls": 0,
       "providerReplayCalls": 2
+    },
+    {
+      "run": "2026-09-22T17-50-59-469Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "new interactions → explicit delta review → new version/input instance; fixed material and old version preserved",
+        "repeat-only interaction → evidence confirmed without new version; confirmed events are not resubmitted"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T17-50-59-469Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-hLCJ8W",
+      "calls": 6,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "prompt_tokens": 2084,
+          "completion_tokens": 9477,
+          "total_tokens": 11561,
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 9076
+          },
+          "prompt_cache_hit_tokens": 1664,
+          "prompt_cache_miss_tokens": 420
+        },
+        {
+          "prompt_tokens": 3768,
+          "completion_tokens": 11484,
+          "total_tokens": 15252,
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 10536
+          },
+          "prompt_cache_hit_tokens": 1664,
+          "prompt_cache_miss_tokens": 2104
+        },
+        {
+          "prompt_tokens": 1980,
+          "completion_tokens": 3219,
+          "total_tokens": 5199,
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 2934
+          },
+          "prompt_cache_hit_tokens": 1664,
+          "prompt_cache_miss_tokens": 316
+        },
+        {
+          "prompt_tokens": 3633,
+          "completion_tokens": 6904,
+          "total_tokens": 10537,
+          "prompt_tokens_details": {
+            "cached_tokens": 2304
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 6212
+          },
+          "prompt_cache_hit_tokens": 2304,
+          "prompt_cache_miss_tokens": 1329
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": true,
+      "actualProviderCalls": 4,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 2
+    },
+    {
+      "run": "2026-09-22T17-55-31-053Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "new interactions → explicit delta review → new version/input instance; fixed material and old version preserved",
+        "repeat-only interaction → evidence confirmed without new version; confirmed events are not resubmitted"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T17-55-31-053Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-hWtqOJ",
+      "calls": 6,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": true,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 6
+    },
+    {
+      "run": "2026-09-22T17-58-01-497Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "new interactions → explicit delta review → new version/input instance; fixed material and old version preserved",
+        "repeat-only interaction → evidence confirmed without new version; confirmed events are not resubmitted"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T17-58-01-497Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-WdNju0",
+      "calls": 6,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": true,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 6
+    },
+    {
+      "run": "2026-09-22T18-04-25-389Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T18-04-25-389Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-PBZ8Cw",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": false,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 2
+    },
+    {
+      "run": "2026-09-22T18-04-29-591Z",
+      "scenario": "report",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/report",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "manual upstream edit → dependent review visible; stale acceptance prevents publication",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T18-04-29-591Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-dxqAOs",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": false,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 2
+    },
+    {
+      "run": "2026-09-22T18-04-34-388Z",
+      "scenario": "code",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/code",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T18-04-34-388Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-HoCTqr",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": false,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 2
+    },
+    {
+      "run": "2026-09-22T18-04-38-918Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "new interactions → explicit delta review → new version/input instance; fixed material and old version preserved",
+        "repeat-only interaction → evidence confirmed without new version; confirmed events are not resubmitted"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T18-04-38-918Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-XWUIOQ",
+      "calls": 6,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": true,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 6
+    },
+    {
+      "run": "2026-09-22T18-06-11-134Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "/Users/dandi/YanGuan/test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "new interactions → explicit delta review → new version/input instance; fixed material and old version preserved",
+        "repeat-only interaction → evidence confirmed without new version; confirmed events are not resubmitted"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T18-06-11-134Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-FyZkWh",
+      "calls": 6,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        },
+        {
+          "replay": true,
+          "baselineIdentityRebound": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": true,
+      "actualProviderCalls": 0,
+      "iteration": "incremental-evolution",
+      "providerReplayCalls": 6
     }
   ]
 }

@@ -1,0 +1,156 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-1/script-input-instance",
+        "text": "本工作提供脚本输入，值为“全新脚本：讲解运动。”",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/mp4-delivery",
+        "text": "以后仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/platform-copy-limit",
+        "text": "平台文案不超过 20 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/bilingual-subtitles",
+        "text": "提供逐句的中英双语字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unspecified"
+    },
+    "evolution": {
+      "baseHash": "6d2e8ef12f8fe45c8a94161ffbc84f68ef520a2b1e7bf39f1e694f9a8d1fc1fe",
+      "changes": [
+        {
+          "kind": "DUPLICATE",
+          "section": "deliverables",
+          "target": "deliverables.mp4_delivery",
+          "item": {
+            "key": "mp4_delivery",
+            "text": "以后仍然交付 MP4。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后仍然交付 MP4"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.update_1_platform_copy_word_limit",
+          "item": {
+            "key": "update_1_platform_copy_word_limit",
+            "text": "平台文案不超过 20 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "平台文案不超过 20 words"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "deliverables",
+          "target": "deliverables.bilingual_subtitles",
+          "item": {
+            "key": "bilingual_subtitles",
+            "text": "提供逐句的中英双语字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "提供逐句的中英双语字幕"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "每期视频"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3633,
+    "completion_tokens": 6904,
+    "total_tokens": 10537,
+    "prompt_tokens_details": {
+      "cached_tokens": 2304
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6212
+    },
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 1329
+  }
+}

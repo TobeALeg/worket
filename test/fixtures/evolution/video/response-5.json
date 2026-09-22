@@ -1,0 +1,69 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-1/script-input",
+        "text": "本工作提供 script 输入，值为“全新脚本：讲解运动。”",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/mp4-delivery",
+        "text": "以后仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/platform-copy-limit",
+        "text": "平台文案不超过 20 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/bilingual-subtitles",
+        "text": "提供逐句的中英双语字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/no-other-changes",
+        "text": "没有其他新增或修改要求。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 1980,
+    "completion_tokens": 3219,
+    "total_tokens": 5199,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2934
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 316
+  }
+}

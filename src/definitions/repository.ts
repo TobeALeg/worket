@@ -1,5 +1,6 @@
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
 import { invalidateRuleDependents } from "./rule-review.js";
+import type { EvolutionReview } from './evolution.js';
 import { effectiveRules, acceptanceChecks, ruleText, type InstanceOverride } from "../contracts/rules.js";
 import { randomUUID } from "node:crypto";
 import { reviewFieldValue, reviewFingerprint, resolveReviewField } from "./review.js";
@@ -36,6 +37,7 @@ export type Draft = {
   resolutions: Resolution[];
   publishedId?: string;
   invalidated?: boolean;
+  evolution?: EvolutionReview;
 };
 export type Definition = {
   id: string;
@@ -161,6 +163,11 @@ export class DefinitionRepository {
       .prepare("INSERT INTO definition_drafts VALUES (?, ?)")
       .run(draft.id, JSON.stringify(draft));
     return draft;
+  }
+  evolutionHistory(definitionKey: string): (EvolutionReview & { definitionKey: string; definitionId: string; at: string })[] {
+    return this.db.prepare('SELECT payload_json FROM review_events ORDER BY rowid').all()
+      .map(row => JSON.parse(row.payload_json as string))
+      .filter(row => row.type === 'EVOLUTION_CONFIRMED' && row.definitionKey === definitionKey);
   }
   revise(input: { definitionId: string; commandId: string }): Draft {
     return this.command(
@@ -308,9 +315,9 @@ export class DefinitionRepository {
       Object.keys(input.materialBindings).length <= LIMITS.maxMaterials,
       "INPUT_TOO_LARGE",
     );
-    const inherited = draft.baseDefinitionId
+    const inherited = (draft.baseDefinitionId
       ? this.get(draft.baseDefinitionId).materials
-      : [];
+      : []).filter(material => !draft.evolution?.changes.some(change => change.kind === 'REPLACES' && change.target === `materialRoles.${material.role}`));
     const materials = draft.content.materialRoles.flatMap((role) => {
       const path = input.materialBindings[role.key];
       const old = inherited.find((m) => m.role === role.key);
@@ -381,6 +388,20 @@ export class DefinitionRepository {
         const base = current.baseDefinitionId
           ? this.get(current.baseDefinitionId)
           : null;
+        if (current.evolution) ensure(base && base.contentHash === current.evolution.baseHash && this.versions(base.definitionKey)[0]?.id === base.id,
+          'BASE_DEFINITION_CHANGED', '约定已有更新版本，请基于最新版重新比较；当前草稿未覆盖任何版本。');
+        const finish = (definition: Definition) => {
+          if (current.evolution) this.db.prepare('INSERT INTO review_events VALUES (?,?,?)').run(randomUUID(), definition.id,
+            JSON.stringify({ type: 'EVOLUTION_CONFIRMED', definitionKey: definition.definitionKey, definitionId: definition.id,
+              draftId: current.id, at: new Date().toISOString(), ...current.evolution }));
+          current.publishedId = definition.id;
+          this.write('definition_drafts', current);
+          if (current.jobId) {
+            const job = this.read<{ id: string; status: string }>('distillation_jobs', current.jobId);
+            job.status = 'SAVED'; this.write('distillation_jobs', job);
+          }
+          return definition;
+        };
         if (
           base &&
           hash({
@@ -400,9 +421,7 @@ export class DefinitionRepository {
               materials: base.materials,
             })
         ) {
-          current.publishedId = base.id;
-          this.write("definition_drafts", current);
-          return base;
+          return finish(base);
         }
         const key = base?.definitionKey ?? randomUUID();
         const version =
@@ -447,17 +466,7 @@ export class DefinitionRepository {
             at: definition.confirmedAt,
           }),
         );
-        current.publishedId = definition.id;
-        this.write("definition_drafts", current);
-        if (current.jobId) {
-          const job = this.read<{ id: string; status: string }>(
-            "distillation_jobs",
-            current.jobId,
-          );
-          job.status = "SAVED";
-          this.write("distillation_jobs", job);
-        }
-        return definition;
+        return finish(definition);
       },
     );
   }

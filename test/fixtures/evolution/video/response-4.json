@@ -1,0 +1,198 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [
+      {
+        "id": "issue-file-1-metadata-only",
+        "type": "MISSING_INFORMATION",
+        "field": "file-1",
+        "message": "文件 file-1 仅有元数据且 contentAnalyzed=false，内容未读取，无法确认其中是否包含新要求。",
+        "blocking": false
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1-event-2-copy-limit-30-words",
+        "text": "原平台文案上限为 30 words（已被 20 words 取代）。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": "work-1-event-2-copy-limit-20-words"
+      },
+      {
+        "id": "work-1-event-2-copy-limit-20-words",
+        "text": "以后这类视频的平台文案上限为 20 words（其他已有要求保持）。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-bilingual-subtitles",
+        "text": "以后每期还需提供逐句的中英双语字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-mp4-deliverable",
+        "text": "仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-12-second-transition-instance",
+        "text": "本次视频仅在 12 秒切换画面；这不是以后的视频规范。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 3,
+      "processedEvents": 3,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "",
+      "model": ""
+    },
+    "evolution": {
+      "baseHash": "258bc1c52e791b64f0af0b813f54d6ea4d7081f18121f62fd93d0ca2f5288012",
+      "changes": [
+        {
+          "kind": "REPLACES",
+          "section": "constraints",
+          "item": {
+            "key": "platform_copy_word_limit",
+            "text": "每个平台交付文案上限为 20 words。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后这类视频的平台文案上限从 30 words 改成 20 words"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          },
+          "target": "constraints.platform_copy_word_limit"
+        },
+        {
+          "kind": "ADD",
+          "section": "deliverables",
+          "item": {
+            "key": "bilingual_subtitles",
+            "text": "每期视频提供逐句的中英双语字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "以后每期还要提供逐句的中英双语字幕"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "每期视频"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "deliverables",
+          "item": {
+            "key": "mp4_delivery",
+            "text": "成片交付 MP4。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "仍然交付 MP4"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          },
+          "target": "deliverables.mp4_delivery"
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "twelve_second_transition_instance",
+            "text": "本次视频仅在 12 秒切换画面；这不是以后的视频规范。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "本次只在 12 秒切换画面，这不是以后的视频规范"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本次视频"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3768,
+    "completion_tokens": 11484,
+    "total_tokens": 15252,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 10536
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 2104
+  }
+}

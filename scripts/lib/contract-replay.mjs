@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { dirname, basename, join } from 'node:path';
 
 /** Replays provider bytes, never substitutes an answer for a different source. */
-export function contractReplay(directory) {
+export function verifyReplay(directory) {
   const manifestPath = join(dirname(directory), 'manifest.json');
   if (existsSync(manifestPath)) {
     const entry = JSON.parse(readFileSync(manifestPath, 'utf8')).cases.find(c => c.id === basename(directory));
@@ -14,6 +14,9 @@ export function contractReplay(directory) {
       assert.equal(actual, expected, `frozen replay changed: ${file}`);
     }
   }
+}
+export function contractReplay(directory) {
+  verifyReplay(directory);
   return (messages, call) => {
     const recorded = JSON.parse(readFileSync(join(directory, `request-${call}.json`), 'utf8'));
     assert.deepEqual(JSON.parse(messages[1].content), JSON.parse(recorded[1].content),

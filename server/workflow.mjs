@@ -1,7 +1,9 @@
 import { RULES_PROMPT } from "./rules-prompt.mjs";
+import { EVOLUTION_PROMPT } from './evolution-prompt.mjs';
 import { clauseText, effectiveRules, ruleItems } from "../dist/contracts/rules.js";
 import {
   validateResult,
+  resultItems,
   validateRequest,
   LIMITS,
   ContractError,
@@ -126,6 +128,7 @@ export async function extractDefinition(
   }
   const aggregate = {
     phase: "reconcile-and-generalize",
+    ...(request.evolution ? { baseline: request.evolution } : {}),
     sourceKeys: request.sources.map((s) => s.key),
     // Preserve authoritative speaker kinds through the lossy intermediate summaries.
     evidence: request.sources.flatMap(s => s.events.map(e => ({ workId: s.key, eventId: e.key, kind: e.kind, content: e.content, hash: e.hash, ...(e.document ? { document: e.document } : {}) }))),
@@ -143,7 +146,7 @@ export async function extractDefinition(
         role: "system",
         content:
           system +
-          "\nNow reconcile correction chains across ALL chunks in each work, compare different works and generalize. Return full schema, including content.purpose as an Item object with key, text and basis. coverage must include every intermediate event key. The evidence catalog contains authoritative event kinds: only user.prompt and work.* events may support USER_STATED. tool.* events and agent.response are not user statements, even if their content repeats a requirement. Use INFERRED for conclusions without direct user evidence and surface a confirmation issue. The evidence catalog includes ORIGINAL text and authoritative document roles; verify clauses, corrections and applicability against it, not just intermediate paraphrases. Excerpts may only quote ORIGINAL text. Cite only snapshotId, workId and eventId using supplied event keys. versions.schema=1.",
+          "\nNow reconcile correction chains across ALL chunks in each work, compare different works and generalize. Return full schema, including content.purpose as an Item object with key, text and basis. coverage must include every intermediate event key. The evidence catalog contains authoritative event kinds: only user.prompt and work.* events may support USER_STATED. tool.* events and agent.response are not user statements, even if their content repeats a requirement. Use INFERRED for conclusions without direct user evidence and surface a confirmation issue. The evidence catalog includes ORIGINAL text and authoritative document roles; verify clauses, corrections and applicability against it, not just intermediate paraphrases. Excerpts may only quote ORIGINAL text. Cite only snapshotId, workId and eventId using supplied event keys. versions.schema=1." + (request.evolution ? EVOLUTION_PROMPT : ""),
       },
       { role: "user", content: JSON.stringify(aggregate) },
     ],
@@ -152,44 +155,33 @@ export async function extractDefinition(
   onUsage(usage);
   result.versions = {
     schema: 1,
-    prompt: coordinated ? PROMPT_VERSION : "work-definition-v1.4",
+    prompt: request.evolution ? 'work-definition-evolution-v1.0' : coordinated ? PROMPT_VERSION : "work-definition-v1.4",
     model: provider.model,
   };
   result.coverage.processedChunks = chunks.length;
   validateResult(result, request);
-  if (result.content && coordinated) {
-    for (const { item } of ruleItems(result.content)) {
+  if ((result.content || result.evolution) && coordinated) {
+    const rows = result.content ? ruleItems(result.content) : result.evolution.changes.filter(c => ['deliverables', 'constraints', 'acceptanceCriteria', 'methods'].includes(c.section)).map(c => ({ item: c.item, address: `${c.section}.${c.item.key}` }));
+    for (const { item } of rows) {
       item.rule ??= { scope: "UNCERTAIN", status: "PROPOSED" };
     }
-    for (const { item } of ruleItems(result.content)) if (item.document) {
+    for (const { item } of rows) if (item.document) {
       const d = item.document;
       const event = request.sources.find(s => s.key === d.source.workId).events.find(e => e.key === d.source.eventId);
       item.text = clauseText(event.content, d);
       d.name = event.document.name;
     }
-    for (const { address, item } of ruleItems(result.content)) {
+    for (const { address, item } of rows) {
       if (item.rule?.scope === "UNCERTAIN" || item.rule?.status === "PROPOSED" || item.rule?.relation?.kind === "CONFLICT") {
         if (!result.issues.some(i => i.field === address)) result.issues.push({ id: `rule-review-${result.issues.length + 1}`, type: item.rule?.relation?.kind === "CONFLICT" ? "CONFLICT" : "UNCERTAIN_GENERALIZATION", field: address, message: "请确认此项的适用范围、采纳状态或冲突关系；当前不作为已确认规则。", blocking: true });
       }
     }
-    try { effectiveRules(result.content); } catch (error) {
+    try { if (result.content) effectiveRules(result.content); } catch (error) {
       if (error.code !== "UNRESOLVED_RULE_CONFLICT") throw error;
       if (!result.issues.some(i => i.type === "CONFLICT")) result.issues.push({ id: "rule-conflict", type: "CONFLICT", field: "constraints", message: error.message, blocking: true });
     }
   }
-  for (const item of result.content
-    ? [
-        result.content.purpose,
-        ...[
-          "inputs",
-          "deliverables",
-          "constraints",
-          "acceptanceCriteria",
-          "methods",
-          "materialRoles",
-        ].flatMap((k) => result.content[k]),
-      ]
-    : [])
+  for (const item of resultItems(result))
     if (item.basis.type !== "USER_AUTHORED") {
       let misattributed = false;
       for (const ref of item.basis.refs) {

@@ -1,4 +1,5 @@
 import { validateRule, validateRuleGraph, clauseText, type RulePolicy, type DocumentClause, type DocumentRole } from "./rules.js";
+import { validateEvolution, type EvolutionBaseline, type EvolutionResult } from './evolution.js';
 // Versioned, runtime-validated data contract shared by desktop and service.
 export type Origin = "USER_STATED" | "AGENT_PROPOSED" | "SYSTEM_INFERRED" | "DOCUMENT_STATED";
 export type SourceRef = {
@@ -57,6 +58,7 @@ export type WireEvent = {
 export type ExtractionRequest = {
   schemaVersion: 1;
   ruleSchemaVersion?: 1;
+  evolution?: EvolutionBaseline;
   snapshotHash: string;
   sources: { key: string; events: WireEvent[] }[];
 };
@@ -64,6 +66,7 @@ export type ExtractionResult = {
   schemaVersion: 1;
   compatibility: "COMPATIBLE" | "CONFLICTING" | "UNRELATED";
   content: DefinitionContent | null;
+  evolution?: EvolutionResult;
   issues: Issue[];
   groups: { sourceKeys: string[]; reason: string }[];
   requirements: {
@@ -249,6 +252,10 @@ export function validateRequest(
   ensure(value.schemaVersion === 1);
   string(value.snapshotHash);
   if (value.ruleSchemaVersion !== undefined) ensure(value.ruleSchemaVersion === 1);
+  if (value.evolution !== undefined) {
+    ensure(value.ruleSchemaVersion === 1); object(value.evolution); string(value.evolution.contentHash);
+    validateContent(value.evolution.content);
+  }
   array(value.sources);
   ensure(
     value.sources.length > 0 && value.sources.length <= LIMITS.maxSources,
@@ -391,11 +398,11 @@ function validateModelResult(
         ),
     );
   if (value.compatibility === "UNRELATED")
-    ensure(value.content === null && value.groups.length > 0);
-  else validateContent(value.content, { model: true, refs });
-  if (value.content) {
-    const content = value.content as DefinitionContent;
-    for (const item of [content.purpose, ...content.inputs, ...content.deliverables, ...content.constraints, ...content.acceptanceCriteria, ...content.methods, ...content.materialRoles]) {
+    ensure(value.content === null && value.groups.length > 0 && value.evolution === undefined);
+  else if (request.evolution) { ensure(value.content === null); validateEvolution(value.evolution, request.evolution, refs); }
+  else { ensure(value.evolution === undefined); validateContent(value.content, { model: true, refs }); }
+  {
+    for (const item of resultItems(value as ExtractionResult)) {
       if (item.document) {
         const d = item.document;
         const event = request.sources.find(s => s.key === d.source.workId)?.events.find(e => e.key === d.source.eventId);
@@ -416,4 +423,8 @@ function validateModelResult(
   ensure(value.versions.schema === 1);
   string(value.versions.prompt);
   string(value.versions.model);
+}
+export function resultItems(value: ExtractionResult): DefinedItem[] {
+  const content = value.content;
+  return content ? [content.purpose, ...content.inputs, ...content.deliverables, ...content.constraints, ...content.acceptanceCriteria, ...content.methods, ...content.materialRoles] : value.evolution?.changes.map(change => change.item) ?? [];
 }

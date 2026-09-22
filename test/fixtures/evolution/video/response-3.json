@@ -1,0 +1,78 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-event-2-copy-limit-30-words",
+        "text": "这类视频的平台文案上限原为 30 words（历史要求，已被 20 words 取代）。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": "work-1-event-2-copy-limit-20-words"
+      },
+      {
+        "id": "work-1-event-2-copy-limit-20-words",
+        "text": "以后这类视频的平台文案上限为 20 words（其他已有要求保持）。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-bilingual-subtitles",
+        "text": "以后每期视频还需额外提供逐句的中英双语字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-mp4-deliverable",
+        "text": "仍然交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-12-second-transition-instance",
+        "text": "本次视频仅在 12 秒切换画面；这不是以后的视频规范。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/file-1"
+    ],
+    "issues": [
+      {
+        "id": "issue-work-1-file-1-not-analyzed",
+        "type": "MISSING_INFORMATION",
+        "field": "file-1",
+        "message": "文件 file-1 仅有元数据且 contentAnalyzed=false，内容未读取，无法提取其中可能的要求。",
+        "blocking": false
+      }
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2084,
+    "completion_tokens": 9477,
+    "total_tokens": 11561,
+    "prompt_tokens_details": {
+      "cached_tokens": 1664
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 9076
+    },
+    "prompt_cache_hit_tokens": 1664,
+    "prompt_cache_miss_tokens": 420
+  }
+}

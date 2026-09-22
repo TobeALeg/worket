@@ -2,6 +2,8 @@ import { effectiveRules, acceptanceChecks, ruleItems, ruleText } from "../contra
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import { definitionSections, sectionItems } from "../definitions/review.js";
+import { contentItems } from '../contracts/evolution.js';
+import type { EvolutionReview } from '../definitions/evolution.js';
 import { definitionLabels, worketBrand } from "./ui.js";
 import { mountDefinitionReview } from "./definition-review.js";
 import type { Definition, Draft } from "../definitions/repository.js";
@@ -177,25 +179,26 @@ function jobLabel(status: string): string {
     )[status] ?? status
   );
 }
-export async function openPreparation(workIds: string[]): Promise<void> {
+export async function openPreparation(workIds: string[], baseDefinitionId?: string): Promise<void> {
   if (!workIds.length) throw new Error("请先选择至少一条工作记录");
   let snapshot: Snapshot = await api("prepare", {
     workIds,
     includedFileIds: [],
+    ...(baseDefinitionId ? { baseDefinitionId } : {}),
   });
   async function render() {
     const { enabled } = await api("improvementPreference");
     show(
-      "确认沉淀范围",
-      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">所选文本与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
-      '<button id="start-distillation" class="primary">开始沉淀</button>',
+      baseDefinitionId ? '确认约定更新范围' : "确认沉淀范围",
+      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">${baseDefinitionId ? "当前已确认约定、所选新交互与附件" : "所选文本与附件"}将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
+      `<button id="start-distillation" class="primary">${baseDefinitionId ? '比较新交互' : '开始沉淀'}</button>`,
     );
     bind("#apply-range", async () => {
       const ids = [
         ...modal.querySelectorAll<HTMLInputElement>("[data-file-id]:checked"),
       ].map((e) => e.dataset.fileId!);
       const fileRoles = Object.fromEntries(ids.map(id => [id, modal.querySelector<HTMLSelectElement>(`[data-file-role="${CSS.escape(id)}"]`)?.value ?? "REFERENCE"]));
-      snapshot = await api("prepare", { workIds, includedFileIds: ids, fileRoles });
+      snapshot = await api("prepare", { workIds, includedFileIds: ids, fileRoles, ...(baseDefinitionId ? { baseDefinitionId } : {}) });
       await render();
     });
     const id = commandId();
@@ -287,13 +290,20 @@ async function openDefinition(id: string): Promise<void> {
   const versions: Definition[] = await api("versions", {
     key: d.definitionKey,
   });
+  const history: EvolutionReview[] = await api('evolutionHistory', { definitionId: id });
+  const additionalEvidence = history.flatMap(review => {
+    const base = versions.find(version => version.contentHash === review.baseHash);
+    return review.evidence.flatMap(entry => entry.refs.map(ref => ({ ref,
+      label: `v${base?.version ?? '?'} · ${base ? contentItems(base.content).find(row => row.address === entry.target)?.item.text ?? '历史要求' : '历史要求'}`,
+    })));
+  });
   show(
     d.content.name,
     `<label class="inline-field">版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><div class="definition-summary">${definitionSections
       .filter(key => sectionItems(content, key).length)
       .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(content, key).map(item => `<div class="state-item"><p>${esc(ruleText(item))}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
       .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details><details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
-    '<button id="revise-definition">修改为新版本</button><button id="use-definition" class="primary">使用</button>',
+    `<button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button><button id="revise-definition">手工修改</button><button id="use-definition" class="primary">使用</button>`,
   );
   modal
     .querySelector("#definition-version")!
@@ -302,6 +312,27 @@ async function openDefinition(id: string): Promise<void> {
       () => void openDefinition(value("#definition-version")),
     );
   bind("#use-definition", () => useDefinition(d));
+  if (additionalEvidence.length) {
+    const details = document.createElement('details'); details.id = 'evolution-evidence';
+    details.innerHTML = `<summary>此系列的补充依据 · ${additionalEvidence.length}</summary>${additionalEvidence.map((entry, index) => `<p>${esc(entry.label)} ${entry.ref.deleted ? '来源已删除' : `<button data-evolution-evidence="${index}">查看后续原文</button>`}</p>`).join('')}`;
+    modal.querySelector('.definition-card')!.append(details);
+    additionalEvidence.forEach((entry, index) => {
+      if (!entry.ref.deleted) bind(`[data-evolution-evidence="${index}"]`, async () => {
+        const text = await api('evidence', entry.ref);
+        const pre = document.createElement('pre'); pre.textContent = text;
+        modal.querySelector(`[data-evolution-evidence="${index}"]`)?.replaceWith(pre);
+      });
+    });
+  }
+  bind('#evolve-definition', async () => {
+    const sources: { workId: string; title: string; count: number; status: string }[] = await api('evolutionSources', { definitionId: id });
+    const available = sources.filter(source => source.count > 0);
+    show('选择后续工作', available.length
+      ? available.map(source => `<label class="file-choice"><input type="checkbox" data-evolution-work="${esc(source.workId)}">${esc(source.title)} · ${source.count} 条新记录</label>`).join('')
+      : '<p>使用此约定开展工作并记录新的交互后，可在这里比较更新。</p>',
+      available.length ? '<button id="prepare-evolution" class="primary">确认范围</button>' : '');
+    if (available.length) bind('#prepare-evolution', () => openPreparation([...modal.querySelectorAll<HTMLInputElement>('[data-evolution-work]:checked')].map(el => el.dataset.evolutionWork!), id));
+  });
   bind("#revise-definition", async () => {
     await editDraft(
       await api("revise", { definitionId: id, commandId: commandId() }),

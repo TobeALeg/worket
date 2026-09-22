@@ -1,4 +1,6 @@
 import { type DocumentRole } from "../contracts/rules.js";
+import { evolutionBaseline, mergeEvolution } from '../definitions/evolution.js';
+import { resolveRuleDocuments } from '../definitions/document-rules.js';
 import { RecordingCollection } from "../improvement/recording.js";
 import { ImprovementCollector } from "../improvement/collector.js";
 import { randomUUID } from "node:crypto";
@@ -14,6 +16,7 @@ import {
   LIMITS,
   validateRequest,
   validateResult,
+  resultItems,
   type SourceRef,
   type ExtractionRequest,
   type ExtractionResult,
@@ -26,6 +29,8 @@ export type Snapshot = {
   schemaVersion: 1;
   capturedAt: string;
   contentHash: string;
+  baseDefinitionId?: string;
+  baseContentHash?: string;
   sources: {
     workId: string;
     key: string;
@@ -148,11 +153,22 @@ export class DistillationService {
       }
     }
   }
-  prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole> }): Snapshot {
+  evolutionSources(definitionId: string) {
+    const base = this.repository.get(definitionId);
+    const seen = new Set(this.repository.evolutionHistory(base.definitionKey).flatMap(history => history.sourceEvents).filter(e => !('deleted' in e)).map(e => `${e.workId}/${e.eventId}/${e.hash}`));
+    return this.core.listWorks().filter(work => work.definition.key === base.definitionKey).map(work => ({
+      workId: work.instance.id, title: work.state.objective[0]?.text ?? work.definition.name, status: work.instance.status,
+      count: work.sourceArchive.filter(e => e.kind !== 'reasoning.summary' && e.kind !== 'work.definition_applied' && e.content?.trim() && !seen.has(`${work.instance.id}/${e.id}/${hash(e.content)}`)).length,
+    }));
+  }
+  prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole>; baseDefinitionId?: string }): Snapshot {
     array(input.workIds);
     array(input.includedFileIds);
     input.workIds.forEach(string);
     input.includedFileIds.forEach(string);
+    const base = input.baseDefinitionId ? this.repository.get(input.baseDefinitionId) : null;
+    if (base) ensure(this.repository.versions(base.definitionKey)[0]?.id === base.id, 'BASE_DEFINITION_CHANGED', '请基于最新版本比较后续交互');
+    const seen = new Set(base ? this.repository.evolutionHistory(base.definitionKey).flatMap(history => history.sourceEvents).filter(e => !('deleted' in e)).map(e => `${e.workId}/${e.eventId}/${e.hash}`) : []);
     ensure(
       input.workIds.length > 0 &&
         input.workIds.length <= LIMITS.maxSources &&
@@ -172,6 +188,7 @@ export class DistillationService {
       ensure(work, "SOURCE_DELETED");
       const events = work.sourceArchive
         .filter((e) => e.kind !== "reasoning.summary" && e.content?.trim())
+        .filter(e => !base || e.kind !== 'work.definition_applied' && !seen.has(`${id}/${e.id}/${hash(e.content!)}`))
         .map((e, i) => ({
           id: e.id,
           key: `event-${i + 1}`,
@@ -183,7 +200,7 @@ export class DistillationService {
       ensure(
         events.length,
         "MISSING_INFORMATION",
-        "空工作没有可提交的来源事件",
+        base ? "此工作没有尚未确认比较的新交互" : "空工作没有可提交的来源事件",
       );
       // Verification appends a new reference whenever a file changes or disappears, so the
       // reference list keeps history. Only the newest reference per path describes the file now.
@@ -283,7 +300,8 @@ export class DistillationService {
       id: randomUUID(),
       schemaVersion: 1,
       capturedAt: new Date().toISOString(),
-      contentHash: hash(sources),
+      contentHash: base ? hash({ sources, baseHash: base.contentHash }) : hash(sources),
+      ...(base ? { baseDefinitionId: base.id, baseContentHash: base.contentHash } : {}),
       sources,
     };
     validateRequest(this.wire(snapshot));
@@ -295,10 +313,13 @@ export class DistillationService {
     return snapshot;
   }
   wire(snapshot: Snapshot): ExtractionRequest {
+    const base = snapshot.baseDefinitionId ? this.repository.get(snapshot.baseDefinitionId) : null;
+    if (base) ensure(base.contentHash === snapshot.baseContentHash, 'BASE_DEFINITION_CHANGED');
     return {
       schemaVersion: 1,
       ruleSchemaVersion: 1,
       snapshotHash: snapshot.contentHash,
+      ...(base ? { evolution: evolutionBaseline(base, resolveRuleDocuments(base.content, base.materials, this.repository.materials).content) } : {}),
       sources: snapshot.sources.map((s) => ({
         key: s.key,
         events: [
@@ -345,18 +366,19 @@ export class DistillationService {
     ]);
   }
   assertSources(snapshot: Snapshot, unchanged: boolean): void {
+    if (unchanged && snapshot.baseDefinitionId) {
+      const base = this.repository.get(snapshot.baseDefinitionId);
+      ensure(this.repository.versions(base.definitionKey)[0]?.id === base.id, 'BASE_DEFINITION_CHANGED', '请基于最新版本重新确认比较范围');
+    }
     for (const source of snapshot.sources) {
       const work = this.core.getWork(source.workId);
       ensure(work && !source.deleted, "SOURCE_DELETED");
       if (unchanged) {
         const events = work.sourceArchive.filter((e) => e.kind !== "reasoning.summary" && e.content?.trim());
         ensure(
-          events.length === source.events.length &&
-            events.every(
-              (e, i) =>
-                e.id === source.events[i]?.id &&
-                hash(e.content!) === source.events[i]?.hash,
-            ),
+          snapshot.baseDefinitionId
+            ? source.events.every(selected => events.some(e => e.id === selected.id && hash(e.content!) === selected.hash))
+            : events.length === source.events.length && events.every((e, i) => e.id === source.events[i]?.id && hash(e.content!) === source.events[i]?.hash),
           "SOURCE_CHANGED",
         );
         for (const file of source.files.filter((f) => f.content !== undefined))
@@ -410,6 +432,7 @@ export class DistillationService {
   async submit(job: Job): Promise<void> {
     if (this.active.has(job.id)) return;
     this.active.add(job.id);
+    let dispatched = false;
     try {
       const snapshot = this.repository.read<Snapshot>(
         "source_snapshots",
@@ -421,9 +444,11 @@ export class DistillationService {
       const capability = (await this.client.capabilities()) as {
         limits?: { maxSources?: number; maxBytes?: number };
         ruleSchemaVersions?: number[];
+        evolutionSchemaVersions?: number[];
       };
       if (this.closed || this.repository.read<Job>("distillation_jobs", job.id).status === "CANCELLED") return;
       ensure(capability.ruleSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。");
+      if (snapshot.baseDefinitionId) ensure(capability.evolutionSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '当前后台尚不支持增量比较，请升级后重试。');
       const wire = this.wire(snapshot);
       ensure(
         snapshot.sources.length <=
@@ -432,6 +457,7 @@ export class DistillationService {
             (capability.limits?.maxBytes ?? LIMITS.maxBytes),
         "INPUT_TOO_LARGE",
       );
+      dispatched = true;
       const remote = await this.client.submit(
         this.wire(snapshot),
         job.commandId,
@@ -451,7 +477,7 @@ export class DistillationService {
       if (this.closed) return;
       const current = this.repository.read<Job>("distillation_jobs", job.id);
       if (current.status !== "CANCELLED" && current.status !== "SAVED") {
-        current.status = current.requestId ? "FAILED" : "INTERRUPTED";
+        current.status = current.requestId || !dispatched ? "FAILED" : "INTERRUPTED";
         current.error =
           error instanceof Error ? error.message : "MODEL_UNAVAILABLE";
         this.repository.write("distillation_jobs", current);
@@ -504,6 +530,7 @@ export class DistillationService {
             "INVALID_SOURCE_REF",
             "INCOMPLETE_COVERAGE",
             "SOURCE_DELETED",
+            "INVALID_RULE_TARGET", "RULE_CYCLE", "RULE_SCOPE_MISMATCH", "BASE_DEFINITION_CHANGED",
           ].includes(String(error.code))
         )
           job.status = "FAILED";
@@ -532,17 +559,7 @@ export class DistillationService {
       validateResult(remote.result, request);
       const result = structuredClone(remote.result);
       // Map only verified request-local references back to local identities.
-      for (const item of result.content
-        ? [
-            result.content.purpose,
-            ...result.content.inputs,
-            ...result.content.deliverables,
-            ...result.content.constraints,
-            ...result.content.acceptanceCriteria,
-            ...result.content.methods,
-            ...result.content.materialRoles,
-          ]
-        : []) {
+      for (const item of resultItems(result)) {
         if (item.basis.type === "USER_AUTHORED")
           throw new ContractError(
             "INVALID_MODEL_OUTPUT",
@@ -593,14 +610,20 @@ export class DistillationService {
           fresh.status = "NEEDS_SELECTION";
           fresh.result = result;
         } else {
+          const draftId = randomUUID();
+          const base = snapshot.baseDefinitionId ? this.repository.get(snapshot.baseDefinitionId) : null;
+          const merged = base ? mergeEvolution(base, result) : null;
+          if (merged) merged.evolution.sourceEvents = snapshot.sources.flatMap(s => s.events.map(e => ({ workId: s.workId, eventId: e.id, hash: e.hash })));
           const draft: Draft = {
-            id: randomUUID(),
+            id: draftId,
             jobId: job.id,
             revision: 1,
-            content: result.content!,
-            originalContent: structuredClone(result.content!),
-            refs: this.refs(snapshot),
-            issues: result.issues,
+            ...(base ? { baseDefinitionId: base.id } : {}),
+            ...(merged ? { evolution: merged.evolution } : {}),
+            content: merged?.content ?? result.content!,
+            originalContent: structuredClone(merged?.content ?? result.content!),
+            refs: [...(base?.refs ?? []), ...this.refs(snapshot)],
+            issues: merged?.issues ?? result.issues,
             resolutions: [],
           };
           for (const method of draft.content.methods)

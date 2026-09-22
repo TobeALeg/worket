@@ -13,6 +13,7 @@ import { hash } from '../dist/definitions/storage.js';
 import { ruleItems, effectiveRules } from '../dist/contracts/rules.js';
 import { source } from '../test/distillation/fixtures.ts';
 import { contractReplay } from './lib/contract-replay.mjs';
+import { qaContractEvolution, replayEvolution } from './lib/qa-contract-evolution.mjs';
 const run = new Date().toISOString().replace(/[:.]/g, '-');
 const output = join(process.cwd(), 'output', 'contract-e2e', run); mkdirSync(output, { recursive: true });
 const directory = mkdtempSync(join(tmpdir(), 'worket-contract-e2e-'));
@@ -25,6 +26,8 @@ const scenarios = {
     conversation: '以后所有这类代码改动都按 FRAME.md，每个函数最多五十行。以后每个修复必须有对应的回归测试。本次只修正 48 行的拼写，48 行只属于本次。下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。' },
 };
 const scenario = process.env.WORKET_E2E_SCENARIO ?? 'video';
+const evolution = process.env.WORKET_E2E_EVOLUTION === '1';
+if (evolution) assert.equal(scenario, 'video');
 assert.ok(scenarios[scenario], 'unknown QA scenario');
 const { norm, unit, supplement, conversation } = scenarios[scenario];
 const oldLimit = `50 ${unit}`, newLimit = `30 ${unit}`, overrideLimit = `80 ${unit}`;
@@ -34,17 +37,25 @@ const original = source(core, conversation);
 core.addArtifactRef(original.instance.id, { path, filename: 'FRAME.md', role: 'REFERENCE', mimeType: 'text/markdown', size: Buffer.byteLength(norm), sha256: hash(norm), lastModifiedAt: new Date().toISOString(), availability: 'AVAILABLE' });
 core.completeWork(original.instance.id); core.close();
 let calls = 0;
+let liveCalls = 0;
 const replay = process.env.WORKET_E2E_REPLAY ? contractReplay(process.env.WORKET_E2E_REPLAY) : null;
 const usage = [], errors = [];
 const remoteCode = `import {readFileSync} from 'node:fs'; import {AdminStore} from '/app/server/admin/store.mjs'; import {ModelProvider} from '/app/server/workflow.mjs'; const store=Object.create(AdminStore.prototype); store.data=JSON.parse(readFileSync('/data/settings.json','utf8')); store.master=readFileSync('/data/encryption.key'); const config=store.data.provider; const provider=new ModelProvider({baseUrl:config.baseUrl,model:config.model,apiKey:store.apiKey()}); const chunks=[]; for await(const chunk of process.stdin)chunks.push(chunk); try {const value=await provider.call(JSON.parse(Buffer.concat(chunks)).messages,AbortSignal.timeout(180000)); process.stdout.write(JSON.stringify(value));}catch{process.stderr.write('MODEL_CALL_FAILED');process.exitCode=1;}`;
 const quote = text => "'" + text.replaceAll("'", "'\\''") + "'";
 const provider = { model: 'deepseek-flash', async call(messages, signal) {
-  assert.ok(++calls <= 2, 'E2E budget: at most two real provider calls; no hidden retries');
+  assert.ok(++calls <= (evolution ? 6 : 2), 'E2E provider call budget exceeded; no hidden retries');
   writeFileSync(join(output, `request-${calls}.json`), JSON.stringify(messages, null, 2));
-  if (process.env.WORKET_E2E_REPLAY) {
+  if (process.env.WORKET_E2E_REPLAY && calls <= 2) {
     const response = replay(messages, calls);
+    writeFileSync(join(output, `response-${calls}.json`), JSON.stringify(response, null, 2));
     usage.push({ replay: true }); return response;
   }
+  if (calls > 2 && process.env.WORKET_E2E_EVOLUTION_REPLAY) {
+    const response = replayEvolution(process.env.WORKET_E2E_EVOLUTION_REPLAY, messages, calls);
+    writeFileSync(join(output, `response-${calls}.json`), JSON.stringify(response, null, 2));
+    usage.push({ replay: true, baselineIdentityRebound: true }); return response;
+  }
+  liveCalls++;
   console.log(`provider call ${calls} started`);
   const response = await new Promise((resolve, reject) => {
     const child = spawn('ssh', ['-o', 'BatchMode=yes', 'jp-server', `sudo docker exec -i worket node --input-type=module -e ${quote(remoteCode)}`], { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -59,7 +70,7 @@ const provider = { model: 'deepseek-flash', async call(messages, signal) {
   console.log(`provider call ${calls} finished`); return response;
 } };
 const secret = 'isolated-contract-e2e';
-const service = createAIService({ mode: 'development', devSecret: secret, issuer: 'qa', audience: 'qa', provider, providerName: '真实模型端到端验收', limits: { dailyCalls: 2 } });
+const service = createAIService({ mode: 'development', devSecret: secret, issuer: 'qa', audience: 'qa', provider, providerName: '真实模型端到端验收', limits: { dailyCalls: evolution ? 6 : 2 } });
 await new Promise(r => service.server.listen(0, '127.0.0.1', r));
 const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
 const body = Buffer.from(JSON.stringify({ sub: 'qa-contract', iss: 'qa', aud: 'qa', exp: Date.now()/1000+3600 })).toString('base64url');
@@ -208,8 +219,9 @@ try {
   await panel.locator('[data-output]').check(); await panel.locator('#accept-output').click();
   assert.equal((await panel.evaluate(()=>window.workpet.getDashboard())).selectedWork.status,'COMPLETED');
   mark('synthetic attachment → needs-revision stays open → explicit checklist pass completes instance');
+  if (evolution) await qaContractEvolution({ panel, directory, definition: v2, oldId: v2Id, mark, output });
 
   assert.deepEqual(errors,[]);
   report.status='PASSED';
 } catch(error) { report.status='FAILED'; report.error=error.message; if(panel) { await panel.screenshot({path:join(output,'failure.png')}).catch(()=>{}); writeFileSync(join(output,'failure-dom.txt'),await panel.locator('body').innerText().catch(()=>'')); } process.exitCode=1; console.error(error.message); }
-finally { report.calls=calls;report.usage=usage;writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); await app?.close(); await service.close(); console.log(JSON.stringify(report)); }
+finally { report.calls=calls;report.usage=usage;report.evolution=evolution;report.actualProviderCalls=liveCalls;writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2)); await app?.close(); await service.close(); console.log(JSON.stringify(report)); }
