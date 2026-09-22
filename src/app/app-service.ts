@@ -59,12 +59,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
       : "stopped";
   if (
     work.definition.kind === "REUSABLE" &&
-    !work.packageReadAt &&
-    !work.sourceArchive.some(
-      (event) =>
-        event.kind === "tool.result" &&
-        event.metadata.toolName === "get_work_context",
-    )
+    !work.packageReadAt
   )
     return "waiting";
   return "recording";
@@ -1001,8 +996,8 @@ export class AppService {
       ...(work.definition.kind === "REUSABLE"
         ? {
             reusableDefinitionId: work.definition.id,
-            dispatchStatus: String(dispatch?.status ?? "NOT_DISPATCHED"),
-            dispatchReadAt: (dispatch?.read_at as string | null) ?? null,
+            dispatchStatus: work.activeBinding ? (work.activeBinding.conversationId.startsWith("pending:") ? "WAITING" : "BOUND") : String(dispatch?.status ?? "NOT_DISPATCHED"),
+            dispatchReadAt: work.packageReadAt ?? null,
           }
         : {}),
       ...this.#summary(work),

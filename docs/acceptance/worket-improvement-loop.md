@@ -94,6 +94,12 @@
 
 下一轮优先复现/修复读取回执的交接归属：MCP 只传 work_id，#recordToolReadSuccess 直接更新 pending_dispatches.read_at；AppService.handoff 生成新 handoff.id / Binding，但未见读取证据重置。需证明换执行者后旧读回执不会被继承、旧 delivery 不能确认新接手，再验证目标读取路径。入口：src/bridge/mcp-handler.ts、src/app/app-service.ts、src/distillation/desktop.ts、src/executors/work-bootstrap.ts；现为代码审计发现，尚未完成新交接的独立复现。跨技能/插件依赖继续保留，不把 QA runner 产物算成用户真实业务交付。
 
+## 第 9 轮：本次交接的读取回执（源码已验收）
+
+独立复现第二次交接继承第一次读取，修复为 deliveryId/Binding 独立回执。只有当前标识读取加真实会话绑定才确认接手，读取可先于 Hook；仅查看、旧标识不确认。取消/失败恢复原会话证据，旧 pending 升级不信全局标志。
+
+188 项全量测试通过；两次交接真实 Electron/HTTP 与 MCP 当前资料、技能复用回归通过。新增模型调用为零，外部 Agent 边界受控，未宣称真实业务交付。完整失败与通过见 [验收](delivery-receipts.md)。下一步干净打包和 ZIP 解压回归；后台未变化。
+
 ## 首批试用包与部署（已验收）
 
 源码 `858c677`，从 git archive 干净导出构建，未包含工作区未提交实验材料。试用包 `release/Worket-loop-858c677.zip`；SHA-256 `7422b4737141417f4e3b69824afaafd365ac63c75a3dcd4387d9ee7bda7a6ed7`。原包与 ZIP 解压后的签名通过，解压客户端三类完整桌面回放通过：video `2026-09-22T17-26-18-552Z`、report `17-26-29-499Z`、code `17-26-34-082Z`。打包测试采用隔离测试钥匙串，未验证正常系统钥匙串授权；版本标识仍为 0.1.4 的本地试用包，未发布 GitHub Release 或替换 Applications 中的安装。

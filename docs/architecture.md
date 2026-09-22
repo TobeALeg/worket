@@ -107,7 +107,7 @@ App Server 提供列表与完整可见历史；共享连接初始化，单请求
 
 Hook 只在工作 OPEN、目标执行者和两个标记均匹配时确认真实 session；重复点击和已待确认的交付不得重复打开目标。失败补偿恢复原来源；取消需要确认未接手，恢复前一真实绑定。旧标记不能绑定下一轮交付。恢复工作使用最后一个真实执行者。切换不取消外部应用已经执行的任务。
 
-MCP 成功读取审计使用当前 Binding、Episode 与环境，工作包读取和目标会话确认是分开的证据。通用服务每轮同步全部真实活动绑定；异步读取完成后重新检查生命周期和 binding ID，避免旧来源写入新执行片段。事件序号跨执行片段递增，externalId 去重。
+MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_receipts 将读取归属到 deliveryId/Binding，Hook 与读取可乱序到达。仅查看不确认，新交付不继承旧读取；恢复原实际会话可恢复原证据。标识用于关联，不是调用者身份认证。详见 [交接回执](specs/delivery-receipts.md)。工作包读取和目标会话确认是分开的证据。通用服务每轮同步全部真实活动绑定；异步读取完成后重新检查生命周期和 binding ID，避免旧来源写入新执行片段。事件序号跨执行片段递增，externalId 去重。
 
 ### WorkStateExtractor
 
@@ -309,7 +309,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 `server/workflow.mjs` 仅串行调用 Provider 做分块提取和聚合；`server/service.mjs` 负责主体验证、预占调用额度、元数据以及短时结果。服务器源码排除在桌面发布包外。客户端 `WorketAIClient` 只发请求内 source key、顺序、文本和显式附件范围，safeStorage 保护 Worket 访问令牌。管理员签发的 RS256 身份与撤销由 managed service 提供；公开用户自助登录与 HTTPS 部署仍待接入。
 
-`createWorkFromDefinition` 在单个事务里创建无执行片段/无绑定的新工作，写入本地采用定义与输入事件。`pending_dispatches` 只表达交付意图，真实 Hook 到达后才建立 ExecutionEpisode/CaptureBinding；MCP 读取独立记证。`WorkPackageBuilder` 保留旧 Handoff 字段，以 `workPackage.packageVersion=1` 扩展 START/CONTINUE、固定定义、本次输入与本地资料。
+`createWorkFromDefinition` 在单个事务里创建无执行片段/无绑定的新工作，写入本地采用定义与输入事件。`pending_dispatches` 表达交付意图；实际启动交接创建 pending ExecutionEpisode/CaptureBinding，真实 Hook 到达后确认会话。MCP 读取以本次 deliveryId 独立记证。`WorkPackageBuilder` 保留旧 Handoff 字段，以 `workPackage.packageVersion=1` 扩展 START/CONTINUE、固定定义、本次输入与本地资料。
 
 数据库 `user_version=2` 升级前保存 `.before-distillation-v1.bak`。旧实例及 GENERAL 定义不改身份。未来更高版本的库被本应用拒绝；真实采集绑定表迁至 `capture_bindings_v2`，原表名保留升级屏障，使基线旧二进制初始化失败，回滚必须恢复备份。取消记录时一并移除工具管理的迁移备份，避免备份保留已删正文。取消和发布在本地事务串行裁决；删除来源还清理快照文件文本、来源摘录与失效草稿，并排队取消远端。
 

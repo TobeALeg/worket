@@ -38,7 +38,7 @@ test("桌面闭环必须同时具有真实 binding、MCP 调用和可见回复",
     {
       kind: "tool.call", episodeId: "episode-1", environmentType: "WORKBUDDY_DESKTOP",
       metadata: {
-        toolName: "get_work_context", outcome: "success", auditId: "audit-1",
+        toolName: "get_work_context", outcome: "success", auditId: "audit-1", deliveryMatched: true, deliveryId: "delivery-1",
         bindingId: "binding-1", conversationId: "desktop-session-1"
       }
     },

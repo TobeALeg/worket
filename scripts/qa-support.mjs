@@ -43,8 +43,10 @@ export function desktopRoundtripIssues({ work, archiveEvents, beforeEventCount, 
       && event.environmentType === "WORKBUDDY_DESKTOP"
       && event.metadata?.toolName === "get_work_context"
       && event.metadata?.outcome === "success"
+      && event.metadata?.deliveryMatched === true
+      && typeof event.metadata?.deliveryId === "string"
       && event.metadata?.bindingId === binding?.id
-      && event.metadata?.conversationId === binding?.conversationId
+      && (event.metadata?.conversationId === binding?.conversationId || event.metadata?.conversationId === `pending:${event.metadata.deliveryId}`)
   );
   const successfulResult = successfulCall
     ? sameEpisodeEvents.find(

@@ -22,7 +22,7 @@ export function buildWorkBootstrap(input: WorkBootstrapInput): string {
     `当前任务：${input.currentTask || "请先读取工作记录确认当前状态"}`,
     `下一步：${input.nextStep || "调用 Worket MCP 获取工作上下文"}`,
     "",
-    `请先调用 Worket MCP 的 get_work_context，参数 work_id=${input.workId}。`,
+    `请先调用 Worket MCP 的 get_work_context，参数 work_id=${input.workId}${input.deliveryId ? `，delivery_id=${input.deliveryId}` : ""}。`,
     "不要仅根据这条启动指令猜测背景；需要核验时再调用 get_work_archive。",
     "",
     "当前可能需要的资料：",

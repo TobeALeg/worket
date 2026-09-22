@@ -68,7 +68,7 @@ try {
   const after = createWorkCore({ databasePath });
   try {
     assert.equal(after.definitions.db.prepare('SELECT payload_json FROM handoff_packages WHERE id=?').get(prior.id).payload_json, priorRow);
-    assert.ok(after.getWork(work.instance.id).packageReadAt);
+    assert.equal(after.getWork(work.instance.id).packageReadAt, null, 'inspection without a delivery does not confirm an executor');
     assert.equal(after.getWork(blocked.instance.id).packageReadAt, null);
     assert.equal(after.getLatestHandoffPackage(blocked.instance.id).id, priorBlocked.id);
     result.checks.immutableHistoryAndNoFalseReceipt = true;

@@ -646,7 +646,7 @@ test("A19 actual Hook binding and MCP read evidence gate reusable dispatch; laun
     method: "tools/call",
     params: {
       name: "get_work_context",
-      arguments: { work_id: work.instance.id },
+      arguments: { work_id: work.instance.id, delivery_id: core.getWork(work.instance.id)!.packageDeliveryId },
     },
   });
   assert.ok(!response.error);
@@ -804,8 +804,13 @@ test("A09 malformed remote result becomes FAILED instead of polling as RUNNING f
   f.core.close();
 });
 
-test('MCP read preceding Hook is retained independently of the later session binding',async()=>{
- const f=await setup(),definition=publish(f,await review(f)),work=create(f,definition);f.core.definitions.db.prepare("INSERT INTO pending_dispatches VALUES (?,?,'WAITING',NULL)").run(work.instance.id,cid());const {WorkPetMcpHandler}=await import('../../dist/bridge/mcp-handler.js');const mcp=new WorkPetMcpHandler(f.core);mcp.handle({id:1,method:'tools/call',params:{name:'get_work_context',arguments:{work_id:work.instance.id}}});assert.ok(f.core.getWork(work.instance.id)!.packageReadAt);assert.equal(f.core.getWork(work.instance.id)!.activeBinding,null);f.core.close();
+test('uncorrelated MCP inspection never confirms a pending dispatch', async () => {
+ const f=await setup(), definition=publish(f,await review(f)), work=create(f,definition);
+ f.core.definitions.db.prepare("INSERT INTO pending_dispatches VALUES (?,?,'WAITING',NULL)").run(work.instance.id,cid());
+ const {WorkPetMcpHandler}=await import('../../dist/bridge/mcp-handler.js');
+ const response: any = new WorkPetMcpHandler(f.core).handle({id:1,method:'tools/call',params:{name:'get_work_context',arguments:{work_id:work.instance.id}}});
+ assert.equal(JSON.parse(response.result.content[0].text).deliveryReceipt.acknowledged,false);
+ assert.equal(f.core.getWork(work.instance.id)!.packageReadAt,null); assert.equal(f.core.getWork(work.instance.id)!.activeBinding,null); f.core.close();
 });
 
 test('cancel while reading capabilities never submits source content afterward',async()=>{

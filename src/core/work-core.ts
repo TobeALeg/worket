@@ -1,3 +1,4 @@
+import { PackageReceipts } from './package-receipts.js';
 import { existsSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { migrateDefinitions } from '../definitions/migration.js';
@@ -67,6 +68,7 @@ function emptyWorkState(): WorkState {
 export class SqliteWorkCore implements WorkCore {
   readonly #database: DatabaseSync;
   readonly #databasePath: string;
+  readonly #packageReceipts: PackageReceipts;
   readonly definitions: DefinitionRepository;
   readonly #now: () => string;
   readonly #id: () => string;
@@ -81,6 +83,7 @@ export class SqliteWorkCore implements WorkCore {
     if (storageVersion === 0) createSchema(this.#database);
     migrateDefinitions(this.#database, options.databasePath);
     migrateStateProgress(this.#database);
+    this.#packageReceipts = new PackageReceipts(this.#database);
     this.definitions = new DefinitionRepository(this.#database, join(dirname(options.databasePath), "definition-materials"));
   }
 
@@ -285,11 +288,20 @@ export class SqliteWorkCore implements WorkCore {
     const activeEpisode = episodes.find((episode) => episode.status === "ACTIVE") ?? null;
     const activeBinding = bindings.find((binding) => binding.status === "ACTIVE") ?? null;
 
+    const receipt = this.#packageReceipts.find(activeBinding);
+    // Compatibility is scoped to the same actual conversation, never another delivery.
+    const legacyBindings = activeBinding && !receipt ? new Set(bindings.filter(binding =>
+      binding.adapter === activeBinding.adapter && binding.conversationId === activeBinding.conversationId &&
+      !/^(pending|waiting):/.test(binding.conversationId)).map(binding => binding.id)) : new Set<string>();
+    const legacyRead = sourceArchive.findLast(event => event.kind === 'tool.result' &&
+      event.metadata.toolName === 'get_work_context' && event.metadata.outcome === 'success' &&
+      event.metadata.deliveryMatched === undefined && legacyBindings.has(String(event.metadata.bindingId)));
     return {
       definition,
       instance,
       record: { id: instanceRow.r_id as string, workInstanceId },
-      ...(definition.kind === "REUSABLE" ? { packageReadAt: this.#database.prepare("SELECT read_at FROM pending_dispatches WHERE work_id=?").get(workInstanceId)?.read_at as string | null ?? null } : {}),
+      packageDeliveryId: receipt?.delivery_id ?? null,
+      packageReadAt: receipt ? receipt.read_at : legacyRead?.timestamp ?? null,
       episodes,
       bindings,
       activeEpisode,
@@ -558,6 +570,7 @@ export class SqliteWorkCore implements WorkCore {
           startedAt,
         );
       this.#insertCaptureBinding(bindingId, workInstanceId, episodeId, input.source);
+      this.#packageReceipts.register(this.#requireWork(workInstanceId).activeBinding!);
       this.#database
         .prepare(
           `UPDATE work_instances SET status = 'OPEN', updated_at = ? WHERE id = ?`,
@@ -592,6 +605,7 @@ export class SqliteWorkCore implements WorkCore {
         )
         .run(episodeId, workInstanceId, JSON.stringify(input.executor), JSON.stringify(input.environment), startedAt);
       this.#insertCaptureBinding(bindingId, workInstanceId, episodeId, input.source);
+      this.#packageReceipts.register(this.#requireWork(workInstanceId).activeBinding!);
       this.#database
         .prepare("UPDATE work_instances SET updated_at = ? WHERE id = ?")
         .run(startedAt, workInstanceId);
@@ -619,6 +633,11 @@ export class SqliteWorkCore implements WorkCore {
       .run(conversationId, sourceLocator ?? null, workInstanceId, adapter, previousConversationId);
     if (result.changes !== 1) throw new Error("ACTIVE_BINDING_NOT_FOUND");
     return this.#requireWork(workInstanceId);
+  }
+
+  recordPackageRead(workInstanceId: string, deliveryId: string): boolean {
+    const work = this.#requireWork(workInstanceId);
+    return work.instance.status === 'OPEN' && this.#packageReceipts.record(work.activeBinding, deliveryId, this.#now());
   }
 
   createHandoffPackage(workInstanceId: string): HandoffPackage {

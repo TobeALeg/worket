@@ -49,7 +49,7 @@ export class WorkPetMcpHandler {
                   "读取可直接接力的结构化 Work State；不包含完整聊天历史。",
                 inputSchema: {
                   type: "object",
-                  properties: { work_id: { type: "string" } },
+                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" } },
                   required: ["work_id"],
                 },
               },
@@ -89,16 +89,22 @@ export class WorkPetMcpHandler {
         const work = this.#core.getWork(workId);
         if (!work) throw new Error("WORK_NOT_FOUND");
         if (name === "get_work_context") {
+          const deliveryId = args.delivery_id;
+          if (deliveryId !== undefined && (typeof deliveryId !== 'string' ||
+              work.instance.status !== 'OPEN' || deliveryId !== work.packageDeliveryId)) throw new Error('DELIVERY_MISMATCH');
           // Historical handoffs stay immutable; a current read must also recheck
           // the pinned materials and input files before recording read success.
           const handoff = this.#core.createHandoffPackage(workId);
+          const acknowledged = typeof deliveryId === "string";
           const result = toolResult({
             ...handoff,
+            deliveryReceipt: { acknowledged },
             executionEpisodes: work.episodes,
             captureBindings: work.bindings,
             ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
           });
-          this.#recordToolReadSuccess(workId, name, request.id);
+          this.#recordToolReadSuccess(workId, name, request.id, acknowledged, typeof deliveryId === "string" ? deliveryId : undefined);
+          if (acknowledged && !this.#core.recordPackageRead(workId, deliveryId)) throw new Error("DELIVERY_MISMATCH");
           return { jsonrpc: "2.0", id, result };
         }
         if (name === "get_work_archive") {
@@ -142,12 +148,10 @@ export class WorkPetMcpHandler {
     workId: string,
     toolName: string,
     requestId: string | number | null,
+    deliveryMatched = false,
+    deliveryId?: string,
   ): void {
     const work = this.#core.getWork(workId);
-    if (toolName === "get_work_context" && work?.instance.status === "OPEN")
-      this.#core.definitions.db
-        .prepare("UPDATE pending_dispatches SET read_at=? WHERE work_id=?")
-        .run(new Date().toISOString(), workId);
     if (
       work?.instance.status !== "OPEN" ||
       !work.activeBinding ||
@@ -162,6 +166,8 @@ export class WorkPetMcpHandler {
       toolName,
       access: "read",
       outcome: "success",
+      deliveryMatched,
+      ...(deliveryId ? { deliveryId } : {}),
       auditId,
       bindingId: work.activeBinding.id,
       conversationId: work.activeBinding.conversationId,
@@ -171,7 +177,7 @@ export class WorkPetMcpHandler {
         externalId: `${auditId}:call`,
         sequence,
         kind: "tool.call",
-        content: `${work.activeEpisode.executor.name} MCP 调用 ${toolName}`,
+        content: `MCP 调用 ${toolName}`,
         timestamp,
         executorType: "TOOL",
         environmentType: work.activeEpisode.environment.type,
@@ -183,7 +189,7 @@ export class WorkPetMcpHandler {
         externalId: `${auditId}:result`,
         sequence: sequence + 1,
         kind: "tool.result",
-        content: `${work.activeEpisode.executor.name} MCP 已成功读取 ${toolName}`,
+        content: `MCP 已成功读取 ${toolName}${deliveryMatched ? "（本次交接已确认读取）" : "（仅查看）"}`,
         timestamp,
         executorType: "TOOL",
         environmentType: work.activeEpisode.environment.type,

@@ -148,6 +148,7 @@ export type SourceEventInput = Omit<
 
 export interface WorkSnapshot {
   packageReadAt?: string | null;
+  packageDeliveryId?: string | null;
   definition: WorkDefinition;
   instance: WorkInstance;
   record: WorkRecord;
@@ -231,6 +232,7 @@ export interface WorkCore {
     conversationId: string,
     sourceLocator?: string,
   ): WorkSnapshot;
+  recordPackageRead(workInstanceId: string, deliveryId: string): boolean;
   createHandoffPackage(workInstanceId: string): HandoffPackage;
   getLatestHandoffPackage(workInstanceId: string): HandoffPackage | null;
   addArtifactRef(workInstanceId: string, artifact: ArtifactRefInput): WorkSnapshot;
