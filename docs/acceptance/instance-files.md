@@ -10,4 +10,6 @@
 
 这是合成输入的真实 Electron、SQLite、HTTP MCP 路径；外部 Agent 启动和历史边界受控，文件选择由隔离路径提供。新增供应商调用 0，未声称真实业务验收、跨机器文件传输或正常钥匙串授权。
 
-入口 `npm run qa:instance-files`；原始运行目录在 output/instance-files，摘要及失败见 [机器结果](instance-files-results.json)。干净构建及 ZIP 解压验收待完成。
+入口 `npm run qa:instance-files`；原始运行目录在 output/instance-files，摘要及失败见 [机器结果](instance-files-results.json)。源码 c08d9eb 已从 git archive 干净构建，原包及解压签名通过。试用包 `release/Worket-loop-c08d9eb.zip`，SHA-256 `9ead3f9835ccb333ac89d5b93b028818086bbf743c2632fe8013730b3df155e4`。ZIP 解压实例文件链路 `2026-09-22T22-36-49-429Z` 与交接回执回归 `22-37-29-804Z` 均通过。
+
+后台维持 44dd3ba，本轮无需服务协议或部署变更；未替换 Applications 安装，未发布 GitHub Release。BP B003 已补充实例材料版本的价值与证据边界。

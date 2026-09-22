@@ -37,7 +37,42 @@
     "checks": {},
     "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'第二期脚本' !== '第一期脚本'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-instance-files.mjs:71:10"
   },
-  "package": null,
+  "package": {
+    "sourceCommit": "c08d9eb",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-c08d9eb.zip",
+    "sha256": "9ead3f9835ccb333ac89d5b93b028818086bbf743c2632fe8013730b3df155e4",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-extract-nzp9bvnz/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
   "actualProviderCalls": 0,
-  "externalAgent": false
+  "externalAgent": false,
+  "sourceCommit": "c08d9eb",
+  "packagedE2E": {
+    "run": "2026-09-22T22-36-49-429Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-aYHr9v",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "distinctInputsVersionsAndOverrides": true,
+      "explicitUpdateIsolatedAndReceiptReset": true,
+      "legacyBlockedAndExplicitlyRepaired": true
+    }
+  },
+  "packagedReceipts": {
+    "run": "2026-09-22T22-37-29-804Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-delivery-e2e-Y8TOSY",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "checks": {
+      "readBeforeHookRetained": true,
+      "noInheritedOrUncorrelatedReceipt": true
+    }
+  },
+  "backendSourceCommit": "44dd3ba",
+  "quotaUsedPercent": 73
 }
