@@ -1,0 +1,9 @@
+{
+  "files": {
+    "docs/specs/repetition-semantic-trials.md": "5b3fec46cadd171419d1438636c0d60e5b8e4d9e539d74dfba76c9b158c05d3c",
+    "scripts/lib/repetition-semantic-cases.mjs": "aa3b8cc36066f2fe63d1440347ca21fa6733914e587865d0347613ee8fa2b522"
+  },
+  "maxProviderCalls": 6,
+  "expectedCases": 3,
+  "businessAcceptance": false
+}

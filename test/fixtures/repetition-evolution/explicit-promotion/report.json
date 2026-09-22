@@ -1,0 +1,39 @@
+{
+  "id": "explicit-promotion",
+  "status": "FAILED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-RRdZ8m",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-43-04-583Z/explicit-promotion",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2908,
+      "completion_tokens": 7842,
+      "total_tokens": 10750,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7492
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 348
+    },
+    {
+      "prompt_tokens": 4509,
+      "completion_tokens": 12066,
+      "total_tokens": 16575,
+      "prompt_tokens_details": {
+        "cached_tokens": 3584
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 11442
+      },
+      "prompt_cache_hit_tokens": 3584,
+      "prompt_cache_miss_tokens": 925
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "INVALID_MODEL_OUTPUT\n+ actual - expected\n\n+ 'FAILED'\n- 'AWAITING_REVIEW'\n"
+}

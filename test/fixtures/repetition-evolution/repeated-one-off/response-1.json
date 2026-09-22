@@ -1,0 +1,70 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-event-2-instance-english",
+        "text": "本期活动因外国来宾临时增加英文字幕；仅限本期，并非以后都双语。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-2-event-2-instance-english",
+        "text": "本期因发给海外访客，临时增加英文字幕；仅本期特例，不改变后续默认中文字幕要求。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-2/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-3-event-2-instance-english",
+        "text": "本期因展会使用，临时增加英文字幕；仅限这一期，长期约定仍只有中文字幕。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-3/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-2-reusable-chinese-only",
+        "text": "默认长期字幕方案为仅中文字幕，不因单期特例改为长期双语；后续默认中文字幕要求保持不变。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-2/event-2",
+          "work-3/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/event-3",
+      "work-2/event-1",
+      "work-2/event-2",
+      "work-2/event-3",
+      "work-3/event-1",
+      "work-3/event-2",
+      "work-3/event-3"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 3242,
+    "completion_tokens": 3273,
+    "total_tokens": 6515,
+    "prompt_tokens_details": {
+      "cached_tokens": 2304
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2909
+    },
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 938
+  },
+  "configuredModel": "deepseek-flash"
+}

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Original failures retained. Synthetic sources, actual unmodified provider responses. Ambiguous expectation is not relabeled success. Not blind or business acceptance.",
+  "cases": [
+    {
+      "id": "one-instance-echo",
+      "scenario": "one-instance-echo",
+      "run": "2026-09-22T23-43-04-583Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "3fd55c889838533a34fdbf7041ff3261edc93d00dce1ae48a820e6053d3b5394",
+        "response-1.json": "7746575a0803539e6ea009fe699da6ad23ca097276f47a88dd5f8b60b43d7f95",
+        "request-2.json": "3daa6c4c5a01f337a6901db46d467570b25cfdbd674a2e3560dbee4e16622f5c",
+        "response-2.json": "2616fdce6815a1b13e81c8f7c1566d801f8b95b561c0f47ba03984e040fe5080",
+        "report.json": "449b47da07851b6e5e1e5ed1702169044611c691b010f8135f02b418cdcee654"
+      }
+    },
+    {
+      "id": "repeated-one-off",
+      "scenario": "repeated-one-off",
+      "run": "2026-09-22T23-43-04-583Z",
+      "outcome": "AMBIGUOUS_BASELINE_FAILED_ORIGINAL_EXPECTATION",
+      "sha256": {
+        "request-1.json": "5a1dd3f8dd44b7d383e35fd746d0c73a4404e9253d9bd00a6dc500c907d094b2",
+        "response-1.json": "f8aec2eebfcf5e4b750d111ce7fa0ddc1474d4817101de6ef23c6c1501098bcf",
+        "request-2.json": "9473907ecfa3185213c6f3a0e74d7e8c456d245987023dbfecf1ba568b9b66e5",
+        "response-2.json": "6dd05892a5b77134a336cf73da13aa85fd6de4b402c19208852f7b0f5f3b07c7",
+        "report.json": "f742d7f790d20658ed7f2231d2fdb68547789f496f351e5129671748edf7be89"
+      }
+    },
+    {
+      "id": "explicit-promotion",
+      "scenario": "explicit-promotion",
+      "run": "2026-09-22T23-43-04-583Z",
+      "outcome": "ACCEPTED_AFTER_IDENTICAL_RELATION_NORMALIZATION",
+      "sha256": {
+        "request-1.json": "1a7c9c6c50524d729cf81f9f90a73ae0813c9476446bdc5146893a1b0174623b",
+        "response-1.json": "89feda5d8ff2b155a2f939e4e82c76cd7611e10a6915b1a3974da476f313541b",
+        "request-2.json": "1b73b510ec507f8a56759ebc004106fe463795c659584af89a3c75dfb442e380",
+        "response-2.json": "77b05fa12aa3715581659200c696bd4bf2650111af04072a665703c31037ac26",
+        "report.json": "e8db41cb979afc67c789ee289f23e90c1a189df86515186c71d9ed27e49d82e6"
+      }
+    },
+    {
+      "id": "repeated-instance-scope",
+      "scenario": "repeated-instance-scope",
+      "run": "2026-09-22T23-48-07-488Z",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "1893a7c5d924fc22abf3ba4b653b33120825ba3bb791fd0d2551ed84f259cdb5",
+        "response-1.json": "16d9925193dd0faae4db865f8aa08f499f00ae7a6a03146e0a406492eee322e1",
+        "request-2.json": "8fb3078d7eae479711a788a573f5e2f5dc148c92bb4c24a554ea07209edacb22",
+        "response-2.json": "a45b854892b50a7a2b5d243e5aa8f44af96b4ccd57fbd71dbaa0f7ab4eaf66bd",
+        "report.json": "d63f7fdf906725a74eea0b2036b3e098edced638f5d6fccf6ae0666d29e921b0"
+      }
+    }
+  ]
+}

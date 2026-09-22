@@ -1,0 +1,130 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-2-req-1",
+        "text": "本期视频增加英文字幕（一次性例外）。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-req-2",
+        "text": "后续暂时不据本期例外调整默认规则。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": "work-1/event-4-req-1"
+      },
+      {
+        "id": "work-1/event-4-req-1",
+        "text": "从下一期开始，所有后续视频默认增加英文字幕，不再只限本期，以后无需每期另行说明。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 5,
+      "processedEvents": 5,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3",
+        "work-1/event-4",
+        "work-1/event-5"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "8a0b0b876101a7d4937a7d1dee156ac2e1b657322766a3315e5e60ab0699153a",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "english_subtitles_this_issue",
+            "text": "本期视频增加英文字幕（一次性例外）。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "先按本期例外加英文字幕"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "仅本期"
+            }
+          }
+        },
+        {
+          "kind": "SUPPLEMENTS",
+          "section": "constraints",
+          "item": {
+            "key": "english_subtitles_default",
+            "text": "从下一期开始，所有后续视频默认增加英文字幕，不再只限本期，以后无需每期另行说明。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-4",
+                  "excerpt": "从下一期开始，所有视频都默认中英双语字幕，以后不用我每期再说。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE",
+              "condition": "从下一期开始，适用于所有后续视频",
+              "relation": {
+                "kind": "SUPPLEMENTS",
+                "target": "constraints.subtitles"
+              }
+            }
+          },
+          "target": "constraints.subtitles"
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4509,
+    "completion_tokens": 12066,
+    "total_tokens": 16575,
+    "prompt_tokens_details": {
+      "cached_tokens": 3584
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 11442
+    },
+    "prompt_cache_hit_tokens": 3584,
+    "prompt_cache_miss_tokens": 925
+  },
+  "configuredModel": "deepseek-flash"
+}

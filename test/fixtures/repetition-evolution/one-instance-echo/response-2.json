@@ -1,0 +1,118 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "req-event2-bilingual-exception",
+        "text": "本期在原有中文字幕之外增加英文字幕，只做这一次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-event6-chinese-subtitles-reaffirmed",
+        "text": "以后仍按原来的中文字幕要求。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-6"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 7,
+      "processedEvents": 7,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3",
+        "work-1/event-4",
+        "work-1/event-5",
+        "work-1/event-6",
+        "work-1/event-7"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "8a0b0b876101a7d4937a7d1dee156ac2e1b657322766a3315e5e60ab0699153a",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "english_subtitles_exception",
+            "text": "本期在原有中文字幕之外增加英文字幕，只做这一次。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "这期是发给外籍嘉宾的特例：这期在原有中文字幕之外加英文字幕，只做这一次。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "仅本期（发给外籍嘉宾的特例）"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.subtitles",
+          "item": {
+            "key": "subtitles",
+            "text": "以后仍按原来的中文字幕要求。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-6",
+                  "excerpt": "以后仍按原来的中文字幕要求。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4622,
+    "completion_tokens": 7439,
+    "total_tokens": 12061,
+    "prompt_tokens_details": {
+      "cached_tokens": 3200
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6675
+    },
+    "prompt_cache_hit_tokens": 3200,
+    "prompt_cache_miss_tokens": 1422
+  },
+  "configuredModel": "deepseek-flash"
+}

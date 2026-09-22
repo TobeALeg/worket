@@ -1,0 +1,250 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "w1_english_instance",
+        "text": "本期活动因外国来宾临时增加英文字幕；仅限本期，不改为长期双语。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "w2_english_instance",
+        "text": "本期因发给海外访客临时增加英文字幕；仅本期特例，不改变后续默认中文字幕要求。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-2/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "w3_english_instance",
+        "text": "本期因展会使用临时增加英文字幕；仅限这一期，长期约定仍只有中文字幕。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-3/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "subtitles_chinese_only",
+        "text": "长期默认仅提供中文字幕，不改为默认中英双语。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-2/event-2",
+          "work-3/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "subtitles_reaffirmed",
+        "text": "每期视频必须包含中文字幕。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-2/event-2",
+          "work-3/event-2"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 9,
+      "processedEvents": 9,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3",
+        "work-2/event-1",
+        "work-2/event-2",
+        "work-2/event-3",
+        "work-3/event-1",
+        "work-3/event-2",
+        "work-3/event-3"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "8a0b0b876101a7d4937a7d1dee156ac2e1b657322766a3315e5e60ab0699153a",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "w1_english_subtitles_instance",
+            "text": "本期活动因外国来宾临时增加英文字幕；仅限本期，不改为长期双语。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "本期活动又有外国来宾，这次仍然临时加英文字幕；仅这期，不是以后都双语。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本期活动有外国来宾"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "w2_english_subtitles_instance",
+            "text": "本期因发给海外访客临时增加英文字幕；仅本期特例，不改变后续默认中文字幕要求。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-2",
+                  "eventId": "event-2",
+                  "excerpt": "这期发给海外访客，也加英文字幕，但只是本期特例，别改后续默认的中文字幕要求。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本期面向海外访客"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "w3_english_subtitles_instance",
+            "text": "本期因展会使用临时增加英文字幕；仅限这一期，长期约定仍只有中文字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-3",
+                  "eventId": "event-2",
+                  "excerpt": "本期给展会使用，例外加英文字幕，仅限这一期，长期约定仍只有中文字幕。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE",
+              "condition": "本期用于展会"
+            }
+          }
+        },
+        {
+          "kind": "SUPPLEMENTS",
+          "section": "constraints",
+          "target": "constraints.subtitles",
+          "item": {
+            "key": "subtitles_chinese_only",
+            "text": "长期默认仅提供中文字幕，不改为默认中英双语。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "不是以后都双语"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-2",
+                  "eventId": "event-2",
+                  "excerpt": "别改后续默认的中文字幕要求"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-3",
+                  "eventId": "event-2",
+                  "excerpt": "长期约定仍只有中文字幕"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "constraints",
+          "target": "constraints.subtitles",
+          "item": {
+            "key": "subtitles",
+            "text": "每期视频必须包含中文字幕。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "不是以后都双语"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-2",
+                  "eventId": "event-2",
+                  "excerpt": "别改后续默认的中文字幕要求"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-3",
+                  "eventId": "event-2",
+                  "excerpt": "长期约定仍只有中文字幕"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4853,
+    "completion_tokens": 10545,
+    "total_tokens": 15398,
+    "prompt_tokens_details": {
+      "cached_tokens": 3584
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 9290
+    },
+    "prompt_cache_hit_tokens": 3584,
+    "prompt_cache_miss_tokens": 1269
+  },
+  "configuredModel": "deepseek-flash"
+}

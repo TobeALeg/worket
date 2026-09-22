@@ -1,0 +1,73 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-2-req-1",
+        "text": "先按本期例外加英文字幕",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2-req-2",
+        "text": "后续暂时不改。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2"
+        ],
+        "replacedBy": "work-1/event-4-req-1"
+      },
+      {
+        "id": "work-1/event-3-req-1",
+        "text": "本次中英双语",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3-req-2",
+        "text": "其他期仍只有中文字幕。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-4-req-1"
+      },
+      {
+        "id": "work-1/event-4-req-1",
+        "text": "从下一期开始，所有视频都默认中英双语字幕，以后不用我每期再说。保留原有中文字幕并加英文字幕，适用于所有后续视频，不再只限本期。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/event-3",
+      "work-1/event-4",
+      "work-1/event-5"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2908,
+    "completion_tokens": 7842,
+    "total_tokens": 10750,
+    "prompt_tokens_details": {
+      "cached_tokens": 2560
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7492
+    },
+    "prompt_cache_hit_tokens": 2560,
+    "prompt_cache_miss_tokens": 348
+  },
+  "configuredModel": "deepseek-flash"
+}

@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 范围提升与冗余关系（2026-09-23）
+
+server/normalize-evolution.mjs 在 validateResult 前仅删除与 change.kind/target 完全一致且无额外字段的 item.rule.relation；规范校验器不变。缺失/不一致关系、非法目标、范围冲突仍拒绝。自然语言及来源不修改，提示版本不变，旧客户端接收同一规范格式。 证据见 [验收](acceptance/repetition-evolution.md)。
+
 ## 候选来源变化审阅（2026-09-23）
 
 source-review.ts 按本次 Job 快照选择范围，复用来源修订链映射到本地最新观察，返回变化集合/hash。renderer 展示原文与现文、确认当前集合；DefinitionRepository.publish 在事务内重算并拒绝过期确认，审计仅保留引用/hash。已发布基准历史依据、文件固定版本和外部未同步内容不参与本次对照。 详见 [规格](specs/source-review.md) 与 [验收](acceptance/source-review.md)。

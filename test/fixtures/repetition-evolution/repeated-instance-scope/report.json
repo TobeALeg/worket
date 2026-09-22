@@ -1,0 +1,47 @@
+{
+  "id": "repeated-instance-scope",
+  "status": "PASSED",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-PcquOm",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-22T23-48-07-488Z/repeated-instance-scope",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 3239,
+      "completion_tokens": 5022,
+      "total_tokens": 8261,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4756
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 807
+    },
+    {
+      "prompt_tokens": 4752,
+      "completion_tokens": 3466,
+      "total_tokens": 8218,
+      "prompt_tokens_details": {
+        "cached_tokens": 3712
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2446
+      },
+      "prompt_cache_hit_tokens": 3712,
+      "prompt_cache_miss_tokens": 1040
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "PUBLISH",
+    "expectedVersion": 1,
+    "reason": "repetition cannot turn an explicit instance requirement into a reusable obligation"
+  },
+  "acceptanceLabels": [
+    "成片交付 MP4。",
+    "每期视频必须包含中文字幕。"
+  ]
+}

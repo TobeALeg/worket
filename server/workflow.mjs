@@ -1,3 +1,4 @@
+import { normalizeEvolutionRelations } from './normalize-evolution.mjs';
 import { SKILL_PROMPT } from './skill-prompt.mjs';
 import { EVIDENCE_PROMPT } from './evidence-prompt.mjs';
 import { RULES_PROMPT } from "./rules-prompt.mjs";
@@ -161,6 +162,7 @@ export async function extractDefinition(
     model: provider.model,
   };
   result.coverage.processedChunks = chunks.length;
+  if (request.evolution) normalizeEvolutionRelations(result);
   validateResult(result, request);
   const skillRoles = result.content?.materialRoles ?? result.evolution?.changes.filter(c => c.section === 'materialRoles').map(c => c.item) ?? [];
   for (const item of skillRoles) if (item.kind === 'SKILL') {
