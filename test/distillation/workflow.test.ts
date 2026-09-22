@@ -49,7 +49,7 @@ test("new coordination is opt-in; legacy clients keep a compatible effective con
   assert.equal(old.value.content.constraints[0].rule, undefined);
   const modern = await run("user.prompt", () => {}, true);
   assert.ok(modern.prompts.every(p => p.includes('RULE COORDINATION')));
-  assert.equal(modern.value.versions.prompt, 'work-definition-v2.1');
+  assert.equal(modern.value.versions.prompt, 'work-definition-v2.4');
   assert.equal(modern.value.content.constraints[0].rule.scope, 'UNCERTAIN');
   assert.ok(modern.value.issues.some(i => i.blocking));
 });

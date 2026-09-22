@@ -30,7 +30,7 @@ export type DefinitionContent = {
   constraints: DefinedItem[];
   acceptanceCriteria: DefinedItem[];
   methods: (DefinedItem & { obligation: "REFERENCE" | "REQUIRED" })[];
-  materialRoles: (DefinedItem & { required: boolean })[];
+  materialRoles: (DefinedItem & { required: boolean; kind?: "SKILL" })[];
 };
 export type Issue = {
   id: string;
@@ -60,6 +60,7 @@ export type ExtractionRequest = {
   schemaVersion: 1;
   ruleSchemaVersion?: 1;
   evidenceSchemaVersion?: 1;
+  skillSchemaVersion?: 1;
   evolution?: EvolutionBaseline;
   snapshotHash: string;
   sources: { key: string; events: WireEvent[] }[];
@@ -98,6 +99,7 @@ export const LIMITS = {
   metadataTtlMs: 30 * 86400_000,
   chunkBytes: 24_000,
   maxMaterials: 20,
+  maxSkillFiles: 512,
   maxMaterialBytes: 50 * 1024 * 1024,
   dailyCalls: 100,
 };
@@ -246,13 +248,16 @@ export function validateContent(
   }
   for (const item of value.methods as Record<string, unknown>[])
     ensure(["REFERENCE", "REQUIRED"].includes(String(item.obligation)));
-  for (const item of value.materialRoles as Record<string, unknown>[])
+  for (const item of value.materialRoles as Record<string, unknown>[]) {
     ensure(typeof item.required === "boolean");
+    ensure(item.kind === undefined || item.kind === "SKILL", "INVALID_INPUT");
+  }
 }
 export function validateRequest(
   value: unknown,
 ): asserts value is ExtractionRequest {
   object(value);
+  ensure(value.skillSchemaVersion === undefined || value.skillSchemaVersion === 1, "INVALID_INPUT");
   ensure(value.evidenceSchemaVersion === undefined || value.evidenceSchemaVersion === 1, "INVALID_INPUT");
   ensure(value.schemaVersion === 1);
   string(value.snapshotHash);

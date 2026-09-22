@@ -189,7 +189,7 @@ test("desktop collection: opted source, original candidate, edits, publication; 
   const work = source(core);
   const remote = new ImprovementStore(":memory:");
   const client: any = new FixtureClient();
-  client.capabilities = async () => ({ improvement: remote.policy(), ruleSchemaVersions: [1] });
+  client.capabilities = async () => ({ improvement: remote.policy(), ruleSchemaVersions: [1], skillSchemaVersions: [1] });
   client.improvementIdentity = () => "fixture";
   client.uploadSample = async (v: any) => remote.receive("alice", v);
   client.deleteSample = async (id: string) => remote.delete(remote.key("alice", id));

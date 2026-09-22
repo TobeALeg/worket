@@ -15,7 +15,7 @@ export type EvolutionReview = {
 export function evolutionBaseline(base: Definition, effective: DefinitionContent): EvolutionBaseline {
   const project = (item: DefinitionContent['purpose']) => {
     const result: Record<string, unknown> = {};
-    for (const key of ['key', 'text', 'valueType', 'required', 'choices', 'defaultValue', 'obligation'])
+    for (const key of ['key', 'text', 'valueType', 'required', 'choices', 'defaultValue', 'obligation', 'kind'])
       if (key in item) result[key] = structuredClone((item as unknown as Record<string, unknown>)[key]);
     result.basis = { type: 'INFERRED', refs: [], rationale: '用户已确认的基准约定，不是本次新证据' };
     if (item.rule) result.rule = { scope: item.rule.scope, status: item.rule.status, ...(item.rule.condition ? { condition: item.rule.condition } : {}) };

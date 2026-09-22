@@ -1,3 +1,4 @@
+import { copySkill, verifySkill, removeSkill, type SkillBundle } from './skill-materials.js';
 import { createHash, randomUUID } from "node:crypto";
 import {
   mkdirSync,
@@ -42,6 +43,7 @@ export function transaction<T>(db: DatabaseSync, operation: () => T): T {
   }
 }
 export type Material = {
+  bundle?: SkillBundle;
   id: string;
   path: string;
   originalPath: string;
@@ -57,6 +59,7 @@ export class MaterialStore {
     ensure(stat.size <= max, "INPUT_TOO_LARGE");
     return readFileSync(path);
   }
+  copySkill(path: string, role: string): Material { return copySkill(path, this.directory, role); }
   copy(path: string, role: string): Material {
     const bytes = this.read(path);
     const material = this.freeze(bytes, role, path);
@@ -84,6 +87,7 @@ export class MaterialStore {
     };
   }
   verify(material: Material): void {
+    if (material.bundle) { verifySkill(material); return; }
     ensure(
       existsSync(material.path) &&
         hash(this.read(material.path)) === material.hash,
@@ -92,6 +96,7 @@ export class MaterialStore {
     );
   }
   remove(material: Material): void {
+    if (material.bundle) { removeSkill(material); return; }
     if (existsSync(material.path)) unlinkSync(material.path);
   }
 }

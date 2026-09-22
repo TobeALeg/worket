@@ -1,0 +1,33 @@
+{
+  "kind": "synthetic real model trials, not blind; raw bytes preserved",
+  "cases": [
+    {
+      "id": "input-value-leak",
+      "run": "2026-09-22T19-46-57-123Z",
+      "status": "KNOWN_SEMANTIC_FAILURE",
+      "sha256": {
+        "request-1.json": "4c5ef25c9c0231b0f89da586bf6456322e5d0194ed62fbcbf7a1a9da579ee0d4",
+        "response-1.json": "d3178a879c9b47289601656c1b252c2ab35aa0e848e118b05f202749a5d0fd06",
+        "request-2.json": "7798041f6b95dd97e9e3798a042d2471fb3e3e854f8f8fefb5b69b322062e804",
+        "response-2.json": "374c70aea57251d693b5608f23b59b0d0c66e054cb6447226c4a456b7c0c19e4",
+        "wire.json": "fe1e4b4eac9b11bb9612054e5d3f778e406327b1e840eceeea30f079fc6ed465",
+        "result.json": "4689deabac4cf02dc5f7f56e64ca7b0a1fc1fbafc46708b1ef39bd8e0ed3015f",
+        "report.json": "428be6c64bc625270d903de7b4a7d3f996ea398a8c765b0717cbb94c947a5735"
+      }
+    },
+    {
+      "id": "accepted",
+      "run": "2026-09-22T19-50-09-068Z",
+      "status": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "ba21851f33c228e1aaf865537178eb8ce72e7d9aea9a23eed32859296ff43ff1",
+        "response-1.json": "1e260e2d47e3984fe000303d698178be993cd89984ab9f382de0a26da7bdec77",
+        "request-2.json": "fd68fdff2feb73d0b100ad7f8d8b35621fad0473e5c0623af38312637635c026",
+        "response-2.json": "e0825be053a19800812af2679392e3c3fc83809b1fa8b31b0255d7743025a96d",
+        "wire.json": "fe1e4b4eac9b11bb9612054e5d3f778e406327b1e840eceeea30f079fc6ed465",
+        "result.json": "b93bfa80837072acbc72cc1415c35b68d48f304f398528b1f6b11ea0bf274151",
+        "report.json": "197470623cd5094c5be221e0bd7feca40e04f0adaa27d220ba476eeda78a992a"
+      }
+    }
+  ]
+}

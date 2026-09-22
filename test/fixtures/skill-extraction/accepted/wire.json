@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "ruleSchemaVersion": 1,
+  "evidenceSchemaVersion": 1,
+  "skillSchemaVersion": 1,
+  "snapshotHash": "2adbcfa2c18f2ef3ef2127f6fb3d8a8b4e087215beda4a44f3764bed1efc791b",
+  "sources": [
+    {
+      "key": "work-1",
+      "events": [
+        {
+          "key": "event-1",
+          "sequence": 1,
+          "kind": "user.prompt",
+          "content": "以后同类报告都使用 Report Builder skill，根据每次给的新主题写 Markdown 报告，每条事实注明来源。本次主题是城市交通。我这次临时用 csv-cleaner 清理数据，仅限本次；以后不用固定这个工具。Report Builder 的技能目录会由我在本机选择，不要把它内部的执行步骤变成我的报告约束。",
+          "hash": "2adbcfa2c18f2ef3ef2127f6fb3d8a8b4e087215beda4a44f3764bed1efc791b"
+        }
+      ]
+    }
+  ]
+}

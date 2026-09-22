@@ -851,3 +851,14 @@ test("MCP refuses a cached package after material loss and does not acknowledge 
     assert.equal(f.core.getLatestHandoffPackage(work.instance.id)!.id, previous.id);
   } finally { f.core.close(); }
 });
+
+test("skill protocol is checked before sending source records to an older backend", async () => {
+  const f = await setup();
+  try {
+    f.client.capabilities = async () => ({ ruleSchemaVersions: [1] });
+    const job = f.service.start({ preparationId: f.snapshot.id, expectedContentHash: f.snapshot.contentHash, consentVersion: 'worket-data-v1', commandId: cid() });
+    await new Promise(r => setImmediate(r));
+    assert.match((await f.service.get(job.id)).error!, /^SERVICE_UPGRADE_REQUIRED/);
+    assert.equal(f.client.calls, 0);
+  } finally { f.core.close(); }
+});

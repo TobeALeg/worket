@@ -18,7 +18,7 @@ async function setup() {
   const core = createWorkCore({ databasePath });
   let time = Date.now(), destination = 'service-one';
   const client = new FixtureClient();
-  client.capabilities = async () => ({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] });
+  client.capabilities = async () => ({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] });
   client.improvementIdentity = () => destination;
   client.get = async requestId => {
     const out = result(client.request);
@@ -101,7 +101,7 @@ test('stop and destination change while capabilities are pending prevent automat
       if (mutation === 'stop') await f.service.continuous.set(f.base.id, false);
       if (mutation === 'destination') f.destination('another-service');
       if (mutation === 'delete') f.core.deleteWorkPermanently(work.instance.id, { confirmation: work.instance.id });
-      resolve!({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
+      resolve!({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
       assert.equal(f.client.calls, 1, mutation);
       assert.ok(['FAILED', 'CANCELLED'].includes(f.automatic()[0].status), f.automatic()[0].status);
     } finally { f.service.close(); f.core.close(); }
@@ -119,9 +119,9 @@ test('a newer published version is the next baseline; stale pending auto request
     const content = structuredClone(draft.content); content.name += '第二版';
     const revised = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: [] });
     const v2 = f.core.definitions.publish({ draftId: revised.id, expectedRevision: revised.revision, materialBindings: {}, commandId: id() });
-    resolve!({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
+    resolve!({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
     assert.equal(f.client.calls, 1); assert.match(f.automatic()[0].error, /BASE_DEFINITION_CHANGED/);
-    f.client.capabilities = async () => ({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] });
+    f.client.capabilities = async () => ({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] });
     f.append(work, '后续又有新交互'); await f.trigger();
     assert.equal(f.client.request.evolution.contentHash, v2.contentHash);
   } finally { f.service.close(); f.core.close(); }
@@ -174,7 +174,7 @@ test('explicit retry after stopping retains the original destination across asyn
     f.client.capabilities = () => new Promise(r => resolve = r);
     const snapshot = f.core.definitions.read<any>('source_snapshots', old.snapshotId);
     const retry = f.service.retry({ jobId: old.id, expectedContentHash: snapshot.contentHash, commandId: id() });
-    f.destination('other'); resolve!({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
+    f.destination('other'); resolve!({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] }); await settle();
     const job = f.core.definitions.read<any>('distillation_jobs', retry.id);
     assert.equal(job.status, 'FAILED'); assert.match(job.error, /CONTINUOUS_STOPPED/); assert.equal(f.client.calls, 2);
   } finally { f.service.close(); f.core.close(); }

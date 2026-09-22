@@ -320,8 +320,8 @@ export class DefinitionRepository {
       : []).filter(material => !draft.evolution?.changes.some(change => change.kind === 'REPLACES' && change.target === `materialRoles.${material.role}`));
     const materials = draft.content.materialRoles.flatMap((role) => {
       const path = input.materialBindings[role.key];
-      const old = inherited.find((m) => m.role === role.key);
-      return path ? [this.materials.copy(path, role.key)] : old ? [old] : [];
+      const old = inherited.find((m) => m.role === role.key && !!m.bundle === (role.kind === "SKILL"));
+      return path ? [role.kind === "SKILL" ? this.materials.copySkill(path, role.key) : this.materials.copy(path, role.key)] : old ? [old] : [];
     });
     materials.push(...pinRuleDocuments(draft.content, inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
     ensure(

@@ -1,3 +1,4 @@
+import { dirname } from 'node:path';
 import { resolveRuleDocuments } from "./document-rules.js";
 import { ruleText, acceptanceChecks, type InstanceOverride } from "../contracts/rules.js";
 import type { WorkSnapshot, WorkState } from "../core/types.js";
@@ -14,6 +15,7 @@ export type WorkPackage = {
   acceptanceChecks?: { key: string; rule: string }[];
   ruleSources?: { rule: string; name: string; hash: string; startLine: number; endLine: number }[];
   fixedMaterials: Material[];
+  skills: { name: string; required: boolean; entrypoint: string; directory: string; hash: string; files: string[] }[];
   referenceExamples: unknown[];
   state: WorkState;
   nextStep: string | null;
@@ -40,10 +42,15 @@ export function buildWorkPackage(
   }
   if (definition)
     definition.materials.forEach((m) => repository.materials.verify(m));
+  const skills = (definition?.materials ?? []).filter(m => m.bundle).map(m => ({
+    name: definition!.content.materialRoles.find(role => role.key === m.role)!.text,
+    required: definition!.content.materialRoles.find(role => role.key === m.role)!.required,
+    entrypoint: m.path, directory: dirname(m.path), hash: m.hash, files: m.bundle!.files.map(file => file.path),
+  }));
   const binding = repository.inputs(work.instance.id);
   const checks = definition ? acceptanceChecks(definition.content, binding.ruleOverrides ?? []).map(({ key, rule }) => ({ key, rule })) : [];
   const resolved = definition ? resolveRuleDocuments(definition.content, definition.materials, repository.materials, binding.ruleOverrides ?? []) : null;
-  if (definition && resolved) { definition.content = resolved.content; definition.materials = definition.materials.filter(m => !m.role.startsWith("document:")); }
+  if (definition && resolved) { definition.content = resolved.content; definition.materials = definition.materials.filter(m => !m.role.startsWith("document:") && !m.bundle); }
   for (const spec of definition?.content.inputs ?? [])
     if (spec.valueType === "FILE" && binding.inputs[spec.key])
       repository.materials.read(String(binding.inputs[spec.key]));
@@ -59,7 +66,8 @@ export function buildWorkPackage(
     definition,
     ...binding,
     ...(resolved ? { ruleSources: resolved.sources, acceptanceChecks: checks } : {}),
-    fixedMaterials: (definition?.materials ?? []).filter(m => !m.role.startsWith("document:")),
+    skills,
+    fixedMaterials: (definition?.materials ?? []).filter(m => !m.role.startsWith("document:") && !m.bundle),
     state: Object.fromEntries(Object.entries(work.state).map(([field, items]) => [field,
       definition && ["constraints", "successCriteria"].includes(field)
         ? items.filter(i => !i.sourceMessageIds.length || !i.sourceMessageIds.every(id => work.sourceArchive.some(e => e.id === id && e.kind === "work.definition_applied"))) : items
@@ -97,6 +105,7 @@ export function packageMarkdown(value: WorkPackage): string {
       .map(([k, v]) => `- ${escapeMarkdown(k)}: ${escapeMarkdown(String(v))}`)
       .join("\n")}`,
   );
+  if (value.skills?.length) lines.push(`\n## 执行技能\n${value.skills.map(skill => `- ${escapeMarkdown(skill.name)}（${skill.required ? "必需" : "参考"}）\n  入口：${escapeMarkdown(skill.entrypoint)}\n  目录：${escapeMarkdown(skill.directory)} · SHA256 ${skill.hash} · ${skill.files.length} 个文件`).join("\n")}\n先读取技能入口，按该固定目录解析配套文件。这里只验证目录文件完整性；技能依赖的其他插件、工具和运行环境仍需执行者核验，缺少时应明确报告。`);
   lines.push(
     `\n## 固定资料\n${value.fixedMaterials.map((m) => `- ${escapeMarkdown(m.role)}: ${escapeMarkdown(m.path)} (SHA256 ${m.hash})`).join("\n")}`,
   );

@@ -155,7 +155,7 @@ export interface WorkPetApi {
   resizePanelRight(phase: "start" | "move" | "end", screenX: number): void;
   openArtifact(workId: string, itemId: string): Promise<void>;
   distillation(action: string, input?: unknown): Promise<any>;
-  chooseDefinitionFile(): Promise<string | null>;
+  chooseDefinitionFile(kind?: "SKILL"): Promise<string | null>;
   exportWorkPackage(workId: string): Promise<string | null>;
   copyWorkPackage(workId: string): Promise<void>;
   configureWorketService(input: { url: string; token: string }): Promise<void>;

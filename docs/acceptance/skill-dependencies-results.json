@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-23",
+  "semanticTrials": [
+    {
+      "run": "2026-09-22T19-46-57-123Z",
+      "status": "FAILED",
+      "kind": "synthetic source, actual provider through production extraction workflow; not blind or business acceptance",
+      "providerCalls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 2434,
+          "completion_tokens": 3065,
+          "total_tokens": 5499,
+          "prompt_tokens_details": {
+            "cached_tokens": 1792
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 2631
+          },
+          "prompt_cache_hit_tokens": 1792,
+          "prompt_cache_miss_tokens": 642
+        },
+        {
+          "prompt_tokens": 2979,
+          "completion_tokens": 13646,
+          "total_tokens": 16625,
+          "prompt_tokens_details": {
+            "cached_tokens": 2048
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 12081
+          },
+          "prompt_cache_hit_tokens": 2048,
+          "prompt_cache_miss_tokens": 931
+        }
+      ],
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!result.content.constraints.some(rule => /csv-cleaner|SKILL\\.md/i.test(rule.text)))\n"
+    },
+    {
+      "run": "2026-09-22T19-50-09-068Z",
+      "status": "PASSED",
+      "kind": "synthetic source, actual provider through production extraction workflow; not blind or business acceptance",
+      "providerCalls": 2,
+      "usage": [
+        {
+          "prompt_tokens": 2609,
+          "completion_tokens": 5814,
+          "total_tokens": 8423,
+          "prompt_tokens_details": {
+            "cached_tokens": 1024
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 5536
+          },
+          "prompt_cache_hit_tokens": 1024,
+          "prompt_cache_miss_tokens": 1585
+        },
+        {
+          "prompt_tokens": 2998,
+          "completion_tokens": 4688,
+          "total_tokens": 7686,
+          "prompt_tokens_details": {
+            "cached_tokens": 2176
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 3623
+          },
+          "prompt_cache_hit_tokens": 2176,
+          "prompt_cache_miss_tokens": 822
+        }
+      ]
+    }
+  ],
+  "desktopRuns": [
+    {
+      "run": "2026-09-22T19-43-07-362Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-kI019K",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {},
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!rpc.error)\n"
+    },
+    {
+      "run": "2026-09-22T19-44-28-370Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-4kMekm",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {
+        "relativeCompanionsExecuted": true,
+        "missingCompanionBlocked": true,
+        "syntheticAcceptanceCompleted": true
+      }
+    },
+    {
+      "run": "2026-09-22T19-50-38-468Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-vVlxgg",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {
+        "relativeCompanionsExecuted": true,
+        "missingCompanionBlocked": true,
+        "syntheticAcceptanceCompleted": true
+      }
+    },
+    {
+      "run": "2026-09-22T19-53-50-502Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-OUS4As",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "frozen actual model response through local HTTP; synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {},
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'RUNNING'\n- 'AWAITING_REVIEW'\n"
+    },
+    {
+      "run": "2026-09-22T19-55-23-756Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-bGDEqJ",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "frozen actual model response through local HTTP; synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {
+        "relativeCompanionsExecuted": true,
+        "missingCompanionBlocked": true,
+        "syntheticAcceptanceCompleted": true
+      }
+    }
+  ],
+  "providerCalls": 4,
+  "knownTokens": {
+    "input": 11020,
+    "output": 27213,
+    "total": 38233
+  },
+  "cost": "not returned by provider, unknown",
+  "humanBusinessAcceptance": false
+}

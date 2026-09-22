@@ -100,7 +100,7 @@ export class FixtureClient {
   latest: any;
   acknowledged = 0;
   async capabilities() {
-    return { ruleSchemaVersions: [1] };
+    return { ruleSchemaVersions: [1], skillSchemaVersions: [1] };
   }
   async submit(request: any, key: string) {
     this.calls++;

@@ -24,7 +24,7 @@ async function setup() {
   const work = source(core, events[0].content), file = events[1];
   const path = join(directory, 'FRAME.md'); writeFileSync(path, file.content);
   const artifact = core.addArtifactRef(work.instance.id, { path, filename: 'FRAME.md', role: 'REFERENCE', mimeType: 'text/markdown', size: Buffer.byteLength(file.content), sha256: hash(file.content), lastModifiedAt: new Date().toISOString(), availability: 'AVAILABLE' }).artifactRefs.at(-1)!;
-  const client = new FixtureClient(); client.capabilities = async () => ({ ruleSchemaVersions: [1], evolutionSchemaVersions: [1] });
+  const client = new FixtureClient(); client.capabilities = async () => ({ ruleSchemaVersions: [1], skillSchemaVersions: [1], evolutionSchemaVersions: [1] });
   const service = new DistillationService(core, client);
   client.get = async () => ({ requestId: client.latest.requestId, status: 'SUCCEEDED', result: JSON.parse(readFileSync(new URL('../fixtures/contracts/video/response-2.json', import.meta.url), 'utf8')).result });
   const snapshot = service.prepare({ workIds: [work.instance.id], includedFileIds: [artifact.id], fileRoles: { [artifact.id]: 'NORMATIVE' } });
@@ -120,7 +120,7 @@ test('stale base, forged target, scope-changing duplicate and old backend cannot
     Object.assign(scoped.evolution.changes[0], { kind: 'DUPLICATE', target: target.address }); scoped.evolution.changes[0].item.rule.scope = 'INSTANCE';
     assert.throws(() => validateResult(scoped, f.service.wire(snapshot)), /RULE_SCOPE_MISMATCH/);
     f.mock(out); const draft = await f.run(snapshot);
-    f.client.capabilities = async () => ({ ruleSchemaVersions: [1] });
+    f.client.capabilities = async () => ({ ruleSchemaVersions: [1], skillSchemaVersions: [1] });
     const before = f.client.calls;
     const job = f.service.start({ preparationId: snapshot.id, expectedContentHash: snapshot.contentHash, consentVersion: 'worket-data-v1', commandId: id() });
     await new Promise(r => setImmediate(r));
@@ -149,7 +149,7 @@ test('evolution workflow sends a path-free baseline and validates new evidence t
       assert.deepEqual(body.baseline, request.evolution); assert.ok(messages[0].content.endsWith('No deletion by omission. No tool use. No generic rules unsupported by new evidence.'));
       return { result: expected };
     } }, new AbortController().signal);
-    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.2'); assert.equal(value.content, null);
+    assert.equal(calls, 2); assert.equal(value.versions.prompt, 'work-definition-evolution-v1.6'); assert.equal(value.content, null);
   } finally { f.core.close(); }
 });
 

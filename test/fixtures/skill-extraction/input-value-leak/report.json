@@ -1,0 +1,35 @@
+{
+  "run": "2026-09-22T19-46-57-123Z",
+  "status": "FAILED",
+  "kind": "synthetic source, actual provider through production extraction workflow; not blind or business acceptance",
+  "providerCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2434,
+      "completion_tokens": 3065,
+      "total_tokens": 5499,
+      "prompt_tokens_details": {
+        "cached_tokens": 1792
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2631
+      },
+      "prompt_cache_hit_tokens": 1792,
+      "prompt_cache_miss_tokens": 642
+    },
+    {
+      "prompt_tokens": 2979,
+      "completion_tokens": 13646,
+      "total_tokens": 16625,
+      "prompt_tokens_details": {
+        "cached_tokens": 2048
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 12081
+      },
+      "prompt_cache_hit_tokens": 2048,
+      "prompt_cache_miss_tokens": 931
+    }
+  ],
+  "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!result.content.constraints.some(rule => /csv-cleaner|SKILL\\.md/i.test(rule.text)))\n"
+}

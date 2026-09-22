@@ -284,11 +284,11 @@ function registerIpc(): void {
     worketConnection.restore(recoveryCode);
     await worketConnection.ready();
   });
-  ipcMain.handle("distillation:choose-file", async (event) => {
+  ipcMain.handle("distillation:choose-file", async (event, kind) => {
     if (event.sender !== panelWindow?.webContents)
       throw new Error("INVALID_SENDER");
     return (
-      (await dialog.showOpenDialog({ properties: ["openFile"] }))
+      (await dialog.showOpenDialog({ properties: [kind === "SKILL" ? "openDirectory" : "openFile"], ...(kind === "SKILL" ? { title: "选择技能目录（含 SKILL.md 及全部配套文件）" } : {}) }))
         .filePaths[0] ?? null
     );
   });

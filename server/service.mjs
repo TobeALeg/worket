@@ -216,6 +216,7 @@ export function createAIService(config) {
             ruleSchemaVersions: [1],
             evolutionSchemaVersions: [1],
             evidenceSchemaVersions: [1],
+            skillSchemaVersions: [1],
             improvement: config.improvement?.policy() ?? null,
             limits,
             fileTypes: ["UTF-8 text"],

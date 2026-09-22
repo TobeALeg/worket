@@ -327,6 +327,7 @@ export class DistillationService {
       schemaVersion: 1,
       ruleSchemaVersion: 1,
       evidenceSchemaVersion: 1,
+      skillSchemaVersion: 1,
       snapshotHash: snapshot.contentHash,
       ...(base ? { evolution: evolutionBaseline(base, resolveRuleDocuments(base.content, base.materials, this.repository.materials).content) } : {}),
       sources: snapshot.sources.map((s) => ({
@@ -464,10 +465,12 @@ export class DistillationService {
         limits?: { maxSources?: number; maxBytes?: number };
         ruleSchemaVersions?: number[];
         evolutionSchemaVersions?: number[];
+        skillSchemaVersions?: number[];
       };
       if (this.closed || this.repository.read<Job>("distillation_jobs", job.id).status === "CANCELLED") return;
       ensure(capability.ruleSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。");
       if (snapshot.baseDefinitionId) ensure(capability.evolutionSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '当前后台尚不支持增量比较，请升级后重试。');
+      ensure(capability.skillSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持技能依赖，请升级后重试。");
       const wire = this.wire(snapshot);
       ensure(
         snapshot.sources.length <=

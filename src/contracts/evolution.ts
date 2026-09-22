@@ -7,7 +7,7 @@ export type EvolutionBaseline = { contentHash: string; content: DefinitionConten
 export type EvolutionChange = {
   kind: 'ADD' | 'DUPLICATE' | 'REPLACES' | 'SUPPLEMENTS' | 'CONFLICT';
   section: EvolutionSection;
-  item: DefinedItem & Partial<Pick<InputSpec, 'valueType' | 'required' | 'choices' | 'defaultValue'>> & { obligation?: 'REFERENCE' | 'REQUIRED' };
+  item: DefinedItem & Partial<Pick<InputSpec, 'valueType' | 'required' | 'choices' | 'defaultValue'>> & { obligation?: 'REFERENCE' | 'REQUIRED'; kind?: 'SKILL' };
   target?: string;
 };
 export type EvolutionResult = { baseHash: string; changes: EvolutionChange[] };
@@ -59,7 +59,7 @@ export function validateEvolution(value: unknown, baseline: EvolutionBaseline, r
         ensure(item.obligation === (target.item as typeof item).obligation, 'INVALID_MODEL_OUTPUT');
     } else {
       ensure(['DUPLICATE', 'REPLACES'].includes(change.kind) && target.section === change.section && target.item.key === item.key);
-      if (change.kind === 'DUPLICATE') for (const key of ['valueType', 'required', 'choices', 'defaultValue'] as const)
+      if (change.kind === 'DUPLICATE') for (const key of ['valueType', 'required', 'choices', 'defaultValue', 'kind'] as const)
         ensure(JSON.stringify(item[key]) === JSON.stringify((target.item as typeof item)[key]), 'INVALID_MODEL_OUTPUT', '输入或资料角色的规格变化不能当作重复');
     }
     if (change.kind === 'REPLACES') { ensure(!replacing.has(change.target), 'UNRESOLVED_RULE_CONFLICT'); replacing.add(change.target); }

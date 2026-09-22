@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "compatibility": "COMPATIBLE",
+  "content": {
+    "schemaVersion": 1,
+    "name": "Report Builder Markdown 报告复用规范",
+    "purpose": {
+      "key": "purpose",
+      "text": "根据每次提供的新主题生成 Markdown 格式报告。",
+      "basis": {
+        "type": "SOURCE",
+        "origin": "USER_STATED",
+        "refs": [
+          {
+            "snapshotId": "wire",
+            "workId": "work-1",
+            "eventId": "event-1",
+            "excerpt": "根据每次给的新主题写 Markdown 报告"
+          }
+        ]
+      }
+    },
+    "inputs": [
+      {
+        "key": "topic",
+        "text": "每次提供的新主题。",
+        "valueType": "TEXT",
+        "required": true,
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "根据每次给的新主题写 Markdown 报告"
+            }
+          ]
+        }
+      },
+      {
+        "key": "current_topic",
+        "text": "本次报告主题：城市交通。",
+        "valueType": "TEXT",
+        "required": true,
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "本次主题是城市交通"
+            }
+          ]
+        }
+      }
+    ],
+    "deliverables": [
+      {
+        "key": "markdown_report",
+        "text": "Markdown 格式报告。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "写 Markdown 报告"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "REUSABLE",
+          "status": "ACTIVE",
+          "condition": "同类报告"
+        }
+      }
+    ],
+    "constraints": [
+      {
+        "key": "no_fixed_csv_cleaner",
+        "text": "不得将 csv-cleaner 固定为后续同类报告的必用工具。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "以后不用固定这个工具"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "REUSABLE",
+          "status": "ACTIVE",
+          "condition": "后续同类报告"
+        }
+      },
+      {
+        "key": "no_skill_internal_as_constraints",
+        "text": "不得将 Report Builder 技能内部的执行步骤转化为报告约束。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "不要把它内部的执行步骤变成我的报告约束"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "REUSABLE",
+          "status": "ACTIVE",
+          "condition": "同类报告"
+        }
+      }
+    ],
+    "acceptanceCriteria": [
+      {
+        "key": "cite_sources",
+        "text": "报告中每条事实均注明来源。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "每条事实注明来源"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "REUSABLE",
+          "status": "ACTIVE",
+          "condition": "同类报告"
+        }
+      }
+    ],
+    "methods": [
+      {
+        "key": "report_builder_skill_method",
+        "text": "使用 Report Builder skill 生成同类报告。",
+        "obligation": "REQUIRED",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "以后同类报告都使用 Report Builder skill"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "REUSABLE",
+          "status": "ACTIVE",
+          "condition": "同类报告"
+        }
+      },
+      {
+        "key": "csv_cleaner_temp",
+        "text": "本次临时使用 csv-cleaner 清理数据。",
+        "obligation": "REFERENCE",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "我这次临时用 csv-cleaner 清理数据，仅限本次"
+            }
+          ]
+        },
+        "rule": {
+          "scope": "INSTANCE",
+          "status": "ACTIVE",
+          "condition": "仅限本次"
+        }
+      }
+    ],
+    "materialRoles": [
+      {
+        "key": "report_builder_skill",
+        "text": "Report Builder skill；技能目录由用户在本机选择，发布时绑定。",
+        "required": true,
+        "kind": "SKILL",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "以后同类报告都使用 Report Builder skill"
+            },
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "Report Builder 的技能目录会由我在本机选择"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "issues": [
+    {
+      "id": "issue-1",
+      "type": "MISSING_INFORMATION",
+      "field": "acceptanceCriteria.cite_sources",
+      "message": "未指定来源标注的具体格式（如脚注、行内链接或参考文献列表），发布前需确认。",
+      "blocking": false
+    },
+    {
+      "id": "issue-2",
+      "type": "UNCERTAIN_GENERALIZATION",
+      "field": "deliverables.markdown_report",
+      "message": "“同类报告”的适用范围未明确，需确认哪些报告类型适用该复用规则。",
+      "blocking": false
+    }
+  ],
+  "groups": [],
+  "requirements": [
+    {
+      "id": "work-1-event-1-req-01",
+      "text": "以后同类报告都使用 Report Builder skill。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-02",
+      "text": "根据每次提供的新主题撰写 Markdown 格式报告。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-03",
+      "text": "每条事实注明来源。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-04",
+      "text": "本次报告主题为城市交通。",
+      "scope": "INSTANCE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-05",
+      "text": "本次临时使用 csv-cleaner 清理数据，仅限本次。",
+      "scope": "INSTANCE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-06",
+      "text": "以后不将 csv-cleaner 固定为必用工具。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-07",
+      "text": "Report Builder 的技能目录由用户在本机选择。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    },
+    {
+      "id": "work-1-event-1-req-08",
+      "text": "不要将 Report Builder 内部的执行步骤变成报告约束。",
+      "scope": "REUSABLE",
+      "sourceKeys": [
+        "work-1/event-1"
+      ],
+      "replacedBy": null
+    }
+  ],
+  "coverage": {
+    "inputEvents": 1,
+    "processedEvents": 1,
+    "processedChunks": 1,
+    "eventKeys": [
+      "work-1/event-1"
+    ],
+    "exclusions": []
+  },
+  "versions": {
+    "schema": 1,
+    "prompt": "work-definition-v2.3",
+    "model": "configured-worket-provider"
+  }
+}

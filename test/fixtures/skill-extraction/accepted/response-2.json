@@ -1,0 +1,242 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "带来源标注的 Markdown 事实报告",
+      "purpose": {
+        "key": "purpose",
+        "text": "为每次给定的新主题生成相应的 Markdown 报告。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "根据每次给的新主题写 Markdown 报告"
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "key": "topic",
+          "text": "报告主题：由用户每次提供的新主题，用于确定本次报告的内容方向。",
+          "valueType": "TEXT",
+          "required": true,
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "根据每次给的新主题写 Markdown 报告"
+              }
+            ]
+          }
+        }
+      ],
+      "deliverables": [
+        {
+          "key": "markdown_report",
+          "text": "Markdown 格式的报告文档。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "写 Markdown 报告"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "fact_source_citation",
+          "text": "报告中的每条事实都必须注明来源。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "每条事实注明来源"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "acceptanceCriteria": [
+        {
+          "key": "fact_sources_checked",
+          "text": "交付前检查报告中每条事实均已标注来源。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "每条事实注明来源"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "constraints.fact_source_citation"
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "key": "use_report_builder_skill",
+          "text": "使用 Report Builder skill 生成报告。",
+          "obligation": "REQUIRED",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后同类报告都使用 Report Builder skill"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "materialRoles": [
+        {
+          "key": "report_builder_skill",
+          "text": "Report Builder skill：生成同类报告所需的执行技能，其技能目录及配套文件由用户在本机选择绑定；其内部执行步骤不作为报告约束。",
+          "required": true,
+          "kind": "SKILL",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后同类报告都使用 Report Builder skill"
+              },
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "Report Builder 的技能目录会由我在本机选择，不要把它内部的执行步骤变成我的报告约束"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-1-req-1",
+        "text": "同类报告均使用 Report Builder skill 生成。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-2",
+        "text": "每次根据用户新提供的主题编写 Markdown 报告。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-3",
+        "text": "报告中的每条事实都注明来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-4",
+        "text": "本次报告主题为城市交通。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-5",
+        "text": "本次临时使用 csv-cleaner 清理数据，仅限本次；该工具不固定为长期依赖。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 1,
+      "processedEvents": 1,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unspecified"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 2998,
+    "completion_tokens": 4688,
+    "total_tokens": 7686,
+    "prompt_tokens_details": {
+      "cached_tokens": 2176
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3623
+    },
+    "prompt_cache_hit_tokens": 2176,
+    "prompt_cache_miss_tokens": 822
+  },
+  "configuredModel": "deepseek-flash"
+}

@@ -3,7 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("workpet", {
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
   distillation: (action, input) => ipcRenderer.invoke("distillation:command", action, input),
-  chooseDefinitionFile: () => ipcRenderer.invoke("distillation:choose-file"),
+  chooseDefinitionFile: (kind) => ipcRenderer.invoke("distillation:choose-file", kind),
   exportWorkPackage: (workId) => ipcRenderer.invoke("distillation:export", workId),
   copyWorkPackage: (workId) => ipcRenderer.invoke("distillation:copy", workId),
   configureWorketService: (input) => ipcRenderer.invoke("distillation:configure", input),
