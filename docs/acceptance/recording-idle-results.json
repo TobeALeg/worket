@@ -105,5 +105,49 @@
     "error": "idle collection must not load full work snapshots\n\n40 !== 0\n"
   },
   "actualProviderCalls": 0,
-  "externalAgent": false
+  "externalAgent": false,
+  "sourceCommit": "7dd6c4a",
+  "package": {
+    "sourceCommit": "7dd6c4a",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-7dd6c4a.zip",
+    "sha256": "2f5ac3c77eff6f9835930e58dced54048756d9c1634d683b99140b7fe83cb204",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-idle-extract-w1r4wm22/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "packagedE2E": {
+    "run": "2026-09-22T22-49-57-445Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-zHRVhn",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "sourceAbsence": true,
+    "checks": {
+      "allPagesToStateAndExtraction": true,
+      "idleSkipsArchiveAndQueue": true,
+      "failedPageAtomicAndRetry": true,
+      "absenceArchiveCurrentViewAndRestoration": true,
+      "remoteSampleRevisionAbsenceRestoration": true
+    },
+    "recordingView": true,
+    "idle": {
+      "depth": 0,
+      "passes": 40,
+      "snapshots": 0,
+      "recordAttempts": 0,
+      "totalMs": 2.240997000000789
+    },
+    "scale": {
+      "uploadedBytes": 621088,
+      "uploads": 1312,
+      "messages": 550,
+      "currentMessages": 754,
+      "ready": true
+    },
+    "rpc": {
+      "count": 3334
+    }
+  },
+  "backendSourceCommit": "44dd3ba",
+  "quotaUsedPercent": 75
 }

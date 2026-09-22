@@ -13,4 +13,8 @@
 
 221 项全量测试通过。新增检查覆盖旧格式首次扫描、无变化重启、工具事件不外发、相同/迟到序号不漏、长消息部分排队、检查点事务失败回滚、到期/完成/解除绑定/删除/退出采集。未调用供应商，外部 Agent 边界受控。
 
-入口：`npm run qa:recording-idle`；原始运行目录 output/codex-history；[机器结果](recording-idle-results.json) 保存两版对照。干净试用包待构建验收。
+入口：`npm run qa:recording-idle`；原始运行目录 output/codex-history；[机器结果](recording-idle-results.json) 保存两版对照。源码 `7dd6c4a` 已干净导出构建，原包/ZIP 解压签名通过。试用包 `release/Worket-loop-7dd6c4a.zip`，SHA-256 `2f5ac3c77eff6f9835930e58dced54048756d9c1634d683b99140b7fe83cb204`。
+
+ZIP 解压客户端 `2026-09-22T22-49-57-445Z` 同时通过无变化 40 次、修订/消失/恢复与连续 550 次新增刷新。后台有效当前消息 754 条，实际上传 1,312 次、621,088 bytes；其中包括初始 200 条闲置负载和原夹具。无变化阶段额外上传为零，零完整快照和消息入队尝试。
+
+后台维持 `44dd3ba`，本轮无服务协议或部署变更；未替换已安装客户端或发布 GitHub Release，测试钥匙串隔离，正常系统批准未验证。BP B003 已记录常驻学习的局部成本与证据边界。
