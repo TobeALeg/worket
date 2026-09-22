@@ -1,6 +1,6 @@
 # 记录样本有效原文验收
 
-2026-09-23，第 14 轮。源码验收完成，待打包与部署。
+2026-09-23，第 14 轮。源码、干净包和解压客户端均验收，后台已部署。
 
 真实 HTTP 合成复现：要求从 50 words 改为 30 words，再从来源中消失。旧后台仅收到 RECORDING/MESSAGE/MESSAGE，两条要求并列，没有有效性关系。修复后原文仍在，分别显示 SUPERSEDED 和 ABSENT，ready=true、current=[]，不把缺失当撤销已确认约定。
 
@@ -9,3 +9,9 @@
 210 项全量测试通过，覆盖长分片、乱序与重试、视图/内容冲突、缺失及恢复、隐藏链路排除、旧服务器零上传与升级恢复；服务器独立构建通过。发送前退出/服务切换桌面回归 21-48-02-504Z 通过。后台样本均为合成内容，零新模型调用，未代表真实业务交付或语义准确率提升。
 
 [机器结果](recording-sample-view-results.json) · [协议](../specs/recording-sample-view.md)
+
+## 交付与部署
+
+源码 `5eecf20`，ZIP `release/Worket-loop-5eecf20.zip`，SHA-256 `e6722e8ed9d380330d028bdba534f6a00557e115f0929f6a1d0aa4447a7ae9ec`。原包/解压签名通过；解压完整来源与管理员链路 `2026-09-22T21-52-05-198Z`、发送边界 `21-53-09-679Z` 通过。使用隔离测试钥匙串，未验证正常 OS 批准，未替换用户安装或发布 GitHub Release。
+
+后台同版部署，public health 200、匿名 capabilities 401、admin 404；认证能力 200 且 recordingViewSchemaVersions=[1]。三份关键运行文件 hash 与干净服务器构建一致。部署前无活跃/待领取任务，配置不变、数据已备份，无数据库迁移；回滚见 [运维记录](../deployment/jp-server-worket.md)。公网只做只读检查，合成样本写入验收均在隔离本地后台。

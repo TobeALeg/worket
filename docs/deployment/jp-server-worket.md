@@ -103,3 +103,11 @@ ssh jp-server 'sudo nginx -t'
 无活跃/待领取请求后完成离线模块校验、备份、切换并复核原容器配置。前版 `/opt/worket/releases/46b2c1a`，回滚容器 `worket-before-58be614-20260922-200115`，备份 `/opt/worket/backups/data-pre-58be614-20260922-200115.tgz`。没有数据库迁移或模型/密钥配置变更。
 
 公网 health 200，未认证 capabilities 401，admin 404；服务器内一分钟临时认证检查 200，rule/evolution/evidence/skill schema 均为 1。凭据未输出或离开服务器，未写账户数据。模型调用发生于隔离语义试验，部署后没有重复调用。详情见 [技能验收](../acceptance/skill-dependencies.md)。
+
+## 2026-09-23 记录样本有效视图部署
+
+源码 `5eecf20`，记录上传 v2 / RECORDING_VIEW，能力 improvement.recordingViewSchemaVersions:[1]；兼容旧 v1 数据，缺少来源视图时明确有效性未知。独立 server 构建包含 recording-view.js，后台包 SHA-256 `9ae04ea7207f1297a777e9514c8ee9ff7c415c24c1aa78f225fc06e407c7ed79`。
+
+部署前无活跃/待领取请求，模块离线导入通过。前版 `/opt/worket/releases/58be614`，回滚容器 `worket-before-5eecf20-20260922-215249`，数据备份 `/opt/worket/backups/data-pre-5eecf20-20260922-215249.tgz`。配置逐项复核不变，无数据库迁移或密钥更新。初次普通 SSH 用户直接访问 Docker 被权限拒绝，改用既有 sudo 运维权限完成。
+
+公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内短期令牌只读认证能力 200，新能力 schema 1，令牌没有输出或离开服务器。recording-view.js、improvement.mjs、admin.js 运行 hash 与干净构建一致。没有生产样本写入或新增模型调用。详见 [样本视图验收](../acceptance/recording-sample-view.md)。
