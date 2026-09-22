@@ -44,7 +44,8 @@
     "qa:instance-files": "npm run build && node scripts/qa-instance-files.mjs",
     "qa:recording-idle": "npm run build && node scripts/qa-recording-idle.mjs && WORKET_SOURCE_ABSENCE=1 WORKET_RECORDING_VIEW=1 WORKET_RECORDING_IDLE=1 node scripts/qa-codex-history.mjs",
     "qa:material-recovery": "npm run build && node scripts/qa-material-recovery.mjs && WORKET_MATERIAL_RECOVERY=1 node scripts/qa-instance-files.mjs",
-    "qa:obligations": "npm run build && WORKET_SEMANTIC_SUITE=obligations WORKET_SEMANTIC_REPLAY_ROOT=test/fixtures/obligation-evolution node scripts/qa-evolution-semantics.mjs"
+    "qa:obligations": "npm run build && WORKET_SEMANTIC_SUITE=obligations WORKET_SEMANTIC_REPLAY_ROOT=test/fixtures/obligation-evolution node scripts/qa-evolution-semantics.mjs",
+    "qa:source-review": "npm run build && WORKET_REVIEW_DRIFT=1 node scripts/qa-source-revisions.mjs && WORKET_REVIEW_DRIFT=1 WORKET_SOURCE_ABSENCE=1 node scripts/qa-codex-history.mjs"
   },
   "devDependencies": {
     "@electron/packager": "19.0.1",

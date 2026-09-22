@@ -1,3 +1,4 @@
+import { seedSourceReview } from './lib/qa-source-review.mjs';
 import { recordingViewService } from './lib/qa-recording-view.mjs';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
@@ -48,6 +49,8 @@ try {
   assert.ok(snapshot.sources[0].events.some(e => e.content.includes('最早来源')));
   assert.ok(snapshot.sources[0].events.some(e => e.content.includes('分页末尾')));
   report.checks.allPagesToStateAndExtraction = true;
+  const reviewJob=process.env.WORKET_REVIEW_DRIFT === '1' ? await seedSourceReview(app,snapshot) : null;
+  if(reviewJob) assert.equal(reviewJob.status,'AWAITING_REVIEW',reviewJob.error);
   if (sampleService) {
     const sample = await sampleService.sync(panel);
     assert.equal(sample.recordingView.ready, true);
@@ -126,12 +129,30 @@ try {
       assert.ok(visible.includes('修订后')); assert.ok(visible.includes('当前有效原文'));
       assert.ok(!visible.includes('每次必须保留分页末尾'));
     }
+    if(reviewJob) {
+      await panel.evaluate(async id=>(await import('./distillation.js')).openJob(id),reviewJob.id);
+      await panel.locator('#source-review-notice').waitFor();
+      await panel.locator('#source-review-notice summary').click();
+      assert.match(await panel.locator('#source-review-notice').innerText(),/已不在当前来源/);
+      assert.match(await panel.locator('#source-review-notice').innerText(),/每次必须检查分页末尾/);
+      assert.ok(await panel.locator('#publish-definition').isDisabled());
+      await panel.screenshot({path:join(output,'absent-source-review.png')});
+      await panel.locator('[data-review-action="close"]').click();
+      report.checks.absentEvidenceVisibleAndBlocked=true;
+    }
     fixture.turns.push(removed); writeFileSync(dataPath, JSON.stringify(fixture));
     await panel.evaluate(id => window.workpet.refreshWork(id), workId);
     const restored = await panel.evaluate(id => window.workpet.getDashboard(id), workId);
     assert.ok(restored.selectedWork.state.constraints.some(i => i.text.includes('分页末尾')));
     assert.equal(restored.selectedWork.sourceNotice, undefined);
     report.checks.absenceArchiveCurrentViewAndRestoration = true;
+    if(reviewJob) {
+      const checked=await panel.evaluate(draftId=>window.workpet.distillation('sourceReview',{draftId}),reviewJob.draftId);
+      assert.ok(!checked.changes.some(c=>c.status==='ABSENT'||c.status==='PENDING'));
+      await panel.evaluate(async id=>(await import('./distillation.js')).openJob(id),reviewJob.id);
+      await panel.locator('#source-review-confirm').check();await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
+      report.checks.restoredEvidenceAndExplicitPublication=true;
+    }
     if (sampleService) {
       const sample = await sampleService.sync(panel);
       assert.equal(sample.recordingView.ready, true);

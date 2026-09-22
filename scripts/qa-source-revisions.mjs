@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { _electron as electron } from 'playwright';
+import { seedSourceReview } from './lib/qa-source-review.mjs';
 import { sourceFixture, finishSource, reviseSource } from './lib/source-revision-fixture.mjs';
 const run = new Date().toISOString().replace(/[:.]/g, '-'), output = join(process.cwd(), 'output/source-revisions', run); mkdirSync(output, { recursive: true });
 const directory = mkdtempSync(join(tmpdir(), 'worket-source-e2e-'));
@@ -45,6 +46,7 @@ try {
   if (report.legacyPartial) assert.equal(initial.selectedWork.latestActivity.text, '已完成');
   else assert.equal(initial.selectedWork.latestActivity, undefined);
   report.checks[report.legacyPartial ? 'legacyPartialSeeded' : 'noPartialReply'] = true;
+  let reviewJob;
   const bridge = JSON.parse(readFileSync(join(directory, 'bridge.json'), 'utf8'));
   const call = async (name) => {
     const response = await fetch(`http://${bridge.host}:${bridge.port}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-workpet-token': bridge.token }, body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method: 'tools/call', params: { name, arguments: { work_id: workId } } }), signal: AbortSignal.timeout(10000) });
@@ -56,6 +58,10 @@ try {
   const oldPackage = await call('get_work_context');
   assert.ok(oldPackage.state.completedActions.some(i => i.text === '已完成报告。'));
   const prepared = await panel.evaluate(workId => window.workpet.distillation('prepare', { workIds: [workId], includedFileIds: [] }), workId);
+  if (process.env.WORKET_REVIEW_DRIFT === '1') {
+    reviewJob = await seedSourceReview(app, prepared);
+    assert.equal(reviewJob.status,'AWAITING_REVIEW',reviewJob.error);
+  }
   reviseSource(payload); await app.evaluate((_, payload) => { globalThis.qaSourcePayload = payload; }, payload); await refresh(); await waitText(payload.turns[0].items[1].text);
   const current = await call('get_work_context'), archive = await call('get_work_archive');
   assert.ok(current.state.constraints.some(i => i.text.includes('发布日期')));
@@ -79,6 +85,33 @@ try {
   await panel.screenshot({ path: join(output, 'current-source.png') });
   const splitPoints = await panel.evaluate(id => window.workpet.listSplitPoints(id), workId);
   assert.equal(splitPoints.length, 1); assert.match(splitPoints[0].label, /发布日期/);
-  report.checks.revisedSplitPoint = true; report.status = 'PASSED';
+  report.checks.revisedSplitPoint = true;
+  if (reviewJob) {
+    await app.evaluate(({BrowserWindow}) => {const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().endsWith('/panel.html'));w.setSize(410,700);});
+    await panel.evaluate(async id => (await import('./distillation.js')).openJob(id),reviewJob.id);
+    await panel.locator('#source-review-notice').waitFor();
+    await panel.locator('#source-review-notice').getByText('查看变化', {exact:true}).click();
+    assert.match(await panel.locator('#source-review-notice').innerText(),/每次报告必须包含来源链接。/);
+    assert.match(await panel.locator('#source-review-notice').innerText(),/每次报告必须包含来源链接和发布日期。/);
+    assert.ok(await panel.locator('#publish-definition').isDisabled());
+    await panel.screenshot({path:join(output,'changed-source-review.png')});
+    await panel.locator('#source-review-confirm').check();
+    payload.turns[0].items[0].content[0].text = '每次报告必须包含来源链接、发布日期和作者。';
+    payload.turns[0].items[1].text = '已完成二次修订。';
+    await app.evaluate((_, payload) => { globalThis.qaSourcePayload = payload; }, payload);
+    await waitText('已完成二次修订。'); // Actual background source synchronization while the review remains open.
+    await panel.locator('#publish-definition').click();
+    await panel.waitForFunction(() => document.querySelector('#source-review-confirm')?.checked === false && document.querySelector('#publish-definition')?.disabled);
+    await panel.locator('#source-review-notice').getByText('查看变化', {exact:true}).click();
+    assert.match(await panel.locator('#source-review-notice').innerText(),/发布日期和作者/);
+    await panel.locator('#source-review-confirm').check();
+    await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
+    await panel.locator('#use-definition').click();await panel.locator('[data-input="customer"]').fill('新客户');await panel.locator('[data-input="market"]').fill('新市场');await panel.locator('#create-defined-work').click();
+    const next=(await state()).selectedWorkId; const pkg=await panel.evaluate(workId=>window.workpet.distillation('package',{workId}),next);
+    assert.ok(pkg.markdown.includes('每条事实必须标注来源'));assert.ok(!pkg.markdown.includes('发布日期'));
+    report.checks.explicitSnapshotReviewAndReuse=true;
+    await panel.screenshot({path:join(output,'reviewed-instance.png')});
+  }
+  report.status = 'PASSED';
 } catch (error) { report.status = 'FAILED'; report.error = error instanceof Error ? error.message : String(error); if (panel) await panel.screenshot({ path: join(output, 'failure.png') }).catch(() => {}); process.exitCode = 1; }
 finally { if (app) await app.close().catch(() => {}); writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify(report)); }

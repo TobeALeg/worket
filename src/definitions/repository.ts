@@ -1,3 +1,4 @@
+import { sourceReview } from './source-review.js';
 import { updateInstanceFiles, type UpdateInstanceFiles } from './instance-file-update.js';
 import { InstanceFiles, type InstanceInputs } from "./instance-files.js";
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
@@ -296,6 +297,7 @@ export class DefinitionRepository {
     });
   }
   publish(input: {
+    sourceReviewHash?: string;
     draftId: string;
     expectedRevision: number;
     materialBindings: Record<string, string>;
@@ -344,6 +346,8 @@ export class DefinitionRepository {
           current.revision === input.expectedRevision,
           "REVISION_CONFLICT",
         );
+        const reviewedSources = sourceReview(this, current);
+        ensure(!reviewedSources.changes.length || input.sourceReviewHash === reviewedSources.hash, 'SOURCE_REVIEW_REQUIRED', '候选所用的聊天来源已有变化，请查看对照后确认');
         validateContent(current.content);
         if (current.jobId) {
           const job = this.read<{ status: string }>(
@@ -395,6 +399,9 @@ export class DefinitionRepository {
         if (current.evolution) ensure(base && base.contentHash === current.evolution.baseHash && this.versions(base.definitionKey)[0]?.id === base.id,
           'BASE_DEFINITION_CHANGED', '约定已有更新版本，请基于最新版重新比较；当前草稿未覆盖任何版本。');
         const finish = (definition: Definition) => {
+          if (reviewedSources.changes.length) this.db.prepare('INSERT INTO review_events VALUES (?,?,?)').run(randomUUID(), definition.id,
+            JSON.stringify({ type: 'SOURCE_SNAPSHOT_CONFIRMED', draftId: current.id, revision: current.revision, definitionId: definition.id,
+              at: new Date().toISOString(), sourceReviewHash: reviewedSources.hash, changes: reviewedSources.changes.map(({ before, current, title, ...change }) => ({ ...change, beforeHash: hash(before), ...(current !== undefined ? { currentHash: hash(current) } : {}) })) }));
           if (current.evolution) this.db.prepare('INSERT INTO review_events VALUES (?,?,?)').run(randomUUID(), definition.id,
             JSON.stringify({ type: 'EVOLUTION_CONFIRMED', definitionKey: definition.definitionKey, definitionId: definition.id,
               draftId: current.id, at: new Date().toISOString(), ...current.evolution }));

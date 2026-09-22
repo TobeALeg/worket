@@ -65,3 +65,9 @@
 .dr-resize::after { content:""; width:2px; height:24px; border-radius:2px; background:#b7beb0; opacity:.6; }
 .dr-resize:hover::after,.dr-resize:focus-visible::after { background:var(--accent); opacity:1; }
 @media(max-width:380px) { .dr-content{padding-inline:12px}.dr-title{padding-inline:12px}.dr-group{grid-template-columns:46px minmax(0,1fr)}.dr-row{gap:3px} }
+
+.dr-source-notice { margin:4px 0 12px; padding:8px; border-left:2px solid #b78c4c; background:#f8f4e9; font-size:11px; }
+.dr-source-notice > p { margin:0 0 6px; }
+.dr-source-notice label { display:flex; align-items:flex-start; gap:5px; margin-top:8px; }
+.dr-source-notice input[type=checkbox] { width:auto; flex-shrink:0; margin:2px 0; }
+.dr-source-notice > button { border:0; background:transparent; font-size:10px; padding:5px 0 0; color:var(--accent); }

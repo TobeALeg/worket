@@ -1,3 +1,4 @@
+import { sourceReview } from '../definitions/source-review.js';
 import { materialRecoveryStatus, recoverMaterial } from '../definitions/material-recovery.js';
 import { previewDocumentRevision, adoptDocumentRevision } from "../definitions/document-revision.js";
 import { distillationActivity } from "./activity.js";
@@ -157,6 +158,9 @@ export class DistillationDesktop {
         return this.service.retry(
           input as Parameters<DistillationService["retry"]>[0],
         );
+      case 'sourceReview':
+        string(input.draftId);
+        return sourceReview(r, r.read('definition_drafts', input.draftId));
       case "draft":
         string(input.id);
         return r.read("definition_drafts", input.id);

@@ -18,8 +18,8 @@ export function supersededSources(events: readonly SourceEvent[]): Set<string> {
   }
   return superseded;
 }
-export function currentSourceObservations(events: readonly SourceEvent[]): SourceEvent[] {
-  const current: SourceEvent[] = [], positions = new Map<string, number>();
+export function currentSourceObservations<T extends Pick<SourceEvent, 'id' | 'metadata'>>(events: readonly T[]): T[] {
+  const current: T[] = [], positions = new Map<string, number>();
   for (const event of events) {
     const previous = sourceIdentity(event)?.previousEventId;
     const position = previous ? positions.get(previous) : undefined;
@@ -55,7 +55,7 @@ export function currentSourceState(state: WorkState, events: readonly SourceEven
   ])) as WorkState;
 }
 /** Keep manual edits and deletion decisions attached to the logical source across revisions. */
-export function sourceRoots(events: readonly SourceEvent[]): Map<string, string> {
+export function sourceRoots(events: readonly Pick<SourceEvent, 'id' | 'externalId' | 'metadata'>[]): Map<string, string> {
   const roots = new Map<string, string>();
   for (const event of events) {
     const previous = sourceIdentity(event)?.previousEventId;
