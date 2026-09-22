@@ -55,5 +55,44 @@
     }
   },
   "actualProviderCalls": 0,
-  "externalAgent": false
+  "externalAgent": false,
+  "sourceCommit": "db8dfa2",
+  "package": {
+    "sourceCommit": "db8dfa2",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-db8dfa2.zip",
+    "sha256": "db630784f8b7a91897b9829afa61f6880787060aed851f9669c4364f0ef0f25d",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-repair-extract-r63yth5z/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "packagedRecoveryE2E": {
+    "run": "2026-09-22T23-04-33-826Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-recovery-e2e-HNwTj7",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "definitionAndSkillExactVersion": true,
+      "inputsReferencesAndContractIdentityPreserved": true,
+      "mcpValidatesRecoveredMaterials": true
+    }
+  },
+  "packagedInputE2E": {
+    "run": "2026-09-22T23-05-07-030Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-instance-e2e-bJN6E8",
+    "providerCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "reselectionRepairsSameInputVersion": true,
+      "distinctInputsVersionsAndOverrides": true,
+      "explicitUpdateIsolatedAndReceiptReset": true,
+      "legacyBlockedAndExplicitlyRepaired": true
+    }
+  },
+  "backendSourceCommit": "44dd3ba",
+  "quotaUsedPercent": 76
 }

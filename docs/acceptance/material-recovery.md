@@ -8,4 +8,6 @@
 
 225 项全量回归通过。新增边界覆盖文件缺失/不可读、错误版本不写入、具名输入重选、技能全部清单/权限恢复、外部路径/符号链接拒绝及目录切换异常回滚。断电不是普通异常，不把双 rename 说成断电原子操作；中途断电仍可能留下备份并需要再次显式恢复。
 
-入口 `npm run qa:material-recovery`。原始运行在 output/material-recovery 与 output/instance-files，[机器结果](material-recovery-results.json) 保留失败及通过。干净打包验收待完成。
+入口 `npm run qa:material-recovery`。原始运行在 output/material-recovery 与 output/instance-files，[机器结果](material-recovery-results.json) 保留失败及通过。源码 `db8dfa2` 已干净导出构建，原包和 ZIP 解压签名通过。试用包 `release/Worket-loop-db8dfa2.zip`，SHA-256 `db630784f8b7a91897b9829afa61f6880787060aed851f9669c4364f0ef0f25d`。
+
+ZIP 解压恢复链路 `2026-09-22T23-04-33-826Z` 通过，默认 410×700 面板截图已目视核对，四类资料状态清楚、无横向溢出；另一实例读取共享约定资料仍正确。输入重选及实例/MCP 回执回归 `23-05-07-030Z` 通过。后台维持 `44dd3ba`，本轮无服务协议变更；未替换 Applications 或发布 GitHub Release，隔离测试钥匙串不代表正常系统授权已验收。BP B003 已补充恢复能力与边界。
