@@ -63,10 +63,10 @@ const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url
 const body = Buffer.from(JSON.stringify({ sub: 'qa-contract', iss: 'qa', aud: 'qa', exp: Date.now()/1000+3600 })).toString('base64url');
 const token = `${header}.${body}.${createHmac('sha256', secret).update(`${header}.${body}`).digest('base64url')}`;
 let app, panel;
-const report = { run, scenario, model: provider.model, status: 'RUNNING', replay: process.env.WORKET_E2E_REPLAY ?? null, stages: [], output, directory, calls: 0, usage: [], humanAcceptance: false };
+const report = { run, scenario, model: provider.model, status: 'RUNNING', replay: process.env.WORKET_E2E_REPLAY ?? null, packaged: !!process.env.WORKPET_EXECUTABLE_PATH, credentialStorage: process.env.WORKPET_EXECUTABLE_PATH ? 'isolated mock keychain; OS keychain approval not tested' : 'OS safeStorage', stages: [], output, directory, calls: 0, usage: [], humanAcceptance: false };
 const mark = stage => { report.stages.push(stage); console.log(stage); };
 try {
-  app = await electron.launch({ executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'), args: ['.', `--user-data-dir=${directory}`, '--dev'], cwd: process.cwd(), env: { ...process.env, WORKPET_SKIP_INTEGRATIONS: '1', WORKPET_DATA_DIR: directory, WORKPET_BRIDGE_CONFIG: join(directory, 'bridge.json') } });
+  app = await electron.launch({ executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'), args: [...(process.env.WORKPET_EXECUTABLE_PATH ? ['--use-mock-keychain'] : ['.']), `--user-data-dir=${directory}`, '--dev'], timeout: 30000, cwd: process.cwd(), env: { ...process.env, WORKPET_SKIP_INTEGRATIONS: '1', WORKPET_DATA_DIR: directory, WORKPET_BRIDGE_CONFIG: join(directory, 'bridge.json') } });
   const windowDeadline = Date.now() + 15000;
   while (!panel && Date.now() < windowDeadline) {
     panel = app.windows().find(p => p.url().endsWith('/panel.html'));

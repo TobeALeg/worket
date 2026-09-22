@@ -454,6 +454,63 @@
         }
       ],
       "humanAcceptance": false
+    },
+    {
+      "run": "2026-09-22T11-47-16-582Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": "output/contract-e2e/2026-09-22T11-39-19-669Z",
+      "stages": [],
+      "output": "output/contract-e2e/2026-09-22T11-47-16-582Z",
+      "calls": 0,
+      "usage": [],
+      "humanAcceptance": false,
+      "error": "electron.launch: Timeout 180000ms exceeded.\nCall log:\n\u001b[2m  - <launching> /Users/dandi/YanGuan/release/working-contract-v2-813a758/Worket.app/Contents/MacOS/Worket --inspect=0 --remote-debugging-port=0 . --user-data-dir=/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-qqtdY0 --dev\u001b[22m\n\u001b[2m  - <launched> pid=77943\u001b[22m\n\u001b[2m  - [pid=77943][err] Debugger listening on ws://127.0.0.1:53159/56d065d1-5135-41c4-985e-409e07f001d2\u001b[22m\n\u001b[2m  - [pid=77943][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:53159/56d065d1-5135-41c4-985e-409e07f001d2\u001b[22m\n\u001b[2m  - [pid=77943][err] Debugger attached.\u001b[22m\n\u001b[2m  - <ws connected> ws://127.0.0.1:53159/56d065d1-5135-41c4-985e-409e07f001d2\u001b[22m\n\u001b[2m  - [pid=77943][err]\u001b[22m\n\u001b[2m  - [pid=77943][err] DevTools listening on ws://127.0.0.1:53163/devtools/browser/9d79d1c6-c1f3-4589-938e-3b68d8e8e637\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:53163/devtools/browser/9d79d1c6-c1f3-4589-938e-3b68d8e8e637\u001b[22m\n"
+    },
+    {
+      "run": "2026-09-22T11-49-10-438Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "FAILED",
+      "replay": "output/contract-e2e/2026-09-22T11-39-19-669Z",
+      "stages": [],
+      "output": "output/contract-e2e/2026-09-22T11-49-10-438Z",
+      "calls": 0,
+      "usage": [],
+      "humanAcceptance": false,
+      "error": "electron.launch: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - <launching> /Users/dandi/YanGuan/release/working-contract-v2-813a758/Worket.app/Contents/MacOS/Worket --inspect=0 --remote-debugging-port=0 --user-data-dir=/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-8NOSpC --dev\u001b[22m\n\u001b[2m  - <launched> pid=78518\u001b[22m\n\u001b[2m  - [pid=78518][err] Debugger listening on ws://127.0.0.1:53278/3a9868da-7661-44a5-b9ee-3db9cedba6e0\u001b[22m\n\u001b[2m  - [pid=78518][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:53278/3a9868da-7661-44a5-b9ee-3db9cedba6e0\u001b[22m\n\u001b[2m  - [pid=78518][err] Debugger attached.\u001b[22m\n\u001b[2m  - <ws connected> ws://127.0.0.1:53278/3a9868da-7661-44a5-b9ee-3db9cedba6e0\u001b[22m\n\u001b[2m  - [pid=78518][err]\u001b[22m\n\u001b[2m  - [pid=78518][err] DevTools listening on ws://127.0.0.1:53280/devtools/browser/897f25fa-cd4e-4c33-95f0-183cea471fec\u001b[22m\n\u001b[2m  - <ws connecting> ws://127.0.0.1:53280/devtools/browser/897f25fa-cd4e-4c33-95f0-183cea471fec\u001b[22m\n"
+    },
+    {
+      "run": "2026-09-22T14-59-57-758Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "output/contract-e2e/2026-09-22T11-39-19-669Z",
+      "packaged": true,
+      "credentialStorage": "isolated mock keychain; OS keychain approval not tested",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+      ],
+      "output": "output/contract-e2e/2026-09-22T14-59-57-758Z",
+      "calls": 2,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        }
+      ],
+      "humanAcceptance": false
     }
   ]
 }

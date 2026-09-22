@@ -48,6 +48,13 @@ FRAME.md 等已采用规范使用固定 hash 与条款行区间，底层保存�
 
 运行：先 `npm run build`，再 `node --experimental-strip-types scripts/qa-contract-e2e.mjs`。`WORKET_E2E_SCENARIO` 可选 `video`、`report`、`code`；设置 `WORKET_E2E_REPLAY=output/contract-e2e/<真实运行>` 可仅回放。真实运行要求本机有现有 `jp-server` SSH 配置和读取容器配置的权限，不需要把模型 Key 配到客户端。
 
+## 打包与后台交付
+
+- 实现提交：`813a758`。从 `git archive` 干净导出构建 macOS arm64 应用，没有纳入未提交的实验 ZIP、工作目录或本地测试数据。属于本地试用包，未发布新的 GitHub Release，也未替换 `/Applications/Worket.app`。
+- 应用：`release/working-contract-v2-813a758/Worket.app`；归档：`release/Worket-contract-v2-813a758.zip`。SHA256：`f1628102a420e4c243b1ae080869aacba3749cca0b6dde731407d0d261cd94fd`。应用签名及最终 ZIP 解压后签名均验证通过。
+- 签名安装包回放运行 `2026-09-22T14-59-57-758Z` 完成同一完整桌面链路。前两次启动超时保留在账本；调用栈定位到 macOS `SecItemCopyMatching`/钥匙串读取。最终 QA 仅在隔离测试启动参数中使用 Electron `--use-mock-keychain`，不修改产品凭据代码、系统设置或真实钥匙串。正常启动的系统钥匙串授权弹窗未由本次自动验收覆盖。
+- 后台已部署 `813a758`，保留原容器配置、旧版本与停机一致性数据备份；无正在运行/待取回的新请求时才切换。公网健康检查 200、新协议认证能力接口 200、未认证 401、管理页公网 404。一次本机 curl TLS 失败后，Node 客户端同类网络栈及服务器访问公网域名均复核成功。详见 [部署记录](../deployment/jp-server-worket.md)。
+
 ## 未证明的部分
 
 这三组是为了检查机制而编写的合成输入，已用于调试，不是盲测集。没有以旧 S 轨道 Gold 宣称可复用定义准确率，也没有 A/B 测得重复率下降、审阅节时或返工收益。程序能保证模型声明的关系被正确执行，不能保证模型总能识别所有同义、范围和采纳变化；合并多个义务的长句、跨字段语义重复仍可能需要人工修改。

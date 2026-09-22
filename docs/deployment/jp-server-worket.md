@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- Worket 服务代码来自提交 `50cd337`，版本目录为 `/opt/worket/releases/50cd337`，`/opt/worket/current` 指向当前版本。
+- Worket 服务代码来自提交 `813a758`（2026-09-22 更新），版本目录为 `/opt/worket/releases/813a758`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -59,3 +59,15 @@ ssh jp-server 'sudo nginx -t'
 旧版本目录 `78d09d4809371798b66221c4181387b27bd392f8` 与停止的 `worket-before-50cd337` 容器保留。部署中曾因未保留容器用户而触发 `/data` chmod EPERM，健康检查自动回滚；最终保留 `1000:1000` 后成功，未改变数据权限。重建时须保留 User、挂载、环境和安全设置，不能只复制镜像和启动命令。此轮不含数据库迁移。
 
 真实客户端验证：重试此前失败的同一已授权快照，4 批提取加 1 次汇总，228 秒进入 `AWAITING_REVIEW`。本地保存 33 条候选（33 条文本均含中文），提示词版本 v1.4；4 个非阻塞待确认提示，0 个阻塞问题。候选留给用户审阅，未自动发布。本地包已通过打包态流程验证，正常启动时保留未读完成提醒。
+
+## 2026-09-22 规则协调部署
+
+`813a758` 新客户端以 `ruleSchemaVersion:1` 启用 `work-definition-v2.0`。旧请求保持 v1.4 提示；能力接口增加 `ruleSchemaVersions:[1]`。新客户端连接旧后台会在提交前拒绝，不静默把不支持的协议当作成功。
+
+从已提交源码构建精简后台包，SHA256 为 `e74664bd85f0f6b57a05a2405b87f4293b277c94b9e8fb5eff1858226294532e`。部署前确认过去 10 分钟无 RUNNING/SUCCEEDED 待处理请求，并先用无网络临时容器校验新模块可加载。停机后备份数据到 `/opt/worket/backups/data-pre-813a758-20260922-150144.tgz`，权限由 root 的 0077 umask 限制；保留旧容器 `worket-before-813a758-20260922-150144` 与 `/opt/worket/releases/50cd337`。
+
+新容器复制并复核原 User、Env、WorkingDir、Cmd、Entrypoint、Binds、只读根文件系统、capabilities、SecurityOpt、NetworkMode 与 RestartPolicy。健康检查失败时脚本会恢复旧 symlink 与旧容器；本次健康成功，没有执行回滚。不修改 Nginx、模型配置或密钥。
+
+验证：本机 Node fetch 与服务器访问 `https://worket.dandi.site/health` 均为 200；服务器内使用现有主体的一分钟临时签名认证，公网 capabilities 为 200 并返回 `[1]`，无认证为 401，`/admin/` 为 404。令牌和私钥始终留在服务器，没有写日志或改账号。没有另行消耗模型调用重跑生产请求；模型/桌面链路在相同实现的隔离服务中验证，见 [系统验收](../acceptance/working-contract-v2.md)。
+
+本地试用包为 `release/Worket-contract-v2-813a758.zip`，打包态完整流程已回放通过；未发布新 GitHub Release，用户已安装应用保持原样。
