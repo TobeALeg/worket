@@ -62,6 +62,12 @@ run `E0-synthetic-pilot-2026-09-21T10-13-00-466Z-9a49e534` 对 12/12 个案例�
 
 本轮也暴露了流程说明缺口：确认页完成后只写出 gold，没有向用户说明本步产物与 Working Context 的区别，也没有引导到下一阶段。后续评测界面应明确显示 `原文 → 人工 gold → 实际 Working Context/Definition → 差异裁定 → 评分`，并优先让用户复核自动差异，而不是再次从头阅读全部条目。
 
+## H2 真实模型 Working Context 诊断
+
+用户于 2026-09-22 明确要求调用真实模型生成 Working Context。run `E0-videocreator-workstate-real-2026-09-22T08-49-15Z-b7769344` 使用服务器已配置的 `deepseek-flash`，对两份已授权校准记录各调用一次，2/2 成功；随后在本机走真实 Work Core 持久化与 Handoff Package 导出。共观察到 2 次 provider 调用、9,238 input tokens、16,692 output tokens；供应商未返回币种费用，因此 cost 保持 `null`。API Key 只在服务器容器内解密使用，没有回传或写入运行文件。
+
+这次调用通过受控运维诊断通道复用当前 `openai-compatible-work-state-v1` 提示词，尚不是正式托管 WorkState API，因此证据标记为 `AUTHORIZED_REAL_DIRECT_DIAGNOSTIC`，不能表述为线上客户端完整路径。初查显示：第二份记录已保留最终“每个平台不超过 50 words”及“不附加免责声明”；第一份结果的 Handoff `currentTask` 为空，仍把导出体积核算留作下一步；两份结果都有同义内容跨字段重复，且存在把 Agent 提议写成 `USER_STATED` 的来源归属风险。正式召回、精确率与噪音率仍须以 H1 gold 做逐项裁定。
+
 ## H0 真实资料登记（VideoCreator）
 
 用户于 2026-09-21 明确授权使用 `/Users/dandi/VideoCreator` 的对话记录，并允许收费调用真实模型 API。导入器只采集该工作区、`thread_source=user` 根对话中的用户/助手可见文本；同一 thread 的续聊文件合并去重，排除子代理、系统/开发者上下文、自动注入的插件/AGENTS/环境文本、工具调用与输出、隐藏推理和独立附件正文。原始清单、模型输出和凭据均位于被 Git 忽略的 `evals/extraction/runs/`。
