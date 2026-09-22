@@ -1,3 +1,4 @@
+import { currentSourceEvents } from "../core/source-revisions.js";
 import { randomUUID } from 'node:crypto';
 import { ensure, LIMITS } from '../contracts/definition.js';
 import { hash } from '../definitions/storage.js';
@@ -95,7 +96,7 @@ export class ContinuousEvolution {
         const seen = new Set([...s.excluded, ...this.service.repository.evolutionHistory(s.definitionKey).flatMap(h => h.sourceEvents).filter(e => !('deleted' in e)).map(e => `${e.workId}/${e.eventId}/${e.hash}`)]);
         const sources = this.service.core.listWorks().filter(w => w.definition.key === s.definitionKey).map(work => ({
           workId: work.instance.id,
-          events: work.sourceArchive.filter(e => e.content?.trim() && ['user.prompt', 'agent.response', 'work.input_provided'].includes(e.kind) && !seen.has(eventIdentity(work.instance.id, e))),
+          events: currentSourceEvents(work.sourceArchive).filter(e => e.content?.trim() && ['user.prompt', 'agent.response', 'work.input_provided'].includes(e.kind) && !seen.has(eventIdentity(work.instance.id, e))),
         })).filter(s => s.events.some(e => e.kind === 'user.prompt' || e.kind === 'agent.response'));
         // Batch whole instances; oversized individual histories require an explicit range review.
         const selected = sources.slice(0, LIMITS.maxSources);

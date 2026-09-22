@@ -1,3 +1,4 @@
+import { currentSourceEvents } from "../core/source-revisions.js";
 import type { WorkCore } from "../core/index.js";
 
 interface JsonRpcRequest {
@@ -115,6 +116,8 @@ export class WorkPetMcpHandler {
             id,
             result: toolResult({
               workInstanceId: workId,
+              currentEventIds: currentSourceEvents(work.sourceArchive).map(event => event.id),
+              revisionPolicy: "events 保留观察历史；当前有效内容按 currentEventIds 顺序读取，修订的 metadata.worketSource.previousEventId 指向旧观察。",
               events: work.sourceArchive.filter(
                 (event) => event.sequence > after,
               ),

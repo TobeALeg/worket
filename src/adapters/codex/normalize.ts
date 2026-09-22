@@ -16,6 +16,7 @@ interface CodexTurnPayload extends UnknownRecord {
   id: string;
   startedAt?: number | null;
   completedAt?: number | null;
+  status?: string;
   items: CodexItemPayload[];
 }
 
@@ -104,6 +105,9 @@ export function normalizeCodexThread(thread: CodexThreadPayload): NormalizedThre
         }
         continue;
       }
+
+      // User input is stable immediately; other items may still stream within a running turn.
+      if (turn.status === "inProgress") continue;
 
       if (item.type === "agentMessage" && typeof item.text === "string") {
         sequence += 1;

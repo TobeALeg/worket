@@ -107,7 +107,7 @@ App Server 提供列表与完整可见历史；共享连接初始化，单请求
 
 Hook 只在工作 OPEN、目标执行者和两个标记均匹配时确认真实 session；重复点击和已待确认的交付不得重复打开目标。失败补偿恢复原来源；取消需要确认未接手，恢复前一真实绑定。旧标记不能绑定下一轮交付。恢复工作使用最后一个真实执行者。切换不取消外部应用已经执行的任务。
 
-MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_receipts 将读取归属到 deliveryId/Binding，Hook 与读取可乱序到达。仅查看不确认，新交付不继承旧读取；恢复原实际会话可恢复原证据。标识用于关联，不是调用者身份认证。详见 [交接回执](specs/delivery-receipts.md)。工作包读取和目标会话确认是分开的证据。通用服务每轮同步全部真实活动绑定；异步读取完成后重新检查生命周期和 binding ID，避免旧来源写入新执行片段。事件序号跨执行片段递增，externalId 去重。
+MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_receipts 将读取归属到 deliveryId/Binding，Hook 与读取可乱序到达。仅查看不确认，新交付不继承旧读取；恢复原实际会话可恢复原证据。标识用于关联，不是调用者身份认证。详见 [交接回执](specs/delivery-receipts.md)。工作包读取和目标会话确认是分开的证据。通用服务每轮同步全部真实活动绑定；异步读取完成后重新检查生命周期和 binding ID，避免旧来源写入新执行片段。事件序号跨执行片段递增。source-delta.ts 以实际会话中的原始 ID 比较内容，修订追加观察并关联前版；source-revisions.ts 分离不可变档案与保持逻辑顺序的有效视图。WorkState 隐去旧自动派生项，提炼范围和持续比较只用有效事件；人工改动保留，失败后按游标补算。MCP 历史提供 currentEventIds，拆分点映射回原应用 ID。详见 [来源修订](specs/source-revisions.md)。
 
 ### WorkStateExtractor
 

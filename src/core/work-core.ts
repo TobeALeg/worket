@@ -1,3 +1,4 @@
+import { currentSourceState, sourceRoots } from "./source-revisions.js";
 import { PackageReceipts } from './package-receipts.js';
 import { existsSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -306,7 +307,7 @@ export class SqliteWorkCore implements WorkCore {
       bindings,
       activeEpisode,
       activeBinding,
-      state: JSON.parse(instanceRow.state_json as string) as WorkState,
+      state: currentSourceState(JSON.parse(instanceRow.state_json as string) as WorkState, sourceArchive),
       sourceArchive,
       artifactRefs,
       handoffPackages,
@@ -417,6 +418,8 @@ export class SqliteWorkCore implements WorkCore {
     const work = this.#requireWork(workInstanceId);
     const nextState = structuredClone(work.state);
     const tombstones = this.#loadTombstones(workInstanceId);
+    const roots = sourceRoots(work.sourceArchive);
+    const sameSource = (a: string[], b: string[]) => sharesSource(a.map(id => roots.get(id) ?? id), b.map(id => roots.get(id) ?? id));
 
     for (const field of WORK_STATE_FIELDS) {
       if (work.definition.kind === "REUSABLE" && field === "objective") continue;
@@ -431,7 +434,7 @@ export class SqliteWorkCore implements WorkCore {
                 tombstone.itemId === incomingItem.id
                 || (
                   tombstone.normalizedText === normalizedStateText(incomingItem.text)
-                  && sharesSource(tombstone.sourceMessageIds ?? [], incomingItem.sourceMessageIds)
+                  && sameSource(tombstone.sourceMessageIds ?? [], incomingItem.sourceMessageIds)
                 )
               ),
           )
@@ -442,8 +445,8 @@ export class SqliteWorkCore implements WorkCore {
           (existing) =>
             existing.origin === "USER_EDITED"
             && existing.originalText
-            && normalizedStateText(existing.originalText) === normalizedStateText(incomingItem.text)
-            && sharesSource(existing.sourceMessageIds, incomingItem.sourceMessageIds),
+            && (normalizedStateText(existing.originalText) === normalizedStateText(incomingItem.text) || !sharesSource(existing.sourceMessageIds, incomingItem.sourceMessageIds))
+            && sameSource(existing.sourceMessageIds, incomingItem.sourceMessageIds),
         );
         if (protectedEdit) continue;
         const existingIndex = nextState[field].findIndex(

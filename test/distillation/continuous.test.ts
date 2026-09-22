@@ -179,3 +179,17 @@ test('explicit retry after stopping retains the original destination across asyn
     assert.equal(job.status, 'FAILED'); assert.match(job.error, /CONTINUOUS_STOPPED/); assert.equal(f.client.calls, 2);
   } finally { f.service.close(); f.core.close(); }
 });
+
+test('continuous comparison batches only current source revisions while preserving the opt-in boundary', async () => {
+  const f = await setup();
+  try {
+    const work = f.create(); await f.enable(); f.append(work, '每次必须保留旧字数要求');
+    const previous = f.core.getWork(work.instance.id)!.sourceArchive.at(-1)!;
+    f.core.appendSourceEvents(work.instance.id, [{ externalId: id(), sequence: previous.sequence + 1, kind: 'user.prompt', content: '每次必须按新版字数要求执行', timestamp: new Date().toISOString(), executorType: 'HUMAN', environmentType: 'CODEX_DESKTOP', metadata: { worketSource: { adapter: 'codex', conversationId: f.core.getWork(work.instance.id)!.activeBinding!.conversationId, externalId: previous.externalId, previousEventId: previous.id } }, artifactRefs: [] }]);
+    await f.trigger();
+    assert.equal(f.client.calls, 2);
+    const wire = JSON.stringify(f.client.request);
+    assert.match(wire, /新版字数要求/); assert.doesNotMatch(wire, /旧字数要求/);
+    assert.equal(f.core.getWork(work.instance.id)!.sourceArchive.some(e => e.content === previous.content), true, 'original observation stays local and immutable');
+  } finally { f.service.close(); f.core.close(); }
+});

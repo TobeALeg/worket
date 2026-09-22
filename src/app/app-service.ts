@@ -1,3 +1,5 @@
+import { sourceDelta } from "./source-delta.js";
+import { currentSourceEvents, sourceIdentity } from "../core/source-revisions.js";
 import { basename, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import { conversationProjectLabel } from "../executors/project-label.js";
@@ -330,7 +332,7 @@ export class AppService {
     // Archived evidence is enough to choose a split point; no need to contact the old application.
     const binding = work.activeBinding ?? work.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
-    return work.sourceArchive
+    return currentSourceEvents(work.sourceArchive)
       .filter(
         (event) =>
           event.episodeId === binding.episodeId &&
@@ -352,11 +354,12 @@ export class AppService {
     if (!binding) throw new Error("没有可分割的来源对话");
     const adapter = this.#executors.get(binding.adapter),
       thread = await adapter.source.readThread(binding.conversationId);
-    const start = thread.events.findIndex(
-      (event) =>
-        event.externalId === request.startExternalId &&
-        event.kind === "user.prompt",
-    );
+    if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致，未创建新记录");
+    const selected = currentSourceEvents(sourceWork.sourceArchive).find(event =>
+      event.externalId === request.startExternalId && event.episodeId === binding.episodeId && event.kind === "user.prompt");
+    if (!selected) throw new Error("所选消息已改变，请重新选择");
+    const originalId = sourceIdentity(selected)?.externalId ?? selected.externalId;
+    const start = thread.events.findIndex(event => event.externalId === originalId && event.kind === "user.prompt");
     if (start < 0) throw new Error("未找到指定的用户消息");
     if (
       this.#requireWork(request.sourceWorkId).activeBinding?.id !==
@@ -444,7 +447,9 @@ export class AppService {
   async #updateRecordedState(work: WorkSnapshot): Promise<void> {
     const workId = work.instance.id;
     const extracted = this.#core.extractedSequence(workId);
-    const events = work.sourceArchive.filter((event) => event.sequence > extracted);
+    const pending = work.sourceArchive.filter(event => event.sequence > extracted);
+    const revised = pending.some(event => sourceIdentity(event)?.previousEventId);
+    const events = currentSourceEvents(work.sourceArchive).filter(event => revised || event.sequence > extracted);
     if (!events.length) return;
     const patch = await this.#extractor(this.#cloudExtractionEnabledFor(workId)).extract({
       previousState: work.state,
@@ -929,25 +934,7 @@ export class AppService {
     current: WorkSnapshot,
     thread: NormalizedThread,
   ): Promise<{ work: WorkSnapshot; newEvents: NormalizedSourceEvent[] }> {
-    const known = new Set(
-      current.sourceArchive.map((event) => event.externalId),
-    );
-    const captureStart = thread.events.findIndex((event) =>
-      known.has(event.externalId),
-    );
-    const captureScope =
-      captureStart === -1 ? thread.events : thread.events.slice(captureStart);
-    const maxSequence = Math.max(
-      0,
-      ...current.sourceArchive.map((event) => event.sequence),
-    );
-    const newEvents = captureScope
-      .filter((event) => !known.has(event.externalId))
-      .map((event, index) => ({
-        ...event,
-        sequence: maxSequence + index + 1,
-        metadata: { ...event.metadata, sourceSequence: event.sequence },
-      }));
+    const newEvents = sourceDelta(current, thread);
     let work = this.#core.appendSourceEvents(
       current.instance.id,
       this.#sourceInputs(newEvents),
@@ -988,7 +975,7 @@ export class AppService {
   }
 
   #detail(work: WorkSnapshot): WorkDetailView {
-    const latestReply = work.sourceArchive.findLast((event) => event.kind === "agent.response" && event.content?.trim());
+    const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
       .prepare("SELECT status,read_at FROM pending_dispatches WHERE work_id=?")
       .get(work.instance.id);

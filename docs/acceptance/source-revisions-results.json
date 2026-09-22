@@ -1,0 +1,172 @@
+{
+  "round": 10,
+  "sourceCommit": null,
+  "reproduction": {
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-stream-repro-WsILgu",
+    "before": "已完成",
+    "after": "已完成",
+    "tool": {
+      "status": "inProgress",
+      "exitCode": null,
+      "output": ""
+    },
+    "completed": [
+      "已完成"
+    ],
+    "pending": []
+  },
+  "protocolVerification": {
+    "localBinary": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "version": "codex-cli 0.155.0-alpha.9.2",
+    "command": "codex app-server generate-ts --out /tmp/worket-codex-protocol --experimental",
+    "turnStatus": [
+      "completed",
+      "interrupted",
+      "failed",
+      "inProgress"
+    ]
+  },
+  "tests": {
+    "passed": 193,
+    "failed": 0
+  },
+  "runs": [
+    {
+      "run": "2026-09-22T20-38-33-890Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-eXpsVM",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {},
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-thread-id=\"synthetic-revisions\"]').getByRole('button', { name: '开始记录' })\u001b[22m\n"
+    },
+    {
+      "run": "2026-09-22T20-39-41-424Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-mNiYcC",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "noPartialReply": true
+      },
+      "error": "locator.click: Error: strict mode violation: locator('.secondary-menu summary') resolved to 2 elements:\n    1) <summary aria-label=\"更多选项\">•••</summary> aka getByLabel('更多选项')\n    2) <summary aria-label=\"工作操作\">更多</summary> aka getByLabel('工作操作')\n\nCall log:\n\u001b[2m  - waiting for locator('.secondary-menu summary')\u001b[22m\n"
+    },
+    {
+      "run": "2026-09-22T20-40-09-684Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-jQLKrZ",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "noPartialReply": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true
+      },
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok((await panel.locator('#work-detail').innerText()).includes('发布日期'))\n"
+    },
+    {
+      "run": "2026-09-22T20-41-57-656Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-NGV3xc",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": false,
+      "checks": {
+        "noPartialReply": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true
+      }
+    },
+    {
+      "run": "2026-09-22T20-42-36-547Z",
+      "status": "FAILED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-8nt6Sn",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": false,
+      "checks": {},
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ {\n+   sourceMessageId: 'reply-1:agent',\n+   text: '已完成'\n+ }\n- undefined\n",
+      "case": "old",
+      "expectedFailure": true,
+      "sourceCommit": "7ead4f4"
+    },
+    {
+      "run": "2026-09-22T20-42-37-974Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-QxKpEK",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": true,
+      "checks": {
+        "legacyPartialSeeded": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true
+      },
+      "case": "legacy"
+    },
+    {
+      "run": "2026-09-22T20-42-39-318Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-delivery-e2e-u0Iq5N",
+      "providerCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "readBeforeHookRetained": true,
+        "noInheritedOrUncorrelatedReceipt": true
+      },
+      "case": "receipts"
+    },
+    {
+      "run": "2026-09-22T20-42-42-420Z",
+      "scenario": "video",
+      "model": "deepseek-flash",
+      "status": "PASSED",
+      "replay": "test/fixtures/contracts/video",
+      "packaged": false,
+      "credentialStorage": "OS safeStorage",
+      "stages": [
+        "desktop → explicit normative file selection → HTTP submitted",
+        "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+        "draft review → published test definition",
+        "new instance → actual exported/copied execution package",
+        "instance-only override → old/default definition unchanged",
+        "renamed source → unchanged fixed version",
+        "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+        "missing pinned dependency → actual export refuses incomplete instructions",
+        "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance",
+        "explicit future-only consent → persisted idle queue → real HTTP + controlled provider → one review → user-confirmed version → stopped; no live model call"
+      ],
+      "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-22T20-42-42-420Z",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-lztCne",
+      "calls": 4,
+      "usage": [
+        {
+          "replay": true
+        },
+        {
+          "replay": true
+        },
+        {
+          "controlledFixture": true
+        },
+        {
+          "controlledFixture": true
+        }
+      ],
+      "humanAcceptance": false,
+      "evolution": false,
+      "continuous": true,
+      "actualProviderCalls": 0,
+      "case": "continuous"
+    }
+  ],
+  "actualProviderCalls": 0,
+  "externalAgent": false,
+  "businessAcceptance": false
+}
