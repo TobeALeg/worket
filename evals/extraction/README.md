@@ -11,6 +11,7 @@ npm run eval:extraction -- curate --source <imported-cases.jsonl> --plan <local-
 npm run eval:extraction -- preflight --config evals/extraction/manifests/synthetic-template.json
 npm run eval:extraction -- run --config <local-config.json> --adapter work-state-local
 npm run eval:extraction -- run --config <local-config.json> --adapter definition-service --approval <approval.json>
+npm run eval:extraction:review -- --source <source-cases.jsonl> --draft <review-draft.json> --output <human-approved-gold.json>
 npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adjudication <adjudication.json>
 ```
 
@@ -19,6 +20,8 @@ npm run eval:extraction -- grade --run <run-directory> --gold <gold.json> --adju
 `import-codex` 只接受显式授权工作区下、`thread_source=user` 的根对话；同一 thread 的续聊文件按可见消息去重合并，并输出 Worket 原生 `user.prompt / agent.response` 事件。Codex 的交互式问答包装会拆回助手问题与用户答案，避免来源错归。它只导入用户与助手的可见文本，排除自动注入的插件/AGENTS/环境上下文、子代理、系统与开发者消息、工具调用及输出、隐藏推理和独立附件正文。导入结果初始为 `split=UNASSIGNED`，不能在未记录分组与盲法状态前冒充封存集。
 
 `curate` 用本地计划登记 `split`、近重复/共享模板 `group_id` 与盲法状态，并阻断同组跨 split。计划和真实清单必须留在被忽略的本地路径；四份试点保留集在 H1 前不运行、不查看正文。曾参与这些历史工作的操作者即使本轮不打开正文，也必须将其标成非严格盲法，不能作为最终独立封存证据。
+
+`eval:extraction:review` 启动只监听本机的 [H1 人工确认页](review/README.md)。页面从任意 source case JSONL 自动读取案例与原始可见消息，再把独立 review draft 填入表单；同一界面可用于本轮两份校准记录和后续测试。草稿可反复保存，最终 gold 只有所有单位完成确认、证据可在同案原文精确定位且评审人签名完整时才会写入，并且不会覆盖已有最终文件。source、draft、output 都应放在被忽略的 `runs/` 下。
 
 ## Adapter
 

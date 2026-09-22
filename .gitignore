@@ -3,6 +3,7 @@ dist/
 release/
 research/
 output/
+.playwright-cli/
 *.log
 .DS_Store
 *.db

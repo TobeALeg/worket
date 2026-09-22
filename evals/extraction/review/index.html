@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>Worket 抽取 H1 人工确认</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">WORKET / EXTRACTION EVALUATION</div>
+        <h1>H1 人工确认</h1>
+        <p class="subhead">逐条核对原始对话中的真实要求，确认后才会进入结构化金标准。</p>
+      </div>
+      <div class="top-actions">
+        <label>评审人 <input id="reviewer-id" type="text" placeholder="姓名或标识"></label>
+        <button id="save-draft" class="secondary">保存草稿</button>
+        <button id="save-final" class="primary">完成并保存最终确认</button>
+      </div>
+    </header>
+    <div id="notice" class="notice" role="status"></div>
+    <main class="layout">
+      <aside class="case-nav">
+        <div class="panel-title">案例 <span id="case-count"></span></div>
+        <div id="case-list"></div>
+        <div class="path-note" id="path-note"></div>
+      </aside>
+      <section id="detail" class="detail" aria-live="polite">
+        <div class="loading">正在读取 source case JSONL 和 review draft…</div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
