@@ -23,6 +23,7 @@
     "eval:extraction:adjudicate": "node evals/extraction/adjudication-server.mjs",
     "eval:extraction:test": "node --test evals/extraction/test/*.test.mjs",
     "qa:package": "WORKPET_EXECUTABLE_PATH=$PWD/release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket node scripts/qa-electron.mjs",
+    "qa:contract": "npm run build && node scripts/qa-contract-baseline.mjs",
     "package:mac": "npm run build && electron-packager . Worket --platform=darwin --arch=arm64 --app-bundle-id=dev.workpet.desktop --icon=assets/WorkPet.icns --extra-resource=assets/WorkPet.png --asar.unpackDir=integrations --asar.unpack=dist/foreground-context --out=release --overwrite --ignore='^/research($|/)' --ignore='^/test($|/)' --ignore='^/output($|/)' --ignore='^/release($|/)' --ignore='^/server($|/)' --ignore='^/.worket-server($|/)'",
     "ai:serve": "npm run build:server && node server/start.mjs",
     "build:server": "tsc -p server/tsconfig.json",

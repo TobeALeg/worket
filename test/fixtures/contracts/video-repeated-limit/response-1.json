@@ -1,0 +1,87 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "req-work-1-event-1-platform-copy-limit",
+        "text": "每个平台文案最多五十个英文单词。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-event-1-animation-voice-sync",
+        "text": "以后动画内容还必须与对应口播同步。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-event-1-clock-48s-instance",
+        "text": "本次视频在 48 秒修正时钟；48 秒只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-event-1-new-script-input-role",
+        "text": "新的视频只需要提供新脚本即可。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-event-1-executor-skill-no-extra-inputs",
+        "text": "其他不明确的制作参数交由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-file-1-platform-copy-limit",
+        "text": "每个平台交付文案不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-work-1-file-1-mp4-deliverable",
+        "text": "成片交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/file-1"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 1995,
+    "completion_tokens": 8609,
+    "total_tokens": 10604,
+    "prompt_tokens_details": {
+      "cached_tokens": 1536
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 8194
+    },
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 459
+  }
+}

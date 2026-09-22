@@ -1,0 +1,284 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "系列视频制作规范",
+      "purpose": {
+        "key": "purpose",
+        "text": "制作符合 FRAME.md 规范的系列视频成片。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "以后所有这类视频都按 FRAME.md 制作"
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "key": "script",
+          "text": "新视频的脚本。",
+          "valueType": "TEXT",
+          "required": true,
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "新的视频只需要提供新脚本即可"
+              }
+            ]
+          }
+        }
+      ],
+      "deliverables": [
+        {
+          "key": "mp4_delivery",
+          "text": "成片交付 MP4。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "成片交付 MP4。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "92ed778c39c1310f2b577f119d0a9d2461ce48f53ac53b91b57bc8e0c154d245",
+            "name": "FRAME.md",
+            "startLine": 3,
+            "endLine": 3
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "platform_copy_word_limit",
+          "text": "每个平台交付文案不超过 50 words。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "每个平台交付文案不超过 50 words。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "92ed778c39c1310f2b577f119d0a9d2461ce48f53ac53b91b57bc8e0c154d245",
+            "name": "FRAME.md",
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "key": "animation_voiceover_sync",
+          "text": "动画内容还必须与对应口播同步。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后动画内容还必须与对应口播同步。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "correction_clock_48s",
+          "text": "本次视频在 48 秒修正时钟；48 秒只属于本次。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "本次视频在 48 秒修正时钟；48 秒只属于本次。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "INSTANCE",
+            "status": "ACTIVE",
+            "condition": "仅限本次视频"
+          }
+        },
+        {
+          "key": "script_only_input",
+          "text": "新的视频只需要提供新脚本；其他不明确的制作参数交由执行者按既有 skill 处理，不增加必填输入。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "新的视频只需要提供新脚本即可，其他不明确的制作参数交由执行者按既有 skill 处理，不增加必填输入。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "acceptanceCriteria": [],
+      "methods": [
+        {
+          "key": "unspecified_params_by_existing_skill",
+          "text": "不明确的制作参数按既有 skill 处理。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "其他不明确的制作参数交由执行者按既有 skill 处理"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "obligation": "REFERENCE"
+        }
+      ],
+      "materialRoles": []
+    },
+    "issues": [
+      {
+        "id": "issue-1",
+        "type": "MISSING_INFORMATION",
+        "field": "methods.unspecified_params_by_existing_skill",
+        "message": "用户要求按既有 skill 处理不明确的制作参数，但未提供该 skill 的具体内容；当前仅记录为 REFERENCE 方法。",
+        "blocking": false
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "req-1",
+        "text": "每个平台交付文案不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1",
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-2",
+        "text": "成片交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-3",
+        "text": "动画内容还必须与对应口播同步。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-4",
+        "text": "本次视频在 48 秒修正时钟；48 秒只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-5",
+        "text": "新的视频只需要提供新脚本；其他不明确的制作参数交由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 2460,
+    "completion_tokens": 12672,
+    "total_tokens": 15132,
+    "prompt_tokens_details": {
+      "cached_tokens": 1536
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 11328
+    },
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 924
+  }
+}

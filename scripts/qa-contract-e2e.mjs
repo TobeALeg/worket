@@ -12,6 +12,7 @@ import { createAIService } from '../server/service.mjs';
 import { hash } from '../dist/definitions/storage.js';
 import { ruleItems, effectiveRules } from '../dist/contracts/rules.js';
 import { source } from '../test/distillation/fixtures.ts';
+import { contractReplay } from './lib/contract-replay.mjs';
 const run = new Date().toISOString().replace(/[:.]/g, '-');
 const output = join(process.cwd(), 'output', 'contract-e2e', run); mkdirSync(output, { recursive: true });
 const directory = mkdtempSync(join(tmpdir(), 'worket-contract-e2e-'));
@@ -33,6 +34,7 @@ const original = source(core, conversation);
 core.addArtifactRef(original.instance.id, { path, filename: 'FRAME.md', role: 'REFERENCE', mimeType: 'text/markdown', size: Buffer.byteLength(norm), sha256: hash(norm), lastModifiedAt: new Date().toISOString(), availability: 'AVAILABLE' });
 core.completeWork(original.instance.id); core.close();
 let calls = 0;
+const replay = process.env.WORKET_E2E_REPLAY ? contractReplay(process.env.WORKET_E2E_REPLAY) : null;
 const usage = [], errors = [];
 const remoteCode = `import {readFileSync} from 'node:fs'; import {AdminStore} from '/app/server/admin/store.mjs'; import {ModelProvider} from '/app/server/workflow.mjs'; const store=Object.create(AdminStore.prototype); store.data=JSON.parse(readFileSync('/data/settings.json','utf8')); store.master=readFileSync('/data/encryption.key'); const config=store.data.provider; const provider=new ModelProvider({baseUrl:config.baseUrl,model:config.model,apiKey:store.apiKey()}); const chunks=[]; for await(const chunk of process.stdin)chunks.push(chunk); try {const value=await provider.call(JSON.parse(Buffer.concat(chunks)).messages,AbortSignal.timeout(180000)); process.stdout.write(JSON.stringify(value));}catch{process.stderr.write('MODEL_CALL_FAILED');process.exitCode=1;}`;
 const quote = text => "'" + text.replaceAll("'", "'\\''") + "'";
@@ -40,7 +42,7 @@ const provider = { model: 'deepseek-flash', async call(messages, signal) {
   assert.ok(++calls <= 2, 'E2E budget: at most two real provider calls; no hidden retries');
   writeFileSync(join(output, `request-${calls}.json`), JSON.stringify(messages, null, 2));
   if (process.env.WORKET_E2E_REPLAY) {
-    const response = JSON.parse(readFileSync(join(process.env.WORKET_E2E_REPLAY, `response-${calls}.json`), 'utf8'));
+    const response = replay(messages, calls);
     usage.push({ replay: true }); return response;
   }
   console.log(`provider call ${calls} started`);

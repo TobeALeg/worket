@@ -1,0 +1,266 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "代码改动执行规范",
+      "purpose": {
+        "key": "purpose",
+        "text": "用于规范后续同类代码改动的执行与交付。",
+        "basis": {
+          "type": "INFERRED",
+          "refs": [],
+          "rationale": "根据用户要求后续同类代码改动按 FRAME.md 执行并包含回归测试，归纳出该复用目标。"
+        }
+      },
+      "inputs": [
+        {
+          "key": "change_request",
+          "text": "新改动需求",
+          "valueType": "TEXT",
+          "required": true,
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "下一次只需要提供新改动需求"
+              }
+            ]
+          }
+        }
+      ],
+      "deliverables": [
+        {
+          "key": "git_patch",
+          "text": "交付 Git patch。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "交付 Git patch。"
+              }
+            ]
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "43ad526cf66693999c9e5af08522e0db4c25b90b46483fa8d3ca2a5698a4fb37",
+            "name": "FRAME.md",
+            "startLine": 3,
+            "endLine": 3
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "max_function_lines",
+          "text": "每个函数不超过 50 行。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "每个函数不超过 50 行。"
+              }
+            ]
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "43ad526cf66693999c9e5af08522e0db4c25b90b46483fa8d3ca2a5698a4fb37",
+            "name": "FRAME.md",
+            "startLine": 2,
+            "endLine": 2
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "no_extra_required_inputs",
+          "text": "除新改动需求外，不增加必填输入。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "不增加必填输入"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "acceptanceCriteria": [
+        {
+          "key": "regression_test_required",
+          "text": "每个修复必须有对应的回归测试。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后每个修复必须有对应的回归测试。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "methods": [
+        {
+          "key": "existing_skill",
+          "text": "其他由执行者按既有 skill 处理。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "其他由执行者按既有 skill 处理"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "obligation": "REFERENCE"
+        }
+      ],
+      "materialRoles": []
+    },
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1-event-1-r1",
+        "text": "以后所有这类代码改动都按 FRAME.md 执行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-r2",
+        "text": "每个函数最多五十行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-r3",
+        "text": "以后每个修复必须有对应的回归测试。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-r4",
+        "text": "本次只修正第 48 行的拼写；第 48 行只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-r5",
+        "text": "下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-file-1-r1",
+        "text": "每个函数不超过 50 行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-file-1-r2",
+        "text": "交付 Git patch。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 2470,
+    "completion_tokens": 16557,
+    "total_tokens": 19027,
+    "prompt_tokens_details": {
+      "cached_tokens": 1408
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 14770
+    },
+    "prompt_cache_hit_tokens": 1408,
+    "prompt_cache_miss_tokens": 1062
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1-file-1-req-1",
+        "text": "每个平台交付文案不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1",
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-file-1-req-2",
+        "text": "成片交付 MP4。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-req-1",
+        "text": "动画内容必须与对应口播同步。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-req-2",
+        "text": "本次视频在 48 秒修正时钟；48 秒只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1-event-1-req-3",
+        "text": "新的视频只需要提供新脚本作为输入；其他不明确的制作参数交由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/file-1"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2042,
+    "completion_tokens": 6606,
+    "total_tokens": 8648,
+    "prompt_tokens_details": {
+      "cached_tokens": 896
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6296
+    },
+    "prompt_cache_hit_tokens": 896,
+    "prompt_cache_miss_tokens": 1146
+  }
+}

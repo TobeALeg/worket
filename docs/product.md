@@ -1,5 +1,7 @@
 # 产品定义：工作记录、接力与沉淀复用
 
+2026-09-23 已启动 [持续优化计划](specs/worket-improvement-loop.md)。首轮固定可复现桌面回放与失败样本；回放通过证明已记录结果可走完产品链路，不代表新模型的语义质量或实际业务交付已经通过。
+
 ## 2026-09-22：工作约定的规则协调与规范引用
 
 本轮实现 [working contract 通用机制](specs/working-contract-evolution-v2.md) 的首条完整链路：选择已授权交互与规范文本、审阅协调结果、保存定义、新建实例、导出有效工作包及逐项验收。验收证据与范围见 [本轮验收记录](acceptance/working-contract-v2.md)。

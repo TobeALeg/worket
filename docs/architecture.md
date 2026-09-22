@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-09-23：可复现验收基线
+
+`test/fixtures/contracts` 固定三份成功和两份失败的原始真实模型响应及请求，用 hash 验证不可变性。`npm run qa:contract` 在独立 Electron profile 和 SQLite 内回放三类完整桌面路径；回放核对输入与中间结果，不允许历史答案冒充新输入结果。语义失败保留为已知失败，不计入质量通过率。详见 [持续优化检查点](acceptance/worket-improvement-loop.md)。
+
 ## 2026-09-22：规则协调与固定规范条款
 
 `DistillationService.prepare → file role + immutable source snapshot → server/workflow → DefinitionDraft → publish/pinRuleDocuments → WorkDefinition version → instance inputs/overrides → resolveRuleDocuments → WorkPackage/MCP/copy → acceptanceChecks`。

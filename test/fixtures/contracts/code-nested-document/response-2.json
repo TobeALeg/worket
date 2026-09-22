@@ -1,0 +1,268 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "代码改动规范",
+      "purpose": {
+        "key": "purpose",
+        "text": "完成这类代码改动。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "这类代码改动"
+            }
+          ]
+        }
+      },
+      "inputs": [],
+      "deliverables": [
+        {
+          "key": "gitPatch",
+          "text": "交付 Git patch。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "交付 Git patch。"
+              }
+            ],
+            "document": {
+              "source": {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1"
+              },
+              "hash": "43ad526cf66693999c9e5af08522e0db4c25b90b46483fa8d3ca2a5698a4fb37",
+              "name": "FRAME.md",
+              "startLine": 3,
+              "endLine": 3
+            }
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "functionLengthLimitDoc",
+          "text": "每个函数不超过 50 行。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "每个函数不超过 50 行。"
+              }
+            ],
+            "document": {
+              "source": {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1"
+              },
+              "hash": "43ad526cf66693999c9e5af08522e0db4c25b90b46483fa8d3ca2a5698a4fb37",
+              "name": "FRAME.md",
+              "startLine": 2,
+              "endLine": 2
+            }
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "functionLengthLimitUser",
+          "text": "每个函数最多五十行。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "每个函数最多五十行。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "constraints.functionLengthLimitDoc"
+            }
+          }
+        },
+        {
+          "key": "regressionTestForFix",
+          "text": "每个修复必须有对应的回归测试。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "每个修复必须有对应的回归测试。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "spellingFix48LinesInstance",
+          "text": "本次只修正 48 行的拼写，48 行只属于本次。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "本次只修正 48 行的拼写，48 行只属于本次。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "INSTANCE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "nextTimeInputsInstance",
+          "text": "下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "INSTANCE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "acceptanceCriteria": [],
+      "methods": [],
+      "materialRoles": []
+    },
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1:event-1:req-1",
+        "text": "每个函数最多五十行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-2",
+        "text": "每个修复必须有对应的回归测试。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-3",
+        "text": "本次只修正 48 行的拼写，48 行只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-4",
+        "text": "下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:file-1:req-1",
+        "text": "每个函数不超过 50 行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:file-1:req-2",
+        "text": "交付 Git patch。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "assistant"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 2330,
+    "completion_tokens": 15929,
+    "total_tokens": 18259,
+    "prompt_tokens_details": {
+      "cached_tokens": 1536
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 14686
+    },
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 794
+  }
+}

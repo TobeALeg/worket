@@ -1,0 +1,421 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "调研报告规范",
+      "purpose": {
+        "key": "purpose",
+        "text": "生成调研报告。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "以后所有调研报告都按 FRAME.md 制作"
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "key": "research_question",
+          "text": "新调研问题",
+          "valueType": "TEXT",
+          "required": true,
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "下次只需提供新调研问题"
+              }
+            ]
+          }
+        }
+      ],
+      "deliverables": [
+        {
+          "key": "markdown_report",
+          "text": "报告交付 Markdown。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "报告交付 Markdown。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "4ce85dc986c80823a8d67a1ac0707a062b9a81422f27c7cc0cc3dc8d64850acb",
+            "name": "FRAME.md",
+            "startLine": 3,
+            "endLine": 3
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "english_summary_limit",
+          "text": "每节英文摘要不超过 50 words。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "每节英文摘要不超过 50 words。"
+              },
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "每节英文摘要最多五十个词。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "4ce85dc986c80823a8d67a1ac0707a062b9a81422f27c7cc0cc3dc8d64850acb",
+            "name": "FRAME.md",
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "key": "citation_required",
+          "text": "以后每条结论都必须标注资料来源。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后每条结论都必须标注资料来源。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        },
+        {
+          "key": "input_minimalism",
+          "text": "不增加必填输入。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "不增加必填输入。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          }
+        }
+      ],
+      "acceptanceCriteria": [
+        {
+          "key": "english_summary_limit_check",
+          "text": "每节英文摘要不超过 50 words。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "每节英文摘要不超过 50 words。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "constraints.english_summary_limit"
+            }
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "4ce85dc986c80823a8d67a1ac0707a062b9a81422f27c7cc0cc3dc8d64850acb",
+            "name": "FRAME.md",
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "key": "citation_acceptance",
+          "text": "每条结论均标注资料来源。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后每条结论都必须标注资料来源。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "constraints.citation_required"
+            }
+          }
+        },
+        {
+          "key": "markdown_deliverable_check",
+          "text": "报告交付 Markdown。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "报告交付 Markdown。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "deliverables.markdown_report"
+            }
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "4ce85dc986c80823a8d67a1ac0707a062b9a81422f27c7cc0cc3dc8d64850acb",
+            "name": "FRAME.md",
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "key": "input_minimalism_check",
+          "text": "不增加必填输入。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "不增加必填输入。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "DUPLICATE",
+              "target": "constraints.input_minimalism"
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "key": "existing_skill",
+          "text": "其他由执行者按既有 skill 处理。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "其他由执行者按既有 skill 处理"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "obligation": "REFERENCE"
+        }
+      ],
+      "materialRoles": []
+    },
+    "issues": [
+      {
+        "id": "issue-1",
+        "type": "MISSING_INFORMATION",
+        "field": "methods.existing_skill",
+        "message": "用户指定按既有 skill 处理，但未提供该 skill 的具体内容；方法只能标记为 REFERENCE，无法进一步细化。",
+        "blocking": false
+      }
+    ],
+    "groups": [
+      {
+        "sourceKeys": [
+          "work-1"
+        ],
+        "reason": "同一工作的用户对话与 NORMATIVE 文件共同支持可复用规则；文件条款保留规范表述，对话中的相同义务仅作为重复支持。"
+      }
+    ],
+    "requirements": [
+      {
+        "id": "work-1/event-1-req-1",
+        "text": "以后所有调研报告都按 FRAME.md 制作。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-2",
+        "text": "每节英文摘要最多五十个词。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-3",
+        "text": "以后每条结论都必须标注资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-4",
+        "text": "本次报告在 48 页补一张插图，48 页只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-5",
+        "text": "下次只需提供新调研问题，其他由执行者按既有 skill 处理。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-6",
+        "text": "不增加必填输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/file-1-req-1",
+        "text": "每节英文摘要不超过 50 words。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/file-1-req-2",
+        "text": "报告交付 Markdown。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 2388,
+    "completion_tokens": 18342,
+    "total_tokens": 20730,
+    "prompt_tokens_details": {
+      "cached_tokens": 1536
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 16373
+    },
+    "prompt_cache_hit_tokens": 1536,
+    "prompt_cache_miss_tokens": 852
+  }
+}

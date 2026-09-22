@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Synthetic inputs, unmodified real deepseek-flash responses. Previously used for tuning; not blind evaluation or human business acceptance.",
+  "cases": [
+    {
+      "id": "video",
+      "run": "2026-09-22T11-39-19-669Z",
+      "scenario": "video",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "1e8554dc0d87bf60dc111fe7edb169767abed0e6a36c46e09595a860893b653a",
+        "request-2.json": "a947fb91ee5b267773bded89597dcf66f8c8515d6d6eae41cf5c01d41162e797",
+        "response-1.json": "81c6050f65e98cea7fc101c7e050f1415c0054a3676ecb8fa5c709ab815d404f",
+        "response-2.json": "93ba195d25d1706a51dc916e298b21060e50ac59cbea700fd2023514ac7b9f6a"
+      }
+    },
+    {
+      "id": "report",
+      "run": "2026-09-22T11-31-17-293Z",
+      "scenario": "report",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "feb9e7737ed2587097798d51c8788b5e92b9257875269a148b6c4f0ff2e5b33f",
+        "request-2.json": "4f51ea0ce1587d8f4e470f911d0ff922a000aee7a925e8eb43c6b8a29ec03ac1",
+        "response-1.json": "168cd3ab0bf80d4e713034a4c95f0cfd0487a14abaf93906ea95b44106a54123",
+        "response-2.json": "477b84edee265e58d935743862e677a724141464811c680e41b779e73151f69a"
+      }
+    },
+    {
+      "id": "code",
+      "run": "2026-09-22T11-35-11-383Z",
+      "scenario": "code",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "ec21e1afcabce946504087cd13193492665ad7f1fa5f7257b17801152da9b9cd",
+        "request-2.json": "a165064ada16e9c87efa4642ef37120270684216ff6cd9e7df82f3641e8bc5d5",
+        "response-1.json": "68fbabb38c3215bf8d18f8396831757eef9ffbbf132b101f7cdc97ab461a840b",
+        "response-2.json": "e091dfe263cad2ee02af1c62ec208889b6c8d8cd75a1210350b91ddd781bb8cc"
+      }
+    },
+    {
+      "id": "code-nested-document",
+      "run": "2026-09-22T11-31-20-947Z",
+      "scenario": "code",
+      "outcome": "INVALID_SOURCE_REF",
+      "sha256": {
+        "request-1.json": "7941fb57f9438152779ec5d451c545d7be06381685cd7f25a9bcfcb8d35d80ce",
+        "request-2.json": "23c1a9b0d380fd1700270545e5d61f3cdb2337ed60a53fb1ed77d1ca0055faa3",
+        "response-1.json": "ad0ca0147aa616872c4a0a008c5f4fb5751dc79ab7be3b689bdc6bed503fb620",
+        "response-2.json": "bebd0cfd4023003ebd146f07c40b9df59426f95b28f2fbf034608b86881fec10"
+      }
+    },
+    {
+      "id": "video-repeated-limit",
+      "run": "2026-09-22T11-35-15-147Z",
+      "scenario": "video",
+      "outcome": "REPEATED_LIMIT",
+      "sha256": {
+        "request-1.json": "fc88c84cd4cc7bdbd1b2a58d44799f2987497a42ab543daf375542b0fc3e3ec0",
+        "request-2.json": "96b2c3686eb798865855f638d3aaf0b71ae81744d8865b3f2b82c8c22436bc71",
+        "response-1.json": "bc7c98ec0202653617ecd6f4efb7fe6a2bf9a835db9bbc88da8e03adcd93f617",
+        "response-2.json": "079129077b05abed626dac2b7a902bf9a35e3e363ba5d141f4e6a39697ea7d67"
+      }
+    }
+  ]
+}

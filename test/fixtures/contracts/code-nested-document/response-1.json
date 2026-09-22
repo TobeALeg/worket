@@ -1,0 +1,80 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1:event-1:req-1",
+        "text": "每个函数最多五十行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-2",
+        "text": "以后每个修复必须有对应的回归测试。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-3",
+        "text": "本次只修正 48 行的拼写，48 行只属于本次。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:event-1:req-4",
+        "text": "下一次只需要提供新改动需求，其他由执行者按既有 skill 处理，不增加必填输入。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:file-1:req-1",
+        "text": "每个函数不超过 50 行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1:file-1:req-2",
+        "text": "交付 Git patch。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/file-1"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 1862,
+    "completion_tokens": 7705,
+    "total_tokens": 9567,
+    "prompt_tokens_details": {
+      "cached_tokens": 1408
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7345
+    },
+    "prompt_cache_hit_tokens": 1408,
+    "prompt_cache_miss_tokens": 454
+  }
+}
