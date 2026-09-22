@@ -20,9 +20,11 @@ node evals/extraction/review-server.mjs \
 左侧切换案例。原始消息区默认折叠，让待确认单位直接进入视野；展开后可查看用户/助手消息、原始 `event_id`、序号和时间。点“引用此消息”会创建一条已绑定该证据的补录单位，避免误把新证据写进另一条待确认单位。单位可标记为保留、修改、删除、已替代或补遗漏，并填写：
 
 - `semantic_content`、`evidence_refs`、`source_origin`、`adoption_status`、`validity`
-- `scope`（仅本次、任务家族长期、全局长期、历史、不进入结构化视图）
-- `destinations`（当前状态、复用候选、待澄清、历史、不入结构化视图）
-- `criticality`、`required`（是否计入当前评分分母）、`utility_reason`、`acceptable_variants`、`forbidden_inferences`
+- `scope`（只适用于本次、以后同类工作、所有工作、历史或不应成为要求）
+- `destinations`（保存到本次工作、以后同类工作、还要问我、只保留历史或不要收录）
+- `criticality`（模型漏掉后是否会导致返工或错误）、`required`（本轮是否要求模型识别）、`utility_reason`、`acceptable_variants`、`forbidden_inferences`
+
+页面使用上述人话标签，保存的 JSON 仍使用稳定枚举值，避免界面文案变化破坏已有评测文件。`required` 决定一条单位是否进入本轮评分分母，`criticality` 决定漏掉它是否属于严重错误，`destinations` 只决定确认后保存到哪个结构化视图；三者互不替代。
 
 “保存草稿”原子写入 `--draft`。所有案例完成后，设置评审人并点“完成并保存最终确认”，server 会拒绝仍有待确认单位/案例、缺少同案原文证据或包含非法枚举值的文档，再以独占方式写入 `--output`。已有最终文件不会被覆盖；如需重做，必须明确指定新的输出路径。输出顶层为 `schema_version/status/reviewer_id/updated_at/cases/human_approval`；每个 case 保留 `case_id/work_id/cutoff_event_id`，每个 unit 保留 gold 示例规定的字段，并额外带 `review_action/review_status` 以审计人工动作。标记为删除或已替代的单位会自动退出当前评分分母。
 

@@ -75,6 +75,9 @@ button.danger { color: var(--danger); }
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field.full { grid-column: 1 / -1; }
 .field > span { color: var(--muted); font-size: 11px; }
+.field-note { color: #7b8793; font-size: 11px; line-height: 1.45; }
+.review-guide { margin: 0 0 14px; padding: 11px 13px; border-left: 3px solid var(--accent); background: var(--accent-soft); color: #49615f; font-size: 12px; line-height: 1.55; }
+.review-guide strong { color: var(--ink); }
 textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
 .semantic textarea { min-height: 62px; }
 .small-input { width: 100%; }

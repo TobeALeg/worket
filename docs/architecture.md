@@ -240,6 +240,8 @@ provider 调用上限由 runner 按 trial 预留。当前托管接口不返回 t
 
 H1 使用 `evals/extraction/review-server.mjs` 提供的本机 HTML。server 显式接收 source/draft/output 三个工作区内路径：source 只读，draft 原子替换，最终 output 独占创建且不可覆盖。页面自动投影任意 source case、可见消息和独立草稿，不依赖本轮 VideoCreator 硬编码；最终保存会验证案例/单位状态、受控枚举、同案 event ID、原文精确摘录、评分分母与人工签名。删除或已替代单位固定退出当前评分分母。真实内容和人工结果继续位于被忽略的 `runs/`，静态 HTML/校验器/测试进入仓库。
 
+评审 UI 将稳定枚举翻译为面向决策的问题：`required` 是“本轮要求模型识别吗”，`criticality` 是“模型漏掉它会怎样”，`destinations` 是“识别后应该保存到哪里”。映射只存在于浏览器显示层，保存与 grader 继续使用原枚举，避免文案调整改变评分合同。
+
 ### Data flow
 
 ```text

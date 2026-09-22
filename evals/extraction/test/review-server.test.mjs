@@ -97,6 +97,10 @@ test("server auto-loads source/draft and serves original visible messages", asyn
   const script = await request(address, "/app.js");
   assert.equal(script.response.status, 200);
   assert.match(script.body, /引用此消息/u);
+  assert.match(script.body, /识别后应该保存到哪里/u);
+  assert.match(script.body, /本轮要求模型识别吗/u);
+  assert.match(script.body, /模型漏掉它会怎样/u);
+  assert.doesNotMatch(script.body, />目标（可多选）</u);
 });
 
 test("draft saves atomically and final save rejects unreviewed cases", async (t) => {
