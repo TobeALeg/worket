@@ -1,6 +1,6 @@
 {
   "round": 11,
-  "sourceCommit": null,
+  "sourceCommit": "e794fd3",
   "tests": {
     "passed": 198,
     "failed": 0
@@ -207,8 +207,102 @@
         }
       ],
       "case": "e2e-final"
+    },
+    {
+      "run": "2026-09-22T20-59-10-281Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-e2e-rjaM4D",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "allPagesToStateAndExtraction": true,
+        "failedPageAtomicAndRetry": true
+      },
+      "rpc": [
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two",
+          "error": "synthetic second page failure"
+        },
+        {
+          "method": "initialize"
+        },
+        {
+          "method": "thread/read",
+          "includeTurns": false
+        },
+        {
+          "method": "thread/turns/list"
+        },
+        {
+          "method": "thread/turns/list",
+          "cursor": "turn-page-two"
+        },
+        {
+          "method": "thread/items/list"
+        },
+        {
+          "method": "thread/items/list",
+          "cursor": "item-page-two"
+        }
+      ],
+      "case": "packaged-history"
+    },
+    {
+      "run": "2026-09-22T20-59-18-673Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-source-e2e-FtmLDk",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "legacyPartial": false,
+      "checks": {
+        "noPartialReply": true,
+        "revisionArchiveCurrentPackageAndSnapshot": true,
+        "revisedSplitPoint": true
+      },
+      "case": "packaged-revisions"
     }
   ],
   "actualProviderCalls": 0,
-  "externalAgent": false
+  "externalAgent": false,
+  "package": {
+    "sourceCommit": "e794fd3",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-e794fd3.zip",
+    "sha256": "c60c1810d826cab6fb500d6969f4a420ddb681eb6b8a2d41cad63fcbc6663f1f",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-history-extract-8iv_6x7g/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  }
 }
