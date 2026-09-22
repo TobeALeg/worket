@@ -140,6 +140,21 @@
         "missingCompanionBlocked": true,
         "syntheticAcceptanceCompleted": true
       }
+    },
+    {
+      "run": "2026-09-22T20-00-35-466Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-skill-e2e-w3pyWP",
+      "actualProviderCalls": 0,
+      "humanAcceptance": false,
+      "targetAgent": false,
+      "kind": "frozen actual model response through local HTTP; synthetic skill executed by QA; real Electron UI and HTTP MCP",
+      "checks": {
+        "relativeCompanionsExecuted": true,
+        "missingCompanionBlocked": true,
+        "syntheticAcceptanceCompleted": true
+      }
     }
   ],
   "providerCalls": 4,
@@ -149,5 +164,41 @@
     "total": 38233
   },
   "cost": "not returned by provider, unknown",
-  "humanBusinessAcceptance": false
+  "humanBusinessAcceptance": false,
+  "packagedMcpRegression": {
+    "run": "2026-09-22T20-00-49-488Z",
+    "status": "PASSED",
+    "packaged": true,
+    "kind": "synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance",
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-mcp-context-NOnEHW",
+    "actualProviderCalls": 0,
+    "checks": {
+      "freshStateArtifactsAndPinnedVersion": true,
+      "missingMaterialBlocked": true,
+      "corruptMaterialBlocked": true,
+      "immutableHistoryAndNoFalseReceipt": true
+    }
+  },
+  "release": {
+    "source": "58be614",
+    "zip": "release/Worket-loop-58be614.zip",
+    "sha256": "e8524b1d588d12f0517863b09b8161e6561d52c155b1ef5f15153df286ac70a9",
+    "signatures": "original and ZIP extracted verified",
+    "normalOsKeychainApproval": "not tested; mock keychain used in isolated packaged QA",
+    "backendArchiveSha256": "86f18606aff40228ae47b5f501950f20c53c6e31e96996611b54dec8816d001c",
+    "publicCapabilities": {
+      "rule": [
+        1
+      ],
+      "evolution": [
+        1
+      ],
+      "evidence": [
+        1
+      ],
+      "skill": [
+        1
+      ]
+    }
+  }
 }

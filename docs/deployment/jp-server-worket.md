@@ -95,3 +95,11 @@ ssh jp-server 'sudo nginx -t'
 部署前无活跃/待领取请求，离线模块导入通过。前版 `/opt/worket/releases/5e1800e`，回滚容器 `worket-before-46b2c1a-20260922-192542`，数据备份 `/opt/worket/backups/data-pre-46b2c1a-20260922-192542.tgz`。原容器配置逐项复核不变，无数据库迁移或凭据变更。
 
 公网 health 200 且 configured=true，匿名 capabilities 401，admin 404；服务器内一分钟签名检查返回认证 200，rule/evolution/evidence schema 均为 1。凭据未离开服务器或写入日志；部署后没有重复模型调用。解压客户端三类完整语义回放通过，见 [语义验收](../acceptance/contract-semantic-trials.md)。
+
+## 2026-09-23 技能协议与输入角色部署
+
+源码 `58be614` 增加 skillSchemaVersions:[1]。新协调/增量技能请求使用 v2.6/v1.6；明确通用输入角色不承载旧值、提炼元指令不混入执行约束。仅规则请求 v2.4，规则加背景引用 v2.5；对应增量 v1.4/v1.5，旧无规则请求保持原提示。后台包包含新引用的 skill-materials.js，SHA-256 `86f18606aff40228ae47b5f501950f20c53c6e31e96996611b54dec8816d001c`。
+
+无活跃/待领取请求后完成离线模块校验、备份、切换并复核原容器配置。前版 `/opt/worket/releases/46b2c1a`，回滚容器 `worket-before-58be614-20260922-200115`，备份 `/opt/worket/backups/data-pre-58be614-20260922-200115.tgz`。没有数据库迁移或模型/密钥配置变更。
+
+公网 health 200，未认证 capabilities 401，admin 404；服务器内一分钟临时认证检查 200，rule/evolution/evidence/skill schema 均为 1。凭据未输出或离开服务器，未写账户数据。模型调用发生于隔离语义试验，部署后没有重复调用。详情见 [技能验收](../acceptance/skill-dependencies.md)。
