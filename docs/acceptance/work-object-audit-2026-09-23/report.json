@@ -1,0 +1,82 @@
+{
+  "sourceCommit": "01b27c5ea28e5433b4524ec5ceea4f4fb7b075fe",
+  "scope": "Freshly compiled source; isolated SQLite; real AppService, extractor, MCP handler and default adapters; fake OS launch/clipboard and source interfaces. No cloud, user database, Electron UI or external Agent.",
+  "checks": {
+    "defaultContinuation": {
+      "resolution": "UNRESOLVED",
+      "fallbackConstraints": [
+        "必须交付 CSV。",
+        "必须保留人民币。",
+        "现在必须交付 PDF。"
+      ],
+      "fallbackFirstAction": "导出 CSV。",
+      "latestUserMessages": [
+        "请导出报告。必须交付 CSV。必须保留人民币。",
+        "取消此前 CSV 要求。现在必须交付 PDF。"
+      ]
+    },
+    "defaultAdapterDelivery": [
+      {
+        "executor": "codex",
+        "deliveredContextVersion": 2,
+        "hasStoredContinuation": true,
+        "storedResolution": "UNRESOLVED",
+        "workIdPreserved": true,
+        "targetStillPending": true,
+        "packageReadAt": null
+      },
+      {
+        "executor": "workbuddy",
+        "deliveredContextVersion": 2,
+        "hasStoredContinuation": true,
+        "storedResolution": "UNRESOLVED",
+        "workIdPreserved": true,
+        "targetStillPending": true,
+        "packageReadAt": null
+      },
+      {
+        "executor": "zcode",
+        "deliveredContextVersion": 2,
+        "hasStoredContinuation": true,
+        "storedResolution": "UNRESOLVED",
+        "workIdPreserved": true,
+        "targetStillPending": true,
+        "packageReadAt": null
+      },
+      {
+        "executor": "antigravity",
+        "deliveredContextVersion": 2,
+        "hasStoredContinuation": true,
+        "storedResolution": "UNRESOLVED",
+        "workIdPreserved": true,
+        "targetStillPending": true,
+        "packageReadAt": null
+      }
+    ],
+    "initialBatchCoverage": {
+      "explicitRequirements": 12,
+      "structuredConstraints": 8,
+      "texts": [
+        "必须遵守第 1 条要求。",
+        "必须遵守第 2 条要求。",
+        "必须遵守第 3 条要求。",
+        "必须遵守第 4 条要求。",
+        "必须遵守第 5 条要求。",
+        "必须遵守第 6 条要求。",
+        "必须遵守第 7 条要求。",
+        "必须遵守第 8 条要求。"
+      ],
+      "note": "All source events can remain archived; this measures loss in the structured projection only."
+    },
+    "negatedCompletion": [
+      {
+        "id": "local-941177be172abe0e",
+        "text": "不能声称已完成导出。",
+        "origin": "AGENT_PROPOSED",
+        "sourceMessageIds": [
+          "negative"
+        ]
+      }
+    ]
+  }
+}
