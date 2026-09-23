@@ -61,3 +61,5 @@ node scripts/qa-work-continuity.mjs
 ## 部署边界
 
 当前请求库新增 operation 列，旧行默认 definition。部署前检查无活跃/待领取作业，备份数据并保留旧容器。回退旧服务时必须恢复兼容表结构；已在临时 SQLite 验证删除新增列后旧 INSERT 可继续且既有记录保留。实际部署状态另见 [运维记录](../deployment/jp-server-worket.md)。不发布新的 GitHub Release。
+
+本轮部署包从已提交源码 `47e557c` 独立构建，SHA256 `4b6299cf588435699c6b6cdf481b1a16f302a2aa1d11990e5ea9dcd386a15fe0`。自动审批拒绝上传/重启生产容器，理由为功能实现授权未明确包含生产中断；已请求单独部署确认。当前已只读核实生产仍运行 `8d39223`，health 正常，新整理接口尚未部署。本地可试用包在 `release/Worket-darwin-arm64/Worket.app`；已安装 `/Applications/Worket.app` 未替换。
