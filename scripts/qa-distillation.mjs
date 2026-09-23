@@ -164,7 +164,8 @@ try {
     await panel.locator('#improvement-consent').uncheck();
     await panel.waitForFunction(async () => !(await window.workpet.distillation('improvementPreference')).enabled);
   }
-  await panel.locator('[data-close]').click();
+  await panel.getByRole('button', { name: '返回 Worket 服务', exact: true }).click();
+  await panel.getByRole('button', { name: '返回工作面板', exact: true }).click();
   await panel.locator('#distill-selected').click();
   await panel.locator('#distillation-activity[data-state="running"]').waitFor();
   assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.open), false, 'distill starts without a confirmation page');

@@ -34,15 +34,21 @@ document.body.append(modal);
 let changed: (dashboard?: DashboardView) => void = () => {};
 let preferenceSave: Promise<unknown> = Promise.resolve();
 let disposeReview: (() => void) | null = null;
-function show(title: string, html: string, actions = ""): void {
+function show(title: string, html: string, actions = "", back?: { label: string; action: () => Promise<void> }): void {
   disposeReview?.();
   disposeReview = null;
   modal.removeAttribute("aria-label");
   modal.setAttribute("aria-labelledby", "definition-title");
-  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${worketBrand}<button data-close class="icon-button" aria-label="关闭">×</button></header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
-  modal
-    .querySelector("[data-close]")!
-    .addEventListener("click", () => modal.close());
+  const navigation = back
+    ? `<div class="window-navigation"><button data-back class="icon-button" aria-label="${esc(back.label)}" title="${esc(back.label)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg></button>${worketBrand}</div>`
+    : `${worketBrand}<button data-close class="icon-button" aria-label="关闭">×</button>`;
+  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${navigation}</header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
+  modal.querySelector("[data-close]")?.addEventListener("click", () => modal.close());
+  if (back) bind("[data-back]", back.action);
+  modal.oncancel = back ? (event) => {
+    event.preventDefault();
+    modal.querySelector<HTMLButtonElement>("[data-back]")?.click();
+  } : null;
   const preference = modal.querySelector<HTMLInputElement>("#improvement-consent");
   preference?.addEventListener("change", () => {
     const enabled = preference.checked;
@@ -121,7 +127,13 @@ async function openServiceSettings(connected = false): Promise<void> {
   const account = status.automatic
     ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">◎</span> Worket 用户</h3><p>${status.userId ? `用户 ${esc(status.userId.slice(0, 8))}` : "首次使用时自动创建"}</p><button class="settings-link" id="copy-recovery" ${status.hasRecoveryCode ? "" : "disabled"}>复制恢复码</button><details><summary>在此设备恢复已有用户</summary><p class="consent">恢复后，此设备的模型额度和已授权上传归入同一用户。请把恢复码当作密码保管。</p><label class="field">恢复码<input id="recovery-code" type="password" autocomplete="off"></label><button id="restore-account">恢复用户</button></details></section>`
     : "";
-  show("Worket 服务", `<p class="service-status ${connected ? "connected" : ""}">${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service" class="settings-link"><span class="category-icon" aria-hidden="true">↻</span>检查连接</button><button id="improvement-data" class="settings-link"><span class="category-icon" aria-hidden="true">▤</span>改进数据</button><details class="policy-details"><summary>模型处理与留存</summary><p>点击沉淀后，所选工作记录交由 Worket 服务及模型供应商处理；默认仅包含附件信息，附件正文通过“含附件沉淀”单独选择。候选仍需审阅后保存。</p><p>未参与改进时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
+  show("Worket 服务", `<p class="service-status ${connected ? "connected" : ""}">${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service" class="settings-link"><span class="category-icon" aria-hidden="true">↻</span>检查连接</button><button id="improvement-data" class="settings-link"><span class="category-icon" aria-hidden="true">▤</span>改进数据</button><details class="policy-details"><summary>模型处理与留存</summary><p>点击沉淀后，所选工作记录交由 Worket 服务及模型供应商处理；默认仅包含附件信息，附件正文通过“含附件沉淀”单独选择。候选仍需审阅后保存。</p><p>未参与改进时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`, "", {
+    label: "返回工作面板",
+    action: async () => {
+      modal.close();
+      document.querySelector<HTMLElement>("#app-menu > summary")?.focus();
+    },
+  });
   bind("#improvement-data", openImprovementData);
   bind("#check-service", async () => { await api("capabilities"); await openServiceSettings(true); });
   bind("#copy-recovery", async () => {
@@ -555,7 +567,13 @@ async function openImprovementData(): Promise<void> {
   const samples: any[] = await api("improvementSamples");
   const { enabled } = await api("improvementPreference");
   const labels: Record<string, string> = { ACTIVE: "采集中", STOPPED: "已停止", DELETE_PENDING: "等待删除确认", DELETED: "已删除" };
-  show("改进数据", `<label class="file-choice"><input id="improvement-consent" data-refresh-improvement type="checkbox" ${enabled ? "checked" : ""}>参与改进 Worket</label><p class="consent">记录的对话、沉淀材料和复用反馈供管理员评审，保存 90 天。</p><details class="policy-details"><summary>采集范围与留存</summary><p>默认开启，用于产品诊断、质量评测和功能改进。开始记录时保存该聊天已有及后续的用户消息和 AI 回复（不额外读取附件、工具输出或推理摘要），沉淀时保存所选材料、候选及修改，复用时保存定义、非文件输入及验收反馈，供后台管理员查看，保存 90 天。首次记录前展示上传范围，成功记录后不再重复提示；范围说明更新时重新展示。点击沉淀直接处理所选记录；附件正文通过“更多 → 含附件沉淀”单独选择，参与改进沿用此设置。复用仍展示其提交范围。取消后记住选择，并停止全部样本后续采集；重新开启仅适用于此后主动开始或恢复记录、提交的范围。</p></details><div class="dialog-actions"><button id="stop-all-improvement">停止全部后续采集</button><button id="sync-improvement">同步并刷新</button></div><p class="consent">停止采集后，已有样本仍保留，可单独删除。离线删除将在重新连接后完成。</p>${samples.map(s => `<section class="state-section"><h3>${esc(s.label)}</h3><p>${esc(labels[s.state])} · ${esc(s.pending)} 条待同步 · ${esc(JSON.parse(s.consent).at)}</p>${s.error ? `<p class="notice">${esc(s.error)}</p>` : ""}${s.state === "ACTIVE" ? `<button data-stop-sample="${esc(s.id)}">停止此样本采集</button>` : ""}${!["DELETED", "DELETE_PENDING"].includes(s.state) ? `<details><summary>删除后台样本</summary><label class="field">输入“删除样本”<input data-delete-confirm="${esc(s.id)}"></label><button data-delete-sample="${esc(s.id)}">确认删除样本</button></details>` : ""}</section>`).join("") || '<p>暂无改进样本</p>'}`);
+  show("改进数据", `<label class="file-choice"><input id="improvement-consent" data-refresh-improvement type="checkbox" ${enabled ? "checked" : ""}>参与改进 Worket</label><p class="consent">记录的对话、沉淀材料和复用反馈供管理员评审，保存 90 天。</p><details class="policy-details"><summary>采集范围与留存</summary><p>默认开启，用于产品诊断、质量评测和功能改进。开始记录时保存该聊天已有及后续的用户消息和 AI 回复（不额外读取附件、工具输出或推理摘要），沉淀时保存所选材料、候选及修改，复用时保存定义、非文件输入及验收反馈，供后台管理员查看，保存 90 天。首次记录前展示上传范围，成功记录后不再重复提示；范围说明更新时重新展示。点击沉淀直接处理所选记录；附件正文通过“更多 → 含附件沉淀”单独选择，参与改进沿用此设置。复用仍展示其提交范围。取消后记住选择，并停止全部样本后续采集；重新开启仅适用于此后主动开始或恢复记录、提交的范围。</p></details><div class="dialog-actions"><button id="stop-all-improvement">停止全部后续采集</button><button id="sync-improvement">同步并刷新</button></div><p class="consent">停止采集后，已有样本仍保留，可单独删除。离线删除将在重新连接后完成。</p>${samples.map(s => `<section class="state-section"><h3>${esc(s.label)}</h3><p>${esc(labels[s.state])} · ${esc(s.pending)} 条待同步 · ${esc(JSON.parse(s.consent).at)}</p>${s.error ? `<p class="notice">${esc(s.error)}</p>` : ""}${s.state === "ACTIVE" ? `<button data-stop-sample="${esc(s.id)}">停止此样本采集</button>` : ""}${!["DELETED", "DELETE_PENDING"].includes(s.state) ? `<details><summary>删除后台样本</summary><label class="field">输入“删除样本”<input data-delete-confirm="${esc(s.id)}"></label><button data-delete-sample="${esc(s.id)}">确认删除样本</button></details>` : ""}</section>`).join("") || '<p>暂无改进样本</p>'}`, "", {
+    label: "返回 Worket 服务",
+    action: async () => {
+      await openServiceSettings();
+      modal.querySelector<HTMLButtonElement>("#improvement-data")?.focus();
+    },
+  });
   bind("#stop-all-improvement", async () => { await api("stopImprovement"); await openImprovementData(); });
   bind("#sync-improvement", async () => { await api("syncImprovement"); await openImprovementData(); });
   for (const s of samples) {
