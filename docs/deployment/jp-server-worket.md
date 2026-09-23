@@ -4,8 +4,8 @@
 
 ## 当前状态
 
-- v0.1.5 客户端已于 2026-09-23 正式发布。自动准备工作状态的配套后台包已就绪，生产切换因自动审批要求单独授权而暂未执行；详见 [发布验收](../releases/v0.1.5-verification.md)。
-- Worket 服务代码来自提交 `8d39223`（2026-09-23 更新），版本目录为 `/opt/worket/releases/8d39223`，`/opt/worket/current` 指向当前版本。
+- v0.1.5 客户端已于 2026-09-23 正式发布，用户确认“同步生产”后，配套后台也已更新。自动准备能力 `continuationSchemaVersions:[1]` 已启用；详见 [发布验收](../releases/v0.1.5-verification.md)。
+- Worket 服务代码来自提交 `8ffa545`（2026-09-23 更新），版本目录为 `/opt/worket/releases/8ffa545`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -136,3 +136,11 @@ ssh jp-server 'sudo nginx -t'
 前版 `/opt/worket/releases/b4702a0`；回滚容器 `worket-before-8d39223-20260922-235509`；数据备份 `/opt/worket/backups/data-pre-8d39223-20260922-235509.tgz`。部署前无活跃/待领取请求，模块离线导入与健康检查通过；原容器配置逐项保持，无数据库迁移或凭据变更。
 
 公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内短期令牌检查认证能力 200，rule/evolution/evidence/skill 均为 [1]，recordingView 为 [1,2]。normalize-evolution.mjs、workflow.mjs、contracts/evolution.js 运行 hash 与干净构建一致。凭据未输出/离开服务器，无生产样本或账号写入，部署检查没有模型调用。试验与失败边界见 [验收](../acceptance/repetition-evolution.md)。
+
+## 2026-09-23 v0.1.5 自动工作状态准备部署
+
+用户明确“同步生产”后，将后台从 `8d39223` 更新到 v0.1.5 发布提交 `8ffa545`，增加 `continuationSchemaVersions:[1]`。后台包 SHA-256 为 `74146ffdddd456389917b4e7140e1388ca00541034ae9ffc53d32124aa513fa0`。
+
+部署前无活跃或待领取请求，离线模块加载通过。备份 `/opt/worket/backups/data-pre-v015-20260923-175910.tgz` 权限为 0600，旧容器 `worket-before-v015-20260923-175910` 和前版目录保留。新容器沿用原镜像、运行与安全配置；新增 `requests.operation` 列默认 `definition`，20 条原请求保留。设置与加密、签名密钥逐字节一致，两份 SQLite 数据库完整性检查均为 ok。
+
+公网 health 200 且 configured=true，匿名 capabilities 401、admin 404；服务器内一分钟令牌核验认证能力 200，自动准备协议为 [1]，原有能力保持。五个关键运行模块哈希与发布构建一致。检查没有模型调用，未修改账号；凭据未输出或离开服务器。完整证据见 [生产验证记录](../releases/v0.1.5-production.json)，客户端发布与升级验收见 [v0.1.5 验收](../releases/v0.1.5-verification.md)。

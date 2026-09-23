@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-23",
+  "public": {
+    "/health": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "configured": true
+      }
+    },
+    "/v1/capabilities": {
+      "status": 401
+    },
+    "/admin/": {
+      "status": 404
+    }
+  },
+  "authenticatedCapabilities": {
+    "status": 200,
+    "continuationSchemaVersions": [
+      1
+    ],
+    "ruleSchemaVersions": [
+      1
+    ],
+    "evolutionSchemaVersions": [
+      1
+    ],
+    "evidenceSchemaVersions": [
+      1
+    ],
+    "skillSchemaVersions": [
+      1
+    ],
+    "recordingViewSchemaVersions": [
+      1,
+      2
+    ],
+    "hashes": {
+      "server/service.mjs": "920f77f0cd294e19b60551d001179cac5b463a1c139b403a5ee12d025c6d0c0d",
+      "server/continuation.mjs": "69e2e709f665dc9e91de9d404dd539d9903170c9a4905a5d495a272547d1d089",
+      "dist/contracts/continuation.js": "59dd38c0081cd7b6e811c0aff48b678e25ea82969eed79e9a7b1b75882be214f",
+      "dist/contracts/continuation-prompt.js": "0a3ecfb2b52f615b6c204f65a0eb3c633b2a8befab472327f0c84a3fc80c63b5",
+      "dist/contracts/evidence.js": "7c70ae97cdf60e59a84c5b7f2e2661c1dbf75efa1b4b5d21cf6c5b77ad1b1c00"
+    }
+  },
+  "deployment": {
+    "version": "/opt/worket/releases/8ffa545",
+    "previous": "/opt/worket/releases/8d39223",
+    "backup": "/opt/worket/backups/data-pre-v015-20260923-175910.tgz",
+    "rollbackContainer": "worket-before-v015-20260923-175910",
+    "packageSha256": "74146ffdddd456389917b4e7140e1388ca00541034ae9ffc53d32124aa513fa0",
+    "activeBefore": 0,
+    "requestRowsPreserved": 20,
+    "configurationPreserved": true,
+    "health": {
+      "ok": true,
+      "configured": true
+    },
+    "migration": "requests.operation defaults to definition; additive column"
+  },
+  "configurationAndIdentityUnchanged": {
+    "settings.json": true,
+    "encryption.key": true,
+    "identity-private.pem": true,
+    "identity-public.pem": true
+  },
+  "databaseIntegrity": {
+    "metadata.sqlite": "ok",
+    "improvement.sqlite": "ok"
+  },
+  "backupMode": "0o600",
+  "realModelInvokedByVerification": false
+}

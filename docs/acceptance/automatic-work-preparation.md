@@ -33,3 +33,5 @@ node scripts/qa-work-continuity.mjs
 打包与安装 ASAR SHA-256 相同：`9e93e3946d06f9709856b707afd85e40c706f41c6771d145c79a017edfdcb535`。原 `WorkPet` 用户数据继续使用；更新前后均为 4 项工作、1,573 条来源事件，SQLite quick_check=ok，新表启用记录数为 0。旧应用和数据库备份位于本地忽略目录 `output/app-backups/automatic-preparation-20260923-164711/`；本机安装详情见忽略文件 `output/worket-latest-install.json`。
 
 生产后台本轮未部署。此前自动审批拒绝生产容器上传/重启，因功能实施授权未明确包含生产中断，部署确认仍待回复；见 [前轮边界](work-continuity.md#部署边界)。客户端能自动触发准备，但旧后台未提供 continuation 能力时会显示升级提示并保留原始证据，不能宣称线上模型理解已生效。
+
+后续更新：用户于同日明确“同步生产”，v0.1.5 配套后台 `8ffa545` 已部署，自动准备能力 `continuationSchemaVersions:[1]` 已启用，公网健康、认证能力与数据库完整性检查通过，见 [发布验收](../releases/v0.1.5-verification.md)。以上保留最初安装时的历史状态。
