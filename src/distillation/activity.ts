@@ -20,7 +20,7 @@ export function jobError(error?: string): string {
 }
 // Commands fail for actionable reasons; the user sees this text instead of an error code.
 const commandErrorText: Record<string, string> = {
-  SOURCE_CHANGED: "来源记录或附件在确认后发生变化，请重新确认范围再开始。",
+  SOURCE_CHANGED: "来源记录或附件已变化，请基于最新记录重新开始。",
   BASE_DEFINITION_CHANGED: "约定已有更新版本，请返回最新版重新比较。当前草稿不会覆盖已有版本。",
   SOURCE_DELETED: "来源工作或附件已被删除，不能继续沉淀。",
   SKILL_ENTRY_MISSING: "请选择包含非空 SKILL.md 的技能目录。",

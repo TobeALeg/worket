@@ -95,15 +95,13 @@ export function setupDistillation(
   window.workpet.onOpenDistillation?.(id => void openJob(id));
   setInterval(() => void refreshActivity().catch(() => {}), 1000);
   void refreshActivity().catch(() => {});
-  document
-    .querySelector("#distill-selected")!
-    .addEventListener(
-      "click",
-      () =>
-        void openPreparation(selection()).catch((error) =>
-          window.alert(errorText(error)),
-        ),
-    );
+  const distillButton = document.querySelector<HTMLButtonElement>("#distill-selected")!;
+  distillButton.addEventListener("click", async () => {
+    distillButton.disabled = true;
+    try { await startDistillation(selection()); }
+    catch (error) { window.alert(errorText(error)); }
+    finally { distillButton.disabled = selection().length === 0; }
+  });
   document.querySelector("#service-settings")!.addEventListener("click", () => {
     void openServiceSettings().catch(error => window.alert(errorText(error)));
   });
@@ -123,7 +121,7 @@ async function openServiceSettings(connected = false): Promise<void> {
   const account = status.automatic
     ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">◎</span> Worket 用户</h3><p>${status.userId ? `用户 ${esc(status.userId.slice(0, 8))}` : "首次使用时自动创建"}</p><button class="settings-link" id="copy-recovery" ${status.hasRecoveryCode ? "" : "disabled"}>复制恢复码</button><details><summary>在此设备恢复已有用户</summary><p class="consent">恢复后，此设备的模型额度和已授权上传归入同一用户。请把恢复码当作密码保管。</p><label class="field">恢复码<input id="recovery-code" type="password" autocomplete="off"></label><button id="restore-account">恢复用户</button></details></section>`
     : "";
-  show("Worket 服务", `<p class="service-status ${connected ? "connected" : ""}">${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service" class="settings-link"><span class="category-icon" aria-hidden="true">↻</span>检查连接</button><button id="improvement-data" class="settings-link"><span class="category-icon" aria-hidden="true">▤</span>改进数据</button><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
+  show("Worket 服务", `<p class="service-status ${connected ? "connected" : ""}">${connected ? "已连接" : status.automatic ? "自动连接" : "自定义连接"}</p><p class="consent">${esc(status.url)}</p>${account}<button id="check-service" class="settings-link"><span class="category-icon" aria-hidden="true">↻</span>检查连接</button><button id="improvement-data" class="settings-link"><span class="category-icon" aria-hidden="true">▤</span>改进数据</button><details class="policy-details"><summary>模型处理与留存</summary><p>点击沉淀后，所选工作记录交由 Worket 服务及模型供应商处理；默认仅包含附件信息，附件正文通过“含附件沉淀”单独选择。候选仍需审阅后保存。</p><p>未参与改进时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><details><summary>高级连接设置</summary><label class="field">服务地址<input id="service-url" type="url" value="${esc(status.url)}"></label><label class="field">Worket 访问令牌<input id="service-token" type="password" autocomplete="off"></label><button id="save-service">保存并检查连接</button></details>`);
   bind("#improvement-data", openImprovementData);
   bind("#check-service", async () => { await api("capabilities"); await openServiceSettings(true); });
   bind("#copy-recovery", async () => {
@@ -179,6 +177,44 @@ function jobLabel(status: string): string {
     )[status] ?? status
   );
 }
+const startingDistillations = new Map<string, Promise<void>>();
+
+// One click freezes the selected records and submits them; concurrent clicks share the same job.
+export function startDistillation(workIds: string[]): Promise<void> {
+  if (!workIds.length) return Promise.reject(new Error("请先选择至少一条工作记录"));
+  const key = JSON.stringify([...workIds].sort());
+  const pending = startingDistillations.get(key);
+  if (pending) return pending;
+  const task = (async () => {
+    await preferenceSave;
+    const snapshot: Snapshot = await api("prepare", { workIds, includedFileIds: [] });
+    const jobs: Job[] = await api("jobs");
+    for (const job of jobs.filter(job => runningJob(job.status))) {
+      const existing: Snapshot = await api("snapshot", { id: job.snapshotId });
+      if (existing.contentHash === snapshot.contentHash) {
+        await refreshActivity();
+        return;
+      }
+    }
+    await startSnapshot(snapshot);
+  })().finally(() => startingDistillations.delete(key));
+  startingDistillations.set(key, task);
+  return task;
+}
+
+async function startSnapshot(snapshot: Snapshot, id = commandId()): Promise<void> {
+  await preferenceSave;
+  const { enabled } = await api("improvementPreference");
+  await api("start", {
+    preparationId: snapshot.id,
+    expectedContentHash: snapshot.contentHash,
+    consentVersion: "worket-data-v1",
+    ...(enabled ? { improvementConsentVersion: IMPROVEMENT_POLICY.version } : {}),
+    commandId: id,
+  });
+  await refreshActivity();
+}
+
 export async function openPreparation(workIds: string[], baseDefinitionId?: string): Promise<void> {
   if (!workIds.length) throw new Error("请先选择至少一条工作记录");
   let snapshot: Snapshot = await api("prepare", {
@@ -189,8 +225,8 @@ export async function openPreparation(workIds: string[], baseDefinitionId?: stri
   async function render() {
     const { enabled } = await api("improvementPreference");
     show(
-      baseDefinitionId ? '确认约定更新范围' : "确认沉淀范围",
-      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button><p class="consent">${baseDefinitionId ? "当前已确认约定、所选新交互与附件" : "所选文本与附件"}将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}`,
+      baseDefinitionId ? '确认约定更新范围' : "选择沉淀附件",
+      `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button>${baseDefinitionId ? `<p class="consent">当前已确认约定、所选新交互与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}` : ""}`,
       `<button id="start-distillation" class="primary">${baseDefinitionId ? '比较新交互' : '开始沉淀'}</button>`,
     );
     bind("#apply-range", async () => {
@@ -203,7 +239,7 @@ export async function openPreparation(workIds: string[], baseDefinitionId?: stri
     });
     const id = commandId();
     bind("#start-distillation", async () => {
-      if (!check("#consent")) throw new Error("请确认本次材料范围及处理说明");
+      if (baseDefinitionId && !check("#consent")) throw new Error("请确认本次材料范围及处理说明");
       const selected = [
         ...modal.querySelectorAll<HTMLInputElement>("[data-file-id]:checked"),
       ]
@@ -216,13 +252,7 @@ export async function openPreparation(workIds: string[], baseDefinitionId?: stri
         .sort();
       if (JSON.stringify(selected) !== JSON.stringify(prepared) || snapshot.sources.some(s => s.files.some(f => f.content !== undefined && (modal.querySelector<HTMLSelectElement>(`[data-file-role="${CSS.escape(f.id)}"]`)?.value ?? "REFERENCE") !== (f.role ?? "REFERENCE"))))
         throw new Error("附件选择已变化，请先更新范围");
-      await api("start", {
-        preparationId: snapshot.id,
-        expectedContentHash: snapshot.contentHash,
-        consentVersion: "worket-data-v1",
-        improvementConsentVersion: improvementVersion(),
-        commandId: id,
-      });
+      await startSnapshot(snapshot, id);
       modal.close();
       await refreshActivity();
     });
@@ -257,17 +287,14 @@ export async function openJob(id: string): Promise<void> {
     modal.close();
     await refreshActivity();
   });
-  modal
-    .querySelectorAll<HTMLElement>("[data-group]")
-    .forEach(
-      (b) =>
-        (b.onclick = () =>
-          void openPreparation(
-            snapshot.sources
-              .filter((s) => b.dataset.group!.split(",").includes(s.key))
-              .map((s) => s.workId),
-          )),
-    );
+  for (const button of modal.querySelectorAll<HTMLElement>("[data-group]")) {
+    bind(`[data-group="${CSS.escape(button.dataset.group!)}"]`, async () => {
+      await startDistillation(snapshot.sources
+        .filter(source => button.dataset.group!.split(",").includes(source.key))
+        .map(source => source.workId));
+      modal.close();
+    });
+  }
   if (["PREPARED", "SUBMITTED", "RUNNING"].includes(job.status)) {
     const token = modal.innerHTML;
     setTimeout(() => {
@@ -457,6 +484,10 @@ export async function workDefinitionAction(
     return true;
   }
   if (action === "distill") {
+    await startDistillation([work.id]);
+    return true;
+  }
+  if (action === "distill-files") {
     await openPreparation([work.id]);
     return true;
   }
@@ -524,7 +555,7 @@ async function openImprovementData(): Promise<void> {
   const samples: any[] = await api("improvementSamples");
   const { enabled } = await api("improvementPreference");
   const labels: Record<string, string> = { ACTIVE: "采集中", STOPPED: "已停止", DELETE_PENDING: "等待删除确认", DELETED: "已删除" };
-  show("改进数据", `<label class="file-choice"><input id="improvement-consent" data-refresh-improvement type="checkbox" ${enabled ? "checked" : ""}>参与改进 Worket</label><p class="consent">记录的对话、沉淀材料和复用反馈供管理员评审，保存 90 天。</p><details class="policy-details"><summary>采集范围与留存</summary><p>默认开启，用于产品诊断、质量评测和功能改进。开始记录时保存该聊天已有及后续的用户消息和 AI 回复（不额外读取附件、工具输出或推理摘要），沉淀时保存所选材料、候选及修改，复用时保存定义、非文件输入及验收反馈，供后台管理员查看，保存 90 天。首次记录前展示上传范围，成功记录后不再重复提示；范围说明更新时重新展示。沉淀与复用仍展示各自提交范围。取消后记住选择，并停止全部样本后续采集；重新开启仅适用于此后主动开始或恢复记录、提交的范围。</p></details><div class="dialog-actions"><button id="stop-all-improvement">停止全部后续采集</button><button id="sync-improvement">同步并刷新</button></div><p class="consent">停止采集后，已有样本仍保留，可单独删除。离线删除将在重新连接后完成。</p>${samples.map(s => `<section class="state-section"><h3>${esc(s.label)}</h3><p>${esc(labels[s.state])} · ${esc(s.pending)} 条待同步 · ${esc(JSON.parse(s.consent).at)}</p>${s.error ? `<p class="notice">${esc(s.error)}</p>` : ""}${s.state === "ACTIVE" ? `<button data-stop-sample="${esc(s.id)}">停止此样本采集</button>` : ""}${!["DELETED", "DELETE_PENDING"].includes(s.state) ? `<details><summary>删除后台样本</summary><label class="field">输入“删除样本”<input data-delete-confirm="${esc(s.id)}"></label><button data-delete-sample="${esc(s.id)}">确认删除样本</button></details>` : ""}</section>`).join("") || '<p>暂无改进样本</p>'}`);
+  show("改进数据", `<label class="file-choice"><input id="improvement-consent" data-refresh-improvement type="checkbox" ${enabled ? "checked" : ""}>参与改进 Worket</label><p class="consent">记录的对话、沉淀材料和复用反馈供管理员评审，保存 90 天。</p><details class="policy-details"><summary>采集范围与留存</summary><p>默认开启，用于产品诊断、质量评测和功能改进。开始记录时保存该聊天已有及后续的用户消息和 AI 回复（不额外读取附件、工具输出或推理摘要），沉淀时保存所选材料、候选及修改，复用时保存定义、非文件输入及验收反馈，供后台管理员查看，保存 90 天。首次记录前展示上传范围，成功记录后不再重复提示；范围说明更新时重新展示。点击沉淀直接处理所选记录；附件正文通过“更多 → 含附件沉淀”单独选择，参与改进沿用此设置。复用仍展示其提交范围。取消后记住选择，并停止全部样本后续采集；重新开启仅适用于此后主动开始或恢复记录、提交的范围。</p></details><div class="dialog-actions"><button id="stop-all-improvement">停止全部后续采集</button><button id="sync-improvement">同步并刷新</button></div><p class="consent">停止采集后，已有样本仍保留，可单独删除。离线删除将在重新连接后完成。</p>${samples.map(s => `<section class="state-section"><h3>${esc(s.label)}</h3><p>${esc(labels[s.state])} · ${esc(s.pending)} 条待同步 · ${esc(JSON.parse(s.consent).at)}</p>${s.error ? `<p class="notice">${esc(s.error)}</p>` : ""}${s.state === "ACTIVE" ? `<button data-stop-sample="${esc(s.id)}">停止此样本采集</button>` : ""}${!["DELETED", "DELETE_PENDING"].includes(s.state) ? `<details><summary>删除后台样本</summary><label class="field">输入“删除样本”<input data-delete-confirm="${esc(s.id)}"></label><button data-delete-sample="${esc(s.id)}">确认删除样本</button></details>` : ""}</section>`).join("") || '<p>暂无改进样本</p>'}`);
   bind("#stop-all-improvement", async () => { await api("stopImprovement"); await openImprovementData(); });
   bind("#sync-improvement", async () => { await api("syncImprovement"); await openImprovementData(); });
   for (const s of samples) {

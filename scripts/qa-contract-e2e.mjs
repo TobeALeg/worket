@@ -96,10 +96,11 @@ try {
   assert.ok(panel); panel.setDefaultTimeout(15000); panel.on('pageerror', e => errors.push(e.message)); panel.on('dialog', d => d.accept());
   await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')); w.setSize(760, 820); w.show(); });
   await panel.evaluate(({url,token}) => window.workpet.configureWorketService({url,token}), { url: `http://127.0.0.1:${service.server.address().port}`, token });
-  await panel.locator('#tab-completed').click(); await panel.locator('[data-distill-work]').check(); await panel.locator('#distill-selected').click();
+  await panel.evaluate(() => window.workpet.distillation('setImprovementPreference', { enabled: false }));
+  await panel.locator('#tab-completed').click(); await panel.locator(`[data-work-id="${original.instance.id}"]`).click(); await panel.locator('#work-detail .secondary-menu summary').click(); await panel.locator('[data-action="distill-files"]').click();
   await panel.locator('[data-file-id]').check(); await panel.locator('#apply-range').click();
   await panel.locator('[data-file-role]').selectOption('NORMATIVE'); await panel.locator('#apply-range').click();
-  await panel.locator('#improvement-consent').uncheck(); await panel.locator('#consent').check();
+
   await panel.screenshot({ path: join(output, '01-source-scope.png') });
   await panel.locator('#start-distillation').click(); mark('desktop → explicit normative file selection → HTTP submitted');
   let job;

@@ -185,6 +185,8 @@ Worket 的潜在差异不只是“用模型生成工作摘要”，而是把来�
 
 潜在价值：用户只表达记录、交接和沉淀意图，产品负责准备可接续状态。展示场景为点击记录后继续工作，稍后选择执行者即可交接；失败时只暴露需要处理的问题。实现状态：用户随后明确“直接改了”，源码已接入记录后台准备、变化合批、交接等待与复用，移除独立整理入口；既有记录不因升级自动启用上传。验证和本机安装状态见 [自动准备验收](../acceptance/automatic-work-preparation.md)。生产服务尚待升级；真实等待时间、长期调用成本和减操作收益仍待验证。无新增竞品事实。
 
+2026-09-23 交互补充：用户进一步要求点击“沉淀”直接开始，去掉范围提醒页，并明确整批修改确认后再统一重启。源码将主入口接入后台提交与进度提示，附件正文选择保留为次级入口，参与改进沿用持久偏好；生成后的候选审阅仍由用户决定。助手判断：开始提取与确认长期约定是两个不同动作，前者可减少重复确认，后者仍应保留审阅。验证见 [直接沉淀验收](../acceptance/direct-distillation.md)；本轮不更新已安装应用，真实减操作收益待验证。
+
 ### 2026-09-23：将语义判断集中为可评估能力（Jev 探索）
 
 用户提出：提取和传递包含很多中间判断，接入 Typesafe Jev 会是什么样。核实日期 2026-09-23：官方把 Jev 定位为 state + typed questions 的结构化判断模型，不生成约定正文；其引用检查范例先做程序原文匹配，再检查语义支持。当前版本官方提示中文/CJK 较弱，confidence 不能直接当正确率。来源：[定位](https://docs.typesafe.ai/introduction/coding-agents)、[引用检查](https://docs.typesafe.ai/cookbooks/citation_check)、[语言支持](https://docs.typesafe.ai/models#language-support)、[Confidence](https://docs.typesafe.ai/confidence)。

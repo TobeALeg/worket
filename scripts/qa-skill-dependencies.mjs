@@ -48,8 +48,7 @@ try {
   await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')); w.setSize(800, 850); w.show(); });
   if (replayRoot) {
     await panel.evaluate(({ url, token }) => window.workpet.configureWorketService({ url, token }), { url: `http://127.0.0.1:${service.server.address().port}`, token });
-    await panel.evaluate(async workId => (await import('./distillation.js')).openPreparation([workId]), original.instance.id);
-    await panel.locator('#improvement-consent').uncheck(); await panel.locator('#consent').check(); await panel.locator('#start-distillation').click();
+    await panel.evaluate(async workId => { await window.workpet.distillation('setImprovementPreference', { enabled: false }); await (await import('./distillation.js')).startDistillation([workId]); }, original.instance.id);
     let job; const until = Date.now() + 30000;
     while (Date.now() < until) { [job] = await panel.evaluate(() => window.workpet.distillation('jobs')); if (job && ['AWAITING_REVIEW', 'FAILED'].includes(job.status)) break; await new Promise(resolve => setTimeout(resolve, 200)); }
     assert.equal(job?.status, 'AWAITING_REVIEW', job?.error);

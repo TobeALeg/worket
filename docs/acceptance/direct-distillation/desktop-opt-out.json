@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "mode": "synthetic-model-desktop-test",
+  "realModelAcceptance": false,
+  "realExecutorAcceptance": false,
+  "calls": 8,
+  "workId": "1e30db51-e159-4d55-8160-dfe6a7533b0a",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-distillation-desktop-kEEAcG",
+  "metrics": {
+    "width": 410,
+    "scrollWidth": 410
+  },
+  "restart": true,
+  "screenshots": 16,
+  "unpackaged": true,
+  "defaultEnabled": true,
+  "persistentOptOut": true,
+  "directDistillation": true,
+  "runningSnapshotReused": true,
+  "noConfirmationPage": true
+}

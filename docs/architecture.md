@@ -1,5 +1,11 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 沉淀直接启动（2026-09-23）
+
+普通入口统一调用 `renderer/distillation.startDistillation(workIds)`：准备本地快照（不选择附件正文）→ 检查相同内容是否已有运行中任务 → 读取当前改进偏好 → 沿用已有 `start` 命令 → 刷新后台状态。同一次启动中的并发点击合并；同内容仍在运行时不新增模型任务。既有范围哈希、来源最新性、服务身份与提交命令幂等校验保持。
+
+`openPreparation` 仅用于可选的附件范围编辑和已有约定的增量比较。普通附件入口只提供文件范围与用途，不重复展示云端确认或改进开关；参与改进统一读取已保存设置。生成后的候选审阅和不可变发布流程保持。
+
 ## 共享证据、托管整理与状态投影（2026-09-23）
 
 `workEvidence` 统一取当前来源版本，并排除内部推理及 Worket 自己的 MCP 读取审计；本地线索、阶段整理、沉淀和持续比较共用此入口。`contracts/evidence` 统一覆盖集合、原文摘录与用户证据角色判断。外部消息 ID 在整理输入中映射到档案事件 ID，人工编辑/用户确认条目与普通关键词线索保持区别。
@@ -391,7 +397,7 @@ H1 使用 `evals/extraction/review-server.mjs` 提供的本机 HTML。server 显
 ### Data flow
 
 ```text
-用户选择记录 → 本地快照与范围确认 → 开始沉淀
+用户点击沉淀 → 本地快照 → 直接开始后台沉淀
     → Worket 后台模型抽象 → 候选定义与问题
     → 用户检查修改 → 固定定义版本与固定资料副本
     → 本次新输入 → 新 WorkInstance → 工作包 → 外部执行 → 用户验收
@@ -439,7 +445,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 `recordingView()` 从本地不可变档案生成只含可上传消息内部 ID 的完整视图，schemaVersion:2 / RECORDING_VIEW；整份记录队列先协商 recordingViewSchemaVersions。后台 projectRecordingSample 合并分片并校验视图覆盖、状态与修订顺序，当前列表保持逻辑会话顺序；旧数据或不完整关系不标为 ready。管理员优先显示当前原文，历史和原始事件折叠。当前上传为 schemaVersion:3，recording_views 基线与 outbox 增量同事务推进；后台按 baseSequence 重建，缺链不 ready。sample_usage 事务维护 UTF-8 字节预算，旧样本惰性回填、删除清理。详见 [样本视图](specs/recording-sample-view.md) 与 [长记录同步](specs/recording-sample-scale.md)。
 
-`ImprovementCollector` 在工作库中维护明确授权的 subscriptions 与 outbox，以及单行 `improvement_preferences` 持久偏好（缺省开启）；桌面通过 `improvementPreference` / `setImprovementPreference` 读取和修改。取消勾选或停止全部时，以同一事务保存关闭偏好、停止全部活动订阅并清空待发正文；停止单个样本不改变全局偏好，重新开启不复活旧订阅。范围页直接展示选项，提交前等待设置保存，重启后从工作库恢复；仅排队固定范围，已收到的队列项清空正文。同步选择队列及 HTTP 异步连接后，通过 beforeSend 再次校验订阅状态、授权期限和原服务/凭据指纹；身份变化暂停发送。删除不受全局退出限制，但保留目的地约束。改进授权的代次与身份在能力查询后及本地动作前核验，停止再开使原待定授权失效。见 [发送边界](specs/improvement-send-boundary.md)。`DistillationService.collectFeedback` 从已授权任务、原始候选及持久化 `review_events` 补齐修改、发布、验收，因此应用在保存后退出也能恢复反馈。复用文件输入被替换为仅选择标记，不上传路径或内容；沉淀快照排除 `reasoning.summary`，本地旧记录不修改。
+`ImprovementCollector` 在工作库中维护明确授权的 subscriptions 与 outbox，以及单行 `improvement_preferences` 持久偏好（缺省开启）；桌面通过 `improvementPreference` / `setImprovementPreference` 读取和修改。取消勾选或停止全部时，以同一事务保存关闭偏好、停止全部活动订阅并清空待发正文；停止单个样本不改变全局偏好，重新开启不复活旧订阅。服务设置维护参与改进偏好，普通沉淀直接沿用，提交前等待设置保存，重启后从工作库恢复；仅排队固定范围，已收到的队列项清空正文。同步选择队列及 HTTP 异步连接后，通过 beforeSend 再次校验订阅状态、授权期限和原服务/凭据指纹；身份变化暂停发送。删除不受全局退出限制，但保留目的地约束。改进授权的代次与身份在能力查询后及本地动作前核验，停止再开使原待定授权失效。见 [发送边界](specs/improvement-send-boundary.md)。`DistillationService.collectFeedback` 从已授权任务、原始候选及持久化 `review_events` 补齐修改、发布、验收，因此应用在保存后退出也能恢复反馈。复用文件输入被替换为仅选择标记，不上传路径或内容；沉淀快照排除 `reasoning.summary`，本地旧记录不修改。
 
 状态流：ACTIVE → STOPPED（停止并清空待发正文）或 DELETE_PENDING → DELETED（服务确认删除）。上传和删除串行；已发出的上传可能在停止之后到达，随后删除仍清除它。服务端删除原材料、候选、反馈、评审并保留只含哈希键的 tombstone，阻止迟到重传复活；SQLite 开启 secure_delete。90 天按授权时间固定，到期在服务启动、请求或定时清理时移除，不因反馈续期。首版不产生另存正文的评测派生副本。每主体最多 1000 份样本、每样本最多 1000 条事件，单事件包最多 4 MiB。
 

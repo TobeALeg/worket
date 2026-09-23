@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "mode": "synthetic-improvement-desktop-test",
+  "realModelAcceptance": false,
+  "realExecutorAcceptance": false,
+  "calls": 8,
+  "workId": "82c46d84-9d12-4a96-a197-109d4b543496",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-distillation-desktop-RGZXSB",
+  "metrics": {
+    "width": 410,
+    "scrollWidth": 410
+  },
+  "restart": true,
+  "screenshots": 20,
+  "unpackaged": true,
+  "defaultEnabled": true,
+  "persistentOptOut": true,
+  "directDistillation": true,
+  "runningSnapshotReused": true,
+  "noConfirmationPage": true
+}

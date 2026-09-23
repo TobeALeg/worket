@@ -1,0 +1,35 @@
+{
+  "run": "2026-09-23T09-04-15-835Z",
+  "scenario": "video",
+  "model": "deepseek-flash",
+  "status": "PASSED",
+  "replay": "test/fixtures/contracts/video",
+  "packaged": false,
+  "credentialStorage": "OS safeStorage",
+  "stages": [
+    "desktop → explicit normative file selection → HTTP submitted",
+    "recorded real-model response → grounded clauses + dedup + reusable/instance separation",
+    "draft review → published test definition",
+    "new instance → actual exported/copied execution package",
+    "instance-only override → old/default definition unchanged",
+    "renamed source → unchanged fixed version",
+    "adopt file revision → v2 new instance; v1 stable; removed original still dispatches",
+    "missing pinned dependency → actual export refuses incomplete instructions",
+    "synthetic attachment → needs-revision stays open → explicit checklist pass completes instance"
+  ],
+  "output": "/Users/dandi/YanGuan/output/contract-e2e/2026-09-23T09-04-15-835Z",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-contract-e2e-DdLCh1",
+  "calls": 2,
+  "usage": [
+    {
+      "replay": true
+    },
+    {
+      "replay": true
+    }
+  ],
+  "humanAcceptance": false,
+  "evolution": false,
+  "continuous": false,
+  "actualProviderCalls": 0
+}

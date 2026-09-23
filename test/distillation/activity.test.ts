@@ -38,7 +38,7 @@ test("command failures show actionable Chinese text instead of raw IPC error cod
     "Error invoking remote method 'distillation:command': Error: INVALID_MODEL_OUTPUT: INVALID_MODEL_OUTPUT",
   );
   assert.equal(errorText(repeated), "模型返回的内容格式不完整，未保存为候选。可以重试。");
-  assert.equal(errorText(new Error("SOURCE_CHANGED: SOURCE_CHANGED")), "来源记录或附件在确认后发生变化，请重新确认范围再开始。");
+  assert.equal(errorText(new Error("SOURCE_CHANGED: SOURCE_CHANGED")), "来源记录或附件已变化，请基于最新记录重新开始。");
   assert.equal(errorText(new Error("MATERIAL_MISSING: MATERIAL_MISSING")), "所需附件在本地已不可用。请取消勾选该附件，或恢复文件后重试。");
   // Unmapped codes keep their detail rather than showing the code twice.
   assert.equal(errorText(new Error("WEIRD_CODE: 后台返回了新的原因")), "后台返回了新的原因");

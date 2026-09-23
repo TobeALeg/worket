@@ -155,26 +155,30 @@ try {
   await panel.locator("#tab-open").click();
   await panel.locator("#tab-completed").click();
   assert.equal(await panel.locator("[data-distill-work]").isChecked(), true);
-  await panel.locator("#distill-selected").click();
-  await panel.locator("#consent").check();
-  assert.equal(await panel.locator("#improvement-consent").isChecked(), true);
-  assert.equal(await panel.locator("#improvement-consent").isVisible(), true);
-  // An unchecked choice survives closing, reopening, and refreshing the material range.
-  await panel.locator("#improvement-consent").uncheck();
-  await panel.locator("[data-close]").click();
-  await panel.locator("#distill-selected").click();
-  assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
-  await panel.locator("#apply-range").click();
-  await panel.getByRole("heading", { name: "确认沉淀范围", exact: true }).waitFor();
-  assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
-  if (improvementQA) await panel.locator("#improvement-consent").check();
-  await panel.locator("#consent").check();
-  assert.equal(calls, 0);
-  await panel.screenshot({ path: join(output, "01-confirm-range.png") });
-  await checkCompactPage('01-confirm-range', '#start-distillation');
-  await panel.locator("#start-distillation").click();
-  await panel.locator("#definition-dialog").waitFor({ state: "hidden" });
+  // The saved preference is managed in settings, not in an intervening confirmation page.
+  await panel.locator('#app-menu summary').click();
+  await panel.locator('#service-settings').click();
+  await panel.locator('#improvement-data').click();
+  assert.equal(await panel.locator('#improvement-consent').isChecked(), true);
+  if (!improvementQA) {
+    await panel.locator('#improvement-consent').uncheck();
+    await panel.waitForFunction(async () => !(await window.workpet.distillation('improvementPreference')).enabled);
+  }
+  await panel.locator('[data-close]').click();
+  await panel.locator('#distill-selected').click();
   await panel.locator('#distillation-activity[data-state="running"]').waitFor();
+  assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.open), false, 'distill starts without a confirmation page');
+  assert.equal(await panel.locator('#consent').count(), 0);
+  let startedJobs = await panel.evaluate(() => window.workpet.distillation('jobs'));
+  assert.equal(startedJobs.length, 1);
+  assert.equal((await panel.evaluate(() => window.workpet.distillation('improvementSamples'))).length, improvementQA ? 1 : 0);
+  // Repeated clicks while the same snapshot is running must not submit another paid job.
+  await panel.locator('#distill-selected').click();
+  await panel.evaluate(async workId => {
+    const { startDistillation } = await import('./distillation.js');
+    await Promise.all([startDistillation([workId]), startDistillation([workId])]);
+  }, original.instance.id);
+  assert.equal((await panel.evaluate(() => window.workpet.distillation('jobs'))).length, 1);
   const pet = app.windows().find(p => p.url().endsWith('/pet.html'));
   await pet.locator('.pet.distilling-running').waitFor();
   await panel.screenshot({ path: join(output, '01a-background-running.png') });
@@ -233,7 +237,7 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, materialPath);
   await material.locator('[data-review-action="material"]').click();
-  await panel.getByText('report-format.txt', { exact: true }).waitFor();
+  await panel.getByText(/^report-format\.txt(?: · (?:待暂存|已固定))?$/).waitFor();
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
@@ -250,12 +254,18 @@ try {
   await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
-  assert.equal(await panel.getByText('report-format.txt', { exact: true }).count(), 1);
+  assert.equal(await panel.getByText(/^report-format\.txt(?: · (?:待暂存|已固定))?$/).count(), 1);
   await panel.screenshot({ path: join(output, '02a-review-edit.png') });
   await panel.locator('#edit-all').click();
   assert.equal(await panel.locator('[data-text]').count(), 0);
   assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.scrollWidth <= el.clientWidth), true);
   await panel.screenshot({ path: join(output, '02b-review-ready.png') });
+  // Current rule drafts require explicit adoption in addition to the fixture's custom questions.
+  for (const section of ['deliverables', 'constraints', 'acceptanceCriteria']) {
+    const keep = panel.locator(`.dr-item[data-section="${section}"] [data-review-action="keep"]`);
+    assert.equal(await keep.count(), 1);
+    await keep.click();
+  }
   await panel.locator('#publish-definition').click();
   await panel.locator("#use-definition").waitFor();
   await panel.screenshot({ path: join(output, "03-saved-definition.png") });
@@ -307,10 +317,17 @@ try {
     "COMPLETED",
   );
   if (improvementQA) {
-    await panel.evaluate(() => window.workpet.distillation("syncImprovement"));
-    const samples = improvement.list();
+    // Automatic flushing may already be in flight; wait for the expected remote events.
+    let samples, events;
+    const deadline = Date.now() + 10000;
+    do {
+      await panel.evaluate(() => window.workpet.distillation("syncImprovement"));
+      samples = improvement.list();
+      events = samples.flatMap(s => improvement.get(s.id).events);
+      if (samples.length === 2 && events.some(e => e.kind === "ACCEPTANCE")) break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } while (Date.now() < deadline);
     assert.equal(samples.length, 2);
-    const events = samples.flatMap(s => improvement.get(s.id).events);
     for (const kind of ["SOURCE", "CANDIDATE", "EDIT", "PUBLISH", "REUSE", "ACCEPTANCE"]) assert.ok(events.some(e => e.kind === kind), kind);
     assert.ok(Object.values(events.find(e => e.kind === "ACCEPTANCE").data.criteriaResults).every(v => v === "PASS"));
   }
@@ -362,7 +379,7 @@ try {
   assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
   await panel.screenshot({ path: join(output, "09-opt-out-after-restart.png") });
   await panel.locator('[data-close]').click();
-  // A source file deleted from disk must still let the user open the range dialog and start.
+  // A source file deleted from disk must not block the direct distill action.
   const existingJobs = await panel.evaluate(
     () => window.workpet.distillation('jobs').then(jobs => jobs.map(j => j.id)),
   );
@@ -383,16 +400,9 @@ try {
     BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).webContents.send('panel:shown', id);
   }, workId);
   await panel.locator('[data-action="distill"]').click();
-  await panel.getByRole('heading', { name: '确认沉淀范围', exact: true }).waitFor();
-  const goneChoice = panel.locator('[data-file-id]').last();
-  assert.equal(await goneChoice.isDisabled(), true);
-  await panel.getByText(/文件已不可用，仅保留文件信息/).waitFor();
-  await panel.screenshot({ path: join(output, '09a-unavailable-file.png') });
-  // The same range submits normally: the missing file is described, never read.
-  await panel.locator('#consent').check();
-  await panel.locator('#start-distillation').click();
-  await panel.locator('#definition-dialog').waitFor({ state: 'hidden' });
   await panel.locator('#distillation-activity[data-state="running"]').waitFor();
+  assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.open), false);
+  await panel.screenshot({ path: join(output, '09a-direct-distill-with-missing-file.png') });
   const prepared = await panel.evaluate(async workId => {
     const snapshot = await window.workpet.distillation('prepare', { workIds: [workId], includedFileIds: [] });
     return snapshot.sources.flatMap(s => s.files);
@@ -441,6 +451,9 @@ try {
     unpackaged,
     defaultEnabled: true,
     persistentOptOut: true,
+    directDistillation: true,
+    runningSnapshotReused: true,
+    noConfirmationPage: true,
   };
   writeFileSync(
     join(output, "desktop-report.json"),

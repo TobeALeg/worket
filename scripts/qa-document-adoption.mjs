@@ -29,9 +29,10 @@ for(const trial of documentCases.filter(c=>!process.env.WORKET_DOCUMENT_CASE||c.
   const until=Date.now()+15000;while(!panel&&Date.now()<until){panel=app.windows().find(p=>p.url().endsWith('/panel.html'));if(!panel)await new Promise(r=>setTimeout(r,100));}assert.ok(panel);panel.setDefaultTimeout(15000);
   await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().endsWith('/panel.html'));w.setSize(410,700);w.show();});
   await panel.evaluate(({url,token})=>window.workpet.configureWorketService({url,token}),{url:`http://127.0.0.1:${service.server.address().port}`,token});
-  await panel.locator('#tab-completed').click();await panel.locator('[data-distill-work]').check();await panel.locator('#distill-selected').click();
+  await panel.evaluate(() => window.workpet.distillation('setImprovementPreference', { enabled: false }));
+  await panel.locator('#tab-completed').click();await panel.locator(`[data-work-id="${original.instance.id}"]`).click();await panel.locator('#work-detail .secondary-menu summary').click();await panel.locator('[data-action="distill-files"]').click();
   await panel.locator('[data-file-id]').check();await panel.locator('#apply-range').click();await panel.locator('[data-file-role]').selectOption('NORMATIVE');await panel.locator('#apply-range').click();
-  await panel.locator('#improvement-consent').uncheck();await panel.locator('#consent').check();await panel.locator('#start-distillation').click();
+  await panel.locator('#start-distillation').click();
   let job;const deadline=Date.now()+420000;while(Date.now()<deadline){[job]=await panel.evaluate(()=>window.workpet.distillation('jobs'));if(job&&['AWAITING_REVIEW','FAILED'].includes(job.status))break;await new Promise(r=>setTimeout(r,1000));}
   writeFileSync(join(out,'job.json'),JSON.stringify(job,null,2));assert.equal(job?.status,'AWAITING_REVIEW',job?.error);
   const draft=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);writeFileSync(join(out,'draft.json'),JSON.stringify(draft,null,2));verifyDraft(draft);report.checks.semanticScopeAndDocumentClauses=true;
