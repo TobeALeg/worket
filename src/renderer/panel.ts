@@ -124,6 +124,7 @@ function renderDetail(work: WorkDetailView | null): void {
     ? new Set([...detail.querySelectorAll<HTMLDetailsElement>("details[data-preview][open]")].map(el => el.dataset.preview))
     : new Set<string>();
   detail.dataset.currentWorkId = work?.id ?? "";
+  detail.classList.toggle("compact-work", work?.status === "OPEN");
   detail.hidden = !work;
   list.hidden = Boolean(work);
   required<HTMLElement>("#list-toolbar").hidden = Boolean(work);
@@ -140,12 +141,15 @@ function renderDetail(work: WorkDetailView | null): void {
     <div class="detail-head"><span class="eyebrow">${escapeHtml(work.agentName)}</span><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" && work.dispatchReadAt ? "已接手" : "等待接手"}</span>` : ""}</p></div>
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作">更多</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
-    ${work.latestActivity ? `<details class="activity-preview" data-preview="reply" ${expanded.has("reply") ? "open" : ""}><summary>最近回复</summary><p class="latest-activity">${escapeHtml(work.latestActivity.text.trim().split(/\n\s*\n/u).slice(0, 3).join("\n\n").replace(/\*\*([^*]+)\*\*/gu, "$1"))}</p></details>` : ""}
+    ${work.status === "OPEN" ? `<div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
+    <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
     ${Object.entries(WORK_STATE_LABELS)
       .map(([field, label]) =>
         stateSection(work, field as WorkStateField, label),
       )
       .join("")}
+    ${work.status === "OPEN" ? "</details>" : ""}
+    ${work.latestActivity ? `<details class="activity-preview" data-preview="reply" ${expanded.has("reply") ? "open" : ""}><summary>最近回复</summary><p class="latest-activity">${escapeHtml(work.latestActivity.text.trim().split(/\n\s*\n/u).slice(0, 3).join("\n\n").replace(/\*\*([^*]+)\*\*/gu, "$1"))}</p></details>` : ""}
     <details class="activity-preview" data-preview="episodes" ${expanded.has("episodes") ? "open" : ""}><summary>执行片段 · ${work.episodes.length}</summary>${work.episodes.map((episode) => `<div class="episode"><span>${escapeHtml(episode.environment)} · ${escapeHtml(episode.executor)}</span><strong>${episode.status === "ACTIVE" ? "进行中" : "已结束"}</strong></div>`).join("")}</details>`;
 
   for (const link of detail.querySelectorAll<HTMLAnchorElement>("[data-artifact-id]")) {
@@ -167,6 +171,15 @@ function renderDetail(work: WorkDetailView | null): void {
       () => void performAction(work.id, button.dataset.action ?? "", button),
     );
   }
+}
+
+function progressSection(work: WorkDetailView, field: "completedActions" | "pendingActions"): string {
+  const items = work.state[field];
+  const preview = field === "completedActions" ? items.slice(-2) : items.slice(0, 2);
+  return `<section class="progress-section" data-progress="${field}">
+    <h3>${WORK_STATE_LABELS[field]}<span class="progress-count">${items.length}</span></h3>
+    ${preview.length ? `<ul>${preview.map(item => `<li><p title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</p></li>`).join("")}</ul>` : `<p class="progress-empty">${field === "completedActions" ? "暂无完成记录" : "暂无下一步记录"}</p>`}
+  </section>`;
 }
 
 function stateSection(

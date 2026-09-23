@@ -60,6 +60,18 @@ main { padding: 12px 18px; margin: 0; min-width: 0; }
 .eyebrow, .detail-meta { color: var(--muted); font-size: 10px; }
 .detail-head h2 { margin: 4px 0 6px; }
 .detail-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.compact-work .detail-head h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.progress-overview { display: grid; gap: 12px; margin-bottom: 12px; }
+.progress-section { min-width: 0; border-top: 1px solid var(--line); padding-top: 8px; }
+.progress-section h3 { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.progress-count { font-size: 10px; font-weight: 400; color: var(--muted); }
+.progress-section ul { display: grid; gap: 6px; list-style: none; margin: 6px 0 0; padding: 0; }
+.progress-section li { display: flex; gap: 7px; align-items: baseline; }
+.progress-section li::before { content: "✓"; color: var(--muted); flex-shrink: 0; }
+.progress-section[data-progress="pendingActions"] h3, .progress-section[data-progress="pendingActions"] li::before { color: var(--accent); }
+.progress-section[data-progress="pendingActions"] li::before { content: "→"; }
+.progress-section li p { min-width: 0; font-size: 12px; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.progress-empty { margin-top: 6px; font-size: 12px; color: var(--muted); }
 .state-section { min-width: 0; border-top: 1px solid var(--line); padding: 10px 0 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .state-section + .state-section { margin-top: 10px; }
 .state-section h3 { color: var(--muted); font-size: 11px; font-weight: 400; }
@@ -144,4 +156,8 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 [data-state="failed"] .extraction-indicator { border-color: var(--danger); background: #b7473718; }
 @keyframes extraction-turn { to { transform: rotate(360deg); } }
 @media (max-width: 380px) { main, .dialog-card { padding: 12px; } .brand-row, .window-bar, .filters { padding-inline: 12px; } .filters { gap: 10px; } }
+@media (max-height: 600px) {
+  .compact-work .detail-head h2, .progress-section li p { -webkit-line-clamp: 1; }
+  .progress-overview { gap: 8px; margin-bottom: 8px; }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } .extraction-indicator { animation: none !important; } }
