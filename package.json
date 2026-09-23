@@ -33,6 +33,7 @@
     "qa:delivery-receipts": "npm run build && node scripts/qa-delivery-receipts.mjs",
     "qa:skills": "npm run build && WORKET_SKILL_REPLAY=test/fixtures/skill-extraction/accepted node scripts/qa-skill-dependencies.mjs",
     "qa:mcp-context": "npm run build && node scripts/qa-mcp-context.mjs",
+    "qa:handoff-stages": "npm run build && node scripts/qa-handoff-stages.mjs",
     "qa:contract:semantics": "npm run build && WORKET_SEMANTIC_REPLAY_ROOT=test/fixtures/semantic-evolution node scripts/qa-evolution-semantics.mjs",
     "qa:contract:continuous": "npm run build && WORKET_E2E_CONTINUOUS=1 WORKET_E2E_REPLAY=test/fixtures/contracts/video node scripts/qa-contract-e2e.mjs",
     "qa:contract:evolution": "npm run build && node scripts/qa-contract-evolution-baseline.mjs",

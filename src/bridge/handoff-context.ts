@@ -87,6 +87,73 @@ export function buildHandoffContextV2(work: WorkSnapshot, handoff: HandoffPackag
   };
 }
 
+export function buildHandoffContextV3(work: WorkSnapshot, handoff: HandoffPackage, fallbackV2: HandoffContextV2) {
+  const continuation = handoff.continuation;
+  if (!continuation) throw new Error("CONTINUATION_SNAPSHOT_MISSING");
+  const events = currentSourceEvents(work.sourceArchive).filter(event => event.kind !== "reasoning.summary");
+  const currentStage = continuation.currentStageId
+    ? continuation.stages.find(stage => stage.id === continuation.currentStageId) ?? null
+    : null;
+  const currentIds = new Set<string>();
+  const addClaim = (claim: { sourceEventIds: string[] }) => claim.sourceEventIds.forEach(id => currentIds.add(id));
+  const addEvidence = (evidence: Array<{ sourceEventId: string }>) => evidence.forEach(item => currentIds.add(item.sourceEventId));
+  continuation.objective.forEach(addClaim);
+  continuation.currentStageBasis.forEach(addClaim);
+  continuation.uncertainties.forEach(addClaim);
+  continuation.requirements.forEach(requirement => {
+    addClaim(requirement.claim);
+    requirement.replacementEvidence.forEach(addClaim);
+  });
+  continuation.stages.forEach(stage => {
+    addClaim(stage.task);
+    stage.remaining.forEach(addClaim);
+    stage.blockers.forEach(addClaim);
+    addEvidence(stage.completionEvidence);
+    stage.outcomes.forEach(outcome => {
+      addClaim(outcome.summary);
+      addEvidence(outcome.checks);
+      addEvidence(outcome.acceptanceEvidence);
+    });
+  });
+  const evidenceIndex = events.filter(event => currentIds.has(event.id))
+    .map(({ id, sequence, kind, timestamp }) => ({ id, sequence, kind, timestamp }));
+  const latestUserMessages = events.filter(event => event.kind === "user.prompt").slice(-3)
+    .map(event => ({ eventId: event.id, sequence: event.sequence, excerpt: (event.content ?? "").slice(0, 600) }));
+  const workPackage = handoff.workPackage
+    ? (() => {
+        const value = { ...handoff.workPackage! };
+        delete (value as Partial<WorkPackage>).state;
+        delete (value as Partial<WorkPackage>).nextStep;
+        return { ...value, packageVersion: 3 as const };
+      })()
+    : undefined;
+  return {
+    contextVersion: 3 as const,
+    workId: handoff.workInstanceId,
+    delivery: { id: handoff.id, generatedAt: handoff.generatedAt, definition: handoff.workDefinition },
+    resolution: continuation.resolution,
+    basis: continuation.basis,
+    overallObjective: continuation.objective,
+    currentStage,
+    currentStageBasis: continuation.currentStageBasis,
+    completedPriorStages: continuation.stages.filter(stage =>
+      stage.id !== continuation.currentStageId && (stage.execution === "SUPPORTED_DONE" || stage.execution === "REPORTED_DONE")),
+    remainingStages: continuation.stages.filter(stage =>
+      stage.id !== continuation.currentStageId &&
+      (stage.execution !== "SUPPORTED_DONE" && stage.execution !== "REPORTED_DONE" || stage.remaining.length > 0 || stage.blockers.length > 0)),
+    activeRequirements: continuation.requirements.filter(requirement => requirement.status === "ACTIVE"),
+    supersededRequirements: continuation.requirements.filter(requirement => requirement.status === "SUPERSEDED"),
+    conflicts: continuation.requirements.filter(requirement => requirement.status === "CONFLICT"),
+    uncertainties: continuation.uncertainties,
+    firstAction: currentStage?.remaining[0] ?? null,
+    evidenceIndex,
+    latestUserMessages,
+    ...(continuation.resolution === "RESOLVED" ? {} : { fallbackV2 }),
+    ...(workPackage ? { workPackage } : {}),
+    sourceArchiveSummary: handoff.sourceArchiveSummary,
+  };
+}
+
 export function readHandoffEvidence(
   work: WorkSnapshot,
   options: { eventIds?: string[]; afterSequence?: number; limit?: number },

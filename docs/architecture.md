@@ -137,6 +137,14 @@ MCP → Work Core work package + read audit
 - `ArtifactRef`：对原始资料与产物的轻量引用；
 - `HandoffPackage`：面向目标 Executor 的交接投影。
 
+### 多阶段交接快照（MCP v3）
+
+`src/handoff/continuation.ts` 的 `ContinuationService.prepareContinuation(workId)` 是阶段整理的唯一入口。它读取已同步的 WorkSnapshot、当前有效 SourceEvent、WorkState 与固定/输入材料版本，排除成功的 `get_work_context` 自生审计事件后计算来源、状态和材料摘要。仅当该工作当前已启用云端提炼且服务器 Key 可用时，`OpenAIContinuationGenerator` 才调用既有 OpenAI-compatible 配置；没有许可时不发模型请求。
+
+模型只产出带来源引用的候选结构；服务校验引用/摘录、事件覆盖、状态、要求替代、证据角色、材料版本和依赖无环，并在提交交接前重读 basis。候选失效时返回 UNRESOLVED 和 v2 回退；来源输入超限则标为 PARTIAL。`WorkCore.createHandoffPackage` 将通过校验的快照写入现有不可变 handoff payload，不新增阶段表或 WorkState 字段。
+
+`get_work_context(context_version=3)` 在当前来源及材料刷新后异步准备快照，并只投影当前阶段、首个阶段内动作、完成前序阶段、仍待执行阶段及要求范围；阶段快照未解析时附 v2 和最新用户消息。v1/v2 调用保留原契约，旧启动指令默认仍请求 v2；AppService 的新交接启动请求 v3。执行阶段和成果接受状态分离，MCP 读取回执仍以原交付机制记账。
+
 ### Desktop Pet Interface
 
 面板将品牌与 Tab 放入同一个 sticky header。应用服务通过 `executors/project-label.ts` 生成会话的 `projectLabel` 展示字段，最近活动和历史选择共用；原始 `cwd` 保留用于记录与交接。
@@ -189,7 +197,7 @@ MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_re
 
 交接上下文 v2（实现待验证）：`get_work_context(context_version=2)` 在既有当前快照与资料校验后生成目标/进度/成果/条件/候选动作投影，嵌套 WorkPackage 移除重复的 state/nextStep，且不返回 Episode/Binding 列表；推断 facts 不进入主包，仍保留证据 ID 并可按需读取，用户陈述/编辑 facts 保留。`get_work_evidence` 支持事件 ID 或最多 100 条的序号分页，排除 reasoning.summary。省略版本仍返回旧结构。历史 HandoffPackage 按原格式持久化且不改写，读取回执语义不变。投影只反映已记录字段，不推断语义断点；接续正确性、真实调用总量与用户纠正成本仍待真实接手小样验证。详见 [交接上下文方案](specs/handoff-context-v1.md)。
 
-2026-09-23 多阶段接续研究（未实现）：拟在交接整理模块生成带 source/state/material basis 的 ContinuationSnapshot，并通过独立 context v3 投影当前阶段、依赖成果及范围限定的证据；v1/v2 兼容出口保留。阶段理解需受约束语义整理与来源校验，不能仅靠调整 pendingActions 排序；新快照可随 HandoffPackage 的现有 JSON 持久化，历史不改写，读取仍重验材料。当前源码没有上述结构，样本只核对 LocalRuleExtractor → SQLite Core → MCP handler。详见 [阶段接续方案及样本](specs/handoff-stages-v1.md)。
+2026-09-23 多阶段接续实现：增加 ContinuationService 与 MCP v3 阶段快照，沿既有 handoff JSON 保存，不增数据库实体；候选带来源校验，冻结 basis 后二次核验，失败明确回退。隔离 HTTP MCP E2E 已通过；真实模型质量与实际执行仍待验证。详见 [阶段接续方案及结果](specs/handoff-stages-v1.md)。
 
 ## Data flow
 
@@ -231,9 +239,23 @@ Codex 或 WorkBuddy 产生新事件
   → 后续事件继续写回同一个 WorkRecord
 ```
 
+多阶段交接在刷新来源与资料后增加准备链，不改变 WorkInstance 或 Executor 状态机：
+
+```text
+handoff / get_work_context v3
+  → ContinuationService 冻结来源、状态、材料 basis
+  → 已许可的语义整理（否则明确 unresolved）
+  → 结构、引用、依赖与版本校验
+  → 重读并比对 basis
+  → HandoffPackage.payload_json 保存不可变快照
+  → v3 投影当前阶段及必要前序成果；完整证据按需读取
+```
+
 ## Status flow
 
 ### WorkInstance
+
+ContinuationSnapshot 的 `RESOLVED / PARTIAL / UNRESOLVED` 是一次交接理解的解析状态，不是 WorkInstance 生命周期状态；阶段 `execution` 与产物 `acceptance` 分开表示，不会自动完成 WorkInstance。
 
 ```text
 OPEN ──用户完成──> COMPLETED

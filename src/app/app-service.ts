@@ -31,6 +31,8 @@ import type {
   ConversationSummary,
 } from "../executors/types.js";
 import { buildWorkPackage } from "../definitions/work-package.js";
+import { ContinuationService, type ContinuationSnapshot } from "../handoff/continuation.js";
+import { OpenAIContinuationGenerator } from "../handoff/openai-continuation-generator.js";
 import { buildWorkBootstrap } from "../executors/work-bootstrap.js";
 import type {
   ConversationPreview,
@@ -83,6 +85,7 @@ export class AppService {
   readonly #executors: ExecutorRegistry;
   readonly #foreground: ForegroundApplicationDetector;
   readonly #artifacts: ArtifactTracker;
+  readonly #continuations: ContinuationService;
   #selectedWorkId: string | null = null;
   #petState: DashboardView["petState"] = "sleeping";
   #notice: string | null = null;
@@ -100,6 +103,37 @@ export class AppService {
         options.executors.flatMap((adapter) => [...adapter.bundleIds]),
       );
     this.#artifacts = new ArtifactTracker(this.#core);
+    this.#continuations = new ContinuationService({
+      load: async workId => {
+        const before = this.#requireWork(workId);
+        await this.#artifacts.verify(before);
+        if (before.activeBinding && !/^(pending|waiting):/.test(before.activeBinding.conversationId))
+          await this.#readBoundWork(workId);
+        const work = this.#requireWork(workId);
+        await this.#artifacts.verify(work);
+        const workPackage = buildWorkPackage(work, this.#core.definitions);
+        return {
+          work,
+          materials: [
+            ...(workPackage.fixedMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" as const })),
+            ...(workPackage.inputMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" as const })),
+          ],
+          ...(this.#core.getLatestHandoffPackage(workId)?.continuation
+            ? { cached: this.#core.getLatestHandoffPackage(workId)!.continuation! }
+            : {}),
+        };
+      },
+      generator: workId => {
+        if (!this.#cloudExtractionEnabledFor(workId)) return null;
+        const apiKey = process.env.WORKPET_LLM_API_KEY;
+        if (!apiKey) return null;
+        return new OpenAIContinuationGenerator({
+          apiKey,
+          baseUrl: process.env.WORKPET_LLM_BASE_URL ?? "https://api.openai.com/v1",
+          model: process.env.WORKPET_LLM_MODEL ?? "gpt-5.4-mini",
+        });
+      },
+    });
   }
   async listExecutors(): Promise<ExecutorView[]> {
     return Promise.all(
@@ -485,6 +519,9 @@ export class AppService {
       : "没有发现新内容。";
     return this.dashboard(workId);
   }
+  prepareContinuation(workId: string): Promise<ContinuationSnapshot> {
+    return this.#continuations.prepareContinuation(workId);
+  }
   async syncHook(
     executorId: string,
     payload: Record<string, unknown>,
@@ -676,7 +713,14 @@ export class AppService {
         current.activeBinding?.id !== initial.activeBinding?.id
       )
         throw new Error("工作状态已改变，未进行交接。");
-      const handoff = this.#core.createHandoffPackage(workId);
+      const continuation = await this.prepareContinuation(workId);
+      current = await this.#artifacts.verify(this.#requireWork(workId));
+      if (
+        current.instance.status !== "OPEN" ||
+        current.activeBinding?.id !== initial.activeBinding?.id
+      )
+        throw new Error("整理阶段发生期间工作状态已改变，未进行交接。");
+      const handoff = this.#core.createHandoffPackage(workId, { continuation });
       const pkg = buildWorkPackage(current, this.#core.definitions);
       const pending = `pending:${handoff.id}`;
       this.#core.startExecutionEpisode(workId, {
@@ -686,20 +730,28 @@ export class AppService {
         endCurrentEpisode: true,
       });
       try {
+        const currentStage = continuation.currentStageId
+          ? continuation.stages.find(stage => stage.id === continuation.currentStageId)
+          : undefined;
+        const latestUserPrompt = current.sourceArchive.findLast(event => event.kind === "user.prompt" && event.content?.trim());
+        const title = currentStage?.task.text ?? latestUserPrompt?.content?.replace(/\s+/gu, " ").slice(0, 96) ?? handoff.currentTask ?? current.definition.name;
+        const nextStep = currentStage?.remaining[0]?.text ??
+          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取 v3 接续状态与最新用户消息证据，核对当前阶段。");
         const prompt = buildWorkBootstrap({
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
-          title: handoff.currentTask ?? current.definition.name,
-          currentTask: handoff.currentTask ?? "读取交接上下文并核对目标",
-          nextStep: "读取 context_version=2 主包；需要核验时按证据 ID 读取来源",
+          contextVersion: 3,
+          title,
+          currentTask: title,
+          nextStep,
           artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
         });
         const receipt = await adapter.deliver({
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
-          title: handoff.currentTask ?? current.definition.name,
+          title,
           prompt,
         });
         const latest = this.#requireWork(workId);

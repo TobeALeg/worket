@@ -8,6 +8,8 @@ import { transaction } from '../definitions/storage.js';
 import { buildWorkPackage } from '../definitions/work-package.js';
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { continuationBasisMatches } from "../handoff/continuation.js";
+import type { ContinuationMaterials, ContinuationSnapshot } from "../handoff/continuation.js";
 
 import { createSchema, migrateStateProgress } from "./schema.js";
 import {
@@ -653,17 +655,25 @@ export class SqliteWorkCore implements WorkCore {
     return work.instance.status === 'OPEN' && this.#packageReceipts.record(work.activeBinding, deliveryId, this.#now());
   }
 
-  createHandoffPackage(workInstanceId: string): HandoffPackage {
+  createHandoffPackage(workInstanceId: string, options: { continuation?: ContinuationSnapshot } = {}): HandoffPackage {
     const work = this.#requireWork(workInstanceId);
     assertSourcePresenceReady(work.sourceArchive);
     const latestArtifacts = new Map<string, ArtifactRef>();
     for (const artifact of work.artifactRefs) latestArtifacts.set(artifact.path, artifact);
     const sourceNotice = sourceAvailabilityNotice(work.sourceArchive);
+    const workPackage = work.definition.kind === "REUSABLE" ? buildWorkPackage(work, this.definitions) : undefined;
+    const continuationMaterials: ContinuationMaterials = [
+      ...(workPackage?.fixedMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" })),
+      ...(workPackage?.inputMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" })),
+    ];
+    if (options.continuation && !continuationBasisMatches(work, continuationMaterials, options.continuation.basis))
+      throw new Error("CONTINUATION_BASIS_STALE");
     const handoff: HandoffPackage = {
       ...(sourceNotice ? { sourceNotice } : {}),
+      ...(options.continuation ? { continuation: structuredClone(options.continuation) } : {}),
       id: this.#id(),
       workInstanceId,
-      ...(work.definition.kind === "REUSABLE" ? { workPackage: buildWorkPackage(work, this.definitions) } : {}),
+      ...(workPackage ? { workPackage } : {}),
       workDefinition: {
         key: work.definition.key,
         version: work.definition.version,

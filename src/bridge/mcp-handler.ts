@@ -1,6 +1,7 @@
 import { currentSourceEvents } from "../core/source-revisions.js";
-import { buildHandoffContextV2, readHandoffEvidence } from "./handoff-context.js";
+import { buildHandoffContextV2, buildHandoffContextV3, readHandoffEvidence } from "./handoff-context.js";
 import type { WorkCore } from "../core/index.js";
+import type { ContinuationSnapshot } from "../handoff/continuation.js";
 
 interface JsonRpcRequest {
   jsonrpc?: string;
@@ -18,13 +19,15 @@ function toolResult(value: unknown): Record<string, unknown> {
 export class WorkPetMcpHandler {
   readonly #core: WorkCore;
   readonly #proofToken: string | null;
+  readonly #prepareContinuation: ((workId: string) => Promise<ContinuationSnapshot>) | undefined;
 
-  constructor(core: WorkCore, options: { proofToken?: string } = {}) {
+  constructor(core: WorkCore, options: { proofToken?: string; prepareContinuation?: (workId: string) => Promise<ContinuationSnapshot> } = {}) {
     this.#core = core;
     this.#proofToken = options.proofToken ?? null;
+    this.#prepareContinuation = options.prepareContinuation;
   }
 
-  handle(request: JsonRpcRequest): JsonRpcResponse {
+  async handle(request: JsonRpcRequest): Promise<JsonRpcResponse> {
     if (request.id === undefined || request.id === null) return null;
     const id = request.id;
     try {
@@ -48,10 +51,10 @@ export class WorkPetMcpHandler {
               {
                 name: "get_work_context",
                 description:
-                  "读取可直接接力的上下文。context_version=2 返回精简主包；省略时兼容旧版结构。",
+                  "读取可直接接力的上下文。context_version=2 返回精简旧版主包；context_version=3 返回有来源与版本校验的阶段接续快照；省略时兼容旧版结构。",
                 inputSchema: {
                   type: "object",
-                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" }, context_version: { type: "integer", enum: [1, 2], description: "2 返回目标/断点/成果/条件/首个动作与有限证据索引。" } },
+                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" }, context_version: { type: "integer", enum: [1, 2, 3], description: "3 返回整体目标、阶段成果、当前阶段、适用约束、证据和未解析缺口。" } },
                   required: ["work_id"],
                 },
               },
@@ -109,22 +112,33 @@ export class WorkPetMcpHandler {
           if (deliveryId !== undefined && (typeof deliveryId !== 'string' ||
               work.instance.status !== 'OPEN' || deliveryId !== work.packageDeliveryId)) throw new Error('DELIVERY_MISMATCH');
           const version = args.context_version;
-          if (version !== undefined && version !== 1 && version !== 2) throw new Error("UNSUPPORTED_CONTEXT_VERSION");
+          if (version !== undefined && version !== 1 && version !== 2 && version !== 3) throw new Error("UNSUPPORTED_CONTEXT_VERSION");
           // Historical handoffs stay immutable; a current read must also recheck
           // the pinned materials and input files before recording read success.
-          const handoff = this.#core.createHandoffPackage(workId);
+          if (version === 3 && !this.#prepareContinuation) throw new Error("CONTINUATION_PREPARER_UNAVAILABLE");
+          const continuation = version === 3 ? await this.#prepareContinuation!(workId) : undefined;
+          const currentWork = this.#core.getWork(workId);
+          if (!currentWork) throw new Error("WORK_NOT_FOUND");
+          const handoff = this.#core.createHandoffPackage(workId, continuation ? { continuation } : {});
           const acknowledged = typeof deliveryId === "string";
-          const result = toolResult(version === 2
+          const legacyContext = buildHandoffContextV2(currentWork, handoff);
+          const result = toolResult(version === 3
             ? {
-                ...buildHandoffContextV2(work, handoff),
+                ...buildHandoffContextV3(currentWork, handoff, legacyContext),
                 deliveryReceipt: { acknowledged },
                 ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
               }
-            : {
+            : version === 2
+              ? {
+                ...legacyContext,
+                deliveryReceipt: { acknowledged },
+                ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
+              }
+              : {
                 ...handoff,
                 deliveryReceipt: { acknowledged },
-                executionEpisodes: work.episodes,
-                captureBindings: work.bindings,
+                executionEpisodes: currentWork.episodes,
+                captureBindings: currentWork.bindings,
                 ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
               });
           this.#recordToolReadSuccess(workId, name, request.id, acknowledged, typeof deliveryId === "string" ? deliveryId : undefined);

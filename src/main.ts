@@ -491,9 +491,10 @@ app.whenReady().then(async () => {
       join(homedir(), ".workpet", "bridge.json"),
     mcp: new WorkPetMcpHandler(
       service.core(),
-      process.env.WORKPET_QA_PROOF_TOKEN
-        ? { proofToken: process.env.WORKPET_QA_PROOF_TOKEN }
-        : {},
+      {
+        ...(process.env.WORKPET_QA_PROOF_TOKEN ? { proofToken: process.env.WORKPET_QA_PROOF_TOKEN } : {}),
+        prepareContinuation: workId => requireService().prepareContinuation(workId),
+      },
     ),
     onHook: (executorId, payload) =>
       requireService().syncHook(executorId, payload),

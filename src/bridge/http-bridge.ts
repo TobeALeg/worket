@@ -54,7 +54,7 @@ export class WorkPetHttpBridge {
         }
         const payload = await jsonBody(request);
         if (request.url === "/mcp") {
-          const result = this.#options.mcp.handle(payload);
+          const result = await this.#options.mcp.handle(payload);
           if (!result) response.writeHead(204).end();
           else
             response

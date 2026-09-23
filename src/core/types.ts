@@ -1,5 +1,6 @@
 import type { DefinitionRepository, CreateFromDefinition } from '../definitions/repository.js';
 import type { WorkPackage } from '../definitions/work-package.js';
+import type { ContinuationSnapshot } from '../handoff/continuation.js';
 export const WORK_STATE_FIELDS = [
   "objective",
   "successCriteria",
@@ -167,6 +168,7 @@ export interface WorkSnapshot {
 export interface HandoffPackage {
   sourceNotice?: string;
   workPackage?: WorkPackage;
+  continuation?: ContinuationSnapshot;
   id: string;
   workInstanceId: string;
   workDefinition: { key: string; version: number };
@@ -237,7 +239,7 @@ export interface WorkCore {
     sourceLocator?: string,
   ): WorkSnapshot;
   recordPackageRead(workInstanceId: string, deliveryId: string): boolean;
-  createHandoffPackage(workInstanceId: string): HandoffPackage;
+  createHandoffPackage(workInstanceId: string, options?: { continuation?: ContinuationSnapshot }): HandoffPackage;
   getLatestHandoffPackage(workInstanceId: string): HandoffPackage | null;
   addArtifactRef(workInstanceId: string, artifact: ArtifactRefInput): WorkSnapshot;
   deleteWorkPermanently(
