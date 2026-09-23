@@ -1,0 +1,43 @@
+{
+  "tests": {
+    "passed": 255,
+    "total": 255
+  },
+  "actualProviderCalls": 0,
+  "runs": [
+    {
+      "run": "2026-09-23T01-08-42-868Z",
+      "status": "FAILED",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-revision-8ZAfwb",
+      "packaged": true,
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {},
+      "observed": {
+        "failedAdoptionSnapshotDelta": 0,
+        "unrelatedResolutionPreserved": false,
+        "changedRuleResolutionCleared": true,
+        "dependentReviewReopened": true
+      },
+      "error": "AssertionError [ERR_ASSERTION]: unrelated input decision must survive adopting a new clause\n\nfalse !== true\n\n    at file:///Users/dandi/YanGuan/scripts/qa-document-revision.mjs:36:133"
+    },
+    {
+      "run": "2026-09-23T01-10-24-407Z",
+      "status": "PASSED",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-revision-YvBqk5",
+      "packaged": false,
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "atomicFailureAndScopedReview": true,
+        "restartRemovedOriginalPublicationAndMcp": true
+      },
+      "observed": {
+        "failedAdoptionSnapshotDelta": 0,
+        "unrelatedResolutionPreserved": true,
+        "changedRuleResolutionCleared": true,
+        "dependentReviewReopened": true
+      }
+    }
+  ]
+}

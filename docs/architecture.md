@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 规范修订的审阅范围（2026-09-23）
+
+adoptDocumentRevision 使用 resolveReviewField/sameAddress 按原始候选身份筛选已有 resolutions，仅清除当前条款及所在栏位整体的决定。repository.update 原有依赖失效逻辑继续生效；快照与引用存储流程未改。见 [规格](specs/document-revision-review.md) 与 [验收](acceptance/document-revision-review.md)。
+
 ## 规范文件的部分采纳（2026-09-23）
 
 document-adoption 冻结原始文件/聊天请求与真实响应，校验原文行范围、有效规则去重、本次例外、新实例验收及 MCP。评测器区分 SKILL 与普通规范材料，保留原始零角色断言误报；运行逻辑与协议不变。见 [验收](acceptance/document-adoption.md)。

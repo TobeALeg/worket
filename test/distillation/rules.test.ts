@@ -231,3 +231,29 @@ test('manual edits reopen transitive dependent reviews; unrelated rules and prio
     assert.equal(buildWorkPackage(first, f.core.definitions).definition.content.constraints[0].text, '每个平台文案不超过 50 words。');
   } finally { f.core.close(); }
 });
+
+
+test('adopting one file clause retains unrelated review decisions and reopens its direct and section-level decisions', async () => {
+  const f = await setup();
+  try {
+    let draft = f.draft;
+    draft.issues = [
+      { id: 'unrelated-input', type: 'MISSING_INFORMATION', field: 'inputs.customer', message: '确认每次输入客户', blocking: true },
+      { id: 'own-index', type: 'UNCERTAIN_GENERALIZATION', field: 'constraints[0]', message: '确认此条款', blocking: true },
+      { id: 'whole-section', type: 'UNCERTAIN_GENERALIZATION', field: 'constraints', message: '确认约束整体', blocking: true },
+    ];
+    f.core.definitions.write('definition_drafts', draft);
+    draft = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision, content: draft.content,
+      issueResolutions: draft.issues.map(i => ({ issueId: i.id, action: 'CHOOSE', explanation: '明确采用当前项' })) });
+    writeFileSync(f.path, '# 新规范\n\n每个平台文案不超过 30 words。\n');
+    const preview = previewDocumentRevision(f.core.definitions, { draftId: draft.id, address: 'constraints.limit', path: f.path });
+    const before = f.core.definitions.db.prepare('SELECT count(*) n FROM source_snapshots').get()!.n;
+    assert.throws(() => adoptDocumentRevision(f.core.definitions, { draftId: draft.id, expectedRevision: draft.revision, address: 'constraints.limit', path: f.path, expectedHash: preview.hash, startLine: 2, endLine: 2 }), /INVALID_SOURCE_REF/);
+    assert.equal(f.core.definitions.db.prepare('SELECT count(*) n FROM source_snapshots').get()!.n, before);
+    assert.deepEqual(f.core.definitions.read('definition_drafts', draft.id), draft);
+    draft = adoptDocumentRevision(f.core.definitions, { draftId: draft.id, expectedRevision: draft.revision, address: 'constraints.limit', path: f.path, expectedHash: preview.hash, startLine: 3, endLine: 3 });
+    assert.deepEqual(draft.resolutions.map(r => r.issueId), ['unrelated-input']);
+    assert.ok(draft.issues.some(i => i.id === 'rule-change-constraints.duplicate' && i.blocking));
+    assert.ok(draft.refs.some(r => r.snapshotId === draft.content.constraints[0].document.source.snapshotId));
+  } finally { f.core.close(); }
+});

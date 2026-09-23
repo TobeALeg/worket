@@ -1,3 +1,4 @@
+import {resolveReviewField,sameAddress} from './review.js';
 import { randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 import { TextDecoder } from 'node:util';
@@ -33,10 +34,17 @@ export function adoptDocumentRevision(repository: DefinitionRepository, input: {
   // Freeze exactly the previewed bytes. Existing definitions keep their old snapshots.
   repository.db.prepare('INSERT INTO source_snapshots VALUES (?,?)').run(snapshot.id, JSON.stringify(snapshot));
   const content = structuredClone(draft.content);
-  const item = ruleItems(content).find(r => r.address === input.address)!.item;
+  const row = ruleItems(content).find(r => r.address === input.address)!;
+  const item = row.item;
   item.document = { source, hash: preview.hash, name: preview.name, startLine: input.startLine, endLine: input.endLine };
   item.text = selectedText;
-  const updated = repository.update({ draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: [], replaceResolutions: true });
+  const changed = { section: row.section, key: item.key };
+  const resolutions = draft.resolutions.filter(resolution => {
+    const issue = draft.issues.find(issue => issue.id === resolution.issueId);
+    const target = issue && resolveReviewField(draft.originalContent, issue.field, draft.content);
+    return !target || !sameAddress(target, changed);
+  });
+  const updated = repository.update({ draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: resolutions, replaceResolutions: true });
   updated.refs.push(source);
   repository.write('definition_drafts', updated);
   return updated;
