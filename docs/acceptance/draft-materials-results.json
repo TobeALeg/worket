@@ -1,0 +1,87 @@
+{
+  "date": "2026-09-23",
+  "tests": {
+    "passed": 245,
+    "log": "/tmp/worket-draft-materials-tests.log"
+  },
+  "actualProviderCalls": 0,
+  "externalAgent": false,
+  "runs": [
+    {
+      "run": "2026-09-23T00-00-49-963Z",
+      "status": "FAILED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-xvi0r6",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {},
+      "error": "AssertionError [ERR_ASSERTION]: saved draft must retain both selected materials after reopen\n\n0 !== 2\n\n    at file:///Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:32:9"
+    },
+    {
+      "run": "2026-09-23T00-07-49-436Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-jgZNkx",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true
+      },
+      "error": "page.evaluate: Error: Error invoking remote method 'distillation:command': Error: INVALID_INPUT: INVALID_INPUT\n    at /Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:41:25"
+    },
+    {
+      "run": "2026-09-23T00-09-24-009Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-rWCw45",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true
+      },
+      "error": "TypeError: Cannot read properties of undefined (reading 'find')\n    at file:///Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:43:42"
+    },
+    {
+      "run": "2026-09-23T00-10-37-287Z",
+      "status": "FAILED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-AFenMb",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true
+      },
+      "error": "AssertionError [ERR_ASSERTION]: manual revision must resume its saved selections\n\n'选择资料' !== '更换资料'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:52:9"
+    },
+    {
+      "run": "2026-09-23T00-11-37-961Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-Cr4G6l",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true,
+        "manualRevisionResumeAndOldInstance": true
+      }
+    }
+  ],
+  "recoveryRegression": {
+    "run": "2026-09-23T00-11-40-338Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-recovery-e2e-3F38hp",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "definitionAndSkillExactVersion": true,
+      "inputsReferencesAndContractIdentityPreserved": true,
+      "mcpValidatesRecoveredMaterials": true
+    }
+  }
+}

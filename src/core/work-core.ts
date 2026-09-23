@@ -765,6 +765,7 @@ export class SqliteWorkCore implements WorkCore {
       this.definitions.instanceFiles.remove(workInstanceId);
       this.#database.prepare("DELETE FROM work_instances WHERE id = ?").run(workInstanceId);
     });
+    this.definitions.collectUnusedMaterials();
   }
 
   #loadTombstones(workInstanceId: string): WorkStateTombstone[] {

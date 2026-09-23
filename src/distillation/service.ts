@@ -722,11 +722,13 @@ export class DistillationService {
           job.draftId,
         );
         draft.invalidated = true;
+        delete draft.materials;
         this.repository.write("definition_drafts", draft);
       }
       this.repository.write("distillation_jobs", job);
       return job;
     });
+    this.repository.collectUnusedMaterials();
     if (job.status === "CANCELLED" && job.requestId && this.matchesDestination(job))
       try {
         await this.client.cancel(job.requestId, this.destinationGuard(job));

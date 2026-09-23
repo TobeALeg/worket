@@ -1,3 +1,4 @@
+import { saveDraftMaterials, collectUnusedMaterials } from './draft-materials.js';
 import { sourceReview } from './source-review.js';
 import { updateInstanceFiles, type UpdateInstanceFiles } from './instance-file-update.js';
 import { InstanceFiles, type InstanceInputs } from "./instance-files.js";
@@ -29,6 +30,7 @@ import {
 } from "./storage.js";
 import type { WorkSnapshot, WorkState } from "../core/types.js";
 export type Draft = {
+  materials?: Material[];
   id: string;
   jobId?: string;
   baseDefinitionId?: string;
@@ -70,7 +72,9 @@ export class DefinitionRepository {
   ) {
     this.materials = new MaterialStore(directory);
     this.instanceFiles = new InstanceFiles(directory);
+    this.collectUnusedMaterials();
   }
+  collectUnusedMaterials(copied: Material[] = []): void { collectUnusedMaterials(this, copied); }
   read<T>(
     table: "source_snapshots" | "distillation_jobs" | "definition_drafts",
     id: string,
@@ -181,6 +185,9 @@ export class DefinitionRepository {
       input.definitionId,
       () => {
         const definition = this.get(input.definitionId);
+        const pending = this.list<Draft>('definition_drafts').find(draft =>
+          draft.baseDefinitionId === definition.id && !draft.jobId && !draft.publishedId && !draft.invalidated);
+        if (pending) return pending;
         return this.saveDraft({
           id: randomUUID(),
           baseDefinitionId: definition.id,
@@ -200,10 +207,12 @@ export class DefinitionRepository {
     content: DefinitionContent;
     issueResolutions: Resolution[];
     replaceResolutions?: boolean;
+    materialBindings?: Record<string, string>;
   }): Draft {
     validateContent(input.content);
     array(input.issueResolutions);
-    return transaction(this.db, () => {
+    const copied: Material[] = [];
+    try { return transaction(this.db, () => {
       const draft = this.read<Draft>("definition_drafts", input.draftId);
       ensure(!draft.invalidated && !draft.publishedId, "DRAFT_NOT_EDITABLE");
       ensure(draft.revision === input.expectedRevision, "REVISION_CONFLICT");
@@ -284,6 +293,7 @@ export class DefinitionRepository {
           resolutions: input.issueResolutions,
         }),
       );
+      draft.materials = saveDraftMaterials(this, draft, content, input.materialBindings, copied);
       draft.content = content;
       draft.revision++;
       draft.resolutions = [
@@ -294,7 +304,7 @@ export class DefinitionRepository {
       ].filter(resolution => !reopened.has(resolution.issueId));
       this.write("definition_drafts", draft);
       return draft;
-    });
+    }); } finally { this.collectUnusedMaterials(copied); }
   }
   publish(input: {
     sourceReviewHash?: string;
@@ -326,7 +336,8 @@ export class DefinitionRepository {
       : []).filter(material => !draft.evolution?.changes.some(change => change.kind === 'REPLACES' && change.target === `materialRoles.${material.role}`));
     const materials = draft.content.materialRoles.flatMap((role) => {
       const path = input.materialBindings[role.key];
-      const old = inherited.find((m) => m.role === role.key && !!m.bundle === (role.kind === "SKILL"));
+      const old = draft.materials?.find(m => m.role === role.key && !!m.bundle === (role.kind === "SKILL"))
+        ?? inherited.find((m) => m.role === role.key && !!m.bundle === (role.kind === "SKILL"));
       return path ? [role.kind === "SKILL" ? this.materials.copySkill(path, role.key) : this.materials.copy(path, role.key)] : old ? [old] : [];
     });
     materials.push(...pinRuleDocuments(draft.content, inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
@@ -406,6 +417,7 @@ export class DefinitionRepository {
             JSON.stringify({ type: 'EVOLUTION_CONFIRMED', definitionKey: definition.definitionKey, definitionId: definition.id,
               draftId: current.id, at: new Date().toISOString(), ...current.evolution }));
           current.publishedId = definition.id;
+          delete current.materials;
           this.write('definition_drafts', current);
           if (current.jobId) {
             const job = this.read<{ id: string; status: string }>('distillation_jobs', current.jobId);
@@ -761,17 +773,7 @@ export class DefinitionRepository {
         return null;
       },
     );
-    for (const row of this.db
-      .prepare(
-        "SELECT * FROM definition_materials WHERE id NOT IN (SELECT material_id FROM definition_material_refs)",
-      )
-      .all()) {
-      const material = JSON.parse(row.payload_json as string) as Material;
-      this.materials.remove(material);
-      this.db
-        .prepare("DELETE FROM definition_materials WHERE id=?")
-        .run(row.id as string);
-    }
+    this.collectUnusedMaterials();
   }
   // Called inside the core delete transaction: sanitize every local evidence copy, including command caches.
   redactSource(workId: string): void {
@@ -811,6 +813,7 @@ export class DefinitionRepository {
           if (job.draftId) {
             const draft = this.read<Draft>("definition_drafts", job.draftId);
             draft.invalidated = true;
+            delete draft.materials;
             draft.content = draft.originalContent = {
               schemaVersion: 1,
               name: "来源已删除",

@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 草稿资料与修订恢复（2026-09-23）
+
+Draft.materials 保存经过 MaterialStore 校验的固定副本；draft-materials.ts 在事务中更新选择并按草稿/定义双重所有权清理。发布采用显式新选择、草稿固定副本、允许继承的原定义资料顺序，发布成功移交所有权。revise 复用同一基准的最新可编辑手动草稿；取消和永久来源删除释放失效草稿引用。见 [规格](specs/draft-materials.md) 与 [验收](acceptance/draft-materials.md)。
+
 ## 范围提升与冗余关系（2026-09-23）
 
 server/normalize-evolution.mjs 在 validateResult 前仅删除与 change.kind/target 完全一致且无额外字段的 item.rule.relation；规范校验器不变。缺失/不一致关系、非法目标、范围冲突仍拒绝。自然语言及来源不修改，提示版本不变，旧客户端接收同一规范格式。 证据见 [验收](acceptance/repetition-evolution.md)。
