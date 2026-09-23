@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "iterationId": null,
+  "status": "NOT_STARTED",
+  "baselineSha": null,
+  "candidateSha": null,
+  "hypothesis": null,
+  "targetFailureIds": [],
+  "allowedProductPaths": [],
+  "beforeReproductionRunIds": [],
+  "artifacts": {
+    "patch": null,
+    "regressionReport": null,
+    "devResults": null,
+    "humanReview": null,
+    "auditReport": null
+  },
+  "fingerprints": {
+    "devManifestHash": null,
+    "goldHash": null,
+    "rubricHash": null,
+    "promptVersion": null,
+    "model": null,
+    "provider": null,
+    "schemaVersion": null,
+    "harnessVersion": null
+  },
+  "counts": {
+    "plannedTrials": null,
+    "startedTrials": null,
+    "completedTrials": null,
+    "failedTrials": null,
+    "blockedTrials": null,
+    "reviewedTrials": null
+  },
+  "metrics": {
+    "rawTrustNumerator": null,
+    "rawTrustDenominator": null,
+    "keyRecallNumerator": null,
+    "keyRecallDenominator": null,
+    "unknownItems": null,
+    "severeErrors": null,
+    "activeHumanSeconds": null,
+    "modelTokens": null,
+    "cost": null,
+    "currency": null
+  },
+  "finalDataAccessed": false,
+  "humanApprovalRefs": [],
+  "auditDecision": null,
+  "promotionDecision": "UNDECIDED",
+  "reason": null,
+  "nextAction": null
+}

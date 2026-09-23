@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-18",
+  "mainSha": "17f045c7f274e7e06e1e488f59bbd3423227beac",
+  "experimentalSha": "b842dfe981bd2f9f05df3eeaa733d2347a0cd3de",
+  "sourceMode": "GitHub connector reads; exact three-file subset, NOT full clone",
+  "runtime": {
+    "os": "Linux x86_64",
+    "node": "v22.16.0",
+    "typescriptCompiler": "5.8.3 (global, contract-only compilation; not repository toolchain regression)"
+  },
+  "liveModelCalls": 0,
+  "fullRepositoryTestsRun": false,
+  "desktopTestsRun": false,
+  "productionChanged": false,
+  "files": [
+    {
+      "path": "src/contracts/definition.ts",
+      "gitBlobSha": "9f8070830abadaf900564231c29996e404823f29",
+      "sha256": "6009f032309a5f7181cc69cdb021dd53caf0a5a38898e1fb8d39f53b860c406f",
+      "originalUrl": "https://github.com/TobeALeg/worket/blob/17f045c7f274e7e06e1e488f59bbd3423227beac/src/contracts/definition.ts"
+    },
+    {
+      "path": "src/extractor/local-rule-extractor.ts",
+      "gitBlobSha": "d44c013fb76d0796a0487f1cf3401584f11652eb",
+      "sha256": "53ed43990f90796bc01ff674df2fa4c710775cd85bdc4ea5394c897c029ea168",
+      "originalUrl": "https://github.com/TobeALeg/worket/blob/17f045c7f274e7e06e1e488f59bbd3423227beac/src/extractor/local-rule-extractor.ts"
+    },
+    {
+      "path": "server/workflow.mjs",
+      "gitBlobSha": "1a2412135aee544d02dec7468a7b5b9a9312a8e8",
+      "sha256": "a705c83d7b0d133adbc196fc552171ccd2c6899203d65cce5764b2627dc760b3",
+      "originalUrl": "https://github.com/TobeALeg/worket/blob/17f045c7f274e7e06e1e488f59bbd3423227beac/server/workflow.mjs"
+    }
+  ]
+}

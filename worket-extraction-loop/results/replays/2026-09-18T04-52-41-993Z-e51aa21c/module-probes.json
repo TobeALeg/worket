@@ -1,0 +1,219 @@
+{
+  "auditDate": "2026-09-18",
+  "baseCommit": "17f045c7f274e7e06e1e488f59bbd3423227beac",
+  "node": "v22.16.0",
+  "evidenceClass": "isolated_exact_source_modules_with_synthetic_inputs_and_mock_provider",
+  "fullRepositoryTestsRun": false,
+  "liveModelCalls": 0,
+  "desktopTestsRun": false,
+  "sourceVerification": [
+    {
+      "path": "src/contracts/definition.ts",
+      "expectedGitBlobSha": "9f8070830abadaf900564231c29996e404823f29",
+      "actualGitBlobSha": "9f8070830abadaf900564231c29996e404823f29",
+      "match": true
+    },
+    {
+      "path": "src/extractor/local-rule-extractor.ts",
+      "expectedGitBlobSha": "d44c013fb76d0796a0487f1cf3401584f11652eb",
+      "actualGitBlobSha": "d44c013fb76d0796a0487f1cf3401584f11652eb",
+      "match": true
+    },
+    {
+      "path": "server/workflow.mjs",
+      "expectedGitBlobSha": "1a2412135aee544d02dec7468a7b5b9a9312a8e8",
+      "actualGitBlobSha": "1a2412135aee544d02dec7468a7b5b9a9312a8e8",
+      "match": true
+    }
+  ],
+  "records": [
+    {
+      "id": "C01",
+      "title": "正常候选经真实workflow完成",
+      "status": "CONTROL_PASSED",
+      "providerCalls": 2
+    },
+    {
+      "id": "C02",
+      "title": "不存在的引用被拦截",
+      "status": "CONTROL_PASSED"
+    },
+    {
+      "id": "C03",
+      "title": "Agent来源冒充USER_STATED被workflow拦截",
+      "status": "CONTROL_PASSED"
+    },
+    {
+      "id": "G01",
+      "title": "replacedBy循环可以通过结果校验和workflow",
+      "status": "GAP_REPRODUCED",
+      "requirements": [
+        {
+          "id": "r1",
+          "text": "每次都必须注明来源",
+          "scope": "REUSABLE",
+          "sourceKeys": [
+            "work-1/event-1"
+          ],
+          "replacedBy": "r2"
+        },
+        {
+          "id": "r2",
+          "text": "每次都必须注明来源",
+          "scope": "REUSABLE",
+          "sourceKeys": [
+            "work-1/event-1"
+          ],
+          "replacedBy": "r1"
+        }
+      ]
+    },
+    {
+      "id": "G02",
+      "title": "INSTANCE要求可出现在通用constraints，缺少可机检的映射屏障",
+      "status": "GAP_REPRODUCED",
+      "requirements": [
+        {
+          "id": "r1",
+          "text": "本次做30秒",
+          "scope": "INSTANCE",
+          "sourceKeys": [
+            "work-1/event-1"
+          ],
+          "replacedBy": null
+        }
+      ],
+      "constraints": [
+        {
+          "key": "duration",
+          "text": "所有视频必须30秒",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G03",
+      "title": "历史客户值可作为defaultValue通过workflow",
+      "status": "GAP_REPRODUCED",
+      "input": {
+        "key": "customer",
+        "text": "客户名称",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1"
+            }
+          ]
+        },
+        "valueType": "TEXT",
+        "required": true,
+        "defaultValue": "客户甲"
+      }
+    },
+    {
+      "id": "G04",
+      "title": "合法事件引用不证明语义：相反要求可以通过workflow",
+      "status": "GAP_REPRODUCED",
+      "source": "制作视频方案，每次都必须注明来源。本次给客户甲做30秒视频，不要沿用到其他客户。",
+      "constraint": {
+        "key": "source",
+        "text": "以后不需要注明来源",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "G05",
+      "title": "event coverage完整而requirements为空仍可返回有效content",
+      "status": "GAP_REPRODUCED",
+      "coverage": {
+        "inputEvents": 2,
+        "processedEvents": 2,
+        "processedChunks": 1,
+        "eventKeys": [
+          "work-1/event-1",
+          "work-1/event-2"
+        ],
+        "exclusions": []
+      },
+      "requirements": [],
+      "contentPresent": true
+    },
+    {
+      "id": "G06",
+      "title": "非法中间requirement可以进入聚合阶段",
+      "status": "GAP_REPRODUCED",
+      "intermediateObservedByAggregate": [
+        {
+          "id": "x",
+          "scope": "ALIEN",
+          "sourceKeys": [
+            "not-a-source"
+          ],
+          "garbage": true
+        }
+      ]
+    },
+    {
+      "id": "L01",
+      "title": "单事件超过chunkBytes明确拒绝，不静默丢弃",
+      "status": "LIMIT_CONFIRMED",
+      "singleEventCharacters": 24100,
+      "requestValidation": "accepted",
+      "chunking": "INPUT_TOO_LARGE"
+    },
+    {
+      "id": "G07",
+      "title": "本地规则提取单批10条明确约束只返回前8条",
+      "status": "GAP_REPRODUCED",
+      "inputConstraints": 10,
+      "outputConstraints": 8,
+      "lastReturned": "必须满足第8项要求。"
+    },
+    {
+      "id": "G08",
+      "title": "含否定语气的已完成字样仍进入completedActions",
+      "status": "GAP_REPRODUCED",
+      "completedActions": [
+        {
+          "id": "local-c38620d6634dab5a",
+          "text": "不能声称已完成，实际上还没开始。",
+          "origin": "AGENT_PROPOSED",
+          "sourceMessageIds": [
+            "e1"
+          ]
+        }
+      ],
+      "note": "文本仍保留否定且origin=AGENT_PROPOSED；这不是数据库COMPLETED状态"
+    }
+  ],
+  "counts": {
+    "CONTROL_PASSED": 3,
+    "GAP_REPRODUCED": 8,
+    "LIMIT_CONFIRMED": 1
+  },
+  "executedAt": "2026-09-18T04:52:41.993Z"
+}

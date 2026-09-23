@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "status": "TEMPLATE_NOT_APPROVED",
+  "ownerHuman": null,
+  "repository": "TobeALeg/worket",
+  "auditedMainSha": "17f045c7f274e7e06e1e488f59bbd3423227beac",
+  "auditedExperimentalSha": "b842dfe981bd2f9f05df3eeaa733d2347a0cd3de",
+  "actualTargetSha": null,
+  "privateExperimentDirectory": null,
+  "roles": [
+    "A0_coordinator",
+    "A1_algorithm",
+    "A2_evaluation",
+    "A3_audit"
+  ],
+  "limits": {
+    "maxCandidateIterations": 3,
+    "maxConsecutiveNoGain": 2,
+    "concurrency": 1,
+    "repeatsPerCondition": 2,
+    "maxPaidSpend": 0,
+    "currency": null,
+    "perTrialTimeoutSeconds": null,
+    "maxRetriesPerTrial": 0
+  },
+  "permissions": {
+    "approved": false,
+    "localTestEdits": false,
+    "algorithmEdits": false,
+    "realSourceRead": false,
+    "externalModelCalls": false,
+    "schemaMigration": false,
+    "globalIntegrationChange": false,
+    "productionDeployment": false,
+    "publicRelease": false
+  },
+  "dataPartitions": {
+    "regressionManifest": null,
+    "devManifest": null,
+    "finalExtractionManifest": null,
+    "finalReuseManifest": null
+  },
+  "devGates": {
+    "rawCandidateTrustMin": 0.95,
+    "keyRequirementRecallMin": 0.9,
+    "confirmedSevereErrorsMax": 0,
+    "blockingRegressionsMax": 0,
+    "semanticRubricHumanApproved": false,
+    "newInstanceContaminationMax": 0
+  },
+  "finalRules": {
+    "unseenRequired": true,
+    "inspectionAfterFailureRetiresBatch": true,
+    "mayOptimizeOnFinal": false,
+    "mustHumanApproveUnseal": true
+  },
+  "note": "此文件是需本地总控落实并由人确认的模板，不是已实现runner或授权凭证。缺预算/审批/输入时live必须阻断。"
+}
