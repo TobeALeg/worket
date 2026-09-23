@@ -1,0 +1,328 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": {
+      "schemaVersion": 1,
+      "name": "视频制作通用约定",
+      "purpose": {
+        "key": "purpose",
+        "text": "为后续视频制作建立可复用的通用约定。",
+        "basis": {
+          "type": "SOURCE",
+          "origin": "USER_STATED",
+          "refs": [
+            {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "event-1",
+              "excerpt": "作为后续所有视频的通用约定"
+            }
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "key": "script_text",
+          "text": "脚本文本",
+          "valueType": "TEXT",
+          "required": true,
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "下一次只需给一段新的脚本文本"
+              }
+            ]
+          }
+        }
+      ],
+      "deliverables": [
+        {
+          "key": "mp4_delivery",
+          "text": "交付 MP4 成片。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "交付 MP4 成片。"
+              },
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "我只采纳字幕至少 24px 安全区、片尾列资料来源、MP4 交付这三条作为后续所有视频的通用约定。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "5f9013da4b3f4815bbea1654f1cf599351fc319f3ec3f3a5baa0811f6f99ab69",
+            "name": "FRAME.md",
+            "startLine": 6,
+            "endLine": 6
+          }
+        }
+      ],
+      "constraints": [
+        {
+          "key": "subtitle_safe_area",
+          "text": "字幕距画面边缘至少 24px。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "字幕距画面边缘至少 24px。"
+              },
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "我只采纳字幕至少 24px 安全区、片尾列资料来源、MP4 交付这三条作为后续所有视频的通用约定。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "5f9013da4b3f4815bbea1654f1cf599351fc319f3ec3f3a5baa0811f6f99ab69",
+            "name": "FRAME.md",
+            "startLine": 2,
+            "endLine": 2
+          }
+        },
+        {
+          "key": "end_credits_sources",
+          "text": "片尾列出资料来源。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "DOCUMENT_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "file-1",
+                "excerpt": "片尾列出资料来源。"
+              },
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "我只采纳字幕至少 24px 安全区、片尾列资料来源、MP4 交付这三条作为后续所有视频的通用约定。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE"
+          },
+          "document": {
+            "source": {
+              "snapshotId": "wire",
+              "workId": "work-1",
+              "eventId": "file-1"
+            },
+            "hash": "5f9013da4b3f4815bbea1654f1cf599351fc319f3ec3f3a5baa0811f6f99ab69",
+            "name": "FRAME.md",
+            "startLine": 3,
+            "endLine": 3
+          }
+        },
+        {
+          "key": "subtitle_max_two_lines",
+          "text": "字幕不超过两行。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "以后字幕还要不超过两行，这是文件外的新要求。"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "relation": {
+              "kind": "SUPPLEMENTS",
+              "target": "constraints.subtitle_safe_area"
+            }
+          }
+        }
+      ],
+      "acceptanceCriteria": [],
+      "methods": [
+        {
+          "key": "existing_skill_handling",
+          "text": "未明确规定的制作参数按既有 skill 处理。",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "其余未明确规定的制作参数按既有 skill 处理"
+              }
+            ]
+          },
+          "rule": {
+            "scope": "REUSABLE",
+            "status": "ACTIVE",
+            "condition": "未明确规定的制作参数"
+          },
+          "obligation": "REFERENCE"
+        }
+      ],
+      "materialRoles": [
+        {
+          "key": "existing_video_skill",
+          "text": "既有视频制作 skill（用于处理未明确规定的制作参数；名称未提供）",
+          "required": true,
+          "kind": "SKILL",
+          "basis": {
+            "type": "SOURCE",
+            "origin": "USER_STATED",
+            "refs": [
+              {
+                "snapshotId": "wire",
+                "workId": "work-1",
+                "eventId": "event-1",
+                "excerpt": "其余未明确规定的制作参数按既有 skill 处理"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "issues": [
+      {
+        "id": "missing-skill-name",
+        "type": "MISSING_INFORMATION",
+        "field": "materialRoles.existing_video_skill",
+        "message": "用户要求未明确规定的制作参数按既有 skill 处理，但未提供该 skill 的名称；发布时需绑定本地 skill 目录。",
+        "blocking": false
+      }
+    ],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "req-subtitle-safe-area",
+        "text": "字幕距画面边缘至少 24px。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-end-credits-sources",
+        "text": "片尾列出资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-mp4-delivery",
+        "text": "交付 MP4 成片。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-subtitle-max-two-lines",
+        "text": "字幕不超过两行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-script-input-only",
+        "text": "后续仅需提供一段新的脚本文本，不增加其他输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "req-existing-skill-handling",
+        "text": "未明确规定的制作参数按既有 skill 处理。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 2,
+      "processedEvents": 2,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/file-1"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    }
+  },
+  "usage": {
+    "prompt_tokens": 3212,
+    "completion_tokens": 13418,
+    "total_tokens": 16630,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 11816
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 780
+  },
+  "configuredModel": "deepseek-flash"
+}

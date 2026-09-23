@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 规范文件的部分采纳（2026-09-23）
+
+document-adoption 冻结原始文件/聊天请求与真实响应，校验原文行范围、有效规则去重、本次例外、新实例验收及 MCP。评测器区分 SKILL 与普通规范材料，保留原始零角色断言误报；运行逻辑与协议不变。见 [验收](acceptance/document-adoption.md)。
+
 ## 组合技能的固定目录（2026-09-23）
 
 skill-environment.ts 将不可变定义中已固定技能投影到 definition-materials/skill-environments/<definitionId>/<原目录名>，WorkPackage.skills 使用这些可解析兄弟引用的入口。单技能保持旧路径，canonical 清单仍是版本依据，派生缓存失配从验证后的副本重建。保存/发布检查名称冲突，定义删除回收派生目录；无数据库或模型协议变更。见 [规格](specs/combined-skills.md) 与 [验收](acceptance/combined-skills.md)。

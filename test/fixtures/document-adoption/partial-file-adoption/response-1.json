@@ -1,0 +1,73 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-1-req-subtitle-safe-area",
+        "text": "字幕距画面边缘至少 24px 安全区。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-end-credits-sources",
+        "text": "片尾列出资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-mp4-delivery",
+        "text": "交付 MP4 成片。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1",
+          "work-1/file-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-subtitle-max-two-lines",
+        "text": "字幕不超过两行。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-1-req-script-input-only",
+        "text": "下一次只需提供一段新的脚本文本，其余未明确规定的制作参数按既有 skill 处理，不增加输入。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/file-1"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 2773,
+    "completion_tokens": 3455,
+    "total_tokens": 6228,
+    "prompt_tokens_details": {
+      "cached_tokens": 2304
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3125
+    },
+    "prompt_cache_hit_tokens": 2304,
+    "prompt_cache_miss_tokens": 469
+  },
+  "configuredModel": "deepseek-flash"
+}

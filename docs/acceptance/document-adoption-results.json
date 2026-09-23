@@ -1,0 +1,156 @@
+{
+  "tests": {
+    "passed": 254,
+    "total": 254
+  },
+  "usage": {
+    "actualProviderCalls": 4,
+    "inputTokens": 12098,
+    "outputTokens": 35967,
+    "totalTokens": 48065,
+    "cost": "unknown: provider returned no price"
+  },
+  "live": {
+    "run": "2026-09-23T00-56-33-863Z",
+    "status": "FAILED",
+    "synthetic": true,
+    "externalAgent": false,
+    "cases": [
+      {
+        "id": "partial-file-adoption",
+        "status": "FAILED",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-33hJre",
+        "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T00-56-33-863Z/partial-file-adoption",
+        "packaged": true,
+        "actualProviderCalls": 2,
+        "usage": [
+          {
+            "prompt_tokens": 2773,
+            "completion_tokens": 3455,
+            "total_tokens": 6228,
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 3125
+            },
+            "prompt_cache_hit_tokens": 2304,
+            "prompt_cache_miss_tokens": 469
+          },
+          {
+            "prompt_tokens": 3212,
+            "completion_tokens": 13418,
+            "total_tokens": 16630,
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 11816
+            },
+            "prompt_cache_hit_tokens": 2432,
+            "prompt_cache_miss_tokens": 780
+          }
+        ],
+        "checks": {},
+        "error": "AssertionError [ERR_ASSERTION]: normative document pinning needs no extra user binding\n\n1 !== 0\n\n    at verifyContent (file:///Users/dandi/YanGuan/scripts/lib/document-adoption-cases.mjs:21:9)\n    at verifyDraft (file:///Users/dandi/YanGuan/scripts/lib/document-adoption-cases.mjs:23:36)\n    at file:///Users/dandi/YanGuan/scripts/qa-document-adoption.mjs:37:162"
+      },
+      {
+        "id": "partial-file-with-one-off",
+        "status": "FAILED",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-Cb1O4L",
+        "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T00-56-33-863Z/partial-file-with-one-off",
+        "packaged": true,
+        "actualProviderCalls": 2,
+        "usage": [
+          {
+            "prompt_tokens": 2805,
+            "completion_tokens": 5367,
+            "total_tokens": 8172,
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 4973
+            },
+            "prompt_cache_hit_tokens": 2432,
+            "prompt_cache_miss_tokens": 373
+          },
+          {
+            "prompt_tokens": 3308,
+            "completion_tokens": 13727,
+            "total_tokens": 17035,
+            "prompt_tokens_details": {
+              "cached_tokens": 2560
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 11982
+            },
+            "prompt_cache_hit_tokens": 2560,
+            "prompt_cache_miss_tokens": 748
+          }
+        ],
+        "checks": {},
+        "error": "AssertionError [ERR_ASSERTION]: normative document pinning needs no extra user binding\n\n1 !== 0\n\n    at verifyContent (file:///Users/dandi/YanGuan/scripts/lib/document-adoption-cases.mjs:21:9)\n    at verifyDraft (file:///Users/dandi/YanGuan/scripts/lib/document-adoption-cases.mjs:23:36)\n    at file:///Users/dandi/YanGuan/scripts/qa-document-adoption.mjs:37:162"
+      }
+    ]
+  },
+  "replays": [
+    {
+      "run": "2026-09-23T00-59-44-600Z",
+      "status": "PASSED",
+      "synthetic": true,
+      "externalAgent": false,
+      "cases": [
+        {
+          "id": "partial-file-adoption",
+          "status": "PASSED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-61p0lb",
+          "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T00-59-44-600Z/partial-file-adoption",
+          "packaged": true,
+          "actualProviderCalls": 0,
+          "usage": [],
+          "checks": {
+            "semanticScopeAndDocumentClauses": true,
+            "removedOriginalNewInstanceAcceptanceAndMcp": true
+          },
+          "acceptanceLabels": [
+            "交付 MP4 成片。",
+            "字幕距画面边缘至少 24px。",
+            "片尾列出资料来源。",
+            "字幕不超过两行。"
+          ]
+        }
+      ]
+    },
+    {
+      "run": "2026-09-23T01-00-41-444Z",
+      "status": "PASSED",
+      "synthetic": true,
+      "externalAgent": false,
+      "cases": [
+        {
+          "id": "partial-file-with-one-off",
+          "status": "PASSED",
+          "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-5VXrp6",
+          "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T01-00-41-444Z/partial-file-with-one-off",
+          "packaged": true,
+          "actualProviderCalls": 0,
+          "usage": [],
+          "checks": {
+            "semanticScopeAndDocumentClauses": true,
+            "removedOriginalNewInstanceAcceptanceAndMcp": true
+          },
+          "acceptanceLabels": [
+            "交付 MP4 成片。",
+            "字幕距画面边缘至少 24px。",
+            "片尾列出资料来源。",
+            "字幕不超过两行。"
+          ]
+        }
+      ]
+    }
+  ],
+  "clientCommit": "bff67e2",
+  "backendCommit": "8d39223",
+  "runtimeChanges": false
+}

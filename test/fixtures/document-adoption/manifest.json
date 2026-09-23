@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Actual unchanged model responses on synthetic sources. Original checker failures preserved.",
+  "cases": [
+    {
+      "id": "partial-file-adoption",
+      "run": "2026-09-23T00-56-33-863Z",
+      "originalOutcome": "FAILED",
+      "outcome": "CHECKER_CONFLATED_SKILL_WITH_NORMATIVE_BINDING",
+      "sha256": {
+        "request-1.json": "8880098c96c46c5d1a5e5fd22b19cf4f217fe78416ad1fd5ad713bf42913da8d",
+        "response-1.json": "efe9c27976f591c17f87d384f07c3373fbea486a900df362cd22a63df4f9fef8",
+        "request-2.json": "64ba88f715003b7e21c67a79a7d0991cd289d05cbe93e6a22715558f3d7cac1a",
+        "response-2.json": "2fecea75b97bbdc36c22db3d277322c966ed81da1c81f520453a1410dc0c947f",
+        "report.json": "b894c1c4cd0949e07b832a3ff42e60979025204bb6a8dcffeef8672bfa7172a4"
+      }
+    },
+    {
+      "id": "partial-file-with-one-off",
+      "run": "2026-09-23T00-56-33-863Z",
+      "originalOutcome": "FAILED",
+      "outcome": "CHECKER_CONFLATED_SKILL_WITH_NORMATIVE_BINDING",
+      "sha256": {
+        "request-1.json": "57a7859c7465195cdbc64810005288913d5680668d5c3bc41ed926606d4c159a",
+        "response-1.json": "b9e67918cc1622bd345ef0037e3e21c488d6e86b4d84d3736b365a5009790dac",
+        "request-2.json": "fd33fb0089ac8b45b3a2de7c16158101d218b0c9f4d454378aa437329ca7a847",
+        "response-2.json": "54755ab40c38683be4ff15523e0cc7610204dc49a42a84dd5899d06d9759c5e0",
+        "report.json": "502f0ced8858b033411922117f551601cf36ae84e30838cb300daaf7cb74c105"
+      }
+    }
+  ]
+}
