@@ -171,6 +171,14 @@ Worket 的潜在差异不只是“用模型生成工作摘要”，而是把来�
 
 ## B003 — 从理解用户意图到提炼可复用的工作约定
 
+### 2026-09-23：将语义判断集中为可评估能力（Jev 探索）
+
+用户提出：提取和传递包含很多中间判断，接入 Typesafe Jev 会是什么样。核实日期 2026-09-23：官方把 Jev 定位为 state + typed questions 的结构化判断模型，不生成约定正文；其引用检查范例先做程序原文匹配，再检查语义支持。当前版本官方提示中文/CJK 较弱，confidence 不能直接当正确率。来源：[定位](https://docs.typesafe.ai/introduction/coding-agents)、[引用检查](https://docs.typesafe.ai/cookbooks/citation_check)、[语言支持](https://docs.typesafe.ai/models#language-support)、[Confidence](https://docs.typesafe.ai/confidence)。
+
+Worket 当前依据：[规则协调](../../src/contracts/rules.ts) 已有范围、采纳与替代结构，[阶段整理](../../src/handoff/continuation.ts) 已有候选与来源校验，但结构正确并不保证自然语言解释正确。助手设计设想（未批准实现）：共享一层候选语义复核，先用 Jev 旁路判断原文支持、单次/长期范围等窄问题，保留确定性校验与用户发布确认；判断结果绑定证据和模型版本，并单独评测中文错误。
+
+潜在用户价值：同一句纠正在本次交接与下次复用中得到一致、可追溯的解释，减少误继承和重复审阅。展示仍用“默认 50 字、本次 80 字、下次回到 50 字”，并明确模型不确定时如何处理。实际准确率、共同误判、审阅成本和调用成本待验证；本轮仅查阅官方文档，无 API 调用、数据上传或接入实现。详见 [接入研究](../research/jev-worket-integration-2026-09-23.md)。
+
 ### 2026-09-23：接续与沉淀共享证据，分别表达本次与下次
 
 用户问题为提取和传递是否存在更好的共通方案。当前代码已有来源修订与档案基础，但八字段 WorkState、Definition 规则协调、ContinuationSnapshot 各自表达要求与状态。源码及隔离样本确认默认状态会并列已取消的 CSV 与新 PDF、保留旧待办；不代表已审阅 Definition 有同样行为。证据见 [工作对象审视](../reviews/2026-09-23-work-object-audit.md)。
