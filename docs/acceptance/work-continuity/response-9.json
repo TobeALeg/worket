@@ -1,0 +1,221 @@
+{
+  "result": {
+    "coveredSourceEventIds": [
+      "ba538dd0-f8db-428c-93e3-12f0587ac980",
+      "5519391c-0923-45c8-8b66-ae38ac72df1a",
+      "75e98269-2d56-418d-aa6b-6123f464ad4a"
+    ],
+    "objective": [
+      {
+        "text": "制作本期视频的英文介绍",
+        "sourceEventIds": [
+          "ba538dd0-f8db-428c-93e3-12f0587ac980",
+          "75e98269-2d56-418d-aa6b-6123f464ad4a"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "ba538dd0-f8db-428c-93e3-12f0587ac980",
+            "text": "现在制作本期视频介绍。"
+          },
+          {
+            "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+            "text": "请先写本期介绍。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ],
+    "currentStageId": "stage-intro-1",
+    "currentStageBasis": [
+      {
+        "text": "用户要求先撰写本期视频介绍，本期单独允许 80 words",
+        "sourceEventIds": [
+          "75e98269-2d56-418d-aa6b-6123f464ad4a"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+            "text": "本期单独允许 80 words，只限这一次。下期仍按 50 words。请先写本期介绍。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ],
+    "stages": [
+      {
+        "id": "stage-intro-1",
+        "task": {
+          "text": "撰写本期视频的英文介绍（本期字数上限按用户本次例外为 80 words）",
+          "sourceEventIds": [
+            "ba538dd0-f8db-428c-93e3-12f0587ac980",
+            "75e98269-2d56-418d-aa6b-6123f464ad4a"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "ba538dd0-f8db-428c-93e3-12f0587ac980",
+              "text": "现在制作本期视频介绍。"
+            },
+            {
+              "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+              "text": "请先写本期介绍。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "execution": "NOT_STARTED",
+        "completionEvidence": [],
+        "outcomes": [],
+        "dependsOn": [],
+        "remaining": [
+          {
+            "text": "尚未产出本期视频的英文介绍文本",
+            "sourceEventIds": [
+              "75e98269-2d56-418d-aa6b-6123f464ad4a"
+            ],
+            "excerpts": [
+              {
+                "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+                "text": "请先写本期介绍。"
+              }
+            ],
+            "manualStateIds": []
+          }
+        ],
+        "blockers": []
+      }
+    ],
+    "requirements": [
+      {
+        "id": "req-50words-general",
+        "kind": "CONSTRAINT",
+        "claim": {
+          "text": "这类视频的英文介绍最多 50 words",
+          "sourceEventIds": [
+            "ba538dd0-f8db-428c-93e3-12f0587ac980",
+            "75e98269-2d56-418d-aa6b-6123f464ad4a"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "ba538dd0-f8db-428c-93e3-12f0587ac980",
+              "text": "以后这类视频的英文介绍最多 50 words。"
+            },
+            {
+              "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+              "text": "下期仍按 50 words。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "WORK",
+          "ids": []
+        },
+        "status": "ACTIVE",
+        "supersedes": [],
+        "replacementEvidence": []
+      },
+      {
+        "id": "req-this-episode-50words-plan",
+        "kind": "DECISION",
+        "claim": {
+          "text": "本期介绍按 50 words 撰写（代理提出的下一步计划）",
+          "sourceEventIds": [
+            "5519391c-0923-45c8-8b66-ae38ac72df1a"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "5519391c-0923-45c8-8b66-ae38ac72df1a",
+              "text": "按 50 words 写本期介绍。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "STAGE",
+          "ids": [
+            "stage-intro-1"
+          ]
+        },
+        "status": "SUPERSEDED",
+        "supersedes": [],
+        "replacementEvidence": [
+          {
+            "text": "用户将本期单独放宽为 80 words，仅限本次，下期仍按 50 words",
+            "sourceEventIds": [
+              "75e98269-2d56-418d-aa6b-6123f464ad4a"
+            ],
+            "excerpts": [
+              {
+                "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+                "text": "本期单独允许 80 words，只限这一次。下期仍按 50 words。"
+              }
+            ],
+            "manualStateIds": []
+          }
+        ]
+      },
+      {
+        "id": "req-this-episode-80words",
+        "kind": "DECISION",
+        "claim": {
+          "text": "本期单独允许 80 words，只限这一次；不做为长期规则",
+          "sourceEventIds": [
+            "75e98269-2d56-418d-aa6b-6123f464ad4a"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+              "text": "本期单独允许 80 words，只限这一次。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "STAGE",
+          "ids": [
+            "stage-intro-1"
+          ]
+        },
+        "status": "ACTIVE",
+        "supersedes": [
+          "req-this-episode-50words-plan"
+        ],
+        "replacementEvidence": []
+      }
+    ],
+    "uncertainties": [
+      {
+        "text": "无工具或产出证据表明本期介绍已开始撰写或已有文本，执行状态依据事件顺序判定",
+        "sourceEventIds": [
+          "5519391c-0923-45c8-8b66-ae38ac72df1a",
+          "75e98269-2d56-418d-aa6b-6123f464ad4a"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "5519391c-0923-45c8-8b66-ae38ac72df1a",
+            "text": "下一步：按 50 words 写本期介绍。"
+          },
+          {
+            "sourceEventId": "75e98269-2d56-418d-aa6b-6123f464ad4a",
+            "text": "请先写本期介绍。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2058,
+    "completion_tokens": 2941,
+    "total_tokens": 4999,
+    "prompt_tokens_details": {
+      "cached_tokens": 1280
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1465
+    },
+    "prompt_cache_hit_tokens": 1280,
+    "prompt_cache_miss_tokens": 778
+  },
+  "configuredModel": "deepseek-flash"
+}

@@ -22,16 +22,23 @@ test("本地提炼器生成带来源的通用 Work State，不读取原始文件
   assert.equal(patch.artifacts?.[0]?.text, "/tmp/private.pdf");
 });
 
-test("本地提炼器忽略确认词并限制每个字段的噪声数量", async () => {
+test("本地线索忽略确认词但不截断明确要求", async () => {
   const extractor = new LocalRuleExtractor();
   const events = ["好", "确认", "同意", "yes", ...Array.from({ length: 20 }, (_, index) => `必须遵守第 ${index + 1} 条约束。`)]
     .map((content, index) => source(`m${index}`, "user.prompt", content));
 
   const patch = await extractor.extract({ previousState: null, events });
 
-  assert.ok((patch.constraints?.length ?? 0) <= 8);
+  assert.equal(patch.constraints?.length, 20);
   assert.ok(patch.constraints?.every((entry) => !/^(好|确认|同意|yes)$/iu.test(entry.text)));
   assert.notEqual(patch.objective?.[0]?.text, "好");
+});
+
+test('否定完成声明不进入本地已做线索', async () => {
+  const patch = await new LocalRuleExtractor().extract({ previousState: null, events: [
+    source('denial', 'agent.response', '不能声称已完成导出。'),
+  ] });
+  assert.deepEqual(patch.completedActions, []);
 });
 
 test("本地提炼器不会把 Codex 附件提示当成工作目标", async () => {

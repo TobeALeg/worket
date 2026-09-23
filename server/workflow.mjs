@@ -1,3 +1,4 @@
+import { coversExactly, hasExactExcerpt, isUserEvidence } from "../dist/contracts/evidence.js";
 import { normalizeEvolutionRelations } from './normalize-evolution.mjs';
 import { SKILL_PROMPT } from './skill-prompt.mjs';
 import { EVIDENCE_PROMPT } from './evidence-prompt.mjs';
@@ -117,10 +118,7 @@ export async function extractDefinition(
     onUsage(usage);
     const expected = chunk.map((e) => `${e.sourceKey}/${e.key}`);
     ensure(
-      Array.isArray(result.eventKeys) &&
-        result.eventKeys.length === expected.length &&
-        new Set(result.eventKeys).size === expected.length &&
-        expected.every((k) => result.eventKeys.includes(k)),
+      coversExactly(result.eventKeys, expected),
       "INCOMPLETE_COVERAGE",
     );
     ensure(
@@ -202,9 +200,9 @@ export async function extractDefinition(
         ensure(event, "INVALID_SOURCE_REF");
         ensure(ref.role !== "CONTEXT" || request.evidenceSchemaVersion === 1, "INVALID_SOURCE_REF", "客户端未授权背景引用协议");
         if (ref.excerpt)
-          ensure(event.content.includes(ref.excerpt), "INVALID_SOURCE_REF");
+          ensure(hasExactExcerpt(event.content, ref.excerpt), "INVALID_SOURCE_REF");
         if (item.basis.type === "SOURCE" && item.basis.origin === "USER_STATED" &&
-            !(request.evidenceSchemaVersion === 1 && ref.role === "CONTEXT") && event.kind !== "user.prompt" && !event.kind.startsWith("work.")) misattributed = true;
+            !(request.evidenceSchemaVersion === 1 && ref.role === "CONTEXT") && !isUserEvidence(event.kind)) misattributed = true;
       }
       if (misattributed) {
         // Identity and quote validation still fail closed. An origin overclaim can

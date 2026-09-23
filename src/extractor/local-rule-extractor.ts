@@ -46,7 +46,7 @@ function compact(patch: WorkStatePatch): WorkStatePatch {
       if (!key || isAcknowledgement(candidate.text) || unique.has(key)) continue;
       unique.set(key, candidate);
     }
-    patch[field] = [...unique.values()].slice(0, field === "artifacts" ? 12 : 8);
+    patch[field] = [...unique.values()];
   }
   return patch;
 }
@@ -88,7 +88,8 @@ export class LocalRuleExtractor implements WorkStateExtractor {
         }
       } else if (event.kind === "agent.response") {
         for (const sentence of sentences(content)) {
-          if (/(已完成|已经完成|完成了|已创建|已实现|已修复)/u.test(sentence)) {
+          if (/(已完成|已经完成|完成了|已创建|已实现|已修复)/u.test(sentence) &&
+              !/(不能|不得|不要|不可).*(声称|宣称|说成)|(?:尚未|还未|未能|没有).*(完成|创建|实现|修复)/u.test(sentence)) {
             patch.completedActions?.push(item("completedActions", event.externalId, sentence, "AGENT_PROPOSED"));
           }
           const nextStep = sentence.match(/(?:下一步|接下来|待办|还需要|尚需)[：:，,\s]*(.+)/u);

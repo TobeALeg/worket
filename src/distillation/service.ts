@@ -1,4 +1,5 @@
-import { currentSourceEvents, assertSourcePresenceReady } from "../core/source-revisions.js";
+import { workEvidence } from "../core/work-evidence.js";
+import { assertSourcePresenceReady } from "../core/source-revisions.js";
 import { ContinuousEvolution, eventIdentity, type AutomaticComparison } from './continuous-evolution.js';
 import { type DocumentRole } from "../contracts/rules.js";
 import { evolutionBaseline, mergeEvolution } from '../definitions/evolution.js';
@@ -166,7 +167,7 @@ export class DistillationService {
     const seen = new Set(this.repository.evolutionHistory(base.definitionKey).flatMap(history => history.sourceEvents).filter(e => !('deleted' in e)).map(e => `${e.workId}/${e.eventId}/${e.hash}`));
     return this.core.listWorks().filter(work => work.definition.key === base.definitionKey).map(work => ({
       workId: work.instance.id, title: work.state.objective[0]?.text ?? work.definition.name, status: work.instance.status,
-      count: currentSourceEvents(work.sourceArchive).filter(e => e.kind !== 'reasoning.summary' && e.kind !== 'work.definition_applied' && e.content?.trim() && !seen.has(`${work.instance.id}/${e.id}/${hash(e.content)}`)).length,
+      count: workEvidence(work.sourceArchive).filter(e => e.kind !== 'reasoning.summary' && e.kind !== 'work.definition_applied' && e.content?.trim() && !seen.has(`${work.instance.id}/${e.id}/${hash(e.content)}`)).length,
     }));
   }
   prepare(input: { workIds: string[]; includedFileIds: string[]; fileRoles?: Record<string, DocumentRole>; baseDefinitionId?: string }, allowedEvents?: Set<string>): Snapshot {
@@ -195,7 +196,7 @@ export class DistillationService {
       const work = this.core.getWork(id);
       ensure(work, "SOURCE_DELETED");
       assertSourcePresenceReady(work.sourceArchive);
-      const events = currentSourceEvents(work.sourceArchive)
+      const events = workEvidence(work.sourceArchive)
         .filter(e => !allowedEvents || allowedEvents.has(eventIdentity(id, e)))
         .filter((e) => e.kind !== "reasoning.summary" && e.content?.trim())
         .filter(e => !base || e.kind !== 'work.definition_applied' && !seen.has(`${id}/${e.id}/${hash(e.content!)}`))
@@ -387,7 +388,7 @@ export class DistillationService {
       ensure(work && !source.deleted, "SOURCE_DELETED");
       if (unchanged) {
         assertSourcePresenceReady(work.sourceArchive);
-        const events = currentSourceEvents(work.sourceArchive).filter((e) => e.kind !== "reasoning.summary" && e.content?.trim());
+        const events = workEvidence(work.sourceArchive).filter((e) => e.kind !== "reasoning.summary" && e.content?.trim());
         ensure(
           snapshot.baseDefinitionId
             ? source.events.every(selected => events.some(e => e.id === selected.id && hash(e.content!) === selected.hash))

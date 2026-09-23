@@ -1,4 +1,7 @@
 import { hash } from "../definitions/storage.js";
+import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+import { validateContinuationRequest, type ContinuationRequest } from '../contracts/continuation.js';
 import type { ServiceConfig } from "./connection.js";
 import type { SampleUpload } from "../contracts/improvement.js";
 import {
@@ -15,6 +18,7 @@ export type RemoteJob = {
   error?: { code: string; message: string; retryable: boolean };
 };
 export interface AIClient {
+  continuation?(request: ContinuationRequest, beforeSend: () => void): Promise<unknown>;
   capabilities(): Promise<unknown>;
   improvementIdentity?(): string;
   uploadSample?(input: SampleUpload, beforeSend?: () => void): Promise<unknown>;
@@ -91,6 +95,37 @@ export class WorketAIClient implements AIClient {
   }
   capabilities() {
     return this.request("/v1/capabilities");
+  }
+  async continuation(request: ContinuationRequest, beforeSend: () => void): Promise<unknown> {
+    validateContinuationRequest(request);
+    const identity = this.improvementIdentity();
+    const authorize = () => {
+      beforeSend();
+      ensure(this.improvementIdentity() === identity, 'AUTH_CHANGED', '服务身份已改变，请重新整理');
+    };
+    const capabilities = await this.request('/v1/capabilities', 'GET', undefined, undefined, authorize);
+    ensure(capabilities.continuationSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '后台尚不支持工作整理，请升级后台');
+    const key = randomUUID();
+    let job = await this.request('/v1/continuations', 'POST', request, key, authorize);
+    const path = `/v1/continuations/${encodeURIComponent(job.requestId)}`;
+    const deadline = Date.now() + 600_000;
+    try {
+      while (job.status === 'RUNNING') {
+        ensure(Date.now() < deadline, 'MODEL_TIMEOUT');
+        await delay(400);
+        job = await this.request(path, 'GET', undefined, undefined, authorize);
+      }
+      authorize();
+      ensure(job.status === 'SUCCEEDED' && job.result, job.error?.code ?? 'MODEL_UNAVAILABLE');
+      const result: unknown = job.result;
+      await this.request(path + '/ack', 'POST', undefined, undefined, authorize);
+      return result;
+    } catch (error) {
+      // Do not issue cleanup against a newly selected account/server.
+      if (this.improvementIdentity() === identity)
+        await this.request(path, 'DELETE').catch(() => {});
+      throw error;
+    }
   }
   submit(request: ExtractionRequest, key: string, beforeSend?: () => void): Promise<RemoteJob> {
     return this.request("/v1/definition-extractions", "POST", request, key, beforeSend);

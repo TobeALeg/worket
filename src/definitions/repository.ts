@@ -705,6 +705,14 @@ export class DefinitionRepository {
             ...input,
           }),
         );
+        const eventId = randomUUID();
+        const artifacts = input.artifactIds.map(id => {
+          const artifact = this.db.prepare('SELECT id,sha256 FROM artifact_refs WHERE id=? AND work_instance_id=?').get(id, input.workId)!;
+          return { id: artifact.id, sha256: artifact.sha256 };
+        });
+        const sequence = Number(this.db.prepare('SELECT COALESCE(MAX(sequence),0)+1 AS value FROM source_events WHERE work_instance_id=?').get(input.workId)!.value);
+        this.db.prepare("INSERT INTO source_events (work_instance_id,id,external_id,sequence,kind,content,timestamp,executor_type,environment_type,metadata_json,artifact_refs_json) VALUES (?,?,?,?, 'work.acceptance',?,?,'HUMAN','WORKPET_LOCAL','{}',?)")
+          .run(input.workId, eventId, eventId, sequence, JSON.stringify({ definitionId: definition.id, artifacts, criteriaResults: input.criteriaResults, completed }), at, JSON.stringify(input.artifactIds));
         if (completed) {
           this.db
             .prepare(

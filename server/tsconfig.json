@@ -3,12 +3,25 @@
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2024", "DOM"],
-    "types": ["node"],
+    "lib": [
+      "ES2024",
+      "DOM"
+    ],
+    "types": [
+      "node"
+    ],
     "rootDir": "../src",
     "outDir": "../dist",
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["../src/contracts/definition.ts", "../src/contracts/improvement.ts", "../src/contracts/recording-view.ts", "../src/definitions/storage.ts"]
+  "include": [
+    "../src/contracts/definition.ts",
+    "../src/contracts/improvement.ts",
+    "../src/contracts/recording-view.ts",
+    "../src/definitions/storage.ts",
+    "../src/contracts/continuation.ts",
+    "../src/contracts/continuation-prompt.ts",
+    "../src/contracts/evidence.ts"
+  ]
 }

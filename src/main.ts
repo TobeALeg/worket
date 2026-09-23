@@ -429,6 +429,9 @@ function registerIpc(): void {
     (_event, workId: string, confirmation: string) =>
       requireService().cancelHandoff(workId, confirmation),
   );
+  ipcMain.handle("work:organize", (_event, workId: string, consentVersion: string) =>
+    requireService().organizeWork(workId, consentVersion),
+  );
   ipcMain.handle("work:handoff", (_event, workId: string, executorId: string) =>
     requireService().handoff(workId, executorId),
   );
@@ -468,12 +471,6 @@ app.whenReady().then(async () => {
       writeClipboard: text => clipboard.writeText(text),
     },
   });
-  service = new AppService({
-    databasePath: join(dataDirectory, "workpet.sqlite"),
-    onRecordingStarted: id => distillation.service.recordings.start(id),
-    onRecordingStopped: id => distillation.service.recordings.stop(id),
-    executors,
-  });
   credentials = new ServiceCredentials(
     join(dataDirectory, "worket-service.enc"),
     !app.isPackaged || process.argv.includes("--dev"),
@@ -481,9 +478,17 @@ app.whenReady().then(async () => {
   worketConnection = new AutomaticConnection(credentials,
     app.isPackaged ? PRODUCTION_WORKET_SERVICE_URL : process.env.WORKET_SERVICE_URL);
   worketConnection.initialize();
+  const aiClient = new WorketAIClient(() => credentials.read(), () => worketConnection.ready());
+  service = new AppService({
+    databasePath: join(dataDirectory, "workpet.sqlite"),
+    onRecordingStarted: id => distillation.service.recordings.start(id),
+    onRecordingStopped: id => distillation.service.recordings.stop(id),
+    executors,
+    aiClient,
+  });
   distillation = new DistillationDesktop(
     service,
-    new WorketAIClient(() => credentials.read(), () => worketConnection.ready()),
+    aiClient,
   );
   bridge = new WorkPetHttpBridge({
     configPath:

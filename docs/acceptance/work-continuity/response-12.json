@@ -1,0 +1,31 @@
+{
+  "result": {
+    "nextAction": "撰写本期视频的英文介绍，按本次例外上限 80 words",
+    "activeRequirements": [
+      "req-50words-general: 这类视频的英文介绍最多 50 words（未来默认）",
+      "req-this-episode-80words: 本期单独允许 80 words，只限这一次，不设为长期规则"
+    ],
+    "alreadyDone": [],
+    "userAccepted": false,
+    "currentWordLimit": 80,
+    "futureWordLimit": 50,
+    "uncertainties": [
+      "尚无工具或产出证据表明本期英文介绍已开始撰写或已有文本",
+      "80 words 例外仅限本期 stage-intro-1，下期恢复 50 words"
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2342,
+    "completion_tokens": 217,
+    "total_tokens": 2559,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 81
+    },
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 2214
+  },
+  "configuredModel": "deepseek-flash"
+}
