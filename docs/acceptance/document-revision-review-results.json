@@ -38,6 +38,77 @@
         "changedRuleResolutionCleared": true,
         "dependentReviewReopened": true
       }
+    },
+    {
+      "run": "2026-09-23T01-13-40-925Z",
+      "status": "PASSED",
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-revision-8X0t0B",
+      "packaged": true,
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "blankSelectionAndScopedReview": true,
+        "restartRemovedOriginalPublicationAndMcp": true
+      },
+      "observed": {
+        "failedAdoptionSnapshotDelta": 0,
+        "unrelatedResolutionPreserved": true,
+        "changedRuleResolutionCleared": true,
+        "dependentReviewReopened": true
+      }
     }
-  ]
+  ],
+  "package": {
+    "sourceCommit": "903263b",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-903263b.zip",
+    "sha256": "7019880f96bdea4875daee7fb769c0d5dce2277b7c423dd6621b4fac4d0cf420",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-revision-extract-k_7hpts8/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "documentAdoptionRegression": {
+    "run": "2026-09-23T01-13-40-848Z",
+    "status": "PASSED",
+    "synthetic": true,
+    "externalAgent": false,
+    "cases": [
+      {
+        "id": "partial-file-adoption",
+        "status": "PASSED",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-idbaHe",
+        "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T01-13-40-848Z/partial-file-adoption",
+        "packaged": true,
+        "actualProviderCalls": 0,
+        "usage": [],
+        "checks": {
+          "semanticScopeAndDocumentClauses": true,
+          "removedOriginalNewInstanceAcceptanceAndMcp": true
+        },
+        "acceptanceLabels": [
+          "交付 MP4 成片。",
+          "字幕距画面边缘至少 24px。",
+          "片尾列出资料来源。",
+          "字幕不超过两行。"
+        ]
+      },
+      {
+        "id": "partial-file-with-one-off",
+        "status": "PASSED",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-document-adoption-rb3lhz",
+        "output": "/Users/dandi/YanGuan/output/document-adoption/2026-09-23T01-13-40-848Z/partial-file-with-one-off",
+        "packaged": true,
+        "actualProviderCalls": 0,
+        "usage": [],
+        "checks": {
+          "semanticScopeAndDocumentClauses": true,
+          "removedOriginalNewInstanceAcceptanceAndMcp": true
+        },
+        "acceptanceLabels": [
+          "交付 MP4 成片。",
+          "字幕距画面边缘至少 24px。",
+          "片尾列出资料来源。",
+          "字幕不超过两行。"
+        ]
+      }
+    ]
+  }
 }

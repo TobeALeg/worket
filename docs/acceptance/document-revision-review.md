@@ -6,4 +6,4 @@
 
 前两次夹具在进入桌面前 INVALID_SOURCE_REF，原因是合成响应复用了同一 JavaScript basis 对象，不能代表 JSON 传输后的独立对象。夹具加入 JSON 往返后才执行上述旧包比较，日志 /tmp/worket-document-revision-before.log、/tmp/worket-document-revision-setup.log 和 01-08-08-590Z setup-job/wire 保留。未修改生产来源校验。
 
-本轮零模型调用。受控候选经真实服务校验，桌面/文件/数据库/MCP 是产品路径；没有实际业务或外部 Agent 验收，也不宣称全故障原子性。后台不变，待客户端干净构建解压验收。
+本轮零模型调用。受控候选经真实服务校验，桌面/文件/数据库/MCP 是产品路径；没有实际业务或外部 Agent 验收，也不宣称全故障原子性。源码 903263b 已干净构建，原包/解压签名均通过，ZIP release/Worket-loop-903263b.zip，SHA-256 7019880f96bdea4875daee7fb769c0d5dce2277b7c423dd6621b4fac4d0cf420。解压规范修订 01-13-40-925Z 与两例文件采纳回归 01-13-40-848Z 通过，410×700 截图已核对。后台保持 8d39223；采用隔离 mock keychain，未替换 Applications 或发布 GitHub Release。构建省去重复的 release 解包目录，保留 ZIP 与实际验收的解压客户端。
