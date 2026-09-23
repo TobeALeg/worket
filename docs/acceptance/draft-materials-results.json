@@ -203,7 +203,31 @@
           "manualRevisionResumeAndOldInstance": true
         },
         "staleUndoOffered": false
+      },
+      {
+        "run": "2026-09-23T00-35-35-870Z",
+        "status": "PASSED",
+        "packaged": true,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-H0lD0F",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {
+          "failedSaveUndoRetained": true,
+          "savedMaterialVersionNotChangedByUndo": true,
+          "reopenRetainsSelections": true,
+          "restartFrozenVersionPublicationAndMcp": true,
+          "syntheticSkillExecution": true,
+          "manualRevisionResumeAndOldInstance": true
+        },
+        "staleUndoOffered": false
       }
-    ]
+    ],
+    "package": {
+      "sourceCommit": "84c5480",
+      "zip": "/Users/dandi/YanGuan/release/Worket-loop-84c5480.zip",
+      "sha256": "0f16a7161459572f05c3caf884867f3e260139ad9f11150176872bc8dc960228",
+      "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-save-undo-extract-t68q4igv/Worket.app/Contents/MacOS/Worket",
+      "signatureVerified": true
+    }
   }
 }
