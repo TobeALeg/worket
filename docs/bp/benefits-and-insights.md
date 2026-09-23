@@ -409,6 +409,8 @@ B004 补充（2026-09-11）：用户确认外形后指出底部切换割裂。�
 
 ## B005 — 用一致的操作降低工作管理的学习成本
 
+2026-09-23 B005 故障隔离补充：用户报告 WorkBuddy 的 `UserPromptSubmit` 被 Worket Hook 在 10000ms 后阻塞。本轮核实已安装 Worket 0.1.4 的主线程停在“发现新版 0.1.5”提示的 `NSAlert runModal` 中；本地桥接只读请求 3 秒超时，使用无会话 ID 的空输入运行现有 Hook 也在 10 秒时未返回。关闭提示的“稍后”按钮后，同一只读请求 35ms 返回，Hook 52ms 返回 `continue:true`，仅恢复运行，未修复源码或代用户提交消息。当前代码依据：[Hook](../../integrations/workbuddy-marketplace/plugins/workpet/bridge/hook-proxy.mjs) 等待桥接完成才放行，[桥接请求](../../integrations/workbuddy-marketplace/plugins/workpet/bridge/config.mjs) 未设置请求时限。助手洞察：工作记录层的可用性不应成为执行者继续工作的前置条件；更新提示、同步延迟等内部故障需要隔离，记录通知应在有限时间内放行。潜在用户价值是后台记录异常时仍能继续原有工作。可展示场景为更新提示打开或桥接无响应时仍可提交，再单独核验恢复后的记录连续性；这些容错能力尚未实现、补录完整性未验证，无新增竞品事实。
+
 2026-09-23 B005 补充：用户明确要求“进行中”不全量展开事实，一屏看到已完成和下一步。当前源码 `src/renderer/panel.ts`、`panel.css` 将两组进度摘要前置，完整上下文按需展开，保留原始条目与来源。助手设计判断：日常查看进度与核查证据需要不同的信息密度；让当前行动先被看见，可能降低重新接手工作的阅读成本。可展示长记录打开后直接看进度、需要时再展开上下文的路径。实际阅读耗时与接手准确率仍待用户验证，不能由折叠布局推导抽取质量提升。
 
 2026-09-23 B005 交接补充：用户进一步追问交接是否传递所有上下文。源码核对：四个现有执行者适配器均发送短启动指令；`get_work_context` 生成的 HandoffPackage 仍复制完整 WorkState（包括全部 facts），未按当前任务做相关性筛选或 token 预算；`get_work_archive` 默认返回本工作全部可见档案事件，只有 after_sequence 下界，无分页上限；本地规则提取器可将工具结果正文写入 facts。依据：`src/executors/work-bootstrap.ts`、`src/core/work-core.ts:createHandoffPackage`、`src/bridge/mcp-handler.ts`、`src/extractor/local-rule-extractor.ts`。助手判断：UI 精简与模型交接精简是两项不同能力，合理方向是当前目标、有效要求、进度、阻塞和必要资料构成主包，其余证据按需查询；这只是待确认设计，未批准实现。可展示同一工作从完整档案到交接包的内容去向，验证包大小、关键要求覆盖与接手准确率；不能把短启动指令等同于低 token 交接。
