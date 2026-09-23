@@ -49,6 +49,23 @@
         "dependencyVersionIsolation": true,
         "manualRevisionResumeAndOldInstance": true
       }
+    },
+    {
+      "run": "2026-09-23T00-51-19-657Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-ayol5C",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "nameCollisionCannotPartiallySave": true,
+        "reopenRetainsSelections": true,
+        "mcpRebuildsDamagedDerivedEnvironment": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true,
+        "dependencyVersionIsolation": true,
+        "manualRevisionResumeAndOldInstance": true
+      }
     }
   ],
   "singleSkillRegression": {
@@ -56,6 +73,30 @@
     "status": "PASSED",
     "packaged": false,
     "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-Pk05Ce",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "checks": {
+      "failedSaveUndoRetained": true,
+      "savedMaterialVersionNotChangedByUndo": true,
+      "reopenRetainsSelections": true,
+      "restartFrozenVersionPublicationAndMcp": true,
+      "syntheticSkillExecution": true,
+      "manualRevisionResumeAndOldInstance": true
+    },
+    "staleUndoOffered": false
+  },
+  "package": {
+    "sourceCommit": "bff67e2",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-bff67e2.zip",
+    "sha256": "eea0753c2462bab0cc9e956b4de9a04f5fc484f498178f4481784f960becbe24",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-extract-x38ais8_/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "packagedSingleSkillRegression": {
+    "run": "2026-09-23T00-51-19-836Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-5ObjIj",
     "actualProviderCalls": 0,
     "externalAgent": false,
     "checks": {
