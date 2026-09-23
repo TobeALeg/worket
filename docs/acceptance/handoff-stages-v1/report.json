@@ -1,0 +1,894 @@
+{
+  "kind": "Synthetic source-level audit of current LocalRuleExtractor + SQLite core + MCP handler; no live user database, network, Electron UI, target Agent, or automatic phase extraction",
+  "sourceCommit": "69e6e0e04bb0229b84ae178fb2a4447678faa4c1",
+  "result": "6 structural/semantic gaps reproduced, 1 source-revision control passed; not a semantic quality pass rate",
+  "cases": [
+    {
+      "id": "M1",
+      "name": "已确认的三阶段依次推进",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "请先清洗销售数据，输出 clean.csv。整个项目必须使用人民币。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "下一步：清洗销售数据。"
+        },
+        {
+          "kind": "tool.result",
+          "content": "数据清洗命令结束，exit=0；clean.csv 版本 data-v1。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "已完成数据清洗，产物 clean.csv。下一步：制作图表。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "确认数据清洗通过，使用 clean.csv 制作图表。"
+        },
+        {
+          "kind": "tool.result",
+          "content": "图表命令结束，exit=0；chart.svg 版本 chart-v1，输入 data-v1。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "已完成图表，产物 chart.svg。下一步：撰写汇报。"
+        },
+        {
+          "kind": "tool.result",
+          "content": "图表尺寸检查通过，仅验证 chart-v1。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "确认图表通过。现在使用 clean.csv 和 chart.svg 撰写汇报。"
+        }
+      ],
+      "expected": "当前只撰写汇报，复用 data-v1 和 chart-v1；人民币约束仍有效。",
+      "observed": "首步仍为已确认完成的清洗；三个阶段待办并列；首屏证据索引不含第 9 条阶段切换消息。",
+      "firstActionText": "清洗销售数据。",
+      "context": {
+        "contextVersion": 2,
+        "workId": "bd7ecfc5-e02e-4540-b36d-a25c1ec02e94",
+        "delivery": {
+          "id": "20c0b8c6-bee0-4b31-bcf3-c4c76f875e3b",
+          "generatedAt": "2026-09-23T04:47:10.167Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-6c044d791816b81a",
+              "text": "请先清洗销售数据，输出 clean.csv",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M1-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": [
+            {
+              "id": "local-358a8360f8fbaf26",
+              "text": "整个项目必须使用人民币。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M1-1"
+              ]
+            }
+          ]
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [
+            {
+              "id": "local-01d2c02fcd06577b",
+              "text": "已完成数据清洗，产物 clean.csv。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M1-4"
+              ]
+            },
+            {
+              "id": "local-6a72781a67b11810",
+              "text": "已完成图表，产物 chart.svg。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M1-7"
+              ]
+            }
+          ],
+          "pendingActions": [
+            {
+              "id": "local-6af7297a15dce8ce",
+              "text": "清洗销售数据。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M1-2"
+              ]
+            },
+            {
+              "id": "local-ef322dff3d67c41c",
+              "text": "制作图表。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M1-4"
+              ]
+            },
+            {
+              "id": "local-4e2458e9b46cbac9",
+              "text": "撰写汇报。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M1-7"
+              ]
+            }
+          ],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 9,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 3,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": [
+            {
+              "id": "local-46d4699ed47ec356",
+              "text": "确认数据清洗通过，使用 clean.csv 制作图表。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M1-5"
+              ]
+            },
+            {
+              "id": "local-a88b28ac91cf4e78",
+              "text": "确认图表通过。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M1-9"
+              ]
+            }
+          ]
+        },
+        "firstAction": {
+          "candidateActionId": "local-6af7297a15dce8ce",
+          "note": "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "fe301970-abbf-4ea3-92cd-121ef11f9b3c",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "6576ddfc-173a-4c80-91ab-0296dcd59f7e",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          },
+          {
+            "id": "9fad53ee-fc1e-4315-90af-ab1db039cf28",
+            "sequence": 3,
+            "kind": "tool.result",
+            "timestamp": "2026-09-23T00:00:02.000Z"
+          },
+          {
+            "id": "cebdc60b-c728-4297-803a-3878a59319ca",
+            "sequence": 4,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:03.000Z"
+          },
+          {
+            "id": "0eae2752-c06e-4423-9afd-1ef42c3b7dcb",
+            "sequence": 5,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:04.000Z"
+          },
+          {
+            "id": "2572e225-5356-46c4-96f5-c1d2e420e28d",
+            "sequence": 6,
+            "kind": "tool.result",
+            "timestamp": "2026-09-23T00:00:05.000Z"
+          },
+          {
+            "id": "949fbfbb-f5b8-4ba2-8bbb-0e63d42dd173",
+            "sequence": 7,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:06.000Z"
+          },
+          {
+            "id": "9f899aa8-33aa-42cb-9634-ec7679d64dec",
+            "sequence": 8,
+            "kind": "tool.result",
+            "timestamp": "2026-09-23T00:00:07.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": true,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "M2",
+      "name": "新消息明确替代旧要求",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "请导出报告。必须交付 CSV。必须保留人民币。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "下一步：导出 CSV。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "取消此前 CSV 要求。现在必须交付 PDF。"
+        }
+      ],
+      "expected": "CSV 被明确替代，交付 PDF，人民币保留。",
+      "observed": "CSV 与 PDF 仍并列为约束，首步继续导出 CSV。",
+      "firstActionText": "导出 CSV。",
+      "context": {
+        "contextVersion": 2,
+        "workId": "bef02561-3ac8-4fae-8182-f8569c9817bb",
+        "delivery": {
+          "id": "619d310e-d97a-4b24-ad0a-c8bb1a169d7c",
+          "generatedAt": "2026-09-23T04:47:10.205Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-9f21966dbb33e115",
+              "text": "请导出报告",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M2-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": [
+            {
+              "id": "local-ecbf99e6ce5a5fb5",
+              "text": "必须交付 CSV。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M2-1"
+              ]
+            },
+            {
+              "id": "local-5a7ea88cafa0efff",
+              "text": "必须保留人民币。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M2-1"
+              ]
+            },
+            {
+              "id": "local-35382f90b173dd84",
+              "text": "现在必须交付 PDF。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M2-3"
+              ]
+            }
+          ]
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [],
+          "pendingActions": [
+            {
+              "id": "local-a72ad6ada0b0c05c",
+              "text": "导出 CSV。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M2-2"
+              ]
+            }
+          ],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 3,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": "local-a72ad6ada0b0c05c",
+          "note": "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "8fb741ad-13f1-44b9-9013-3cfe6454bc44",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "7a9f3464-6f0e-4ee1-8553-8e1726ca981c",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          },
+          {
+            "id": "ac64ff40-9eeb-4efe-ac7f-f9d56cd987ce",
+            "sequence": 3,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:02.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "M3",
+      "name": "开始后阶段但前阶段无验收证据",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "清洗数据后制作图表。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "已完成清洗，产物 clean.csv。下一步：制作图表。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "继续做图表。"
+        }
+      ],
+      "expected": "当前图表；清洗只有 Agent 完成声明，允许定向检查其产物，不能宣称已验收。",
+      "observed": "保留 AGENT_PROPOSED 与未独立核验提示是现有保护，但没有阶段级验证、验收或依赖状态。",
+      "firstActionText": "制作图表。",
+      "context": {
+        "contextVersion": 2,
+        "workId": "f1f264ff-6f89-4a18-9de8-031049775704",
+        "delivery": {
+          "id": "768f51ef-c8a9-4de2-a836-b1a4eb7c416c",
+          "generatedAt": "2026-09-23T04:47:10.222Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-6792d16d5faba55f",
+              "text": "清洗数据后制作图表",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M3-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": []
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [
+            {
+              "id": "local-02692be6dc737a25",
+              "text": "已完成清洗，产物 clean.csv。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M3-2"
+              ]
+            }
+          ],
+          "pendingActions": [
+            {
+              "id": "local-995f7dcbab16bc67",
+              "text": "制作图表。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M3-2"
+              ]
+            }
+          ],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 3,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": "local-995f7dcbab16bc67",
+          "note": "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "38137357-02c7-4688-9245-b5f6b0613a13",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "adfef0ae-e216-4d3a-b15f-85229da3f360",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          },
+          {
+            "id": "83ebef24-8ad4-45b4-9bbb-1a045bbe449a",
+            "sequence": 3,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:02.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "M4",
+      "name": "地图获得认可后只重做 Hero（虚构文本）",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "页面方向不对。必须保留旧版价格、服务卖点和 CTA。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "下一步：重做地图。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "已完成地图 redesign。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "地图这版可以，保留它。现在只重做 Hero。"
+        }
+      ],
+      "expected": "地图认可仅适用于地图；当前改 Hero，价格、卖点、CTA 继续有效。",
+      "observed": "当前主包丢失 Hero 和地图认可内容，保留了旧的重做地图动作；原文仍可按证据读取。",
+      "firstActionText": "重做地图。",
+      "context": {
+        "contextVersion": 2,
+        "workId": "2c41dae5-167f-4b6a-b7e8-f5558e5311ed",
+        "delivery": {
+          "id": "3356ee61-1238-436d-b76f-19bb0bcab27f",
+          "generatedAt": "2026-09-23T04:47:10.237Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-635d32a173a65f18",
+              "text": "页面方向不对",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M4-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": [
+            {
+              "id": "local-352e2838d6423a26",
+              "text": "必须保留旧版价格、服务卖点和 CTA。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M4-1"
+              ]
+            }
+          ]
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [
+            {
+              "id": "local-b64bfeabc127a04e",
+              "text": "已完成地图 redesign。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M4-3"
+              ]
+            }
+          ],
+          "pendingActions": [
+            {
+              "id": "local-c561fabe94d02c29",
+              "text": "重做地图。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M4-2"
+              ]
+            }
+          ],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 4,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": "local-c561fabe94d02c29",
+          "note": "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "6c472b41-905c-4e01-a4c5-21d34d208963",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "01427b43-4c4a-470a-bc4b-c041df02869b",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          },
+          {
+            "id": "de829cac-d9d2-4a37-8d39-ccfb397307fb",
+            "sequence": 3,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:02.000Z"
+          },
+          {
+            "id": "5e39669c-96c4-4663-b7ad-3570b561140b",
+            "sequence": 4,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:03.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "M5",
+      "name": "否定完成声明",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "导出报告后排版。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "不能声称已完成导出，实际上尚未开始。"
+        }
+      ],
+      "expected": "导出未完成，不能成为排版的已验证前置成果。",
+      "observed": "否定句进入 completedActions；原文和 AGENT_PROPOSED 保留，工作并未自动完成。",
+      "firstActionText": null,
+      "context": {
+        "contextVersion": 2,
+        "workId": "08f58f79-1141-4a40-92d2-83ebf902935c",
+        "delivery": {
+          "id": "40358a4a-5023-4ded-9813-c79f90c396ba",
+          "generatedAt": "2026-09-23T04:47:10.246Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-d205b7eb3263e9c0",
+              "text": "导出报告后排版",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M5-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": []
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [
+            {
+              "id": "local-a67576d3c6cd47c4",
+              "text": "不能声称已完成导出，实际上尚未开始。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M5-2"
+              ]
+            }
+          ],
+          "pendingActions": [],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 2,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": null,
+          "note": "没有记录首个动作；依据目标和证据选择，不推断缺失状态。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "ba6972e7-8b8f-471f-af1c-629a905a8fb6",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "c8e7737a-22e5-46e2-89be-15b3bddda9b3",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "M6",
+      "name": "明确返回前序阶段",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "清洗数据后写报告。"
+        },
+        {
+          "kind": "agent.response",
+          "content": "已完成清洗。下一步：撰写报告。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "暂停报告，回到数据清洗阶段，修正重复订单后再继续。"
+        }
+      ],
+      "expected": "当前回到清洗，报告暂停；依赖旧数据的报告成果须重核。",
+      "observed": "首步仍撰写报告，无法表达回到前序阶段。",
+      "firstActionText": "撰写报告。",
+      "context": {
+        "contextVersion": 2,
+        "workId": "117a024c-0395-4708-862e-70b9a06f7c31",
+        "delivery": {
+          "id": "e7c20f35-e836-4669-8f3a-7267cb27c7c7",
+          "generatedAt": "2026-09-23T04:47:10.258Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-524062e7d6cb3fd6",
+              "text": "清洗数据后写报告",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "M6-1"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": []
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [
+            {
+              "id": "local-5d45baa02c461d96",
+              "text": "已完成清洗。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M6-2"
+              ]
+            }
+          ],
+          "pendingActions": [
+            {
+              "id": "local-2bc689de0723a918",
+              "text": "撰写报告。",
+              "origin": "AGENT_PROPOSED",
+              "sourceMessageIds": [
+                "M6-2"
+              ]
+            }
+          ],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 3,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": "local-2bc689de0723a918",
+          "note": "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "d864b8e1-db38-4928-9553-77d6b950450f",
+            "sequence": 1,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:00.000Z"
+          },
+          {
+            "id": "9f078097-f1c5-493f-8f19-faaded576c76",
+            "sequence": 2,
+            "kind": "agent.response",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          },
+          {
+            "id": "c17186bd-42ab-484b-a755-ba686d66fbe2",
+            "sequence": 3,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:02.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    },
+    {
+      "id": "C1",
+      "name": "对照：编辑同一条来源消息",
+      "inputs": [
+        {
+          "kind": "user.prompt",
+          "content": "请导出报告。必须交付 CSV。"
+        },
+        {
+          "kind": "user.prompt",
+          "content": "请导出报告。必须交付 PDF。",
+          "revises": 1
+        }
+      ],
+      "expected": "来源修订可以排除旧 CSV 约束。",
+      "observed": "通过：原消息的显式修订能过滤旧要求；此能力不等于理解新消息中的语义替代。",
+      "firstActionText": null,
+      "context": {
+        "contextVersion": 2,
+        "workId": "31d1ba7b-bc12-47f2-a528-47dbb6738517",
+        "delivery": {
+          "id": "9e8a31c1-2aa1-4344-8d33-97a0227ff57c",
+          "generatedAt": "2026-09-23T04:47:10.267Z",
+          "definition": {
+            "key": "synthetic-stages",
+            "version": 1
+          }
+        },
+        "goal": {
+          "objective": [
+            {
+              "id": "local-988d82fc6de435fc",
+              "text": "请导出报告",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "C1-2"
+              ]
+            }
+          ],
+          "successCriteria": [],
+          "constraints": [
+            {
+              "id": "local-60eef70e9ad68ba1",
+              "text": "必须交付 PDF。",
+              "origin": "USER_STATED",
+              "sourceMessageIds": [
+                "C1-2"
+              ]
+            }
+          ]
+        },
+        "position": {
+          "status": "OPEN",
+          "checkpoint": null,
+          "completedActions": [],
+          "pendingActions": [],
+          "note": "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。"
+        },
+        "reusableWork": {
+          "artifacts": [],
+          "sourceArchiveSummary": {
+            "eventCount": 2,
+            "artifactCount": 0
+          }
+        },
+        "conditions": {
+          "facts": [],
+          "deferredFactCount": 0,
+          "note": "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
+          "decisions": []
+        },
+        "firstAction": {
+          "candidateActionId": null,
+          "note": "没有记录首个动作；依据目标和证据选择，不推断缺失状态。"
+        },
+        "evidenceIndex": [
+          {
+            "id": "64910033-5e9f-4186-81a6-3443d240f3d8",
+            "sequence": 2,
+            "kind": "user.prompt",
+            "timestamp": "2026-09-23T00:00:01.000Z"
+          }
+        ],
+        "evidenceIndexTruncated": false,
+        "deliveryReceipt": {
+          "acknowledged": false
+        }
+      }
+    }
+  ]
+}

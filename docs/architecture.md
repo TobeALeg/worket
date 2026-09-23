@@ -189,6 +189,8 @@ MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_re
 
 交接上下文 v2（实现待验证）：`get_work_context(context_version=2)` 在既有当前快照与资料校验后生成目标/进度/成果/条件/候选动作投影，嵌套 WorkPackage 移除重复的 state/nextStep，且不返回 Episode/Binding 列表；推断 facts 不进入主包，仍保留证据 ID 并可按需读取，用户陈述/编辑 facts 保留。`get_work_evidence` 支持事件 ID 或最多 100 条的序号分页，排除 reasoning.summary。省略版本仍返回旧结构。历史 HandoffPackage 按原格式持久化且不改写，读取回执语义不变。投影只反映已记录字段，不推断语义断点；接续正确性、真实调用总量与用户纠正成本仍待真实接手小样验证。详见 [交接上下文方案](specs/handoff-context-v1.md)。
 
+2026-09-23 多阶段接续研究（未实现）：拟在交接整理模块生成带 source/state/material basis 的 ContinuationSnapshot，并通过独立 context v3 投影当前阶段、依赖成果及范围限定的证据；v1/v2 兼容出口保留。阶段理解需受约束语义整理与来源校验，不能仅靠调整 pendingActions 排序；新快照可随 HandoffPackage 的现有 JSON 持久化，历史不改写，读取仍重验材料。当前源码没有上述结构，样本只核对 LocalRuleExtractor → SQLite Core → MCP handler。详见 [阶段接续方案及样本](specs/handoff-stages-v1.md)。
+
 ## Data flow
 
 ### 创建记录
