@@ -35,7 +35,7 @@ export function setupRecordingSources(
     empty: string,
   ): void {
     container.replaceChildren();
-    if (noticeRequired) {
+    if (container === history && noticeRequired) {
       const disclosure = document.createElement("p");
       disclosure.className = "notice";
       disclosure.textContent = RECORDING_UPLOAD_NOTICE;
@@ -148,11 +148,7 @@ export function setupRecordingSources(
   async function refresh(): Promise<void> {
     if (recording) return;
     try {
-      const [result, notice] = await Promise.all([
-        window.workpet.listRecentConversations(),
-        window.workpet.distillation("recordingNotice"),
-      ]);
-      noticeRequired = notice.required;
+      const result = await window.workpet.listRecentConversations();
       const sources = result.threads;
       renderSources(
         recent,

@@ -187,6 +187,8 @@ Worket 的潜在差异不只是“用模型生成工作摘要”，而是把来�
 
 2026-09-23 交互补充：用户进一步要求点击“沉淀”直接开始，去掉范围提醒页，并明确整批修改确认后再统一重启。源码将主入口接入后台提交与进度提示，附件正文选择保留为次级入口，参与改进沿用持久偏好；生成后的候选审阅仍由用户决定。助手判断：开始提取与确认长期约定是两个不同动作，前者可减少重复确认，后者仍应保留审阅。验证见 [直接沉淀验收](../acceptance/direct-distillation.md)；本轮不更新已安装应用，真实减操作收益待验证。
 
+2026-09-23 面板补充：用户要求移除最近活动长说明和详情中的后台准备占位提示，以 history 图标、三点菜单承载次级入口，并将执行者放到返回导航右侧。源码已按此调整 [面板](../../src/renderer/panel.ts) 与 [最近活动](../../src/renderer/recording-sources.ts)。助手判断：后台准备属于产品内部步骤，前台应优先展示工作内容、可执行动作和实际状态。界面可读性及减负收益仍待用户使用验证；本批未更新或重启已安装应用。
+
 ### 2026-09-23：将语义判断集中为可评估能力（Jev 探索）
 
 用户提出：提取和传递包含很多中间判断，接入 Typesafe Jev 会是什么样。核实日期 2026-09-23：官方把 Jev 定位为 state + typed questions 的结构化判断模型，不生成约定正文；其引用检查范例先做程序原文匹配，再检查语义支持。当前版本官方提示中文/CJK 较弱，confidence 不能直接当正确率。来源：[定位](https://docs.typesafe.ai/introduction/coding-agents)、[引用检查](https://docs.typesafe.ai/cookbooks/citation_check)、[语言支持](https://docs.typesafe.ai/models#language-support)、[Confidence](https://docs.typesafe.ai/confidence)。
