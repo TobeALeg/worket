@@ -4,6 +4,7 @@
 
 ## 当前状态
 
+- v0.1.5 客户端已于 2026-09-23 正式发布。自动准备工作状态的配套后台包已就绪，生产切换因自动审批要求单独授权而暂未执行；详见 [发布验收](../releases/v0.1.5-verification.md)。
 - Worket 服务代码来自提交 `8d39223`（2026-09-23 更新），版本目录为 `/opt/worket/releases/8d39223`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。

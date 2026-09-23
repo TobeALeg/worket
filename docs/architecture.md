@@ -1,5 +1,7 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+v0.1.5 客户端已发布；生产后台暂保持 `8d39223`。自动准备路径在发送前检查 `continuationSchemaVersions`，旧后台缺少能力时返回 `SERVICE_UPGRADE_REQUIRED`，保留原始来源供查看和交接。配套部署与授权状态见 [发布验收](releases/v0.1.5-verification.md)。
+
 ## 面板展示收敛（2026-09-23）
 
 `recording-sources` 的最近活动列表不再请求或展示首次记录说明，历史聊天仍沿用原有说明规则。history 图标保留原按钮事件及可访问名称；工作详情以弹性布局排列返回按钮和执行者，长名称省略并保留悬停全文。准备状态仅在有实际状态或提示时渲染，删除无状态时的说明占位；工作操作继续使用原生 `details/summary`。此次只调整 renderer，不改变记录、交接或后台准备流程。
