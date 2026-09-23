@@ -5,7 +5,6 @@ import {
   resolveThreadFromWindowTitle,
   resolveThreadFromRecentActivity,
 } from "../../executors/conversation-resolution.js";
-import { buildWorkBootstrap } from "../../executors/work-bootstrap.js";
 import type {
   ExecutorAdapter,
   ConversationSource,
@@ -43,18 +42,7 @@ export function createCodexExecutor(options: {
             request: import("../../executors/types.js").DeliveryRequest,
           ) {
             const url = new URL("codex://new");
-            url.searchParams.set(
-              "prompt",
-              buildWorkBootstrap({
-                workId: request.workId,
-                deliveryId: request.deliveryId,
-                purpose: request.purpose,
-                title: request.title,
-                currentTask: "请读取交接主包并核对目标和当前进度。",
-                nextStep: "核对候选动作后从当前断点继续，完成后等待用户验收。",
-                artifactPaths: [],
-              }),
-            );
+            url.searchParams.set("prompt", request.prompt);
             if (request.cwd) url.searchParams.set("path", request.cwd);
             await options.openUrl!(url.toString());
             return { guidance: "新聊天已准备好，请在 Codex 确认发送。" };

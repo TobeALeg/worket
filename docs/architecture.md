@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 交接内容的唯一装配点（2026-09-23）
+
+`AppService.handoff → buildWorkBootstrap → DeliveryRequest.prompt` 是交付内容的唯一装配路径。Codex/WorkBuddy 仅对该文本进行 URL 编码，通用剪贴板直接传递该文本，不能重新生成 prompt 而丢失上下文版本。集成测试通过真实 AppService 与四个默认适配器验证，系统打开操作使用替身。
+
 ## 规范修订的审阅范围（2026-09-23）
 
 adoptDocumentRevision 使用 resolveReviewField/sameAddress 按原始候选身份筛选已有 resolutions，仅清除当前条款及所在栏位整体的决定。repository.update 原有依赖失效逻辑继续生效；快照与引用存储流程未改。见 [规格](specs/document-revision-review.md) 与 [验收](acceptance/document-revision-review.md)。
