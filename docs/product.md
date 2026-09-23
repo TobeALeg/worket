@@ -170,6 +170,8 @@
 
 ## 当前交付
 
+设计讨论（2026-09-23，未实现）：[面向继续执行的交接上下文](specs/handoff-context-v1.md) 从目标对齐、当前断点、可用成果、必要条件和证据读取设计交接主包；接受适度冗余，以接续正确性及总读取成本验证，暂不改变下列现有交付能力。
+
 - macOS 桌宠与轻量侧边面板；
 - 本地 SQLite Work Core 与八部分 Work State；
 - Codex Desktop 真实历史导入、增量 Hook 与 ArtifactRef；

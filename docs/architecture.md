@@ -187,6 +187,8 @@ MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_re
 
 只在本机持久化 WorkDefinition、WorkInstance、WorkRecord、Source Archive、Work State 版本、Capture Binding、ExecutionEpisode、Handoff Package、ArtifactRef、同步游标，以及早期版本可能已有的 tombstone。实现阶段优先选择单机事务数据库；MVP 不需要云数据库。Handoff Package 是不可变快照；每次 MCP get_work_context 调用从当前 WorkSnapshot 生成新的快照，重新运行 buildWorkPackage 校验固定资料和本次文件输入，通过后才记成功读取；不会复用历史包跳过校验或改写历史包；目标应用启动失败时，来源 Binding 与 Episode 在同一补偿流程中恢复。
 
+设计讨论（2026-09-23，未实现）：[交接上下文方案](specs/handoff-context-v1.md) 提议在统一出口生成主包与证据索引，避免嵌套完整状态重复传输，并支持按项读取证据；通过版本选项保留旧调用兼容。领域记录、历史快照、交付关联和读取回执不因该草稿改变。
+
 ## Data flow
 
 ### 创建记录
