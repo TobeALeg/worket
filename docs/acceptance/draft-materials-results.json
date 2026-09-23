@@ -146,7 +146,29 @@
           "syntheticSkillExecution": true,
           "manualRevisionResumeAndOldInstance": true
         }
+      },
+      {
+        "run": "2026-09-23T00-29-50-378Z",
+        "status": "PASSED",
+        "packaged": true,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-eMAvFC",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {
+          "sameKeySectionIsolation": true,
+          "reopenRetainsSelections": true,
+          "restartFrozenVersionPublicationAndMcp": true,
+          "syntheticSkillExecution": true,
+          "manualRevisionResumeAndOldInstance": true
+        }
       }
-    ]
+    ],
+    "package": {
+      "sourceCommit": "ff60eb1",
+      "zip": "/Users/dandi/YanGuan/release/Worket-loop-ff60eb1.zip",
+      "sha256": "ba97cdb04339bcc16825409f16e4d52471163ed818b0280077fe0b1cc88d2129",
+      "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-same-key-extract-bvnps5zx/Worket.app/Contents/MacOS/Worket",
+      "signatureVerified": true
+    }
   }
 }
