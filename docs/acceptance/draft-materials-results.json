@@ -170,5 +170,40 @@
       "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-same-key-extract-bvnps5zx/Worket.app/Contents/MacOS/Worket",
       "signatureVerified": true
     }
+  },
+  "saveUndo": {
+    "tests": 247,
+    "runs": [
+      {
+        "run": "2026-09-23T00-32-31-438Z",
+        "status": "FAILED",
+        "packaged": true,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-K4LOgE",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {
+          "failedSaveUndoRetained": true
+        },
+        "staleUndoOffered": true,
+        "error": "AssertionError [ERR_ASSERTION]: undoing a method after save must not upgrade a saved material\n+ actual - expected\n\n+ '撤销之前原件已变为 v2'\n- '本轮固定模板 v1'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:59:10"
+      },
+      {
+        "run": "2026-09-23T00-33-14-668Z",
+        "status": "PASSED",
+        "packaged": false,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-vLZ3IZ",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {
+          "failedSaveUndoRetained": true,
+          "savedMaterialVersionNotChangedByUndo": true,
+          "reopenRetainsSelections": true,
+          "restartFrozenVersionPublicationAndMcp": true,
+          "syntheticSkillExecution": true,
+          "manualRevisionResumeAndOldInstance": true
+        },
+        "staleUndoOffered": false
+      }
+    ]
   }
 }

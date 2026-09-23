@@ -6,6 +6,8 @@
 
 ## 草稿资料与修订恢复（2026-09-23）
 
+save 仅在 update 成功返回并采用持久化草稿后清空 renderer undo，避免恢复绑定原路径的旧快照；异常路径不清空。未新增材料历史或改变后端固定版本。
+
 审阅条目身份为 section + key，key 仅栏位内唯一。removeItem 仅在 materialRoles 删除时清除 pending materialBindings，方法/输入删除不修改资料选择。
 
 Draft.materials 保存经过 MaterialStore 校验的固定副本；draft-materials.ts 在事务中更新选择并按草稿/定义双重所有权清理。发布采用显式新选择、草稿固定副本、允许继承的原定义资料顺序，发布成功移交所有权。revise 复用同一基准的最新可编辑手动草稿；取消和永久来源删除释放失效草稿引用。见 [规格](specs/draft-materials.md) 与 [验收](acceptance/draft-materials.md)。

@@ -176,6 +176,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const next: Draft = await api("update", { draftId: draft.id, expectedRevision: draft.revision, content, issueResolutions: resolutions, replaceResolutions: true, materialBindings: bindings });
     draft = next; content = structuredClone(next.content); resolutions = structuredClone(next.resolutions); bindings = {};
     targets = issueTargets();
+    undo = null; // Saved bindings now refer to fixed copies; old pending paths cannot be restored.
     savedState = signature(); message = "已暂存";
   }
   function close() {

@@ -1,9 +1,9 @@
 // Synthetic candidate and skill; real Electron save/reopen/restart/publication and authenticated MCP.
 import assert from 'node:assert/strict';
 import {randomUUID as id} from 'node:crypto';
-import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,unlinkSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,unlinkSync,rmSync,renameSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {_electron as electron} from 'playwright';
 import {createWorkCore} from '../dist/core/index.js';
@@ -34,7 +34,32 @@ try{
   assert.equal(await panel.locator('[data-review-action="material"][data-address="materialRoles.builder"]').innerText(),'更换资料','deleting a method must not clear a same-key material choice');
   await panel.locator('#edit-all').click();report.checks.sameKeySectionIsolation=true;
  }
+ if(process.env.WORKET_SAVE_UNDO==='1'){
+  await panel.locator('#edit-all').click();
+  await panel.locator('[data-review-action="toggle-property"][data-address="methods.builder"]').click();
+  renameSync(template,template+'.pending');
+  await panel.locator('#save-draft').click();await panel.locator('#definition-error').waitFor({state:'visible'});
+  assert.equal(await panel.locator('[data-review-action="undo"]').count(),1,'failed save keeps unsaved undo');
+  renameSync(template+'.pending',template);
+  await panel.locator('[data-review-action="undo"]').click();
+  assert.match(await panel.locator('[data-review-action="toggle-property"][data-address="methods.builder"]').innerText(),/必须/);
+  report.checks.failedSaveUndoRetained=true;
+  await panel.locator('[data-review-action="toggle-property"][data-address="methods.builder"]').click();
+  await panel.locator('#edit-all').click();
+ }
  await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
+ if(process.env.WORKET_SAVE_UNDO==='1'){
+  writeFileSync(template,'撤销之前原件已变为 v2');writeFileSync(join(skill,'references/format.md'),'撤销之前技能已变为 v2');
+  report.staleUndoOffered=!!await panel.locator('[data-review-action="undo"]').count();
+  if(report.staleUndoOffered){
+   await panel.locator('[data-review-action="undo"]').click();
+   await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
+  }
+  const saved=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);
+  assert.equal(readFileSync(saved.materials.find(m=>m.role==='template').path,'utf8'),'本轮固定模板 v1','undoing a method after save must not upgrade a saved material');
+  assert.equal(readFileSync(join(dirname(saved.materials.find(m=>m.bundle).path),'references/format.md'),'utf8'),'固定格式 v1');
+  report.checks.savedMaterialVersionNotChangedByUndo=true;
+ }
  await panel.locator('[data-review-action="close"]').click();await open();
  assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true}).count(),2,'saved draft must retain both selected materials after reopen');
  report.checks.reopenRetainsSelections=true;
