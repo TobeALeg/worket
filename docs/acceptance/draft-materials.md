@@ -10,4 +10,4 @@
 
 本轮真实供应商调用为零。候选为受控 FixtureClient，经真实服务校验；桌面、数据库、文件及 MCP 是产品路径。执行的是本轮自建合成技能，不是外部 Agent 的真实业务验收。未验证跨机器传输、系统钥匙串授权或断电恢复。
 
-安装包解压验收待当前源码提交后执行；后台保持 8d39223，无需部署。
+源码 325e7ec 已从 git archive 干净构建，原包与解压签名均通过。ZIP release/Worket-loop-325e7ec.zip，SHA-256 4b9218cb3e6287d908a1f68eec7a6db2e6d03eed12d656839cc3867770fedff9。解压客户端 00-18-05-086Z 草稿全链路、00-18-05-087Z 资料恢复回归通过，窄面板截图已查看。使用隔离 mock keychain，未替换 Applications 安装或发布 GitHub Release；后台保持 8d39223，无需部署。

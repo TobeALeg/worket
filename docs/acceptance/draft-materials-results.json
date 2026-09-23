@@ -68,6 +68,20 @@
         "syntheticSkillExecution": true,
         "manualRevisionResumeAndOldInstance": true
       }
+    },
+    {
+      "run": "2026-09-23T00-18-05-086Z",
+      "status": "PASSED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-Be2IIR",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true,
+        "manualRevisionResumeAndOldInstance": true
+      }
     }
   ],
   "recoveryRegression": {
@@ -75,6 +89,27 @@
     "status": "PASSED",
     "packaged": false,
     "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-recovery-e2e-3F38hp",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "synthetic": true,
+    "checks": {
+      "definitionAndSkillExactVersion": true,
+      "inputsReferencesAndContractIdentityPreserved": true,
+      "mcpValidatesRecoveredMaterials": true
+    }
+  },
+  "package": {
+    "sourceCommit": "325e7ec",
+    "zip": "/Users/dandi/YanGuan/release/Worket-loop-325e7ec.zip",
+    "sha256": "4b9218cb3e6287d908a1f68eec7a6db2e6d03eed12d656839cc3867770fedff9",
+    "executable": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-extract-e23d2bz2/Worket.app/Contents/MacOS/Worket",
+    "signatureVerified": true
+  },
+  "packagedRecoveryRegression": {
+    "run": "2026-09-23T00-18-05-087Z",
+    "status": "PASSED",
+    "packaged": true,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-recovery-e2e-b6iDSr",
     "actualProviderCalls": 0,
     "externalAgent": false,
     "synthetic": true,
