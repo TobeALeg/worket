@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Synthetic inputs, actual unchanged provider responses. Original lexical-checker failure preserved; no new model calls for corrected replay. Not blind or business acceptance.",
+  "cases": [
+    {
+      "id": "broad-assent-with-exceptions",
+      "scenario": "broad-assent-with-exceptions",
+      "run": "2026-09-23T00-20-48-046Z",
+      "originalOutcome": "PASSED",
+      "outcome": "ACCEPTED",
+      "sha256": {
+        "request-1.json": "2c49d261a9800f2fe8c4fceeadc7f9bd241d139ba81cb66ae8ac602b3792bfa8",
+        "response-1.json": "ffb53975d4da55a03755748c87836dbfb2b4d3422748146b3c3a61dadb34a1e6",
+        "request-2.json": "90348b32d21ffbacc00a56683434e90e085c0976875057fcfa32dae03b48f5da",
+        "response-2.json": "2aa115f7b529b8b7c69bde5607dbac29d7eb5df8b22b2c19a499125dd302104c",
+        "report.json": "13d53d67e5419d452ed5d080da8eafaeb5ceea551568db97282c48916beccd0e"
+      }
+    },
+    {
+      "id": "narrowed-after-assent",
+      "scenario": "narrowed-after-assent",
+      "run": "2026-09-23T00-20-48-046Z",
+      "originalOutcome": "FAILED",
+      "outcome": "CORRECT_SEMANTICS_ORIGINAL_CHECKER_FALSE_NEGATIVE",
+      "sha256": {
+        "request-1.json": "2f561e638d301959e04636899dd9861d3f12a6014a78f3de59414d02e8336ceb",
+        "response-1.json": "1743572f70209a870ca94c0c3d32d68938a12cfd733e5c75e0334c6d90c16a77",
+        "request-2.json": "b45a594815679ef481e0fe2691300129028e744d8cbe74613d0dc3d1403ec027",
+        "response-2.json": "c35a89238ac7065c74b734bac7f0f7e87200339a82149cf948610dee89270772",
+        "report.json": "6a4ce48fae9d36bcb886a24fa70735d6a51e5485850e365e420d144b13b01dff"
+      }
+    }
+  ]
+}

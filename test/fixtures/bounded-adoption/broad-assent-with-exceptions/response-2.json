@@ -1,0 +1,247 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-1/script-value-supplied",
+        "text": "本期任务为 script 输入提供取值（全新脚本 1），不改变 script 输入角色本身。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-1"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-2/instance-visuals",
+        "text": "本期活动脚本的视觉设定为金色配色、1:1 正方形画幅。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-4"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3/proposal-color-size-standard",
+        "text": "Agent 建议将金色配色、1:1 正方形画幅作为以后视频的标准。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-4/color-scope-correction"
+      },
+      {
+        "id": "work-1/event-3/proposal-subtitle-safe-standard",
+        "text": "Agent 建议将字幕距离画面边缘至少 24px 作为以后视频的标准。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3/proposal-source-listing-standard",
+        "text": "Agent 建议将片尾列出资料来源作为以后视频的标准。",
+        "scope": "UNCERTAIN",
+        "sourceKeys": [
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-4/color-scope-correction",
+        "text": "金色配色与 1:1 正方形画幅仅限本期活动，不作为通用要求。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-4/per-episode-visuals",
+        "text": "后续各期的配色与画面尺寸按各期脚本中的视觉设定确定。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-4/adopted-subtitle-safe",
+        "text": "字幕距离画面边缘至少 24px 安全区。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-4/adopted-source-listing",
+        "text": "片尾列出资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-4",
+          "work-1/event-3"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 4,
+      "processedEvents": 4,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3",
+        "work-1/event-4"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unspecified"
+    },
+    "evolution": {
+      "baseHash": "1083cd3f31a837425f5033dba83756b75901ac65e26f541242fffcd50f583cfc",
+      "changes": [
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "episode_visual_style",
+            "text": "本期活动脚本的视觉设定为金色配色、1:1 正方形画幅，仅适用于本期。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "这期活动脚本中的视觉设定是金色配色、1:1 正方形画幅。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-4",
+                  "excerpt": "金色和 1:1 仅限这期活动"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "DUPLICATE",
+          "section": "inputs",
+          "item": {
+            "key": "script",
+            "text": "本期新脚本及本期视觉设定",
+            "valueType": "TEXT",
+            "required": true,
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-4",
+                  "excerpt": "后续配色和尺寸继续按各期脚本中的视觉设定"
+                }
+              ]
+            }
+          },
+          "target": "inputs.script"
+        },
+        {
+          "kind": "SUPPLEMENTS",
+          "section": "constraints",
+          "item": {
+            "key": "subtitle_safe_area",
+            "text": "字幕距离画面边缘至少 24px 安全区。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-4",
+                  "excerpt": "字幕至少 24px 安全区"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "role": "CONTEXT",
+                  "excerpt": "字幕距离画面边缘至少 24px"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          },
+          "target": "constraints.subtitles"
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "end_source_listing",
+            "text": "成片片尾须列出资料来源。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-4",
+                  "excerpt": "片尾列来源这两项才是我采纳的长期规则"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "role": "CONTEXT",
+                  "excerpt": "片尾列出资料来源"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4713,
+    "completion_tokens": 13028,
+    "total_tokens": 17741,
+    "prompt_tokens_details": {
+      "cached_tokens": 3200
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 11765
+    },
+    "prompt_cache_hit_tokens": 3200,
+    "prompt_cache_miss_tokens": 1513
+  },
+  "configuredModel": "deepseek-flash"
+}

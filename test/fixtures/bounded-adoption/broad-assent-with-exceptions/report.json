@@ -1,0 +1,49 @@
+{
+  "id": "broad-assent-with-exceptions",
+  "status": "PASSED",
+  "packaged": true,
+  "credentialStorage": "isolated mock keychain; OS approval not tested",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-OdRTlq",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-20-48-046Z/broad-assent-with-exceptions",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 2875,
+      "completion_tokens": 7443,
+      "total_tokens": 10318,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 6862
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 315
+    },
+    {
+      "prompt_tokens": 4713,
+      "completion_tokens": 13028,
+      "total_tokens": 17741,
+      "prompt_tokens_details": {
+        "cached_tokens": 3200
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 11765
+      },
+      "prompt_cache_hit_tokens": 3200,
+      "prompt_cache_miss_tokens": 1513
+    }
+  ],
+  "humanAcceptance": false,
+  "semantic": {
+    "expected": "PUBLISH",
+    "expectedVersion": 2,
+    "reason": "adopt general safety/source rules, exclude explicitly bounded visual choices"
+  },
+  "acceptanceLabels": [
+    "成片交付 MP4。",
+    "每期视频必须包含中文字幕。",
+    "字幕距离画面边缘至少 24px 安全区。",
+    "成片片尾须列出资料来源。"
+  ]
+}

@@ -1,0 +1,279 @@
+{
+  "result": {
+    "schemaVersion": 1,
+    "compatibility": "COMPATIBLE",
+    "content": null,
+    "issues": [],
+    "groups": [],
+    "requirements": [
+      {
+        "id": "work-1/event-3-req-gold-general",
+        "text": "以后都采用金色配色。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-5-req-gold-instance"
+      },
+      {
+        "id": "work-1/event-3-req-ratio-general",
+        "text": "以后都采用 1:1 正方形画幅。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-5-req-ratio-instance"
+      },
+      {
+        "id": "work-1/event-3-req-subtitle-safe",
+        "text": "字幕距画面边缘至少 24px。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3",
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3-req-credits-source",
+        "text": "片尾列资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3",
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-gold-instance",
+        "text": "金色配色仅用于本期，不作为长期约定。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-ratio-instance",
+        "text": "1:1 正方形画幅仅用于本期，不作为长期约定。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-color-size-per-script",
+        "text": "后续配色、尺寸由各期新脚本的视觉设定决定。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "coverage": {
+      "inputEvents": 6,
+      "processedEvents": 6,
+      "processedChunks": 1,
+      "eventKeys": [
+        "work-1/event-1",
+        "work-1/event-2",
+        "work-1/event-3",
+        "work-1/event-4",
+        "work-1/event-5",
+        "work-1/event-6"
+      ],
+      "exclusions": []
+    },
+    "versions": {
+      "schema": 1,
+      "prompt": "reconcile-and-generalize",
+      "model": "unknown"
+    },
+    "evolution": {
+      "baseHash": "1083cd3f31a837425f5033dba83756b75901ac65e26f541242fffcd50f583cfc",
+      "changes": [
+        {
+          "kind": "SUPPLEMENTS",
+          "section": "constraints",
+          "target": "constraints.subtitles",
+          "item": {
+            "key": "subtitle_safe_area",
+            "text": "字幕距画面边缘至少 24px。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "这四项都沿用，以后都按这套做。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-5",
+                  "excerpt": "24px 字幕安全区和片尾列来源继续作为长期规则。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "字幕距画面边缘至少 24px",
+                  "role": "CONTEXT"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "credits_source",
+            "text": "片尾列资料来源。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-3",
+                  "excerpt": "这四项都沿用，以后都按这套做。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-5",
+                  "excerpt": "24px 字幕安全区和片尾列来源继续作为长期规则。"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "片尾列资料来源。",
+                  "role": "CONTEXT"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "color_size_per_script",
+            "text": "后续配色、尺寸由各期新脚本的视觉设定决定。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-5",
+                  "excerpt": "后续配色、尺寸仍由各期新脚本的视觉设定决定。"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "REUSABLE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "gold_color_instance",
+            "text": "金色配色仅用于本期，不作为长期约定。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-5",
+                  "excerpt": "金色和 1:1 只用于这期，不是长期约定"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "金色配色",
+                  "role": "CONTEXT"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE"
+            }
+          }
+        },
+        {
+          "kind": "ADD",
+          "section": "constraints",
+          "item": {
+            "key": "ratio_1_1_instance",
+            "text": "1:1 正方形画幅仅用于本期，不作为长期约定。",
+            "basis": {
+              "type": "SOURCE",
+              "origin": "USER_STATED",
+              "refs": [
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-5",
+                  "excerpt": "金色和 1:1 只用于这期，不是长期约定"
+                },
+                {
+                  "snapshotId": "wire",
+                  "workId": "work-1",
+                  "eventId": "event-2",
+                  "excerpt": "1:1 正方形画幅",
+                  "role": "CONTEXT"
+                }
+              ]
+            },
+            "rule": {
+              "scope": "INSTANCE",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "usage": {
+    "prompt_tokens": 4807,
+    "completion_tokens": 16932,
+    "total_tokens": 21739,
+    "prompt_tokens_details": {
+      "cached_tokens": 3584
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 14949
+    },
+    "prompt_cache_hit_tokens": 3584,
+    "prompt_cache_miss_tokens": 1223
+  },
+  "configuredModel": "deepseek-flash"
+}

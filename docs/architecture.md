@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 整体采纳中的局部边界（2026-09-23）
+
+新增 bounded-adoption 冻结真实响应及 hash 校验，覆盖同会话局部撤回和新旧实例版本。原始词面检查误报保留，扩充等义表达后回放未修改响应；运行协议、提示及服务逻辑均不变。见 [验收](acceptance/bounded-adoption.md)。
+
 ## 草稿资料与修订恢复（2026-09-23）
 
 Draft.materials 保存经过 MaterialStore 校验的固定副本；draft-materials.ts 在事务中更新选择并按草稿/定义双重所有权清理。发布采用显式新选择、草稿固定副本、允许继承的原定义资料顺序，发布成功移交所有权。revise 复用同一基准的最新可编辑手动草稿；取消和永久来源删除释放失效草稿引用。见 [规格](specs/draft-materials.md) 与 [验收](acceptance/draft-materials.md)。

@@ -1,0 +1,163 @@
+{
+  "tests": {
+    "passed": 247,
+    "total": 247
+  },
+  "usage": {
+    "actualProviderCalls": 4,
+    "inputTokens": 15418,
+    "outputTokens": 46518,
+    "totalTokens": 61936,
+    "cost": "unknown: provider returned no price"
+  },
+  "live": {
+    "run": "2026-09-23T00-20-48-046Z",
+    "kind": "new synthetic sources, real model + desktop; not blind or business acceptance",
+    "status": "FAILED",
+    "cases": [
+      {
+        "id": "broad-assent-with-exceptions",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-OdRTlq",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-20-48-046Z/broad-assent-with-exceptions",
+        "actualProviderCalls": 2,
+        "usage": [
+          {
+            "prompt_tokens": 2875,
+            "completion_tokens": 7443,
+            "total_tokens": 10318,
+            "prompt_tokens_details": {
+              "cached_tokens": 2560
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 6862
+            },
+            "prompt_cache_hit_tokens": 2560,
+            "prompt_cache_miss_tokens": 315
+          },
+          {
+            "prompt_tokens": 4713,
+            "completion_tokens": 13028,
+            "total_tokens": 17741,
+            "prompt_tokens_details": {
+              "cached_tokens": 3200
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 11765
+            },
+            "prompt_cache_hit_tokens": 3200,
+            "prompt_cache_miss_tokens": 1513
+          }
+        ],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "adopt general safety/source rules, exclude explicitly bounded visual choices"
+        },
+        "acceptanceLabels": [
+          "成片交付 MP4。",
+          "每期视频必须包含中文字幕。",
+          "字幕距离画面边缘至少 24px 安全区。",
+          "成片片尾须列出资料来源。"
+        ]
+      },
+      {
+        "id": "narrowed-after-assent",
+        "status": "FAILED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-7W8fnF",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-20-48-046Z/narrowed-after-assent",
+        "actualProviderCalls": 2,
+        "usage": [
+          {
+            "prompt_tokens": 3023,
+            "completion_tokens": 9115,
+            "total_tokens": 12138,
+            "prompt_tokens_details": {
+              "cached_tokens": 2560
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 8444
+            },
+            "prompt_cache_hit_tokens": 2560,
+            "prompt_cache_miss_tokens": 463
+          },
+          {
+            "prompt_tokens": 4807,
+            "completion_tokens": 16932,
+            "total_tokens": 21739,
+            "prompt_tokens_details": {
+              "cached_tokens": 3584
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 14949
+            },
+            "prompt_cache_hit_tokens": 3584,
+            "prompt_cache_miss_tokens": 1223
+          }
+        ],
+        "humanAcceptance": false,
+        "error": "adopted 24px safety margin survives"
+      }
+    ]
+  },
+  "replay": {
+    "run": "2026-09-23T00-25-57-685Z",
+    "kind": "frozen synthetic model responses + desktop; no new semantic measurement",
+    "status": "PASSED",
+    "cases": [
+      {
+        "id": "broad-assent-with-exceptions",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-EIhpoE",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-25-57-685Z/broad-assent-with-exceptions",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "adopt general safety/source rules, exclude explicitly bounded visual choices"
+        },
+        "acceptanceLabels": [
+          "成片交付 MP4。",
+          "每期视频必须包含中文字幕。",
+          "字幕距离画面边缘至少 24px 安全区。",
+          "成片片尾须列出资料来源。"
+        ]
+      },
+      {
+        "id": "narrowed-after-assent",
+        "status": "PASSED",
+        "packaged": true,
+        "credentialStorage": "isolated mock keychain; OS approval not tested",
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-qbVNAT",
+        "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-25-57-685Z/narrowed-after-assent",
+        "actualProviderCalls": 0,
+        "usage": [],
+        "humanAcceptance": false,
+        "semantic": {
+          "expected": "PUBLISH",
+          "expectedVersion": 2,
+          "reason": "adopt general safety/source rules, exclude explicitly bounded visual choices"
+        },
+        "acceptanceLabels": [
+          "成片交付 MP4。",
+          "每期视频必须包含中文字幕。",
+          "字幕距画面边缘至少 24px。",
+          "片尾列资料来源。",
+          "后续配色、尺寸由各期新脚本的视觉设定决定。"
+        ]
+      }
+    ]
+  },
+  "clientCommit": "325e7ec",
+  "backendCommit": "8d39223",
+  "runtimeChanges": false
+}

@@ -1,0 +1,7 @@
+{
+  "createdAt": "2026-09-23T00:20:47.641988+00:00",
+  "sha256": {
+    "docs/specs/bounded-adoption-trials.md": "20779a15731fa6a563251e0eaf4043faf432ea64ba1b84d74c5eeb7338e7416b",
+    "scripts/lib/bounded-adoption-cases.mjs": "cc279d2efd656224d60c0ce9360a08460c7305e6246278e4d2235d6f3c3596d8"
+  }
+}

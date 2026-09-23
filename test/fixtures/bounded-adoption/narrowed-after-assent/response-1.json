@@ -1,0 +1,98 @@
+{
+  "result": {
+    "requirements": [
+      {
+        "id": "work-1/event-3-req-gold-general",
+        "text": "以后都采用金色配色。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-5-req-gold-instance"
+      },
+      {
+        "id": "work-1/event-3-req-ratio-general",
+        "text": "以后都采用 1:1 正方形画幅。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3"
+        ],
+        "replacedBy": "work-1/event-5-req-ratio-instance"
+      },
+      {
+        "id": "work-1/event-3-req-subtitle-safe",
+        "text": "字幕距画面边缘至少 24px。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3",
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-3-req-credits-source",
+        "text": "片尾列资料来源。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-2",
+          "work-1/event-3",
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-gold-instance",
+        "text": "金色配色仅用于本期，不是长期约定；撤回将金色设为通用要求的决定。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-ratio-instance",
+        "text": "1:1 正方形画幅仅用于本期，不是长期约定；撤回将 1:1 设为通用要求的决定。",
+        "scope": "INSTANCE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      },
+      {
+        "id": "work-1/event-5-req-color-size-per-script",
+        "text": "后续配色、尺寸仍由各期新脚本的视觉设定决定。",
+        "scope": "REUSABLE",
+        "sourceKeys": [
+          "work-1/event-5"
+        ],
+        "replacedBy": null
+      }
+    ],
+    "eventKeys": [
+      "work-1/event-1",
+      "work-1/event-2",
+      "work-1/event-3",
+      "work-1/event-4",
+      "work-1/event-5",
+      "work-1/event-6"
+    ],
+    "issues": []
+  },
+  "usage": {
+    "prompt_tokens": 3023,
+    "completion_tokens": 9115,
+    "total_tokens": 12138,
+    "prompt_tokens_details": {
+      "cached_tokens": 2560
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 8444
+    },
+    "prompt_cache_hit_tokens": 2560,
+    "prompt_cache_miss_tokens": 463
+  },
+  "configuredModel": "deepseek-flash"
+}

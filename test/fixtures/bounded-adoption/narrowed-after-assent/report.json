@@ -1,0 +1,39 @@
+{
+  "id": "narrowed-after-assent",
+  "status": "FAILED",
+  "packaged": true,
+  "credentialStorage": "isolated mock keychain; OS approval not tested",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-semantic-7W8fnF",
+  "output": "/Users/dandi/YanGuan/output/evolution-semantics/2026-09-23T00-20-48-046Z/narrowed-after-assent",
+  "actualProviderCalls": 2,
+  "usage": [
+    {
+      "prompt_tokens": 3023,
+      "completion_tokens": 9115,
+      "total_tokens": 12138,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 8444
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 463
+    },
+    {
+      "prompt_tokens": 4807,
+      "completion_tokens": 16932,
+      "total_tokens": 21739,
+      "prompt_tokens_details": {
+        "cached_tokens": 3584
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 14949
+      },
+      "prompt_cache_hit_tokens": 3584,
+      "prompt_cache_miss_tokens": 1223
+    }
+  ],
+  "humanAcceptance": false,
+  "error": "adopted 24px safety margin survives"
+}

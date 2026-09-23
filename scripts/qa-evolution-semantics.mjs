@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { _electron as electron } from 'playwright';
 import { createWorkCore } from '../dist/core/index.js';
 import { createAIService } from '../server/service.mjs';
-const suites = { obligations: './lib/obligation-semantic-cases.mjs', repetition: './lib/repetition-semantic-cases.mjs', platform: './lib/evolution-semantic-cases.mjs' };
+const suites = { bounded: './lib/bounded-adoption-cases.mjs', obligations: './lib/obligation-semantic-cases.mjs', repetition: './lib/repetition-semantic-cases.mjs', platform: './lib/evolution-semantic-cases.mjs' };
 const suite = process.env.WORKET_SEMANTIC_SUITE ?? 'platform';
 assert.ok(suites[suite], 'unknown semantic suite');
 const { semanticCases, semanticBaseline } = await import(suites[suite]);
