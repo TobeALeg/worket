@@ -4,11 +4,11 @@
 
 `workEvidence` 统一取当前来源版本，并排除内部推理及 Worket 自己的 MCP 读取审计；本地线索、阶段整理、沉淀和持续比较共用此入口。`contracts/evidence` 统一覆盖集合、原文摘录与用户证据角色判断。外部消息 ID 在整理输入中映射到档案事件 ID，人工编辑/用户确认条目与普通关键词线索保持区别。
 
-`AppService.organizeWork → WorketAIClient.continuation → /v1/continuations → ContinuationService` 通过同一托管连接处理。提交前和轮询时核对工作状态、输入依据与服务身份；默认读取/MCP 的 generator 为空，不能自行取得上传权限。服务器与沉淀共用身份、额度、幂等、取消、结果短期内存保留和 ack；每次整理只调用一次模型，数据库仅保留操作元数据。requests 表新增 operation 列，旧行默认 definition；回滚旧代码须同时考虑数据库备份。
+`AppService` 的记录、从消息新建、继续记录动作启用 `WorkPreparation` 并排入后台；同步计算 basis，新变化防抖 30 秒。`handoff → WorkPreparation.ensure` 等待同一工作正在进行的任务，必要时准备最新状态。共享的 `ContinuationService → WorketAIClient.continuation → /v1/continuations` 经已有托管连接处理。提交前和轮询时核对工作状态、输入依据与服务身份；默认读取/MCP 的 generator 为空，不能自行取得上传权限。`work_preparation` 保存按工作和服务身份限定的启用范围及最后尝试摘要，启动只恢复已启用的活动记录；未变化的失败在重启后也不会循环重试。`work_preparation_notice` 保存首次范围说明版本。完成、归档、来源绑定或服务身份变化会阻止后续发送；退出清除定时器。服务器与沉淀共用身份、额度、幂等、取消、结果短期内存保留和 ack；每次整理只调用一次模型，数据库仅保留操作元数据。requests 表新增 operation 列，旧行默认 definition；回滚旧代码须同时考虑数据库备份。
 
 整理候选以来源 ID/摘录、覆盖、范围、替代、依赖与材料版本校验，保存到不可变 HandoffPackage.continuation。`buildWorkPackage → continuationWorkState` 是界面、导出和 MCP 的共同投影；原始八字段仍作为来源线索保留。basis 包含来源、状态、全部固定材料、技能、参考与成果版本，变化即失效；自己的读取审计不使状态失效。超过 80,000 JSON 字符或失败返回 PARTIAL/UNRESOLVED，不静默裁剪。
 
-`DefinitionRepository.accept` 同事务写入 work.acceptance 事件及既有 review_events，记录实际验收的交付物 ID/hash 和标准结果。接续推导当前实例，定义提取跨实例复用；两者共享证据基础，不共享一个泛化摘要。桌面不再通过供应商环境变量自动分析对话，评测用的独立状态提取工具仍保留。验收见 [工作接续](acceptance/work-continuity.md)。
+`DefinitionRepository.accept` 同事务写入 work.acceptance 事件及既有 review_events，记录实际验收的交付物 ID/hash 和标准结果。接续推导当前实例，定义提取跨实例复用；两者共享证据基础，不共享一个泛化摘要。桌面不再通过供应商环境变量自动分析对话，评测用的独立状态提取工具仍保留。验收见 [工作接续](acceptance/work-continuity.md) 与 [自动准备](acceptance/automatic-work-preparation.md)。
 
 ## 交接内容的唯一装配点（2026-09-23）
 
@@ -153,7 +153,7 @@ MCP → Work Core work package + read audit
 
 ### 多阶段交接快照（MCP v3）
 
-`src/handoff/continuation.ts` 的 `ContinuationService.prepareContinuation(workId)` 是阶段整理的唯一入口。它读取已同步的 WorkSnapshot、当前有效 SourceEvent、WorkState 与固定/输入材料版本，排除成功的 `get_work_context` 自生审计事件后计算来源、状态和材料摘要。仅当该工作当前已启用云端提炼且服务器 Key 可用时，`OpenAIContinuationGenerator` 才调用既有 OpenAI-compatible 配置；没有许可时不发模型请求。
+`src/handoff/continuation.ts` 的 `ContinuationService.prepareContinuation(workId)` 是阶段整理的唯一入口。它读取已同步的 WorkSnapshot、当前有效 SourceEvent、WorkState 与固定/输入材料版本，排除成功的 `get_work_context` 自生审计事件后计算来源、状态和材料摘要。模型调用由 `WorkPreparation` 在显式记录或交接动作确定的范围内提供，统一通过 Worket 托管客户端；历史记录的被动读取不启用模型处理。
 
 模型只产出带来源引用的候选结构；服务校验引用/摘录、事件覆盖、状态、要求替代、证据角色、材料版本和依赖无环，并在提交交接前重读 basis。候选失效时返回 UNRESOLVED 和 v2 回退；来源输入超限则标为 PARTIAL。`WorkCore.createHandoffPackage` 将通过校验的快照写入现有不可变 handoff payload，不新增阶段表或 WorkState 字段。
 

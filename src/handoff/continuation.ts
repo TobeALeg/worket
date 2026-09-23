@@ -325,7 +325,7 @@ export class ContinuationService {
         continuationBasisMatches(input.work, input.materials, input.cached.basis)) return input.cached;
     const generator = authorizedGenerator ?? this.#generator(workId);
     if (!generator) return unresolved(input.work, input.materials,
-      "本次记录尚未整理；请在 Worket 中整理当前记录，或先核对最新用户原话。",
+      "工作状态尚未准备完成；交接时会自动准备，当前可先核对最新用户原话。",
       events.slice(-10).map(event => event.id));
     const modelInput: ContinuationGeneratorInput = {
       basis,
@@ -338,21 +338,21 @@ export class ContinuationService {
     };
     if (JSON.stringify(modelInput).length > CONTINUATION_MAX_CHARS)
       return unresolved(input.work, input.materials,
-        "来源范围超出一次整理上限；当前阶段未确认，需要分批读取或缩小范围。",
+        "记录超出自动处理范围；当前阶段未确认，请先核对原始记录。",
         events.map(event => event.id), "PARTIAL");
     let snapshot: ContinuationSnapshot | null = null;
-    let reason = "阶段整理结果未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。";
+    let reason = "工作状态未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。";
     try { snapshot = validateCandidate(await generator.generate(modelInput), input, basis, events); }
     catch (error) {
       const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-      reason = code === "SERVICE_UPGRADE_REQUIRED" ? "后台尚不支持工作整理，请升级后台后重试。"
-        : code === "QUOTA_EXCEEDED" ? "本次整理额度不足；原始记录保持可用。"
-        : "本次整理未完成，可能是服务不可用或来源已变化；请重试或核对原始记录。";
+      reason = code === "SERVICE_UPGRADE_REQUIRED" ? "服务暂不支持自动准备工作状态，需要升级后台；原始记录保持可用。"
+        : code === "QUOTA_EXCEEDED" ? "工作状态更新额度不足；原始记录保持可用。"
+        : "工作状态暂未更新，可能是服务不可用或来源已变化；交接时会重试，原始记录保持可用。";
     }
     const latest = await this.#load(workId);
     if (!continuationBasisMatches(latest.work, latest.materials, basis))
       return unresolved(latest.work, latest.materials,
-        "整理期间来源、状态或材料版本发生变化；旧候选已作废，请重新读取。",
+        "处理期间来源、状态或材料版本发生变化；旧候选已作废，请重新读取。",
         continuationEvents(latest.work).slice(-10).map(event => event.id));
     return snapshot ?? unresolved(latest.work, latest.materials,
       reason,
