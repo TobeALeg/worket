@@ -28,6 +28,12 @@ const open=()=>panel.evaluate(async id=>(await import('./distillation.js')).open
 async function select(role,path){await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},path);await panel.locator(`[data-review-action="material"][data-address="materialRoles.${role}"]`).click();}
 try{
  await launch();await open();await select('builder',skill);await select('template',template);
+ if(process.env.WORKET_SAME_KEY_REVIEW==='1'){
+  await panel.locator('#edit-all').click();
+  await panel.locator('[data-review-action="delete"][data-address="methods.builder"]').click();
+  assert.equal(await panel.locator('[data-review-action="material"][data-address="materialRoles.builder"]').innerText(),'更换资料','deleting a method must not clear a same-key material choice');
+  await panel.locator('#edit-all').click();report.checks.sameKeySectionIsolation=true;
+ }
  await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
  await panel.locator('[data-review-action="close"]').click();await open();
  assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true}).count(),2,'saved draft must retain both selected materials after reopen');

@@ -118,5 +118,35 @@
       "inputsReferencesAndContractIdentityPreserved": true,
       "mcpValidatesRecoveredMaterials": true
     }
+  },
+  "sectionIsolation": {
+    "tests": 247,
+    "runs": [
+      {
+        "run": "2026-09-23T00-23-31-829Z",
+        "status": "FAILED",
+        "packaged": true,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-hF3wHe",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {},
+        "error": "AssertionError [ERR_ASSERTION]: deleting a method must not clear a same-key material choice\n\n'选择技能目录' !== '更换资料'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-draft-materials.mjs:34:10"
+      },
+      {
+        "run": "2026-09-23T00-24-06-175Z",
+        "status": "PASSED",
+        "packaged": false,
+        "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-pVO0Hg",
+        "actualProviderCalls": 0,
+        "externalAgent": false,
+        "checks": {
+          "sameKeySectionIsolation": true,
+          "reopenRetainsSelections": true,
+          "restartFrozenVersionPublicationAndMcp": true,
+          "syntheticSkillExecution": true,
+          "manualRevisionResumeAndOldInstance": true
+        }
+      }
+    ]
   }
 }

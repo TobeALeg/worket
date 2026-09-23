@@ -187,7 +187,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     if (address.section === "purpose") return;
     const section = address.section;
     content[section] = content[section].filter(i => i.key !== address.key) as never;
-    delete bindings[address.key];
+    if (section === "materialRoles") delete bindings[address.key];
     for (const issue of draft.issues) {
       const target = targets.get(issue.id);
       if (target?.key && sameAddress(target, address)) resolve(issue, "DELETE", "不纳入这条要求");
