@@ -24,6 +24,7 @@ const commandErrorText: Record<string, string> = {
   BASE_DEFINITION_CHANGED: "约定已有更新版本，请返回最新版重新比较。当前草稿不会覆盖已有版本。",
   SOURCE_DELETED: "来源工作或附件已被删除，不能继续沉淀。",
   SKILL_ENTRY_MISSING: "请选择包含非空 SKILL.md 的技能目录。",
+  SKILL_NAME_CONFLICT: "技能目录同名但内容不同，请选择名称明确且互不冲突的技能目录。",
   MATERIAL_MISSING: "所需附件在本地已不可用。请取消勾选该附件，或恢复文件后重试。",
   INPUT_TOO_LARGE: "本次材料超出后台限额，请减少来源或附件后重试。",
   UNSUPPORTED_FILE: "首版只分析 UTF-8 文本附件，二进制文件只能保留文件信息。",

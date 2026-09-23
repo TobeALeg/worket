@@ -1,3 +1,4 @@
+import {skillLayout,collectSkillEnvironments} from './skill-environment.js';
 import { ensure, object, string, LIMITS, type DefinitionContent } from '../contracts/definition.js';
 import type { DefinitionRepository, Draft } from './repository.js';
 import { transaction, type Material } from './storage.js';
@@ -19,6 +20,7 @@ export function saveDraftMaterials(repository: DefinitionRepository, draft: Draf
     return material ? [material] : [];
   });
   ensure(materials.reduce((n,m) => n+m.size,0) <= LIMITS.maxMaterialBytes, 'INPUT_TOO_LARGE');
+  skillLayout(materials);
   for (const material of materials) {
     repository.materials.verify(material);
     repository.db.prepare('INSERT OR IGNORE INTO definition_materials VALUES (?,?)').run(material.id, JSON.stringify(material));
@@ -29,6 +31,7 @@ export function saveDraftMaterials(repository: DefinitionRepository, draft: Draf
 /** A draft is a real blob owner until publication, cancellation or removal. */
 export function collectUnusedMaterials(repository: DefinitionRepository, copied: Material[] = []): void {
   transaction(repository.db, () => {
+  collectSkillEnvironments(repository.materials.directory, new Set(repository.db.prepare('SELECT id FROM work_definitions').all().map(row=>String(row.id))));
   const used = new Set(repository.db.prepare('SELECT material_id FROM definition_material_refs').all().map(row => String(row.material_id)));
   for (const draft of repository.list<Draft>('definition_drafts')) if (!draft.invalidated && !draft.publishedId)
     for (const material of draft.materials ?? []) used.add(material.id);

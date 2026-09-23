@@ -1,0 +1,71 @@
+{
+  "tests": {
+    "passed": 252,
+    "total": 252
+  },
+  "actualProviderCalls": 0,
+  "externalAgent": false,
+  "runs": [
+    {
+      "run": "2026-09-23T00-39-33-365Z",
+      "status": "FAILED",
+      "packaged": true,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-gizstx",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true
+      },
+      "error": "Error: ENOENT: no such file or directory, open '/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-gizstx/definition-materials/format-kit/references/format.md'\n    at readFileSync (node:fs:441:20)\n    at file:///Users/dandi/YanGuan/scripts/qa-combined-skills.mjs:48:15"
+    },
+    {
+      "run": "2026-09-23T00-41-13-130Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-BrXzau",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "reopenRetainsSelections": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true,
+        "dependencyVersionIsolation": true,
+        "manualRevisionResumeAndOldInstance": true
+      }
+    },
+    {
+      "run": "2026-09-23T00-47-33-385Z",
+      "status": "PASSED",
+      "packaged": false,
+      "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-combined-skills-yqCpJ2",
+      "actualProviderCalls": 0,
+      "externalAgent": false,
+      "checks": {
+        "nameCollisionCannotPartiallySave": true,
+        "reopenRetainsSelections": true,
+        "mcpRebuildsDamagedDerivedEnvironment": true,
+        "restartFrozenVersionPublicationAndMcp": true,
+        "syntheticSkillExecution": true,
+        "dependencyVersionIsolation": true,
+        "manualRevisionResumeAndOldInstance": true
+      }
+    }
+  ],
+  "singleSkillRegression": {
+    "run": "2026-09-23T00-43-04-881Z",
+    "status": "PASSED",
+    "packaged": false,
+    "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-draft-materials-Pk05Ce",
+    "actualProviderCalls": 0,
+    "externalAgent": false,
+    "checks": {
+      "failedSaveUndoRetained": true,
+      "savedMaterialVersionNotChangedByUndo": true,
+      "reopenRetainsSelections": true,
+      "restartFrozenVersionPublicationAndMcp": true,
+      "syntheticSkillExecution": true,
+      "manualRevisionResumeAndOldInstance": true
+    },
+    "staleUndoOffered": false
+  }
+}

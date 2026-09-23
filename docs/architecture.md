@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 组合技能的固定目录（2026-09-23）
+
+skill-environment.ts 将不可变定义中已固定技能投影到 definition-materials/skill-environments/<definitionId>/<原目录名>，WorkPackage.skills 使用这些可解析兄弟引用的入口。单技能保持旧路径，canonical 清单仍是版本依据，派生缓存失配从验证后的副本重建。保存/发布检查名称冲突，定义删除回收派生目录；无数据库或模型协议变更。见 [规格](specs/combined-skills.md) 与 [验收](acceptance/combined-skills.md)。
+
 ## 整体采纳中的局部边界（2026-09-23）
 
 新增 bounded-adoption 冻结真实响应及 hash 校验，覆盖同会话局部撤回和新旧实例版本。原始词面检查误报保留，扩充等义表达后回放未修改响应；运行协议、提示及服务逻辑均不变。见 [验收](acceptance/bounded-adoption.md)。

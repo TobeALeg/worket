@@ -43,6 +43,7 @@
     "release:mac": "node scripts/release-mac.mjs",
     "qa:instance-files": "npm run build && node scripts/qa-instance-files.mjs",
     "qa:recording-idle": "npm run build && node scripts/qa-recording-idle.mjs && WORKET_SOURCE_ABSENCE=1 WORKET_RECORDING_VIEW=1 WORKET_RECORDING_IDLE=1 node scripts/qa-codex-history.mjs",
+    "qa:combined-skills": "npm run build && node scripts/qa-combined-skills.mjs",
     "qa:draft-materials": "npm run build && node scripts/qa-draft-materials.mjs",
     "qa:material-recovery": "npm run build && node scripts/qa-material-recovery.mjs && WORKET_MATERIAL_RECOVERY=1 node scripts/qa-instance-files.mjs",
     "qa:obligations": "npm run build && WORKET_SEMANTIC_SUITE=obligations WORKET_SEMANTIC_REPLAY_ROOT=test/fixtures/obligation-evolution node scripts/qa-evolution-semantics.mjs",

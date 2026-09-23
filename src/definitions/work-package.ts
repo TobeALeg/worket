@@ -1,3 +1,4 @@
+import {skillEnvironment} from './skill-environment.js';
 import { sourceAvailabilityNotice, assertSourcePresenceReady } from "../core/source-revisions.js";
 import { dirname } from 'node:path';
 import { resolveRuleDocuments } from "./document-rules.js";
@@ -46,10 +47,11 @@ export function buildWorkPackage(
   }
   if (definition)
     definition.materials.forEach((m) => repository.materials.verify(m));
+  const skillPaths = definition ? skillEnvironment(repository.materials.directory, definition.id, definition.materials) : new Map<string,string>();
   const skills = (definition?.materials ?? []).filter(m => m.bundle).map(m => ({
     name: definition!.content.materialRoles.find(role => role.key === m.role)!.text,
     required: definition!.content.materialRoles.find(role => role.key === m.role)!.required,
-    entrypoint: m.path, directory: dirname(m.path), hash: m.hash, files: m.bundle!.files.map(file => file.path),
+    entrypoint: skillPaths.get(m.role)!, directory: dirname(skillPaths.get(m.role)!), hash: m.hash, files: m.bundle!.files.map(file => file.path),
   }));
   const binding = repository.inputs(work.instance.id);
   const checks = definition ? acceptanceChecks(definition.content, binding.ruleOverrides ?? []).map(({ key, rule }) => ({ key, rule })) : [];
@@ -111,7 +113,7 @@ export function packageMarkdown(value: WorkPackage): string {
       .join("\n")}`,
   );
   if (value.inputMaterials?.length) lines.push(`\n输入文件已固定为本次版本，请读取上列副本路径；原始文件后续变化不会更新本次输入。`);
-  if (value.skills?.length) lines.push(`\n## 执行技能\n${value.skills.map(skill => `- ${escapeMarkdown(skill.name)}（${skill.required ? "必需" : "参考"}）\n  入口：${escapeMarkdown(skill.entrypoint)}\n  目录：${escapeMarkdown(skill.directory)} · SHA256 ${skill.hash} · ${skill.files.length} 个文件`).join("\n")}\n先读取技能入口，按该固定目录解析配套文件。这里只验证目录文件完整性；技能依赖的其他插件、工具和运行环境仍需执行者核验，缺少时应明确报告。`);
+  if (value.skills?.length) lines.push(`\n## 执行技能\n${value.skills.map(skill => `- ${escapeMarkdown(skill.name)}（${skill.required ? "必需" : "参考"}）\n  入口：${escapeMarkdown(skill.entrypoint)}\n  目录：${escapeMarkdown(skill.directory)} · SHA256 ${skill.hash} · ${skill.files.length} 个文件`).join("\n")}\n先读取技能入口，按该固定目录解析配套文件。同一约定中明确选择的多个技能保留原目录名并置于共同目录，可按兄弟相对路径访问；未选择的依赖不包含在内。这里只验证目录文件完整性；技能依赖的其他插件、工具和运行环境仍需执行者核验，缺少时应明确报告。`);
   lines.push(
     `\n## 固定资料\n${value.fixedMaterials.map((m) => `- ${escapeMarkdown(m.role)}: ${escapeMarkdown(m.path)} (SHA256 ${m.hash})`).join("\n")}`,
   );

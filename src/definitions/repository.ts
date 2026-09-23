@@ -1,3 +1,4 @@
+import {skillLayout} from './skill-environment.js';
 import { saveDraftMaterials, collectUnusedMaterials } from './draft-materials.js';
 import { sourceReview } from './source-review.js';
 import { updateInstanceFiles, type UpdateInstanceFiles } from './instance-file-update.js';
@@ -340,6 +341,7 @@ export class DefinitionRepository {
         ?? inherited.find((m) => m.role === role.key && !!m.bundle === (role.kind === "SKILL"));
       return path ? [role.kind === "SKILL" ? this.materials.copySkill(path, role.key) : this.materials.copy(path, role.key)] : old ? [old] : [];
     });
+    skillLayout(materials);
     materials.push(...pinRuleDocuments(draft.content, inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
     ensure(
       materials.reduce((n, m) => n + m.size, 0) <= LIMITS.maxMaterialBytes,
