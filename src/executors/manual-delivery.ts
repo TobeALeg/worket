@@ -12,8 +12,8 @@ export async function deliverViaClipboard(
 ): Promise<DeliveryReceipt> {
   await desktop.openApplication(bundleId);
   desktop.writeClipboard(buildWorkBootstrap({
-    ...request, currentTask: "请读取本次完整工作包。",
-    nextStep: "按工作包继续执行并等待用户验收。", artifactPaths: [],
+    ...request, currentTask: "请读取交接主包并核对目标和当前进度。",
+    nextStep: "核对候选动作后从当前断点继续，完成后等待用户验收。", artifactPaths: [],
   }));
   return { guidance: `启动指令已复制，请在 ${name} 新建聊天并粘贴发送；发送后自动确认记录。` };
 }

@@ -27,6 +27,39 @@ const priorRow = core.definitions.db.prepare('SELECT payload_json FROM handoff_p
 const outputPath = join(directory, 'new-report.md'), reportText = '# 本次报告\n城市交通来源待核验。'; writeFileSync(outputPath, reportText);
 core.addArtifactRef(work.instance.id, { path: outputPath, filename: 'new-report.md', role: 'OUTPUT', mimeType: 'text/markdown', size: Buffer.byteLength(reportText), sha256: createHash('sha256').update(reportText).digest('hex'), lastModifiedAt: new Date().toISOString(), availability: 'AVAILABLE' });
 core.applyExtractorPatch(work.instance.id, { pendingActions: [{ id: randomUUID(), text: '核验本次报告来源', origin: 'USER_STATED', sourceMessageIds: [work.sourceArchive[1].id] }] });
+core.startExecutionEpisode(work.instance.id, {
+  executor: { type: 'AGENT', name: 'Synthetic source' },
+  environment: { type: 'CODEX_DESKTOP', name: 'Codex Desktop' },
+  source: { adapter: 'codex', conversationId: 'synthetic-context-source' },
+});
+let sequence = Math.max(...core.getWork(work.instance.id).sourceArchive.map(event => event.sequence));
+const append = (externalId, kind, text, metadata = {}) => {
+  const appended = core.appendSourceEvents(work.instance.id, [{
+    externalId, sequence: ++sequence, kind, content: text, timestamp: new Date(sequence).toISOString(),
+    executorType: kind === 'user.prompt' ? 'HUMAN' : 'AGENT', environmentType: 'CODEX_DESKTOP', metadata, artifactRefs: [],
+  }]);
+  return appended.work.sourceArchive.find(event => event.externalId === externalId);
+};
+const oldRequirement = append('old-requirement', 'user.prompt', '旧要求：交付 CSV。', {
+  worketSource: { adapter: 'codex', conversationId: 'synthetic-context-source', externalId: 'old-requirement' },
+});
+core.applyExtractorPatch(work.instance.id, {
+  pendingActions: [{ id: randomUUID(), text: '旧动作：导出 CSV', origin: 'AGENT_PROPOSED', sourceMessageIds: [oldRequirement.id] }],
+});
+const revisedRequirement = append('revised-requirement', 'user.prompt', '修订要求：交付 PDF。', {
+  worketSource: { adapter: 'codex', conversationId: 'synthetic-context-source', externalId: 'revised-requirement', previousEventId: oldRequirement.id },
+});
+const toolEvents = Array.from({ length: 12 }, (_, index) => append(
+  `tool-output-${index}`, 'tool.result', `TOOL_DUMP_${index}\n${'详细构建日志与原始输出。'.repeat(700)}`,
+));
+const hiddenReasoning = append('hidden-reasoning', 'reasoning.summary', 'PRIVATE_REASONING_MUST_NOT_APPEAR');
+core.applyExtractorPatch(work.instance.id, {
+  facts: [
+    ...toolEvents.map((event, index) => ({ id: randomUUID(), text: `推断工具记录 ${index}：${'噪音片段 '.repeat(400)}`, origin: 'SYSTEM_INFERRED', sourceMessageIds: [event.id] })),
+    { id: randomUUID(), text: '用户已确认最终格式为 PDF。', origin: 'USER_STATED', sourceMessageIds: [revisedRequirement.id] },
+  ],
+});
+const handoffsBeforeReads = core.getWork(work.instance.id).handoffPackages.length;
 core.close(); unlinkSync(original); // Pinning must survive deletion of the original path.
 const result = { run, status: 'RUNNING', packaged: !!process.env.WORKPET_EXECUTABLE_PATH, kind: 'synthetic instance; real Electron and authenticated MCP HTTP; no target Agent or business acceptance', directory, actualProviderCalls: 0, checks: {} };
 let app, panel;
@@ -37,8 +70,8 @@ try {
   assert.ok(panel, 'real desktop panel opened');
   await panel.locator('#tab-definitions').waitFor();
   const bridge = JSON.parse(readFileSync(join(directory, 'bridge.json'), 'utf8'));
-  const request = async (id, token = bridge.token) => {
-    const response = await fetch(`http://${bridge.host}:${bridge.port}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-workpet-token': token }, body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: id } } }), signal: AbortSignal.timeout(10000) });
+  const request = async (id, token = bridge.token, tool = 'get_work_context', extra = {}) => {
+    const response = await fetch(`http://${bridge.host}:${bridge.port}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-workpet-token': token }, body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method: 'tools/call', params: { name: tool, arguments: { work_id: id, ...extra } } }), signal: AbortSignal.timeout(10000) });
     return { status: response.status, value: response.status === 200 ? await response.json() : null };
   };
   assert.equal((await request(work.instance.id, 'invalid')).status, 401);
@@ -53,6 +86,46 @@ try {
   assert.equal(current.workPackage.definition.id, definition.id);
   assert.equal(readFileSync(current.workPackage.fixedMaterials[0].path, 'utf8'), template);
   result.checks.freshStateArtifactsAndPinnedVersion = true;
+  const modernResponse = await request(work.instance.id, bridge.token, 'get_work_context', { context_version: 2 });
+  assert.equal(modernResponse.status, 200); assert.ok(!modernResponse.value.error);
+  const modernText = modernResponse.value.result.content[0].text, modern = JSON.parse(modernText);
+  writeFileSync(join(output, 'context-v2.json'), JSON.stringify(modern, null, 2));
+  assert.equal(modern.contextVersion, 2);
+  assert.equal(modern.workPackage.packageVersion, 2);
+  assert.equal('state' in modern, false);
+  assert.equal('state' in modern.workPackage, false);
+  assert.equal('nextStep' in modern.workPackage, false);
+  assert.equal('executionEpisodes' in modern, false);
+  assert.equal('captureBindings' in modern, false);
+  const legacyBytes = Buffer.byteLength(first.value.result.content[0].text), modernBytes = Buffer.byteLength(modernText);
+  assert.ok(modernBytes < legacyBytes, 'large inferred tool output must not inflate the primary package');
+  result.payloadBytes = { legacy: legacyBytes, contextV2: modernBytes, reductionPercent: Number(((legacyBytes - modernBytes) / legacyBytes * 100).toFixed(1)) };
+  assert.equal(modern.conditions.deferredFactCount, 12);
+  assert.ok(modern.conditions.facts.some(fact => fact.text === '用户已确认最终格式为 PDF。'));
+  assert.equal(modern.position.checkpoint, null);
+  assert.equal(modern.position.pendingActions.some(action => action.text === '旧动作：导出 CSV'), false, 'superseded pending action must not be proposed as current');
+  assert.equal(modern.evidenceIndex.length, 8);
+  assert.equal(modern.evidenceIndexTruncated, true);
+  assert.equal(modernText.includes('TOOL_DUMP_'), false);
+  assert.equal(modernText.includes('PRIVATE_REASONING_MUST_NOT_APPEAR'), false);
+  result.checks.v2FiltersStaleAndBulkyState = true;
+
+  const evidencePageResponse = await request(work.instance.id, bridge.token, 'get_work_evidence', { after_sequence: 0, limit: 5 });
+  const evidencePage = JSON.parse(evidencePageResponse.value.result.content[0].text);
+  assert.equal(evidencePage.events.length, 5);
+  assert.ok(evidencePage.nextAfterSequence > 0);
+  assert.equal(evidencePage.events.some(event => event.kind === 'reasoning.summary'), false);
+  const exactEvidenceResponse = await request(work.instance.id, bridge.token, 'get_work_evidence', { event_ids: [toolEvents[0].id] });
+  const exactEvidence = JSON.parse(exactEvidenceResponse.value.result.content[0].text);
+  assert.equal(exactEvidence.events.length, 1);
+  assert.match(exactEvidence.events[0].content, /TOOL_DUMP_0/);
+  const hiddenEvidenceResponse = await request(work.instance.id, bridge.token, 'get_work_evidence', { event_ids: [hiddenReasoning.id] });
+  assert.equal(JSON.parse(hiddenEvidenceResponse.value.result.content[0].text).events.length, 0);
+  result.checks.evidencePagingAndPrivateReasoningFilter = true;
+
+  const invalidVersion = await request(work.instance.id, bridge.token, 'get_work_context', { context_version: 99 });
+  assert.equal(invalidVersion.value.error?.message, 'UNSUPPORTED_CONTEXT_VERSION');
+  result.checks.invalidVersionRejected = true;
   unlinkSync(definition.materials[0].path);
   const missing = await request(blocked.instance.id);
   assert.match(missing.value.error?.message ?? '', /MATERIAL_MISSING/, 'cache must not bypass missing fixed material');
@@ -69,6 +142,7 @@ try {
   try {
     assert.equal(after.definitions.db.prepare('SELECT payload_json FROM handoff_packages WHERE id=?').get(prior.id).payload_json, priorRow);
     assert.equal(after.getWork(work.instance.id).packageReadAt, null, 'inspection without a delivery does not confirm an executor');
+    assert.equal(after.getWork(work.instance.id).handoffPackages.length, handoffsBeforeReads + 2, 'invalid version and evidence reads must not create handoff snapshots');
     assert.equal(after.getWork(blocked.instance.id).packageReadAt, null);
     assert.equal(after.getLatestHandoffPackage(blocked.instance.id).id, priorBlocked.id);
     result.checks.immutableHistoryAndNoFalseReceipt = true;

@@ -50,8 +50,8 @@ export function createCodexExecutor(options: {
                 deliveryId: request.deliveryId,
                 purpose: request.purpose,
                 title: request.title,
-                currentTask: "请读取本次完整工作包。",
-                nextStep: "按工作包继续执行并等待用户验收。",
+                currentTask: "请读取交接主包并核对目标和当前进度。",
+                nextStep: "核对候选动作后从当前断点继续，完成后等待用户验收。",
                 artifactPaths: [],
               }),
             );

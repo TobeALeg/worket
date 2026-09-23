@@ -31,6 +31,7 @@ import type {
   ConversationSummary,
 } from "../executors/types.js";
 import { buildWorkPackage } from "../definitions/work-package.js";
+import { buildWorkBootstrap } from "../executors/work-bootstrap.js";
 import type {
   ConversationPreview,
   ConversationPageView,
@@ -685,7 +686,15 @@ export class AppService {
         endCurrentEpisode: true,
       });
       try {
-        const prompt = `[WORKPET:${workId}]\n[DELIVERY:${handoff.id}]\n${pkg.purpose === "START" ? "请开展这项新工作" : "请接手同一项工作"}。以下是用户交付的工作包和当前状态，请按要求继续，完成后等待用户验收。\n${JSON.stringify({ workPackage: pkg, handoff })}`;
+        const prompt = buildWorkBootstrap({
+          workId,
+          deliveryId: handoff.id,
+          purpose: pkg.purpose,
+          title: handoff.currentTask ?? current.definition.name,
+          currentTask: handoff.currentTask ?? "读取交接上下文并核对目标",
+          nextStep: "读取 context_version=2 主包；需要核验时按证据 ID 读取来源",
+          artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
+        });
         const receipt = await adapter.deliver({
           workId,
           deliveryId: handoff.id,

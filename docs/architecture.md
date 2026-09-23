@@ -187,7 +187,7 @@ MCP 成功读取审计使用当前 Binding、Episode 与环境；work_package_re
 
 只在本机持久化 WorkDefinition、WorkInstance、WorkRecord、Source Archive、Work State 版本、Capture Binding、ExecutionEpisode、Handoff Package、ArtifactRef、同步游标，以及早期版本可能已有的 tombstone。实现阶段优先选择单机事务数据库；MVP 不需要云数据库。Handoff Package 是不可变快照；每次 MCP get_work_context 调用从当前 WorkSnapshot 生成新的快照，重新运行 buildWorkPackage 校验固定资料和本次文件输入，通过后才记成功读取；不会复用历史包跳过校验或改写历史包；目标应用启动失败时，来源 Binding 与 Episode 在同一补偿流程中恢复。
 
-设计讨论（2026-09-23，未实现）：[交接上下文方案](specs/handoff-context-v1.md) 提议在统一出口生成主包与证据索引，避免嵌套完整状态重复传输，并支持按项读取证据；通过版本选项保留旧调用兼容。领域记录、历史快照、交付关联和读取回执不因该草稿改变。
+交接上下文 v2（实现待验证）：`get_work_context(context_version=2)` 在既有当前快照与资料校验后生成目标/进度/成果/条件/候选动作投影，嵌套 WorkPackage 移除重复的 state/nextStep，且不返回 Episode/Binding 列表；推断 facts 不进入主包，仍保留证据 ID 并可按需读取，用户陈述/编辑 facts 保留。`get_work_evidence` 支持事件 ID 或最多 100 条的序号分页，排除 reasoning.summary。省略版本仍返回旧结构。历史 HandoffPackage 按原格式持久化且不改写，读取回执语义不变。投影只反映已记录字段，不推断语义断点；接续正确性、真实调用总量与用户纠正成本仍待真实接手小样验证。详见 [交接上下文方案](specs/handoff-context-v1.md)。
 
 ## Data flow
 

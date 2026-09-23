@@ -1,4 +1,5 @@
 import { currentSourceEvents } from "../core/source-revisions.js";
+import { buildHandoffContextV2, readHandoffEvidence } from "./handoff-context.js";
 import type { WorkCore } from "../core/index.js";
 
 interface JsonRpcRequest {
@@ -47,10 +48,24 @@ export class WorkPetMcpHandler {
               {
                 name: "get_work_context",
                 description:
-                  "读取可直接接力的结构化 Work State；不包含完整聊天历史。",
+                  "读取可直接接力的上下文。context_version=2 返回精简主包；省略时兼容旧版结构。",
                 inputSchema: {
                   type: "object",
-                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" } },
+                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" }, context_version: { type: "integer", enum: [1, 2], description: "2 返回目标/断点/成果/条件/首个动作与有限证据索引。" } },
+                  required: ["work_id"],
+                },
+              },
+              {
+                name: "get_work_evidence",
+                description: "按事件 ID 或序号分页读取当前有效来源证据；默认每页 20 条，最多 100 条。",
+                inputSchema: {
+                  type: "object",
+                  properties: {
+                    work_id: { type: "string" },
+                    event_ids: { type: "array", items: { type: "string" }, maxItems: 100 },
+                    after_sequence: { type: "integer", minimum: 0 },
+                    limit: { type: "integer", minimum: 1, maximum: 100 },
+                  },
                   required: ["work_id"],
                 },
               },
@@ -93,20 +108,42 @@ export class WorkPetMcpHandler {
           const deliveryId = args.delivery_id;
           if (deliveryId !== undefined && (typeof deliveryId !== 'string' ||
               work.instance.status !== 'OPEN' || deliveryId !== work.packageDeliveryId)) throw new Error('DELIVERY_MISMATCH');
+          const version = args.context_version;
+          if (version !== undefined && version !== 1 && version !== 2) throw new Error("UNSUPPORTED_CONTEXT_VERSION");
           // Historical handoffs stay immutable; a current read must also recheck
           // the pinned materials and input files before recording read success.
           const handoff = this.#core.createHandoffPackage(workId);
           const acknowledged = typeof deliveryId === "string";
-          const result = toolResult({
-            ...handoff,
-            deliveryReceipt: { acknowledged },
-            executionEpisodes: work.episodes,
-            captureBindings: work.bindings,
-            ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
-          });
+          const result = toolResult(version === 2
+            ? {
+                ...buildHandoffContextV2(work, handoff),
+                deliveryReceipt: { acknowledged },
+                ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
+              }
+            : {
+                ...handoff,
+                deliveryReceipt: { acknowledged },
+                executionEpisodes: work.episodes,
+                captureBindings: work.bindings,
+                ...(this.#proofToken ? { qaProofToken: this.#proofToken } : {}),
+              });
           this.#recordToolReadSuccess(workId, name, request.id, acknowledged, typeof deliveryId === "string" ? deliveryId : undefined);
           if (acknowledged && !this.#core.recordPackageRead(workId, deliveryId)) throw new Error("DELIVERY_MISMATCH");
           return { jsonrpc: "2.0", id, result };
+        }
+        if (name === "get_work_evidence") {
+          const ids = args.event_ids;
+          if (ids !== undefined && (!Array.isArray(ids) || ids.length > 100 || ids.some(id => typeof id !== "string")))
+            throw new Error("INVALID_EVENT_IDS");
+          const afterSequence = args.after_sequence;
+          const limit = args.limit;
+          if (afterSequence !== undefined && (typeof afterSequence !== "number" || !Number.isInteger(afterSequence) || afterSequence < 0)) throw new Error("INVALID_AFTER_SEQUENCE");
+          if (limit !== undefined && (typeof limit !== "number" || !Number.isInteger(limit) || limit < 1 || limit > 100)) throw new Error("INVALID_EVIDENCE_LIMIT");
+          return { jsonrpc: "2.0", id, result: toolResult(readHandoffEvidence(work, {
+            ...(Array.isArray(ids) ? { eventIds: ids as string[] } : {}),
+            ...(typeof afterSequence === "number" ? { afterSequence } : {}),
+            ...(typeof limit === "number" ? { limit } : {}),
+          })) };
         }
         if (name === "get_work_archive") {
           const after =
