@@ -45,6 +45,7 @@ export interface WorkSummaryView {
 }
 
 export interface WorkDetailView extends WorkSummaryView {
+  preparationStatus?: "RUNNING" | "QUEUED";
   understandingStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
   understandingNotice?: string;
   currentStageTask?: string;
@@ -103,7 +104,8 @@ export interface CurrentConversationView {
   captureStatus?: CaptureStatus;
 }
 
-export const RECORDING_UPLOAD_NOTICE = "参与改进开启时，点击记录会上传所选聊天已有及后续的用户消息和 AI 回复，供 Worket 管理员改进产品，保存 90 天。不额外读取附件、工具输出或推理摘要；可在“Worket 服务 → 改进数据”关闭或删除。";
+export const WORK_PREPARATION_NOTICE = "记录和交接时，Worket 服务会分析这项工作已有及后续的可见记录、要求和材料版本，自动准备工作状态；不额外读取附件正文。";
+export const RECORDING_UPLOAD_NOTICE = WORK_PREPARATION_NOTICE + "参与改进开启时，点击记录会上传所选聊天已有及后续的用户消息和 AI 回复，供 Worket 管理员改进产品，保存 90 天。不额外读取附件、工具输出或推理摘要；可在“Worket 服务 → 改进数据”关闭或删除。";
 
 export interface PetView {
   distillation?: import("./distillation/activity.js").DistillationActivity | null;
@@ -143,7 +145,7 @@ export interface ConversationPreview extends ConversationView {
 export interface CreateWorkRequest {
   executorId: string;
   threadId: string;
-  /** Legacy callers may pass this; recording stays local. Use organizeWork for explicit analysis. */
+  /** Legacy callers may pass this; automatic preparation is scoped by the recording action. */
   allowCloudExtraction?: boolean;
 }
 
@@ -208,7 +210,6 @@ export interface WorkPetApi {
   archiveWork(workId: string): Promise<DashboardView>;
   resumeWork(workId: string): Promise<DashboardView>;
   cancelHandoff(workId: string, confirmation: string): Promise<DashboardView>;
-  organizeWork(workId: string, consentVersion: string): Promise<DashboardView>;
   handoff(workId: string, executorId: string): Promise<DashboardView>;
   cancelRecording(workId: string, confirmation: string): Promise<DashboardView>;
   onPanelShown(callback: (workId?: string) => void): () => void;

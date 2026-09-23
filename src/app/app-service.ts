@@ -31,9 +31,9 @@ import type {
   ConversationSummary,
 } from "../executors/types.js";
 import { buildWorkPackage } from "../definitions/work-package.js";
-import { ContinuationService, continuationBasisMatches, type ContinuationSnapshot } from "../handoff/continuation.js";
+import { ContinuationService, type ContinuationSnapshot } from "../handoff/continuation.js";
 import type { AIClient } from "../ai-service/client.js";
-import { CONTINUATION_CONSENT } from "../contracts/continuation.js";
+import { WorkPreparation } from "../handoff/work-preparation.js";
 import { workEvidence } from "../core/work-evidence.js";
 import { buildWorkBootstrap } from "../executors/work-bootstrap.js";
 import type {
@@ -77,6 +77,7 @@ export interface AppServiceOptions {
   aiClient?: AIClient;
   executors: ExecutorAdapter[];
   foreground?: ForegroundApplicationDetector;
+  preparationDelayMs?: number;
   onRecordingStarted?: (workId: string) => void;
   onRecordingStopped?: (workId: string) => void;
 }
@@ -89,6 +90,8 @@ export class AppService {
   readonly #foreground: ForegroundApplicationDetector;
   readonly #artifacts: ArtifactTracker;
   readonly #continuations: ContinuationService;
+  readonly #preparation: WorkPreparation;
+  #closed = false;
   #selectedWorkId: string | null = null;
   #petState: DashboardView["petState"] = "sleeping";
   #notice: string | null = null;
@@ -107,10 +110,12 @@ export class AppService {
     this.#artifacts = new ArtifactTracker(this.#core);
     this.#continuations = new ContinuationService({
       load: async workId => {
+        if (this.#closed) throw new Error("APP_CLOSED");
         const before = this.#requireWork(workId);
         await this.#artifacts.verify(before);
         if (before.activeBinding && !/^(pending|waiting):/.test(before.activeBinding.conversationId))
           await this.#readBoundWork(workId);
+        if (this.#closed) throw new Error("APP_CLOSED");
         const work = this.#requireWork(workId);
         await this.#artifacts.verify(work);
         const workPackage = buildWorkPackage(work, this.#core.definitions);
@@ -122,6 +127,7 @@ export class AppService {
       },
       generator: () => null,
     });
+    this.#preparation = new WorkPreparation(this.#core, this.#continuations, options.aiClient, options.preparationDelayMs);
   }
   async listExecutors(): Promise<ExecutorView[]> {
     return Promise.all(
@@ -345,6 +351,8 @@ export class AppService {
       work.activeBinding?.id
     )
       this.#core.applyExtractorPatch(work.instance.id, patch, Math.max(0, ...work.sourceArchive.map((event) => event.sequence)));
+    this.#preparation.enable(work.instance.id);
+    this.#preparation.schedule(work.instance.id, true);
     this.options.onRecordingStarted?.(work.instance.id);
     this.#notice = `已记录 ${adapter.name} 聊天，导入 ${work.sourceArchive.length} 条可见事件。`;
     return this.dashboard(work.instance.id);
@@ -416,6 +424,9 @@ export class AppService {
       });
       this.#core.applyExtractorPatch(work.instance.id, patch, Math.max(0, ...work.sourceArchive.map((event) => event.sequence)));
       this.options.onRecordingStopped?.(sourceWork.instance.id);
+      this.#preparation.cancel(sourceWork.instance.id);
+      this.#preparation.enable(work.instance.id);
+      this.#preparation.schedule(work.instance.id, true);
       this.options.onRecordingStarted?.(work.instance.id);
       this.#notice = "已从指定消息创建新的工作记录。";
       return this.dashboard(work.instance.id);
@@ -465,6 +476,7 @@ export class AppService {
       adapter.reconcileHistory?.(thread, latest.sourceArchive) ?? thread,
     );
     await this.#updateRecordedState(result.work);
+    this.#preparation.schedule(workId);
     return result;
   }
 
@@ -503,24 +515,8 @@ export class AppService {
   prepareContinuation(workId: string): Promise<ContinuationSnapshot> {
     return this.#continuations.prepareContinuation(workId);
   }
-  async organizeWork(workId: string, consentVersion: string): Promise<DashboardView> {
-    if (consentVersion !== CONTINUATION_CONSENT) throw new Error("CONSENT_REQUIRED");
-    if (this.#requireWork(workId).instance.status !== "OPEN") throw new Error("WORK_NOT_OPEN");
-    const client = this.options.aiClient;
-    if (!client?.continuation) throw new Error("MODEL_UNAVAILABLE: 请先连接 Worket 服务");
-    const continuation = await this.#continuations.prepareContinuation(workId, {
-      generate: input => client.continuation!({ schemaVersion: 1, input }, () => {
-        const current = this.#core.getWork(workId);
-        if (!current || current.instance.status !== "OPEN" || !continuationBasisMatches(current, input.materials, input.basis))
-          throw new Error("CONTINUATION_SCOPE_CHANGED: 记录已变化，请重新整理");
-      }),
-    });
-    if (this.#requireWork(workId).instance.status !== "OPEN") throw new Error("WORK_NOT_OPEN");
-    this.#core.createHandoffPackage(workId, { continuation });
-    this.#notice = continuation.resolution === "RESOLVED"
-      ? "已整理当前阶段、有效要求与下一步。"
-      : continuation.uncertainties[0]?.text ?? "当前阶段仍需核对。";
-    return this.dashboard(workId);
+  preparationNoticeRequired(): boolean {
+    return this.#preparation.noticeRequired();
   }
 
   async syncHook(
@@ -667,12 +663,14 @@ export class AppService {
   }
   completeWork(workId: string): DashboardView {
     this.#core.completeWork(workId);
+    this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
     this.#notice = "工作已完成，自动写入已停止。";
     return this.dashboard(workId);
   }
   archiveWork(workId: string): DashboardView {
     this.#core.archiveWork(workId);
+    this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
     this.#notice = "工作已归档。";
     return this.dashboard(workId);
@@ -690,6 +688,8 @@ export class AppService {
       environment: adapter.environment,
       source: { adapter: adapter.id, conversationId: binding.conversationId },
     });
+    this.#preparation.enable(workId);
+    this.#preparation.schedule(workId, true);
     this.options.onRecordingStarted?.(workId);
     this.#notice = "已继续原工作，并恢复原执行者的记录。";
     return this.dashboard(workId);
@@ -714,13 +714,13 @@ export class AppService {
         current.activeBinding?.id !== initial.activeBinding?.id
       )
         throw new Error("工作状态已改变，未进行交接。");
-      const continuation = await this.prepareContinuation(workId);
+      const continuation = await this.#preparation.ensure(workId);
       current = await this.#artifacts.verify(this.#requireWork(workId));
       if (
         current.instance.status !== "OPEN" ||
         current.activeBinding?.id !== initial.activeBinding?.id
       )
-        throw new Error("整理阶段发生期间工作状态已改变，未进行交接。");
+        throw new Error("准备交接期间工作状态已改变，未进行交接。");
       const handoff = this.#core.createHandoffPackage(workId, { continuation });
       const pkg = buildWorkPackage(current, this.#core.definitions);
       const pending = `pending:${handoff.id}`;
@@ -843,6 +843,7 @@ export class AppService {
     if (confirmation !== "取消记录")
       throw new Error("请输入“取消记录”进行二次确认");
     this.#core.deleteWorkPermanently(workId, { confirmation: workId });
+    this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
     this.#selectedWorkId = null;
     this.#petState = "sleeping";
@@ -855,6 +856,8 @@ export class AppService {
   }
 
   close(): void {
+    this.#closed = true;
+    this.#preparation.close();
     this.#executors.close();
     this.#core.close();
   }
@@ -1051,6 +1054,7 @@ export class AppService {
       } : {}),
       ...(sourceNotice ? { sourceNotice } : {}),
       ...(latestReply?.content ? { latestActivity: { text: latestReply.content, sourceMessageId: latestReply.externalId } } : {}),
+      ...(this.#preparation.status(work.instance.id) ? { preparationStatus: this.#preparation.status(work.instance.id)! } : {}),
       understandingStatus: pkg?.stateStatus ?? "UNRESOLVED",
       ...(pkg?.continuation?.uncertainties[0]?.text ? { understandingNotice: pkg.continuation.uncertainties[0].text } : {}),
       state: {

@@ -330,7 +330,7 @@ function registerIpc(): void {
   ipcMain.handle("pet:get-view", async () => ({
     ...await requireService().getPetView(),
     distillation: await distillation.call("activity"),
-    recordingUploadNoticeRequired: distillation.service.recordings.noticeRequired(),
+    recordingUploadNoticeRequired: distillation.service.recordings.noticeRequired() || requireService().preparationNoticeRequired(),
     edge: petPosition?.edge ?? null,
     placement: petPosition?.placement,
   }));
@@ -428,9 +428,6 @@ function registerIpc(): void {
     "work:cancel-handoff",
     (_event, workId: string, confirmation: string) =>
       requireService().cancelHandoff(workId, confirmation),
-  );
-  ipcMain.handle("work:organize", (_event, workId: string, consentVersion: string) =>
-    requireService().organizeWork(workId, consentVersion),
   );
   ipcMain.handle("work:handoff", (_event, workId: string, executorId: string) =>
     requireService().handoff(workId, executorId),

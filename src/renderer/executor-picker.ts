@@ -1,13 +1,15 @@
-export async function chooseExecutor(): Promise<{ executorId: string; organize: boolean } | null> {
+import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
+
+export async function chooseExecutor(): Promise<string | null> {
   const dialog = document.createElement("dialog");
   dialog.innerHTML =
-    '<form method="dialog" class="dialog-card"><h2 id="executor-picker-title">交接给执行者</h2><label class="checkbox-row"><input type="checkbox" name="organize">先整理当前记录</label><p class="field-help">勾选后将本次可见记录、要求与材料版本发给 Worket 服务；不上传附件正文，不授权后续自动上传。</p><div class="executor-options"></div><p class="notice" hidden></p><div class="dialog-actions"><button class="secondary" value="cancel">取消</button></div></form>';
+    '<form method="dialog" class="dialog-card"><h2 id="executor-picker-title">交接给执行者</h2><p class="field-help" data-preparation-notice hidden></p><div class="executor-options"></div><p class="notice" hidden></p><div class="dialog-actions"><button class="secondary" value="cancel">取消</button></div></form>';
   dialog.setAttribute("aria-labelledby", "executor-picker-title");
   document.body.append(dialog);
   const list = dialog.querySelector(".executor-options")!;
   const message = dialog.querySelector<HTMLParagraphElement>(".notice")!;
-  let selected: { executorId: string; organize: boolean } | null = null;
-  const result = new Promise<{ executorId: string; organize: boolean } | null>((resolve) =>
+  let selected: string | null = null;
+  const result = new Promise<string | null>((resolve) =>
     dialog.addEventListener(
       "close",
       () => {
@@ -19,7 +21,10 @@ export async function chooseExecutor(): Promise<{ executorId: string; organize: 
   );
   dialog.showModal();
   try {
-    const executors = await window.workpet.listExecutors();
+    const [executors, disclosure] = await Promise.all([window.workpet.listExecutors(), window.workpet.distillation("recordingNotice")]);
+    const notice = dialog.querySelector<HTMLElement>("[data-preparation-notice]")!;
+    notice.textContent = WORK_PREPARATION_NOTICE;
+    notice.hidden = disclosure.preparationRequired === false;
     if (!dialog.open) return result;
     for (const executor of executors) {
       const button = document.createElement("button");
@@ -28,7 +33,7 @@ export async function chooseExecutor(): Promise<{ executorId: string; organize: 
       button.textContent = executor.name;
       button.disabled = !executor.available || !executor.canDeliver;
       button.addEventListener("click", () => {
-        selected = { executorId: executor.id, organize: dialog.querySelector<HTMLInputElement>('[name="organize"]')!.checked };
+        selected = executor.id;
         dialog.close();
       });
       list.append(button);

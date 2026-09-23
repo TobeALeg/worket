@@ -1,4 +1,3 @@
-import { CONTINUATION_CONSENT } from "../contracts/continuation-consent.js";
 import { chooseExecutor } from "./executor-picker.js";
 import {
   setupDistillation,
@@ -143,7 +142,8 @@ function renderDetail(work: WorkDetailView | null): void {
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
     ${work.currentStageTask ? `<p class="detail-meta" data-current-stage>${escapeHtml(work.currentStageTask)}</p>` : ""}
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作">更多</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
-    ${work.status === "OPEN" ? `<div class="detail-actions"><span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? '')}">${work.understandingStatus === 'RESOLVED' ? '当前阶段已整理' : work.understandingStatus === 'STALE' ? '记录有更新，待整理' : work.understandingStatus === 'PARTIAL' ? '阶段仍有缺口' : '来源线索 · 待整理'}</span><button data-action="organize">整理</button></div><div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
+    ${work.status !== "OPEN" && recordingNoticeRequired ? `<p class="field-help">${escapeHtml(RECORDING_UPLOAD_NOTICE)}</p>` : ""}
+    ${work.status === "OPEN" ? `<div class="detail-actions"><span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? '')}">${work.preparationStatus === 'RUNNING' ? '正在更新工作状态…' : work.preparationStatus === 'QUEUED' ? '工作状态待更新' : work.understandingStatus === 'RESOLVED' ? '工作状态已更新' : work.understandingStatus === 'PARTIAL' ? '工作状态仍有缺口' : escapeHtml(work.understandingNotice ?? '交接时自动准备工作状态')}</span></div><div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
     <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
     ${Object.entries(WORK_STATE_LABELS)
       .map(([field, label]) =>
@@ -250,14 +250,6 @@ async function performAction(workId: string, action: string, button: HTMLButtonE
 
 async function runAction(workId: string, action: string): Promise<void> {
   const selected = dashboard.selectedWork;
-  if (action === 'organize') {
-    if (!confirm('将这项工作的当前可见记录、要求与材料版本发送给 Worket 服务整理？不上传附件正文，也不会自动上传后续对话。')) return;
-    notice.hidden = false;
-    notice.textContent = '正在整理当前阶段与有效要求…';
-    dashboard = await window.workpet.organizeWork(workId, CONTINUATION_CONSENT);
-    render();
-    return;
-  }
   if (action === "cancel-handoff") {
     if (
       !confirm(
@@ -275,15 +267,11 @@ async function runAction(workId: string, action: string): Promise<void> {
     return;
   }
   if (action === "handoff") {
-    const choice = await chooseExecutor();
-    if (!choice) return;
-    const { executorId } = choice;
+    const executorId = await chooseExecutor();
+    if (!executorId) return;
     try {
-      let organizationNotice: string | null = null;
-      if (choice.organize) {
-        dashboard = await window.workpet.organizeWork(workId, CONTINUATION_CONSENT);
-        if (dashboard.selectedWork?.understandingStatus !== 'RESOLVED') organizationNotice = dashboard.notice;
-      }
+      notice.hidden = false;
+      notice.textContent = '正在准备交接…';
       dashboard =
         selected?.reusableDefinitionId &&
         !selected.bindings.some((binding) => binding.status === "ACTIVE")
@@ -293,7 +281,6 @@ async function runAction(workId: string, action: string): Promise<void> {
               commandId: crypto.randomUUID(),
             })
           : await window.workpet.handoff(workId, executorId);
-      if (organizationNotice) dashboard.notice = `${organizationNotice} ${dashboard.notice ?? ''}`;
       render();
     } catch (error) {
       notice.hidden = false;

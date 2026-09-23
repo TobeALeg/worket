@@ -73,7 +73,7 @@ export class DistillationDesktop {
       case "improvementSamples":
         return this.service.improvement.list();
       case "recordingNotice":
-        return { required: this.service.recordings.noticeRequired() };
+        return { required: this.service.recordings.noticeRequired() || this.app.preparationNoticeRequired(), preparationRequired: this.app.preparationNoticeRequired() };
       case "improvementPreference":
         return { enabled: this.service.improvement.enabled() };
       case "setImprovementPreference":

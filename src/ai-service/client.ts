@@ -101,10 +101,10 @@ export class WorketAIClient implements AIClient {
     const identity = this.improvementIdentity();
     const authorize = () => {
       beforeSend();
-      ensure(this.improvementIdentity() === identity, 'AUTH_CHANGED', '服务身份已改变，请重新整理');
+      ensure(this.improvementIdentity() === identity, 'AUTH_CHANGED', '服务身份已改变，请重新交接');
     };
     const capabilities = await this.request('/v1/capabilities', 'GET', undefined, undefined, authorize);
-    ensure(capabilities.continuationSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '后台尚不支持工作整理，请升级后台');
+    ensure(capabilities.continuationSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '服务暂不支持自动准备工作状态，需要升级后台');
     const key = randomUUID();
     let job = await this.request('/v1/continuations', 'POST', request, key, authorize);
     const path = `/v1/continuations/${encodeURIComponent(job.requestId)}`;

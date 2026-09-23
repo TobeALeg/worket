@@ -75,7 +75,7 @@ test("record selection uploads messages over HTTP without distillation; durable 
     // A pre-existing local work remains unregistered, including after upgrade/restart.
     app.core().createWork({ definition: { key: "old", name: "old", version: 1 }, executor: { type: "AGENT", name: "Fixture" }, environment: { type: "fixture", name: "Fixture" }, source: { adapter: "fixture", conversationId: "old" } });
     desktop!.service.collectFeedback(); assert.equal(desktop!.service.improvement.list().length, 0);
-    assert.deepEqual(await desktop!.call("recordingNotice"), { required: true });
+    assert.deepEqual(await desktop!.call("recordingNotice"), { required: true, preparationRequired: true });
     desktop!.service.recordings.start("missing-work");
     assert.equal(desktop!.service.recordings.noticeRequired(), true);
     desktop!.service.improvement.setEnabled(false);

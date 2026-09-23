@@ -1,7 +1,6 @@
 import { ensure, object, string, array } from './definition.js';
 import type { ContinuationGeneratorInput } from '../handoff/continuation.js';
 
-export { CONTINUATION_CONSENT } from './continuation-consent.js';
 export const CONTINUATION_MAX_CHARS = 80000;
 export type ContinuationRequest = { schemaVersion: 1; input: ContinuationGeneratorInput };
 

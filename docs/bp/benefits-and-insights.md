@@ -177,6 +177,14 @@ Worket 的潜在差异不只是“用模型生成工作摘要”，而是把来�
 
 ## B003 — 从理解用户意图到提炼可复用的工作约定
 
+### 2026-09-23：工作理解应随用户动作在后台维护
+
+用户观点：如果“整理”是交接的前置步骤，就应在点击交接或记录后自动开始，属于后台处理，不应要求用户另点按钮。讨论起因：此前 `AppService.createWorkFromConversation` 只生成本地线索，`organizeWork` 和“先整理当前记录”复选框形成额外步骤，见 [应用入口](../../src/app/app-service.ts) 与 [交接选择器](../../src/renderer/executor-picker.ts)。
+
+助手设计判断：更新当前工作理解也是查看进度的基础，应由记录触发后台准备、来源变化触发失效与合批更新、交接触发最新性检查；已有有效结果直接复用。在首次开启时明确模型处理的记录范围，随后在该范围内自动处理，不要求用户重复启动内部步骤。沉淀仍是形成未来可复用定义的用户决策，继续显式审阅。
+
+潜在价值：用户只表达记录、交接和沉淀意图，产品负责准备可接续状态。展示场景为点击记录后继续工作，稍后选择执行者即可交接；失败时只暴露需要处理的问题。实现状态：用户随后明确“直接改了”，源码已接入记录后台准备、变化合批、交接等待与复用，移除独立整理入口；既有记录不因升级自动启用上传。验证和本机安装状态见 [自动准备验收](../acceptance/automatic-work-preparation.md)。生产服务尚待升级；真实等待时间、长期调用成本和减操作收益仍待验证。无新增竞品事实。
+
 ### 2026-09-23：将语义判断集中为可评估能力（Jev 探索）
 
 用户提出：提取和传递包含很多中间判断，接入 Typesafe Jev 会是什么样。核实日期 2026-09-23：官方把 Jev 定位为 state + typed questions 的结构化判断模型，不生成约定正文；其引用检查范例先做程序原文匹配，再检查语义支持。当前版本官方提示中文/CJK 较弱，confidence 不能直接当正确率。来源：[定位](https://docs.typesafe.ai/introduction/coding-agents)、[引用检查](https://docs.typesafe.ai/cookbooks/citation_check)、[语言支持](https://docs.typesafe.ai/models#language-support)、[Confidence](https://docs.typesafe.ai/confidence)。

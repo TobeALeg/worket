@@ -80,6 +80,7 @@ try {
   panel.on('pageerror', error => report.errors.push(error.message));
   panel.on('dialog', dialog => dialog.accept());
   await app.evaluate(({ BrowserWindow }) => { const window = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')); window.setSize(448, 760); window.show(); });
+  await app.evaluate(({ shell }) => { globalThis.worketQaDeliveries = []; shell.openExternal = async url => { globalThis.worketQaDeliveries.push(url); }; });
   await panel.evaluate(({ url, token }) => window.workpet.configureWorketService({ url, token }), { url: `http://127.0.0.1:${service.server.address().port}`, token });
   const bridge = JSON.parse(readFileSync(join(directory, 'bridge.json'), 'utf8'));
   const context = async (id, version) => {
@@ -94,16 +95,21 @@ try {
     await panel.locator(`[data-work-id="${scenario.id}"]`).click();
     const before = await context(scenario.id, 2);
     assert.equal(provider.calls, replayRoot ? 0 : modelIndex * 4, 'passive MCP must not upload');
-    await panel.locator('[data-action="organize"]').click();
+    assert.equal(await panel.locator('[data-action="organize"]').count(), 0);
+    await panel.locator('[data-action="handoff"]').click();
+    assert.equal(await panel.locator('dialog[open] input[type="checkbox"]').count(), 0);
+    await panel.locator('dialog[open] .executor-options button').filter({ hasText: /^Codex$/ }).click();
     let view;
     const deadline = Date.now() + 220000;
     do {
       view = await panel.evaluate(id => window.workpet.getDashboard(id), scenario.id);
       const job = service.db.prepare("SELECT status FROM requests ORDER BY created DESC LIMIT 1").get();
-      if (view.selectedWork?.understandingStatus === 'RESOLVED' || job?.status === 'FAILED' ||
-          job?.status === 'ACKNOWLEDGED' && /整理|阶段/.test(view.notice ?? '') && await panel.locator('[data-action="organize"]').isEnabled()) break;
+      if (view.selectedWork?.captureStatus === 'waiting' || job?.status === 'FAILED') break;
       await new Promise(resolve => setTimeout(resolve, 500));
     } while (Date.now() < deadline);
+    const deliveries = await app.evaluate(() => globalThis.worketQaDeliveries);
+    assert.equal(deliveries.length, modelIndex + 1, 'handoff opens executor only after preparation');
+    assert.match(decodeURIComponent(deliveries.at(-1)), /context_version=3|context_version: 3|context_version.*3/u);
     result.status = view.selectedWork?.understandingStatus;
     result.notice = view.notice;
     writeFileSync(join(output, `${scenario.name}-dashboard.json`), JSON.stringify(view, null, 2));
