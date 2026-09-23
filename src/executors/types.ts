@@ -26,6 +26,7 @@ export interface DeliveryRequest {
   deliveryId: string;
   title: string;
   purpose: "START" | "CONTINUE";
+  /** Final application-owned bootstrap. Adapters transport it without rewriting. */
   prompt: string;
   cwd?: string;
 }

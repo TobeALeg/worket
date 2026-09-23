@@ -46,6 +46,7 @@ export function buildHandoffContextV2(work: WorkSnapshot, handoff: HandoffPackag
         const value = { ...handoff.workPackage! };
         delete (value as Partial<WorkPackage>).state;
         delete (value as Partial<WorkPackage>).nextStep;
+        delete (value as Partial<WorkPackage>).continuation;
         return { ...value, packageVersion: 2 as const };
       })()
     : undefined;
@@ -54,15 +55,15 @@ export function buildHandoffContextV2(work: WorkSnapshot, handoff: HandoffPackag
     workId: handoff.workInstanceId,
     delivery: { id: handoff.id, generatedAt: handoff.generatedAt, definition: handoff.workDefinition },
     goal: {
-      objective: work.state.objective,
-      successCriteria: work.state.successCriteria,
-      constraints: work.state.constraints,
+      objective: handoff.state.objective,
+      successCriteria: handoff.state.successCriteria,
+      constraints: handoff.state.constraints,
     },
     position: {
       status: work.instance.status,
       checkpoint: null,
-      completedActions: work.state.completedActions,
-      pendingActions: work.state.pendingActions,
+      completedActions: handoff.state.completedActions,
+      pendingActions: handoff.state.pendingActions,
       note: "当前断点未被结构化记录；已完成项和待办项是记录，不代表已独立核验。",
     },
     reusableWork: {
@@ -70,14 +71,14 @@ export function buildHandoffContextV2(work: WorkSnapshot, handoff: HandoffPackag
       sourceArchiveSummary: handoff.sourceArchiveSummary,
     },
     conditions: {
-      facts: work.state.facts.filter(item => item.origin === "USER_STATED" || item.origin === "USER_EDITED"),
-      deferredFactCount: work.state.facts.filter(item => item.origin !== "USER_STATED" && item.origin !== "USER_EDITED").length,
+      facts: handoff.state.facts.filter(item => item.origin === "USER_STATED" || item.origin === "USER_EDITED"),
+      deferredFactCount: handoff.state.facts.filter(item => item.origin !== "USER_STATED" && item.origin !== "USER_EDITED").length,
       note: "主包保留用户陈述或编辑的事实；其他来源不明、提议或推断事实仍可按来源读取，不据此判断其无效。",
-      decisions: work.state.decisions,
+      decisions: handoff.state.decisions,
     },
     firstAction: {
-      candidateActionId: work.state.pendingActions[0]?.id ?? null,
-      note: work.state.pendingActions.length
+      candidateActionId: handoff.state.pendingActions[0]?.id ?? null,
+      note: handoff.state.pendingActions.length
         ? "这是记录中的候选动作，接手者应先对照证据确认仍适用。"
         : "没有记录首个动作；依据目标和证据选择，不推断缺失状态。",
     },
@@ -124,6 +125,7 @@ export function buildHandoffContextV3(work: WorkSnapshot, handoff: HandoffPackag
         const value = { ...handoff.workPackage! };
         delete (value as Partial<WorkPackage>).state;
         delete (value as Partial<WorkPackage>).nextStep;
+        delete (value as Partial<WorkPackage>).continuation;
         return { ...value, packageVersion: 3 as const };
       })()
     : undefined;

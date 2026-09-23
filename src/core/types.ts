@@ -116,6 +116,7 @@ export type ArtifactRefInput = Omit<
 > & { episodeId?: string | null };
 
 export type SourceEventKind =
+  | "work.acceptance"
   | "work.definition_applied"
   | "work.input_provided"
   | "conversation.title"

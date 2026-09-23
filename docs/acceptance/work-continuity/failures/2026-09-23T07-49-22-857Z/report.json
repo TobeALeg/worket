@@ -1,0 +1,21 @@
+{
+  "run": "2026-09-23T07-49-22-857Z",
+  "output": "/Users/dandi/YanGuan/output/work-continuity/2026-09-23T07-49-22-857Z",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-continuity-ECgFiJ",
+  "synthetic": true,
+  "humanAcceptance": false,
+  "packaged": false,
+  "replay": null,
+  "maxCalls": 12,
+  "scenarios": [
+    {
+      "name": "format-replacement",
+      "comparisons": {}
+    }
+  ],
+  "errors": [],
+  "status": "FAILED",
+  "error": "Error: no such column: created_at\n    at file:///Users/dandi/YanGuan/scripts/qa-work-continuity.mjs:102:30",
+  "calls": 1,
+  "usage": []
+}

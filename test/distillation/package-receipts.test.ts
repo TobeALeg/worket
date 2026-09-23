@@ -26,14 +26,14 @@ test('each delivery requires its own read; current read before Hook survives bin
   const f = setup(); let closed = false;
   try {
     const first = await f.begin(); assert.ok(first); assert.equal(f.status(), 'waiting');
-    assert.equal(JSON.parse(f.read().result.content[0].text).deliveryReceipt.acknowledged, false);
+    assert.equal(JSON.parse((await f.read()).result.content[0].text).deliveryReceipt.acknowledged, false);
     assert.equal(f.core.getWork(f.work.instance.id)!.packageReadAt, null);
-    assert.equal(JSON.parse(f.read(first).result.content[0].text).deliveryReceipt.acknowledged, true);
+    assert.equal(JSON.parse((await f.read(first)).result.content[0].text).deliveryReceipt.acknowledged, true);
     assert.equal(f.status(), 'waiting'); await f.bind(first, 'first-session'); assert.equal(f.status(), 'recording');
     const second = await f.begin(); assert.notEqual(first, second); await f.bind(second, 'second-session');
     assert.equal(f.status(), 'waiting', 'previous read cannot qualify a new target');
-    assert.match(f.read(first).error.message, /DELIVERY_MISMATCH/); f.read(); assert.equal(f.status(), 'waiting');
-    f.read(second); assert.equal(f.status(), 'recording');
+    assert.match((await f.read(first)).error.message, /DELIVERY_MISMATCH/); await f.read(); assert.equal(f.status(), 'waiting');
+    await f.read(second); assert.equal(f.status(), 'recording');
     assert.notEqual(f.core.getLatestHandoffPackage(f.work.instance.id)!.id, second, 'fresh context snapshots do not replace delivery identity');
     f.app.close(); closed = true; const reopened = f.open(); try { assert.equal(reopened.dashboard(f.work.instance.id).selectedWork!.captureStatus, 'recording'); } finally { reopened.close(); }
   } finally { if (!closed) f.app.close(); }
@@ -41,10 +41,10 @@ test('each delivery requires its own read; current read before Hook survives bin
 test('cancel and failed launch restore the same conversation proof without lending it to a new delivery', async () => {
   const f = setup();
   try {
-    const first = await f.begin(); await f.bind(first, 'original'); f.read(first);
+    const first = await f.begin(); await f.bind(first, 'original'); await f.read(first);
     const cancelled = await f.begin(); f.app.cancelHandoff(f.work.instance.id, '已确认未接手');
     assert.equal(f.status(), 'recording'); assert.equal(f.core.getWork(f.work.instance.id)!.activeBinding!.conversationId, 'original');
-    assert.match(f.read(cancelled).error.message, /DELIVERY_MISMATCH/);
+    assert.match((await f.read(cancelled)).error.message, /DELIVERY_MISMATCH/);
     f.fail(); await assert.rejects(f.begin(), /LAUNCH_FAILED/);
     assert.equal(f.status(), 'recording'); assert.equal(f.core.getWork(f.work.instance.id)!.packageDeliveryId, first);
     f.core.deleteWorkPermanently(f.work.instance.id, { confirmation: f.work.instance.id });
@@ -63,7 +63,7 @@ test('pre-upgrade pending delivery restores correlation but never trusts a globa
     try {
       const work = app.core().getWork(f.work.instance.id)!;
       assert.equal(work.packageDeliveryId, deliveryId); assert.equal(work.packageReadAt, null);
-      const response: any = new WorkPetMcpHandler(app.core()).handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id, delivery_id: deliveryId } } });
+      const response: any = await new WorkPetMcpHandler(app.core()).handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id, delivery_id: deliveryId } } });
       assert.ok(!response.error); assert.ok(app.core().getWork(work.instance.id)!.packageReadAt);
       assert.equal(app.dashboard(work.instance.id).selectedWork!.captureStatus, 'waiting', 'Hook still required');
     } finally { app.close(); }

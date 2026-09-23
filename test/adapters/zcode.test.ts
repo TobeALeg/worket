@@ -69,8 +69,9 @@ test("ZCode config preserves existing MCP and hooks, is idempotent and respects 
 test("manual delivery has both correlation markers and never claims a bound conversation", async () => {
   let text = "", opened = "";
   const receipt = await deliverViaClipboard({ openApplication: async id => { opened = id; }, writeClipboard: value => { text = value; } }, "dev.zcode.app", "ZCode", {
-    workId: "work-1", deliveryId: "delivery-1", title: "Test", purpose: "CONTINUE", prompt: "full package not for clipboard",
+    workId: "work-1", deliveryId: "delivery-1", title: "Test", purpose: "CONTINUE", prompt: "[WORKPET:work-1]\n[DELIVERY:delivery-1]\nget_work_context context_version=3",
   });
+  assert.match(text, /context_version=3/);
   assert.equal(opened, "dev.zcode.app"); assert.match(text, /\[WORKPET:work-1\]\n\[DELIVERY:delivery-1\]/);
   assert.equal(receipt.conversationId, undefined); assert.match(receipt.guidance!, /新建聊天/);
 });

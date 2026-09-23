@@ -1,0 +1,37 @@
+{
+  "run": "2026-09-23T07-49-53-632Z",
+  "output": "/Users/dandi/YanGuan/output/work-continuity/2026-09-23T07-49-53-632Z",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-continuity-urMBEq",
+  "synthetic": true,
+  "humanAcceptance": false,
+  "packaged": false,
+  "replay": null,
+  "maxCalls": 12,
+  "scenarios": [
+    {
+      "name": "format-replacement",
+      "comparisons": {},
+      "status": "UNRESOLVED",
+      "notice": "阶段整理结果未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。"
+    }
+  ],
+  "errors": [],
+  "status": "FAILED",
+  "error": "AssertionError [ERR_ASSERTION]: {\"name\":\"format-replacement\",\"comparisons\":{},\"status\":\"UNRESOLVED\",\"notice\":\"阶段整理结果未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。\"}\n+ actual - expected\n\n+ 'UNRESOLVED'\n- 'RESOLVED'\n\n    at file:///Users/dandi/YanGuan/scripts/qa-work-continuity.mjs:110:12",
+  "calls": 1,
+  "usage": [
+    {
+      "prompt_tokens": 1591,
+      "completion_tokens": 2503,
+      "total_tokens": 4094,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1383
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 1591
+    }
+  ]
+}

@@ -1,5 +1,19 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 共享证据、托管整理与状态投影（2026-09-23）
+
+`workEvidence` 统一取当前来源版本，并排除内部推理及 Worket 自己的 MCP 读取审计；本地线索、阶段整理、沉淀和持续比较共用此入口。`contracts/evidence` 统一覆盖集合、原文摘录与用户证据角色判断。外部消息 ID 在整理输入中映射到档案事件 ID，人工编辑/用户确认条目与普通关键词线索保持区别。
+
+`AppService.organizeWork → WorketAIClient.continuation → /v1/continuations → ContinuationService` 通过同一托管连接处理。提交前和轮询时核对工作状态、输入依据与服务身份；默认读取/MCP 的 generator 为空，不能自行取得上传权限。服务器与沉淀共用身份、额度、幂等、取消、结果短期内存保留和 ack；每次整理只调用一次模型，数据库仅保留操作元数据。requests 表新增 operation 列，旧行默认 definition；回滚旧代码须同时考虑数据库备份。
+
+整理候选以来源 ID/摘录、覆盖、范围、替代、依赖与材料版本校验，保存到不可变 HandoffPackage.continuation。`buildWorkPackage → continuationWorkState` 是界面、导出和 MCP 的共同投影；原始八字段仍作为来源线索保留。basis 包含来源、状态、全部固定材料、技能、参考与成果版本，变化即失效；自己的读取审计不使状态失效。超过 80,000 JSON 字符或失败返回 PARTIAL/UNRESOLVED，不静默裁剪。
+
+`DefinitionRepository.accept` 同事务写入 work.acceptance 事件及既有 review_events，记录实际验收的交付物 ID/hash 和标准结果。接续推导当前实例，定义提取跨实例复用；两者共享证据基础，不共享一个泛化摘要。桌面不再通过供应商环境变量自动分析对话，评测用的独立状态提取工具仍保留。验收见 [工作接续](acceptance/work-continuity.md)。
+
+## 交接内容的唯一装配点（2026-09-23）
+
+`AppService.handoff → buildWorkBootstrap → DeliveryRequest.prompt` 是交付内容的唯一装配路径。Codex/WorkBuddy 仅对该文本进行 URL 编码，通用剪贴板直接传递该文本，不能重新生成 prompt 而丢失上下文版本。集成测试通过真实 AppService 与四个默认适配器验证，系统打开操作使用替身。
+
 ## 规范修订的审阅范围（2026-09-23）
 
 adoptDocumentRevision 使用 resolveReviewField/sameAddress 按原始候选身份筛选已有 resolutions，仅清除当前条款及所在栏位整体的决定。repository.update 原有依赖失效逻辑继续生效；快照与引用存储流程未改。见 [规格](specs/document-revision-review.md) 与 [验收](acceptance/document-revision-review.md)。

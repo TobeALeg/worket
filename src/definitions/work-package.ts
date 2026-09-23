@@ -1,3 +1,6 @@
+import { continuationBasisMatches, type ContinuationSnapshot } from '../handoff/continuation.js';
+import { continuationWorkState } from '../handoff/work-state.js';
+import { packageMaterialVersions } from '../handoff/material-versions.js';
 import {skillEnvironment} from './skill-environment.js';
 import { sourceAvailabilityNotice, assertSourcePresenceReady } from "../core/source-revisions.js";
 import { dirname } from 'node:path';
@@ -8,6 +11,8 @@ import type { Definition, DefinitionRepository, Inputs } from "./repository.js";
 import type { Material } from "./storage.js";
 export type WorkPackage = {
   packageVersion: 1;
+  continuation?: ContinuationSnapshot;
+  stateStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
   purpose: "START" | "CONTINUE";
   workId: string;
   generatedAt: string;
@@ -29,6 +34,7 @@ export type WorkPackage = {
 export function buildWorkPackage(
   work: WorkSnapshot,
   repository: DefinitionRepository,
+  prepared?: ContinuationSnapshot,
 ): WorkPackage {
   assertSourcePresenceReady(work.sourceArchive);
   const definition =
@@ -59,7 +65,7 @@ export function buildWorkPackage(
   if (definition && resolved) { definition.content = resolved.content; definition.materials = definition.materials.filter(m => !m.role.startsWith("document:") && !m.bundle); }
   if (definition) repository.instanceFiles.verify(work.instance.id, definition, binding);
   const sourceNotice = sourceAvailabilityNotice(work.sourceArchive);
-  return {
+  const pkg: WorkPackage = {
     packageVersion: 1,
     purpose:
       definition &&
@@ -83,6 +89,18 @@ export function buildWorkPackage(
     fileAccess:
       "规范条款已按固定版本展开，下列要求是本次有效约定。本机二进制资料仍须另行传递。完成须由用户关联本次交付物并逐项验收。",
   };
+  const candidate = prepared ?? work.handoffPackages.findLast(value => value.continuation)?.continuation;
+  const current = candidate && continuationBasisMatches(work, packageMaterialVersions(pkg), candidate.basis);
+  pkg.stateStatus = candidate ? (current ? candidate.resolution : "STALE") : "UNRESOLVED";
+  if (current) {
+    pkg.continuation = candidate;
+    if (candidate.resolution === "RESOLVED") {
+      pkg.state = continuationWorkState(work, candidate);
+      pkg.nextStep = pkg.state.pendingActions[0]?.text ?? null;
+      if (definition) pkg.fileAccess += " 定义是固定的复用基准；接续快照中有明确来源和适用范围的本次例外仅对本次优先，不改变定义或下次默认要求。范围不明的冲突须核对原话。";
+    }
+  }
+  return pkg;
 }
 const escapeMarkdown = (value: string) =>
   value.replace(/[\\`*_{}\[\]<>()#!|]/g, "\\$&");
@@ -91,6 +109,7 @@ export function packageMarkdown(value: WorkPackage): string {
     `# ${escapeMarkdown(value.definition?.content.name ?? value.state.objective[0]?.text ?? "工作")}`,
     `意图：${value.purpose} · 工作 ID：${value.workId}`,
     value.fileAccess,
+    value.stateStatus === "RESOLVED" ? "当前状态来自同一份已校验接续快照；完成声明不等于用户验收。" : "当前状态仅为来源线索，尚未完成当前阶段核对；不要把历史待办顺序当作执行顺序。",
     ...(value.sourceNotice ? [`来源变化：${value.sourceNotice}`] : []),
   ];
   const content = value.definition?.content;

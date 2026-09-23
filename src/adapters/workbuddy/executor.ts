@@ -4,7 +4,6 @@ import { buildWorkBuddyDeepLink } from "./deep-link.js";
 import { installWorkBuddyUserIntegration } from "./install.js";
 import { conversationPage } from "../../executors/registry.js";
 import { resolveThreadFromWindowTitle } from "../../executors/conversation-resolution.js";
-import { buildWorkBootstrap } from "../../executors/work-bootstrap.js";
 import type { WorkBuddyLauncher } from "./launcher.js";
 import type {
   ExecutorAdapter,
@@ -37,17 +36,7 @@ export function createWorkBuddyExecutor(options: {
     },
     async deliver(request) {
       await options.launcher.openNewConversation(
-        buildWorkBuddyDeepLink(
-          buildWorkBootstrap({
-            workId: request.workId,
-            deliveryId: request.deliveryId,
-            purpose: request.purpose,
-            title: request.title,
-            currentTask: "请读取交接主包，确认目标、输入和当前状态。",
-            nextStep: "核对候选动作后从当前断点继续，并将结果交给用户验收。",
-            artifactPaths: [],
-          }),
-        ),
+        buildWorkBuddyDeepLink(request.prompt),
       );
       return {};
     },

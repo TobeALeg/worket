@@ -546,6 +546,12 @@ test("A20 acceptance requires current artifacts and all checks pass; needs revis
     commandId: cid(),
   });
   assert.equal(f.core.getWork(w.instance.id)!.instance.status, "COMPLETED");
+  const evidence = f.core.getWork(w.instance.id)!.sourceArchive.filter(event => event.kind === 'work.acceptance');
+  assert.equal(evidence.length, 2);
+  assert.equal(evidence[1]!.environmentType, 'WORKPET_LOCAL');
+  assert.deepEqual(JSON.parse(evidence[1]!.content!).artifacts, [{ id: a.id, sha256: a.sha256 }]);
+  assert.equal(JSON.parse(evidence[0]!.content!).completed, false);
+  assert.equal(JSON.parse(evidence[1]!.content!).completed, true);
   f.core.close();
 });
 test("A21/A22 restart retains definitions, inputs and archive with migration backup", async () => {
@@ -641,7 +647,7 @@ test("A19 actual Hook binding and MCP read evidence gate reusable dispatch; laun
     "waiting",
   );
   const mcp = new WorkPetMcpHandler(core);
-  const response: any = mcp.handle({
+  const response: any = await mcp.handle({
     id: 1,
     method: "tools/call",
     params: {
@@ -808,7 +814,7 @@ test('uncorrelated MCP inspection never confirms a pending dispatch', async () =
  const f=await setup(), definition=publish(f,await review(f)), work=create(f,definition);
  f.core.definitions.db.prepare("INSERT INTO pending_dispatches VALUES (?,?,'WAITING',NULL)").run(work.instance.id,cid());
  const {WorkPetMcpHandler}=await import('../../dist/bridge/mcp-handler.js');
- const response: any = new WorkPetMcpHandler(f.core).handle({id:1,method:'tools/call',params:{name:'get_work_context',arguments:{work_id:work.instance.id}}});
+ const response: any = await new WorkPetMcpHandler(f.core).handle({id:1,method:'tools/call',params:{name:'get_work_context',arguments:{work_id:work.instance.id}}});
  assert.equal(JSON.parse(response.result.content[0].text).deliveryReceipt.acknowledged,false);
  assert.equal(f.core.getWork(work.instance.id)!.packageReadAt,null); assert.equal(f.core.getWork(work.instance.id)!.activeBinding,null); f.core.close();
 });
@@ -826,7 +832,7 @@ test("MCP current context includes later state and artifacts without rewriting o
     f.core.applyExtractorPatch(work.instance.id, { pendingActions: [{ id: cid(), text: '等待核验新版报告', origin: 'USER_STATED', sourceMessageIds: [work.sourceArchive[1].id] }] });
     f.core.addArtifactRef(work.instance.id, { path: join(f.directory, 'report.md'), filename: 'report.md', role: 'OUTPUT', mimeType: 'text/markdown', size: 0, sha256: '0'.repeat(64), lastModifiedAt: new Date().toISOString(), availability: 'MISSING' });
     const { WorkPetMcpHandler } = await import('../../dist/bridge/mcp-handler.js');
-    const response: any = new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
+    const response: any = await new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
     assert.ok(!response.error);
     const current = JSON.parse(response.result.content[0].text);
     assert.equal(current.nextStep, '等待核验新版报告');
@@ -850,7 +856,7 @@ test("MCP refuses a cached package after material loss and does not acknowledge 
     f.core.definitions.db.prepare("INSERT INTO pending_dispatches VALUES (?,?,'WAITING',NULL)").run(work.instance.id, cid());
     unlinkSync(definition.materials[0].path);
     const { WorkPetMcpHandler } = await import('../../dist/bridge/mcp-handler.js');
-    const response: any = new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
+    const response: any = await new WorkPetMcpHandler(f.core).handle({ id: cid(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id } } });
     assert.match(response.error?.message ?? '', /MATERIAL_MISSING/);
     assert.equal(f.core.getWork(work.instance.id)!.packageReadAt, null);
     assert.equal(f.core.getLatestHandoffPackage(work.instance.id)!.id, previous.id);

@@ -1,0 +1,37 @@
+{
+  "run": "2026-09-23T07-56-26-363Z",
+  "output": "/Users/dandi/YanGuan/output/work-continuity/2026-09-23T07-56-26-363Z",
+  "directory": "/var/folders/x1/62f5_dvx4kd_kmzx70vcf_rc0000gn/T/worket-continuity-2kYqZE",
+  "synthetic": true,
+  "humanAcceptance": false,
+  "packaged": true,
+  "replay": "output/work-continuity/2026-09-23T07-52-49-899Z",
+  "maxCalls": 12,
+  "scenarios": [
+    {
+      "name": "format-replacement",
+      "comparisons": {},
+      "status": "RESOLVED",
+      "notice": "已整理当前阶段、有效要求与下一步。",
+      "resolution": "RESOLVED"
+    },
+    {
+      "name": "stage-continuation",
+      "comparisons": {},
+      "status": "RESOLVED",
+      "notice": "已整理当前阶段、有效要求与下一步。",
+      "resolution": "RESOLVED"
+    },
+    {
+      "name": "instance-exception",
+      "comparisons": {},
+      "status": "RESOLVED",
+      "notice": "已整理当前阶段、有效要求与下一步。",
+      "resolution": "RESOLVED"
+    }
+  ],
+  "errors": [],
+  "status": "PASSED",
+  "calls": 0,
+  "usage": []
+}

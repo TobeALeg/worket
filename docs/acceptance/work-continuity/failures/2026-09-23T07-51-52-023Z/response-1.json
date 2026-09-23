@@ -1,0 +1,233 @@
+{
+  "result": {
+    "coveredSourceEventIds": [
+      "8be2b85c-0d54-4517-b062-008066f846af",
+      "cca46c66-78d9-487a-a170-f5d575fb3cb7",
+      "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+    ],
+    "objective": [
+      {
+        "text": "用户要求导出本月销售报告。",
+        "sourceEventIds": [
+          "8be2b85c-0d54-4517-b062-008066f846af"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "8be2b85c-0d54-4517-b062-008066f846af",
+            "text": "请导出本月销售报告。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ],
+    "currentStageId": "stage-export-sales-report",
+    "currentStageBasis": [
+      {
+        "text": "用户取消 CSV 要求，改为必须交付 PDF，其他要求保持。",
+        "sourceEventIds": [
+          "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+            "text": "取消此前 CSV 要求。现在必须交付 PDF。其他要求保持。"
+          }
+        ],
+        "manualStateIds": []
+      },
+      {
+        "text": "代理仅提出下一步导出 CSV，未提供任何导出已完成的证据。",
+        "sourceEventIds": [
+          "cca46c66-78d9-487a-a170-f5d575fb3cb7"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "cca46c66-78d9-487a-a170-f5d575fb3cb7",
+            "text": "下一步：导出 CSV。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ],
+    "stages": [
+      {
+        "id": "stage-export-sales-report",
+        "task": {
+          "text": "导出本月销售报告，交付格式已由 CSV 变更为 PDF，金额保留人民币。",
+          "sourceEventIds": [
+            "8be2b85c-0d54-4517-b062-008066f846af",
+            "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "8be2b85c-0d54-4517-b062-008066f846af",
+              "text": "请导出本月销售报告。"
+            },
+            {
+              "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+              "text": "现在必须交付 PDF。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "execution": "NOT_STARTED",
+        "completionEvidence": [],
+        "outcomes": [],
+        "dependsOn": [],
+        "remaining": [
+          {
+            "text": "按 PDF 格式交付本月销售报告。",
+            "sourceEventIds": [
+              "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+            ],
+            "excerpts": [
+              {
+                "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+                "text": "现在必须交付 PDF。"
+              }
+            ],
+            "manualStateIds": []
+          },
+          {
+            "text": "导出内容中所有金额保留人民币。",
+            "sourceEventIds": [
+              "8be2b85c-0d54-4517-b062-008066f846af"
+            ],
+            "excerpts": [
+              {
+                "sourceEventId": "8be2b85c-0d54-4517-b062-008066f846af",
+                "text": "所有金额必须保留人民币。"
+              }
+            ],
+            "manualStateIds": []
+          }
+        ],
+        "blockers": []
+      }
+    ],
+    "requirements": [
+      {
+        "id": "req-deliver-csv",
+        "kind": "CONSTRAINT",
+        "claim": {
+          "text": "必须交付 CSV。",
+          "sourceEventIds": [
+            "8be2b85c-0d54-4517-b062-008066f846af"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "8be2b85c-0d54-4517-b062-008066f846af",
+              "text": "必须交付 CSV。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "WORK",
+          "ids": []
+        },
+        "status": "SUPERSEDED",
+        "supersedes": [],
+        "replacementEvidence": [
+          {
+            "text": "用户明确取消此前 CSV 要求，改为必须交付 PDF。",
+            "sourceEventIds": [
+              "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+            ],
+            "excerpts": [
+              {
+                "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+                "text": "取消此前 CSV 要求。"
+              }
+            ],
+            "manualStateIds": []
+          }
+        ]
+      },
+      {
+        "id": "req-deliver-pdf",
+        "kind": "CONSTRAINT",
+        "claim": {
+          "text": "现在必须交付 PDF。",
+          "sourceEventIds": [
+            "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+              "text": "现在必须交付 PDF。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "WORK",
+          "ids": []
+        },
+        "status": "ACTIVE",
+        "supersedes": [
+          "req-deliver-csv"
+        ],
+        "replacementEvidence": []
+      },
+      {
+        "id": "req-currency-rmb",
+        "kind": "CONSTRAINT",
+        "claim": {
+          "text": "所有金额必须保留人民币。",
+          "sourceEventIds": [
+            "8be2b85c-0d54-4517-b062-008066f846af"
+          ],
+          "excerpts": [
+            {
+              "sourceEventId": "8be2b85c-0d54-4517-b062-008066f846af",
+              "text": "所有金额必须保留人民币。"
+            }
+          ],
+          "manualStateIds": []
+        },
+        "scope": {
+          "kind": "WORK",
+          "ids": []
+        },
+        "status": "ACTIVE",
+        "supersedes": [],
+        "replacementEvidence": []
+      }
+    ],
+    "uncertainties": [
+      {
+        "text": "代理在 CSV 要求取消前仅提出导出 CSV 的下一步，缺少其是否已实际执行的证据。",
+        "sourceEventIds": [
+          "cca46c66-78d9-487a-a170-f5d575fb3cb7",
+          "f3d9dcb8-85a1-40d6-80d9-e1a825e46054"
+        ],
+        "excerpts": [
+          {
+            "sourceEventId": "cca46c66-78d9-487a-a170-f5d575fb3cb7",
+            "text": "下一步：导出 CSV。"
+          },
+          {
+            "sourceEventId": "f3d9dcb8-85a1-40d6-80d9-e1a825e46054",
+            "text": "取消此前 CSV 要求。"
+          }
+        ],
+        "manualStateIds": []
+      }
+    ]
+  },
+  "usage": {
+    "prompt_tokens": 2164,
+    "completion_tokens": 2359,
+    "total_tokens": 4523,
+    "prompt_tokens_details": {
+      "cached_tokens": 128
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 893
+    },
+    "prompt_cache_hit_tokens": 128,
+    "prompt_cache_miss_tokens": 2036
+  },
+  "configuredModel": "deepseek-flash"
+}

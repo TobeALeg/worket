@@ -1,3 +1,4 @@
+import { packageMaterialVersions } from "../handoff/material-versions.js";
 import { SourcePresence } from "./source-presence.js";
 import { sourceDelta, unavailableSourceRange } from "./source-delta.js";
 import { currentSourceEvents, sourceIdentity, sourceAvailabilityNotice, hasPendingSourceChecks } from "../core/source-revisions.js";
@@ -23,7 +24,6 @@ import {
   type WorkSnapshot,
 } from "../core/index.js";
 import { LocalRuleExtractor } from "../extractor/local-rule-extractor.js";
-import { OpenAICompatibleExtractor } from "../extractor/openai-compatible-extractor.js";
 import type { WorkStateExtractor } from "../extractor/types.js";
 import { ExecutorRegistry, conversationPage } from "../executors/registry.js";
 import type {
@@ -31,8 +31,10 @@ import type {
   ConversationSummary,
 } from "../executors/types.js";
 import { buildWorkPackage } from "../definitions/work-package.js";
-import { ContinuationService, type ContinuationSnapshot } from "../handoff/continuation.js";
-import { OpenAIContinuationGenerator } from "../handoff/openai-continuation-generator.js";
+import { ContinuationService, continuationBasisMatches, type ContinuationSnapshot } from "../handoff/continuation.js";
+import type { AIClient } from "../ai-service/client.js";
+import { CONTINUATION_CONSENT } from "../contracts/continuation.js";
+import { workEvidence } from "../core/work-evidence.js";
 import { buildWorkBootstrap } from "../executors/work-bootstrap.js";
 import type {
   ConversationPreview,
@@ -72,6 +74,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
 }
 export interface AppServiceOptions {
   databasePath: string;
+  aiClient?: AIClient;
   executors: ExecutorAdapter[];
   foreground?: ForegroundApplicationDetector;
   onRecordingStarted?: (workId: string) => void;
@@ -90,7 +93,6 @@ export class AppService {
   #petState: DashboardView["petState"] = "sleeping";
   #notice: string | null = null;
   #sourceSelection: string | undefined;
-  readonly #cloudExtractionWorkIds = new Set<string>();
   readonly #handoffs = new Set<string>();
   readonly #syncingWorks = new Map<string, Promise<WorkSyncResult>>();
   constructor(readonly options: AppServiceOptions) {
@@ -114,25 +116,11 @@ export class AppService {
         const workPackage = buildWorkPackage(work, this.#core.definitions);
         return {
           work,
-          materials: [
-            ...(workPackage.fixedMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" as const })),
-            ...(workPackage.inputMaterials ?? []).map(material => ({ id: material.path, version: material.hash, availability: "AVAILABLE" as const })),
-          ],
-          ...(this.#core.getLatestHandoffPackage(workId)?.continuation
-            ? { cached: this.#core.getLatestHandoffPackage(workId)!.continuation! }
-            : {}),
+          materials: packageMaterialVersions(workPackage),
+          ...(workPackage.continuation ? { cached: workPackage.continuation } : {}),
         };
       },
-      generator: workId => {
-        if (!this.#cloudExtractionEnabledFor(workId)) return null;
-        const apiKey = process.env.WORKPET_LLM_API_KEY;
-        if (!apiKey) return null;
-        return new OpenAIContinuationGenerator({
-          apiKey,
-          baseUrl: process.env.WORKPET_LLM_BASE_URL ?? "https://api.openai.com/v1",
-          model: process.env.WORKPET_LLM_MODEL ?? "gpt-5.4-mini",
-        });
-      },
+      generator: () => null,
     });
   }
   async listExecutors(): Promise<ExecutorView[]> {
@@ -347,12 +335,9 @@ export class AppService {
     ]).work;
     if (titleEvent) work = this.#applyObjective(work, titleEvent);
     work = await this.#artifacts.attach(work, thread.events);
-    const allowCloud =
-      request.allowCloudExtraction ?? this.#cloudExtractionIsEnabled();
-    if (allowCloud) this.#cloudExtractionWorkIds.add(work.instance.id);
-    const patch = await this.#extractor(allowCloud).extract({
+    const patch = await this.#extractor().extract({
       previousState: work.state,
-      events: work.sourceArchive,
+      events: workEvidence(work.sourceArchive),
     });
     if (titleEvent) patch.objective = [];
     if (
@@ -425,15 +410,11 @@ export class AppService {
         this.#sourceInputs(events, { adapter: adapter.id, conversationId: thread.threadId, scopeStartExternalId: originalId }),
       ).work;
       work = await this.#artifacts.attach(work, events);
-      const allowCloud = this.#cloudExtractionEnabledFor(
-        sourceWork.instance.id,
-      );
-      const patch = await this.#extractor(allowCloud).extract({
+      const patch = await this.#extractor().extract({
         previousState: work.state,
-        events: work.sourceArchive,
+        events: workEvidence(work.sourceArchive),
       });
       this.#core.applyExtractorPatch(work.instance.id, patch, Math.max(0, ...work.sourceArchive.map((event) => event.sequence)));
-      if (allowCloud) this.#cloudExtractionWorkIds.add(work.instance.id);
       this.options.onRecordingStopped?.(sourceWork.instance.id);
       this.options.onRecordingStarted?.(work.instance.id);
       this.#notice = "已从指定消息创建新的工作记录。";
@@ -493,9 +474,9 @@ export class AppService {
     const extracted = this.#core.extractedSequence(workId);
     const pending = work.sourceArchive.filter(event => event.sequence > extracted);
     const revised = pending.some(event => sourceIdentity(event)?.previousEventId);
-    const events = currentSourceEvents(work.sourceArchive).filter(event => revised || event.sequence > extracted);
+    const events = workEvidence(work.sourceArchive).filter(event => revised || event.sequence > extracted);
     if (!pending.length) return;
-    const patch = events.length ? await this.#extractor(this.#cloudExtractionEnabledFor(workId)).extract({
+    const patch = events.length ? await this.#extractor().extract({
       previousState: work.state,
       events,
     }) : {};
@@ -522,6 +503,26 @@ export class AppService {
   prepareContinuation(workId: string): Promise<ContinuationSnapshot> {
     return this.#continuations.prepareContinuation(workId);
   }
+  async organizeWork(workId: string, consentVersion: string): Promise<DashboardView> {
+    if (consentVersion !== CONTINUATION_CONSENT) throw new Error("CONSENT_REQUIRED");
+    if (this.#requireWork(workId).instance.status !== "OPEN") throw new Error("WORK_NOT_OPEN");
+    const client = this.options.aiClient;
+    if (!client?.continuation) throw new Error("MODEL_UNAVAILABLE: 请先连接 Worket 服务");
+    const continuation = await this.#continuations.prepareContinuation(workId, {
+      generate: input => client.continuation!({ schemaVersion: 1, input }, () => {
+        const current = this.#core.getWork(workId);
+        if (!current || current.instance.status !== "OPEN" || !continuationBasisMatches(current, input.materials, input.basis))
+          throw new Error("CONTINUATION_SCOPE_CHANGED: 记录已变化，请重新整理");
+      }),
+    });
+    if (this.#requireWork(workId).instance.status !== "OPEN") throw new Error("WORK_NOT_OPEN");
+    this.#core.createHandoffPackage(workId, { continuation });
+    this.#notice = continuation.resolution === "RESOLVED"
+      ? "已整理当前阶段、有效要求与下一步。"
+      : continuation.uncertainties[0]?.text ?? "当前阶段仍需核对。";
+    return this.dashboard(workId);
+  }
+
   async syncHook(
     executorId: string,
     payload: Record<string, unknown>,
@@ -843,7 +844,6 @@ export class AppService {
       throw new Error("请输入“取消记录”进行二次确认");
     this.#core.deleteWorkPermanently(workId, { confirmation: workId });
     this.options.onRecordingStopped?.(workId);
-    this.#cloudExtractionWorkIds.delete(workId);
     this.#selectedWorkId = null;
     this.#petState = "sleeping";
     this.#notice = "已取消记录，后续不再同步；Worket 本地副本已清除，原对话和原文件保持不变。";
@@ -859,28 +859,8 @@ export class AppService {
     this.#core.close();
   }
 
-  #extractor(allowCloud: boolean): WorkStateExtractor {
-    const key = process.env.WORKPET_LLM_API_KEY;
-    if (allowCloud && key) {
-      return new OpenAICompatibleExtractor({
-        apiKey: key,
-        baseUrl:
-          process.env.WORKPET_LLM_BASE_URL ?? "https://api.openai.com/v1",
-        model: process.env.WORKPET_LLM_MODEL ?? "gpt-5.4-mini",
-      });
-    }
+  #extractor(): WorkStateExtractor {
     return new LocalRuleExtractor();
-  }
-
-  #cloudExtractionIsEnabled(): boolean {
-    return process.env.WORKPET_CLOUD_EXTRACTION === "true";
-  }
-
-  #cloudExtractionEnabledFor(workId: string): boolean {
-    return (
-      this.#cloudExtractionWorkIds.has(workId) ||
-      this.#cloudExtractionIsEnabled()
-    );
   }
 
   #synchronizeObjective(
@@ -1046,6 +1026,9 @@ export class AppService {
   }
 
   #detail(work: WorkSnapshot): WorkDetailView {
+    let pkg: ReturnType<typeof buildWorkPackage> | undefined;
+    try { pkg = buildWorkPackage(work, this.#core.definitions); } catch { /* Detail must remain available for repairing materials. */ }
+    const state = pkg?.state ?? work.state;
     const sourceNotice = work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
     const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
@@ -1062,11 +1045,17 @@ export class AppService {
           }
         : {}),
       ...this.#summary(work),
+      ...(pkg?.stateStatus === "RESOLVED" && state.objective[0] ? {
+        title: state.objective[0].text,
+        currentStageTask: pkg.continuation?.stages.find(stage => stage.id === pkg.continuation?.currentStageId)?.task.text ?? "",
+      } : {}),
       ...(sourceNotice ? { sourceNotice } : {}),
       ...(latestReply?.content ? { latestActivity: { text: latestReply.content, sourceMessageId: latestReply.externalId } } : {}),
+      understandingStatus: pkg?.stateStatus ?? "UNRESOLVED",
+      ...(pkg?.continuation?.uncertainties[0]?.text ? { understandingNotice: pkg.continuation.uncertainties[0].text } : {}),
       state: {
-        ...work.state,
-        artifacts: work.state.artifacts.map((item) => {
+        ...state,
+        artifacts: state.artifacts.map((item) => {
           const file = artifactFile(item.text);
           return file ? { ...item, file } : item;
         }),

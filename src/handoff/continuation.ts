@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
-import { currentSourceEvents, currentSourceState } from "../core/source-revisions.js";
+import { workEvidence } from "../core/work-evidence.js";
+import { hasExactExcerpt, coversExactly } from "../contracts/evidence.js";
+import { CONTINUATION_MAX_CHARS } from "../contracts/continuation.js";
+import { currentSourceState } from "../core/source-revisions.js";
 import type { HandoffPackage, SourceEvent, WorkSnapshot, WorkState } from "../core/types.js";
 
 export type ContinuationClaim = {
@@ -71,6 +74,7 @@ export type ContinuationGeneratorInput = {
   events: Array<Pick<SourceEvent, "id" | "sequence" | "kind" | "timestamp" | "executorType" | "content" | "metadata">>;
   state: WorkState;
   materials: ContinuationMaterials;
+  artifacts: Array<Pick<WorkSnapshot['artifactRefs'][number], 'id' | 'filename' | 'sha256' | 'availability' | 'role'>>;
 };
 export interface ContinuationGenerator {
   generate(input: ContinuationGeneratorInput): Promise<unknown>;
@@ -84,7 +88,6 @@ export type ContinuationInput = {
 export type ContinuationLoader = (workId: string) => Promise<ContinuationInput>;
 export type ContinuationGeneratorProvider = (workId: string) => ContinuationGenerator | null;
 
-const MAX_MODEL_INPUT_CHARS = 80000;
 const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
 
 function stableJson(value: unknown): string {
@@ -96,10 +99,13 @@ function stableJson(value: unknown): string {
 const hash = (value: unknown) => createHash("sha256").update(stableJson(value)).digest("hex");
 
 export function continuationEvents(work: WorkSnapshot): SourceEvent[] {
-  return currentSourceEvents(work.sourceArchive).filter(event =>
-    event.kind !== "reasoning.summary" &&
-    !(event.metadata.toolName === "get_work_context" && event.metadata.outcome === "success"),
-  );
+  return workEvidence(work.sourceArchive);
+}
+
+function evidenceState(work: WorkSnapshot, events: SourceEvent[]): WorkState {
+  const ids = new Map(events.flatMap(event => [[event.id, event.id], [event.externalId, event.id]]));
+  return Object.fromEntries(Object.entries(currentSourceState(work.state, work.sourceArchive)).map(([field, items]) =>
+    [field, items.map(item => ({ ...item, sourceMessageIds: item.sourceMessageIds.map(id => ids.get(id) ?? id) }))])) as WorkState;
 }
 
 export function buildContinuationBasis(work: WorkSnapshot, materials: ContinuationMaterials): ContinuationBasis {
@@ -156,18 +162,18 @@ function validClaim(value: unknown, eventMap: Map<string, SourceEvent>, stateMap
   const refsExist = sourceEventIds.every(id => eventMap.has(id));
   const excerptsValid = excerpts.every(excerpt =>
     typeof excerpt.sourceEventId === "string" && typeof excerpt.text === "string" && !!excerpt.text &&
-    (eventMap.get(excerpt.sourceEventId)?.content?.includes(excerpt.text) ?? false));
+    hasExactExcerpt(eventMap.get(excerpt.sourceEventId)?.content, excerpt.text));
   const manualBacked = manual && manualIds.some(id =>
     stateMap.get(id)!.text === text || text.includes(stateMap.get(id)!.text));
-  return (refsExist && sourceEventIds.length > 0 && excerptsValid &&
-    excerpts.some(excerpt => sourceEventIds.includes(excerpt.sourceEventId as string))) || manualBacked;
+  return refsExist && excerptsValid && manual && ((sourceEventIds.length > 0 &&
+    excerpts.some(excerpt => sourceEventIds.includes(excerpt.sourceEventId as string))) || manualBacked);
 }
 
 function validEvidence(value: unknown, eventMap: Map<string, SourceEvent>): value is ContinuationEvidence {
   if (!isRecord(value) || !["id", "object", "version", "scope", "result", "sourceEventId", "excerpt"]
     .every(key => typeof value[key] === "string" && !!value[key])) return false;
   const event = eventMap.get(value.sourceEventId as string);
-  if (!event?.content?.includes(value.excerpt as string)) return false;
+  if (!hasExactExcerpt(event?.content, value.excerpt)) return false;
   const version = value.version as string;
   return version === "unknown" || /^(source|sha256|commit|event):/u.test(version) || /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(version);
 }
@@ -197,10 +203,12 @@ function validateCandidate(candidate: unknown, input: ContinuationInput, basis: 
   if (!isRecord(candidate) || !asStringArray(candidate.coveredSourceEventIds)) return null;
   const coveredSourceEventIds = candidate.coveredSourceEventIds as string[];
   const eventIds = events.map(event => event.id);
-  if (coveredSourceEventIds.length !== eventIds.length || eventIds.some(id => !coveredSourceEventIds.includes(id))) return null;
+  if (!coversExactly(coveredSourceEventIds, eventIds)) return null;
   const eventMap = new Map(events.map(event => [event.id, event]));
-  const state = currentSourceState(input.work.state, input.work.sourceArchive);
-  const stateMap = new Map(Object.values(state).flat().map(item => [item.id, item]));
+  const state = evidenceState(input.work, events);
+  const stateMap = new Map(Object.values(state).flat().filter(item => item.origin === "USER_EDITED" ||
+    item.sourceMessageIds.some(id => eventMap.get(id)?.kind.startsWith("work.")))
+    .map(item => [item.id, item]));
   const isClaimArray = (value: unknown) => Array.isArray(value) && value.every(item => validClaim(item, eventMap, stateMap));
   if (!isClaimArray(candidate.objective) || !candidate.objective.length ||
       !isClaimArray(candidate.currentStageBasis) || !isClaimArray(candidate.uncertainties) ||
@@ -236,8 +244,15 @@ function validateCandidate(candidate: unknown, input: ContinuationInput, basis: 
           !outcome.acceptanceEvidence.some(item => {
             const evidence = item as ContinuationEvidence;
             const event = eventMap.get(evidence.sourceEventId);
-            return event?.kind === "user.prompt" && evidence.object === outcome.id &&
+            if (event?.kind === "user.prompt") return evidence.object === outcome.id &&
               !!event.content?.includes(String(outcome.id));
+            if (event?.kind !== "work.acceptance" || event.environmentType !== "WORKPET_LOCAL") return false;
+            try {
+              const acceptance = JSON.parse(event.content ?? "{}");
+              return acceptance.completed === true && Array.isArray(acceptance.artifacts) &&
+                acceptance.artifacts.some((artifact: { id: string; sha256: string }) =>
+                  artifact.id === outcome.artifactRefId && outcome.version === "sha256:" + artifact.sha256);
+            } catch { return false; }
           })) return null;
     }
     for (const dependency of stage.dependsOn)
@@ -263,7 +278,8 @@ function validateCandidate(candidate: unknown, input: ContinuationInput, basis: 
   for (const req of requirements.filter(item => item.status === "SUPERSEDED"))
     if (!requirements.some(replacement =>
       (replacement.supersedes as string[]).includes(req.id as string) &&
-      (replacement.replacementEvidence as unknown[]).length > 0)) return null;
+      ((replacement.replacementEvidence as unknown[]).length > 0 ||
+        (req.replacementEvidence as unknown[]).length > 0))) return null;
   const outcomeVersions = new Map(candidate.stages.flatMap(stage =>
     (stage.outcomes as Record<string, unknown>[]).map(outcome =>
       [String(stage.id) + ":" + String(outcome.id), outcome.version as string] as const)));
@@ -293,44 +309,53 @@ export class ContinuationService {
     this.#load = options.load;
     this.#generator = options.generator;
   }
-  prepareContinuation(workId: string): Promise<ContinuationSnapshot> {
-    const existing = this.#pending.get(workId);
+  prepareContinuation(workId: string, generator?: ContinuationGenerator): Promise<ContinuationSnapshot> {
+    const key = workId + (generator ? ":authorized" : ":cached");
+    const existing = this.#pending.get(key);
     if (existing) return existing;
-    const pending = this.#prepare(workId).finally(() => this.#pending.delete(workId));
-    this.#pending.set(workId, pending);
+    const pending = this.#prepare(workId, generator).finally(() => this.#pending.delete(key));
+    this.#pending.set(key, pending);
     return pending;
   }
-  async #prepare(workId: string): Promise<ContinuationSnapshot> {
+  async #prepare(workId: string, authorizedGenerator?: ContinuationGenerator): Promise<ContinuationSnapshot> {
     const input = await this.#load(workId);
     const events = continuationEvents(input.work);
     const basis = buildContinuationBasis(input.work, input.materials);
     if (input.cached && input.cached.resolution !== "UNRESOLVED" &&
         continuationBasisMatches(input.work, input.materials, input.cached.basis)) return input.cached;
-    const generator = this.#generator(workId);
+    const generator = authorizedGenerator ?? this.#generator(workId);
     if (!generator) return unresolved(input.work, input.materials,
-      "没有已许可且可用的整理模型；请先读取 v2 上下文与最新用户消息证据。",
+      "本次记录尚未整理；请在 Worket 中整理当前记录，或先核对最新用户原话。",
       events.slice(-10).map(event => event.id));
     const modelInput: ContinuationGeneratorInput = {
       basis,
       events: events.map(({ id, sequence, kind, timestamp, executorType, content, metadata }) =>
-        ({ id, sequence, kind, timestamp, executorType, content, metadata })),
-      state: currentSourceState(input.work.state, input.work.sourceArchive),
+        ({ id, sequence, kind, timestamp, executorType, content: content ?? "", metadata: {} })),
+      state: evidenceState(input.work, events),
       materials: input.materials,
+      artifacts: input.work.artifactRefs.map(({ id, filename, sha256, availability, role }) =>
+        ({ id, filename, sha256, availability, role })),
     };
-    if (JSON.stringify(modelInput).length > MAX_MODEL_INPUT_CHARS)
+    if (JSON.stringify(modelInput).length > CONTINUATION_MAX_CHARS)
       return unresolved(input.work, input.materials,
         "来源范围超出一次整理上限；当前阶段未确认，需要分批读取或缩小范围。",
         events.map(event => event.id), "PARTIAL");
     let snapshot: ContinuationSnapshot | null = null;
+    let reason = "阶段整理结果未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。";
     try { snapshot = validateCandidate(await generator.generate(modelInput), input, basis, events); }
-    catch { /* A failed or malformed model response remains unresolved. */ }
+    catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+      reason = code === "SERVICE_UPGRADE_REQUIRED" ? "后台尚不支持工作整理，请升级后台后重试。"
+        : code === "QUOTA_EXCEEDED" ? "本次整理额度不足；原始记录保持可用。"
+        : "本次整理未完成，可能是服务不可用或来源已变化；请重试或核对原始记录。";
+    }
     const latest = await this.#load(workId);
     if (!continuationBasisMatches(latest.work, latest.materials, basis))
       return unresolved(latest.work, latest.materials,
         "整理期间来源、状态或材料版本发生变化；旧候选已作废，请重新读取。",
         continuationEvents(latest.work).slice(-10).map(event => event.id));
     return snapshot ?? unresolved(latest.work, latest.materials,
-      "阶段整理结果未通过来源、范围或依赖校验；请通过证据入口核对当前阶段。",
+      reason,
       events.slice(-10).map(event => event.id));
   }
 }

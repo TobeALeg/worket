@@ -45,6 +45,9 @@ export interface WorkSummaryView {
 }
 
 export interface WorkDetailView extends WorkSummaryView {
+  understandingStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
+  understandingNotice?: string;
+  currentStageTask?: string;
   sourceNotice?: string;
   latestActivity?: { text: string; sourceMessageId: string };
   reusableDefinitionId?: string;
@@ -140,6 +143,7 @@ export interface ConversationPreview extends ConversationView {
 export interface CreateWorkRequest {
   executorId: string;
   threadId: string;
+  /** Legacy callers may pass this; recording stays local. Use organizeWork for explicit analysis. */
   allowCloudExtraction?: boolean;
 }
 
@@ -204,6 +208,7 @@ export interface WorkPetApi {
   archiveWork(workId: string): Promise<DashboardView>;
   resumeWork(workId: string): Promise<DashboardView>;
   cancelHandoff(workId: string, confirmation: string): Promise<DashboardView>;
+  organizeWork(workId: string, consentVersion: string): Promise<DashboardView>;
   handoff(workId: string, executorId: string): Promise<DashboardView>;
   cancelRecording(workId: string, confirmation: string): Promise<DashboardView>;
   onPanelShown(callback: (workId?: string) => void): () => void;

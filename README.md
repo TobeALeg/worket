@@ -25,7 +25,7 @@ Worket 启动后分别安装已接入执行者的本机配置：Codex Hook/MCP�
 - Codex 的工作目标直接使用 App Server 已总结的任务标题；首条 Prompt 或报错正文只进入来源档案，不会再充当目标。
 - WorkBuddy 支持历史列表与直接导入；无法明确定位当前聊天时，桌宠点击打开该执行者的会话选择。两端都可多会话记录，“交接”从注册表选择目标，Codex 原生入口需要确认发送。
 
-Worket 默认提炼 Work State，且默认使用本地规则，不会外发数据。只有本机同时配置 `WORKPET_LLM_API_KEY` 和 `WORKPET_CLOUD_EXTRACTION=true`，才会把必要的可见对话发送给所配置的 OpenAI-compatible 模型。
+Worket 默认在本地保存记录与来源线索。用户点击“整理”或在交接中勾选“先整理当前记录”，明确同意后才将该次可见记录、要求和材料版本发送到 Worket 托管服务。附件正文和后续新对话不在这次授权内；供应商 Key 只配置在后台。
 
 ## 打包
 

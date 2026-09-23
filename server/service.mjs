@@ -15,6 +15,8 @@ import {
 } from "../dist/contracts/definition.js";
 import { canonical } from "../dist/definitions/storage.js";
 import { chunksFor, extractDefinition } from "./workflow.mjs";
+import { extractContinuation } from "./continuation.mjs";
+import { validateContinuationRequest } from "../dist/contracts/continuation.js";
 export function authenticate(token, config) {
   ensure(token, "AUTH_REQUIRED");
   const parts = token.split(".");
@@ -75,6 +77,8 @@ export function createAIService(config) {
   db.exec(
     `CREATE TABLE IF NOT EXISTS requests (id TEXT PRIMARY KEY, subject TEXT NOT NULL, command_key TEXT NOT NULL, hash TEXT NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL, updated INTEGER NOT NULL, calls INTEGER NOT NULL, usage_json TEXT NOT NULL, error TEXT, UNIQUE(subject,command_key)) STRICT;`,
   );
+  if (!db.prepare("PRAGMA table_info(requests)").all().some(column => column.name === "operation"))
+    db.exec("ALTER TABLE requests ADD COLUMN operation TEXT NOT NULL DEFAULT 'definition'");
   db.prepare(
     "UPDATE requests SET status='INTERRUPTED',error='SERVICE_INTERRUPTED' WHERE status IN ('RUNNING','SUCCEEDED')",
   ).run();
@@ -82,11 +86,11 @@ export function createAIService(config) {
   const running = new Map(),
     results = new Map();
   const limits = { ...LIMITS, ...config.limits };
-  function rowFor(id, subject) {
+  function rowFor(id, subject, operation) {
     const row = db
       .prepare("SELECT * FROM requests WHERE id=? AND subject=?")
       .get(id, subject);
-    ensure(row, "NOT_FOUND");
+    ensure(row && row.operation === operation, "NOT_FOUND");
     return row;
   }
   function expire() {
@@ -105,6 +109,7 @@ export function createAIService(config) {
   function view(row) {
     return {
       requestId: row.id,
+      operation: row.operation,
       status: row.status,
       ...(row.status === "RUNNING" && progress.has(row.id) ? { progress: progress.get(row.id) } : {}),
       ...(results.has(row.id) ? { result: results.get(row.id).result } : {}),
@@ -124,7 +129,7 @@ export function createAIService(config) {
         : {}),
     };
   }
-  async function run(id, request, controller) {
+  async function run(id, operation, request, controller) {
     let used = 0;
     const usage = [];
     const timer = setTimeout(() => controller.abort(), limits.timeoutMs);
@@ -136,7 +141,7 @@ export function createAIService(config) {
           return config.provider.call(...args);
         },
       };
-      const result = await extractDefinition(
+      const result = await (operation === "continuation" ? extractContinuation : extractDefinition)(
         request,
         provider,
         controller.signal,
@@ -217,6 +222,7 @@ export function createAIService(config) {
             evolutionSchemaVersions: [1],
             evidenceSchemaVersions: [1],
             skillSchemaVersions: [1],
+            continuationSchemaVersions: [1],
             improvement: config.improvement?.policy() ?? null,
             limits,
             fileTypes: ["UTF-8 text"],
@@ -250,7 +256,8 @@ export function createAIService(config) {
         res.end(JSON.stringify(config.improvement.delete(config.improvement.key(subject, match[1]))));
         return;
       }
-      if (req.method === "POST" && req.url === "/v1/definition-extractions") {
+      if (req.method === "POST" && ["/v1/definition-extractions", "/v1/continuations"].includes(req.url)) {
+        const operation = req.url === "/v1/continuations" ? "continuation" : "definition";
         ensure(
           config.configured !== false,
           "MODEL_UNAVAILABLE",
@@ -274,15 +281,16 @@ export function createAIService(config) {
         } catch {
           throw new ContractError("INVALID_INPUT");
         }
-        validateRequest(input);
+        if (operation === "continuation") validateContinuationRequest(input);
+        else validateRequest(input);
         // A client may have been revoked while its request body was arriving.
         authenticate(
           req.headers.authorization?.replace(/^Bearer /, ""),
           config,
         );
-        ensure(input.sources.length <= limits.maxSources, "INPUT_TOO_LARGE");
+        if (operation === "definition") ensure(input.sources.length <= limits.maxSources, "INPUT_TOO_LARGE");
         ensure(!config.isAdminBusy?.(), "CONCURRENCY_LIMIT");
-        const budget = chunksFor(input).length + 1;
+        const budget = operation === "continuation" ? 1 : chunksFor(input).length + 1;
         ensure(budget <= limits.maxCalls, "INPUT_TOO_LARGE");
         const digest = createHash("sha256")
           .update(canonical(input))
@@ -291,7 +299,7 @@ export function createAIService(config) {
           .prepare("SELECT * FROM requests WHERE subject=? AND command_key=?")
           .get(subject, key);
         if (old) {
-          ensure(old.hash === digest, "IDEMPOTENCY_CONFLICT");
+          ensure(old.hash === digest && old.operation === operation, "IDEMPOTENCY_CONFLICT");
           res.statusCode = 202;
           res.end(JSON.stringify(view(old)));
           return;
@@ -317,26 +325,26 @@ export function createAIService(config) {
         const id = randomUUID(),
           now = Date.now();
         db.prepare(
-          "INSERT INTO requests VALUES (?,?,?,?,'RUNNING',?,?,?,'{}',NULL)",
-        ).run(id, subject, key, digest, now, now, budget);
+          "INSERT INTO requests (id,subject,command_key,hash,status,created,updated,calls,usage_json,error,operation) VALUES (?,?,?,?,'RUNNING',?,?,?,'{}',NULL,?)",
+        ).run(id, subject, key, digest, now, now, budget, operation);
         const controller = new AbortController();
         running.set(id, controller);
-        void run(id, input, controller);
+        void run(id, operation, input, controller);
         res.statusCode = 202;
         res.end(JSON.stringify({ requestId: id, status: "RUNNING" }));
         return;
       }
       const match = req.url?.match(
-        /^\/v1\/definition-extractions\/([a-zA-Z0-9-]+)(\/ack)?$/,
+        /^\/v1\/(definition-extractions|continuations)\/([a-zA-Z0-9-]+)(\/ack)?$/,
       );
       ensure(match, "NOT_FOUND");
-      const id = match[1],
-        row = rowFor(id, subject);
-      if (req.method === "GET" && !match[2]) {
+      const id = match[2],
+        row = rowFor(id, subject, match[1] === "continuations" ? "continuation" : "definition");
+      if (req.method === "GET" && !match[3]) {
         res.end(JSON.stringify(view(row)));
         return;
       }
-      if (req.method === "DELETE" && !match[2]) {
+      if (req.method === "DELETE" && !match[3]) {
         running.get(id)?.abort();
         results.delete(id);
         db.prepare(
@@ -345,7 +353,7 @@ export function createAIService(config) {
         res.end(JSON.stringify({ requestId: id, status: "CANCELLED" }));
         return;
       }
-      if (req.method === "POST" && match[2]) {
+      if (req.method === "POST" && match[3]) {
         ensure(
           ["SUCCEEDED", "ACKNOWLEDGED", "EXPIRED", "INTERRUPTED"].includes(
             row.status,
