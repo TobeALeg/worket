@@ -29,8 +29,10 @@ node --experimental-strip-types scripts/qa-distillation.mjs --unpackaged --impro
 WORKET_E2E_REPLAY=test/fixtures/contracts/video node scripts/qa-contract-e2e.mjs
 ```
 
-## 交付边界
+## 初次交付边界
 
 仅源码、文档与测试完成；没有打包、替换或重启已安装 Worket。报告中的 restart 指隔离测试实例的恢复验证，不是用户应用重启。
 
 只读核验 `/Applications/Worket.app` ASAR SHA-256 仍为 `9e93e3946d06f9709856b707afd85e40c706f41c6771d145c79a017edfdcb535`，运行 PID 仍为 27193。等待用户确认本批修改结束后再统一更新重启；本轮不涉及生产部署。
+
+后续用户已确认更新重启。本变更随面板导航批次完成打包回归、安装替换及重启，见 [本机安装验收](panel-navigation.md)。
