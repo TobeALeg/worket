@@ -11,6 +11,8 @@ import { hash } from '../../dist/definitions/storage.js';
 import { LIMITS, validateRequest } from '../../dist/contracts/definition.js';
 import { chunksFor, extractDefinition } from '../../server/workflow.mjs';
 import { analysisAggregate } from '../../server/analysis-input.mjs';
+import { normalizeUnconfirmedDuplicates } from '../../server/normalize-unconfirmed-rules.mjs';
+import { validateRuleGraph } from '../../dist/contracts/rules.js';
 import { FixtureClient, source as makeSource, result as fixtureResult } from './fixtures.ts';
 import { jobError } from '../../dist/distillation/activity.js';
 
@@ -156,7 +158,7 @@ test('real extraction seam validates per-part quotes, aggregates only evidence a
 });
 
 test('dense evidence fits the final budget while preserving every quote and candidate relationship', () => {
-  const lines = Array.from({ length: 180 }, (_, i) => `第 ${i} 项：${'默认中文，引用必须逐字保留。'.repeat(5)}`);
+  const lines = Array.from({ length: 200 }, (_, i) => `第 ${i} 项：${'默认中文，引用必须逐字保留。'.repeat(5)}`);
   const e = event('e1', 'user.prompt', lines.join('\n'));
   const request = wire({ key: 'work-1', workId: 'w', events: [e] });
   let start = 0;
@@ -172,6 +174,40 @@ test('dense evidence fits the final budget while preserving every quote and cand
   assert.deepEqual(aggregate.evidence.map((ref: any) => ref.content), lines);
   assert.deepEqual(aggregate.chunks[0].requirements, requirements);
   assert.equal(request.sources[0]!.events[0]!.hash, hash(e.content));
+});
+
+test('document evidence keeps the file identity needed to pin an exact normative clause', () => {
+  const content = '标题\n每条结论必须附原始出处。\n末尾';
+  const e = { ...event('file-1', 'file.content', content), document: { role: 'NORMATIVE', name: 'SPEC.md' } };
+  const request = { sources: [{ key: 'work-1', events: [e] }] };
+  const aggregate = analysisAggregate(request, [{ requirements: [], issues: [], evidence: [{ sourceKey: 'work-1',
+    eventKey: e.key, excerpt: '每条结论必须附原始出处。', start: 3, startLine: 2 }] }]);
+  assert.deepEqual(aggregate.evidence[0].document, e.document);
+  assert.equal(aggregate.evidence[0].hash, e.hash);
+  assert.equal(aggregate.evidence[0].startLine, 2);
+});
+
+test('an unconfirmed duplicate stays independent and blocks review; active scope conflicts still fail', () => {
+  const active = { key: 'language', text: '默认中文', rule: { scope: 'REUSABLE', status: 'ACTIVE' } };
+  const proposed = { key: 'new_candidates', text: '新候选中文，旧候选不翻译', rule: { scope: 'UNCERTAIN',
+    status: 'PROPOSED', relation: { kind: 'DUPLICATE', target: 'constraints.language' } } };
+  const result: any = { content: { deliverables: [], constraints: [active], acceptanceCriteria: [proposed], methods: [] }, issues: [] };
+  const before = structuredClone(result);
+  normalizeUnconfirmedDuplicates(result);
+  validateRuleGraph(result.content);
+  assert.deepEqual(result.content.constraints, before.content.constraints);
+  const candidate = result.content.acceptanceCriteria[0];
+  assert.deepEqual(candidate, { ...before.content.acceptanceCriteria[0], rule: { scope: 'UNCERTAIN', status: 'PROPOSED' } });
+  assert.equal(result.issues[0].blocking, true);
+  assert.equal(result.issues[0].field, 'acceptanceCriteria.new_candidates');
+  normalizeUnconfirmedDuplicates(result);
+  assert.equal(result.issues.length, 1);
+  for (const kind of ['DUPLICATE', 'REPLACES']) {
+    const invalid = structuredClone(before);
+    invalid.content.acceptanceCriteria[0].rule = { scope: 'INSTANCE', status: 'ACTIVE', relation: { kind, target: 'constraints.language' } };
+    normalizeUnconfirmedDuplicates(invalid);
+    assert.throws(() => validateRuleGraph(invalid.content), { code: 'RULE_SCOPE_MISMATCH' });
+  }
 });
 
 test('retry migrates a failed legacy snapshot into a separate frozen view and preserves the old job and source', async () => {

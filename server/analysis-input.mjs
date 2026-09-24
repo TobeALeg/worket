@@ -78,7 +78,8 @@ export function analysisAggregate(request, intermediates) {
     // consumes model context without adding evidence. Keep every verified quote.
     evidence.set(key, { workId: ref.sourceKey, eventId: ref.eventKey, kind: event.kind,
       content: ref.excerpt, excerptOnly: true, startLine: ref.startLine,
-      ...(event.document ? { document: event.document } : {}) });
+      // Normative clauses still need the file hash in their final document ref.
+      ...(event.document ? { document: event.document, hash: event.hash } : {}) });
   }
   return {
     phase: 'reconcile-and-generalize',

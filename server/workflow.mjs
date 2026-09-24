@@ -1,6 +1,7 @@
 import { coversExactly, hasExactExcerpt, isUserEvidence } from "../dist/contracts/evidence.js";
 import { analysisChunks, analysisAggregate, validateAnalysisEvidence, ANALYSIS_EXTRACT_PROMPT } from './analysis-input.mjs';
 import { normalizeEvolutionRelations } from './normalize-evolution.mjs';
+import { normalizeUnconfirmedDuplicates } from './normalize-unconfirmed-rules.mjs';
 import { SKILL_PROMPT } from './skill-prompt.mjs';
 import { EVIDENCE_PROMPT } from './evidence-prompt.mjs';
 import { RULES_PROMPT } from "./rules-prompt.mjs";
@@ -175,12 +176,13 @@ export async function extractDefinition(
     model: provider.model,
   };
   if (request.analysis) {
-    result.versions.prompt = request.evolution ? 'work-definition-evolution-analysis-v1' : 'work-definition-analysis-v1';
+    result.versions.prompt = request.evolution ? 'work-definition-evolution-analysis-v1.1' : 'work-definition-analysis-v1.1';
     const eventKeys = request.sources.flatMap(s => s.events.map(e => `${s.key}/${e.key}`));
     result.coverage = { inputEvents: eventKeys.length, processedEvents: eventKeys.length, processedChunks: chunks.length, eventKeys, exclusions: [] };
   }
   result.coverage.processedChunks = chunks.length;
   if (request.evolution) normalizeEvolutionRelations(result);
+  if (request.analysis) normalizeUnconfirmedDuplicates(result);
   validateResult(result, request);
   if (request.analysis) for (const item of resultItems(result)) {
     if (item.basis.type === 'USER_AUTHORED') continue;
