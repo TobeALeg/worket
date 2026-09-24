@@ -95,6 +95,40 @@ async function done(f: any, id: string) {
   throw new Error("timeout");
 }
 
+test('analysis capability and evidence-based extraction work through the authenticated HTTP boundary', async () => {
+  const input = { ...request, analysis: { schemaVersion: 1, ruleVersion: 'test', originalEvents: 3, omittedEvents: 2, excerptEvents: 0 } };
+  const f = await fixture({ provider: { model: 'analysis-fixture', async call(messages: any) {
+    const body = JSON.parse(messages[1].content);
+    if (body.phase === 'extract') return { result: {
+      requirements: [{ id: 'r1', text: '每条事实必须标注来源', scope: 'REUSABLE', sourceKeys: ['work-1/event-1'], replacedBy: null }],
+      eventKeys: ['work-1/event-1'], issues: [], evidence: [{ sourceKey: 'work-1', eventKey: 'event-1', excerpt: '每条事实必须标注来源' }],
+    } };
+    assert.equal(body.analysis.omittedEvents, 2);
+    return { result: result(input) };
+  } } });
+  try {
+    assert.deepEqual((await f.send('/v1/capabilities')).body.analysisSchemaVersions, [1]);
+    const submitted = await f.send('/v1/definition-extractions', 'POST', input, 'analysis');
+    assert.equal(submitted.status, 202);
+    const job = await done(f, submitted.body.requestId);
+    assert.equal(job.status, 'SUCCEEDED');
+    assert.equal(job.result.coverage.processedEvents, 1);
+    assert.equal(job.result.versions.prompt, 'work-definition-analysis-v1');
+  } finally { await f.service.close(); }
+});
+
+test('oversize responses explain the limit without echoing source content', async () => {
+  const f = await fixture();
+  try {
+    const input = structuredClone(request); input.sources[0]!.events[0]!.content = 'PRIVATE_SOURCE_MARKER'.repeat(1300);
+    const response = await f.send('/v1/definition-extractions', 'POST', input, 'oversize');
+    assert.equal(response.body.code, 'INPUT_TOO_LARGE');
+    assert.match(response.body.message, /单条事件/);
+    assert.ok(!response.body.message.includes('PRIVATE_SOURCE_MARKER'));
+    assert.equal(f.calls(), 0);
+  } finally { await f.service.close(); }
+});
+
 test("global daily model budget applies across installation identities", async () => {
   const f = await fixture({ globalDailyCalls: 2 });
   try {

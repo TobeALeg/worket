@@ -1,4 +1,5 @@
 import { coversExactly, hasExactExcerpt, isUserEvidence } from "../dist/contracts/evidence.js";
+import { analysisChunks, analysisAggregate, validateAnalysisEvidence, ANALYSIS_EXTRACT_PROMPT } from './analysis-input.mjs';
 import { normalizeEvolutionRelations } from './normalize-evolution.mjs';
 import { SKILL_PROMPT } from './skill-prompt.mjs';
 import { EVIDENCE_PROMPT } from './evidence-prompt.mjs';
@@ -62,6 +63,7 @@ export class ModelProvider {
   }
 }
 export function chunksFor(request) {
+  if (request.analysis?.schemaVersion === 1) return analysisChunks(request);
   const chunks = [];
   let current = [],
     bytes = 0;
@@ -98,15 +100,16 @@ export async function extractDefinition(
   const system = (coordinated ? SYSTEM : LEGACY_SYSTEM) + (request.evidenceSchemaVersion === 1 ? EVIDENCE_PROMPT : "") + (request.skillSchemaVersion === 1 ? SKILL_PROMPT : "");
   const chunks = chunksFor(request),
     intermediates = [];
-  for (const chunk of chunks) {
-    onProgress({ phase: "extract", completed: intermediates.length, total: chunks.length });
+  let completed = 0;
+  async function extractChunk(chunk, index) {
+    onProgress({ phase: "extract", completed, total: chunks.length });
     const { result, usage } = await provider.call(
       [
         {
           role: "system",
           content:
             system +
-            '\nFor this phase return only {requirements:[{id,text,scope,sourceKeys,replacedBy}], eventKeys:["sourceKey/eventKey"], issues:[]}. Record correction evidence, temporary exceptions and agent proposals. Keep requirement IDs globally unique using source/event prefixes. No generalization yet.',
+            (request.analysis ? ANALYSIS_EXTRACT_PROMPT : '\nFor this phase return only {requirements:[{id,text,scope,sourceKeys,replacedBy}], eventKeys:["sourceKey/eventKey"], issues:[]}. Record correction evidence, temporary exceptions and agent proposals. Keep requirement IDs globally unique using source/event prefixes. No generalization yet.'),
         },
         {
           role: "user",
@@ -125,9 +128,21 @@ export async function extractDefinition(
       Array.isArray(result.requirements) && Array.isArray(result.issues),
       "INVALID_MODEL_OUTPUT",
     );
-    intermediates.push(result);
+    if (request.analysis) result.evidence = validateAnalysisEvidence(result, chunk);
+    intermediates[index] = result;
+    completed++;
   }
-  const aggregate = {
+  // Independent extraction batches can overlap, while reconciliation always sees
+  // the original order. Stop scheduling on failure and await in-flight calls.
+  let next = 0, failure;
+  await Promise.all(Array.from({ length: request.analysis ? Math.min(2, chunks.length) : 1 }, async () => {
+    while (!failure && next < chunks.length) {
+      const index = next++;
+      try { await extractChunk(chunks[index], index); } catch (error) { failure ??= error; }
+    }
+  }));
+  if (failure) throw failure;
+  const aggregate = request.analysis ? analysisAggregate(request, intermediates) : {
     phase: "reconcile-and-generalize",
     ...(request.evolution ? { baseline: request.evolution } : {}),
     sourceKeys: request.sources.map((s) => s.key),
@@ -147,7 +162,7 @@ export async function extractDefinition(
         role: "system",
         content:
           system +
-          "\nNow reconcile correction chains across ALL chunks in each work, compare different works and generalize. Return full schema, including content.purpose as an Item object with key, text and basis. coverage must include every intermediate event key. The evidence catalog contains authoritative event kinds: only user.prompt and work.* events may directly support USER_STATED. tool.* events and agent.response are not user statements, even if their content repeats a requirement. Use INFERRED for conclusions without direct user evidence and surface a confirmation issue. The evidence catalog includes ORIGINAL text and authoritative document roles; verify clauses, corrections and applicability against it, not just intermediate paraphrases. Excerpts may only quote ORIGINAL text. Cite only snapshotId, workId and eventId using supplied event keys. versions.schema=1." + (request.evolution ? EVOLUTION_PROMPT : ""),
+          "\nNow reconcile correction chains across ALL chunks in each work, compare different works and generalize. Return full schema, including content.purpose as an Item object with key, text and basis. coverage must include every intermediate event key. The evidence catalog contains authoritative event kinds: only user.prompt and work.* events may directly support USER_STATED. tool.* events and agent.response are not user statements, even if their content repeats a requirement. Use INFERRED for conclusions without direct user evidence and surface a confirmation issue. The evidence catalog includes ORIGINAL text and authoritative document roles; verify clauses, corrections and applicability against it, not just intermediate paraphrases. Excerpts may only quote ORIGINAL text. Cite only snapshotId, workId and eventId using supplied event keys. versions.schema=1." + (request.analysis ? "\nEvidence entries are exact EXCERPTS, not full events. startLine is the original document line number of the first excerpt line. Cite only supplied excerpt text and original event keys. Omitted implementation bodies have NOT been analyzed. Return requirements, issues and content as usual; coverage is assigned mechanically by the service after every input part passed coverage validation. Do not invent coverage, absent requirements or user acceptance. Reconcile all candidates, preserving explicit corrections, negation, conditions and one-time scope." : "") + (request.evolution ? EVOLUTION_PROMPT : ""),
       },
       { role: "user", content: JSON.stringify(aggregate) },
     ],
@@ -159,9 +174,19 @@ export async function extractDefinition(
     prompt: request.skillSchemaVersion === 1 ? (request.evolution ? 'work-definition-evolution-v1.7' : coordinated ? 'work-definition-v2.6' : 'work-definition-v1.6') : request.evolution ? (request.evidenceSchemaVersion === 1 ? 'work-definition-evolution-v1.5.1' : 'work-definition-evolution-v1.4.1') : coordinated ? (request.evidenceSchemaVersion === 1 ? 'work-definition-v2.5' : PROMPT_VERSION) : (request.evidenceSchemaVersion === 1 ? "work-definition-v1.5" : "work-definition-v1.4"),
     model: provider.model,
   };
+  if (request.analysis) {
+    result.versions.prompt = request.evolution ? 'work-definition-evolution-analysis-v1' : 'work-definition-analysis-v1';
+    const eventKeys = request.sources.flatMap(s => s.events.map(e => `${s.key}/${e.key}`));
+    result.coverage = { inputEvents: eventKeys.length, processedEvents: eventKeys.length, processedChunks: chunks.length, eventKeys, exclusions: [] };
+  }
   result.coverage.processedChunks = chunks.length;
   if (request.evolution) normalizeEvolutionRelations(result);
   validateResult(result, request);
+  if (request.analysis) for (const item of resultItems(result)) {
+    if (item.basis.type === 'USER_AUTHORED') continue;
+    for (const ref of item.basis.refs) ensure(aggregate.evidence.some(e => e.workId === ref.workId && e.eventId === ref.eventId &&
+      (!ref.excerpt || hasExactExcerpt(e.content, ref.excerpt))), 'INVALID_SOURCE_REF', '汇总引用必须来自已传入的原文片段');
+  }
   const skillRoles = result.content?.materialRoles ?? result.evolution?.changes.filter(c => c.section === 'materialRoles').map(c => c.item) ?? [];
   for (const item of skillRoles) if (item.kind === 'SKILL') {
     ensure(request.skillSchemaVersion === 1, 'INVALID_MODEL_OUTPUT', '客户端不支持技能依赖协议');
