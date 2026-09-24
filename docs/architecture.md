@@ -1,8 +1,8 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
-v0.1.5 客户端与生产后台已同步，服务代码为 `8ffa545`。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力为 `[1]`；兼容旧后台时仍保留缺少能力的明确降级。元数据新增 `requests.operation` 区分整理与沉淀请求，已有请求默认 `definition`。配套部署与验证见 [发布验收](releases/v0.1.5-verification.md)。
+v0.1.6 客户端与生产后台已同步，服务代码为 `71a4f94`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.6-verification.md)。
 
-## 沉淀分析输入（2026-09-24，隔离验收通过）
+## 沉淀分析输入（2026-09-24，已部署 v0.1.6）
 
 `distillation/analysis-input.ts` 按工具名、调用 ID、状态和白名单格式产生 KEEP/EXCERPT/OMIT/DUPLICATE 决策。仅复制白名单工具元数据；原始事件与规则版本、事件 hash、原文范围和去重目标共同固定到 Snapshot。`wire()` 从该固定视图生成请求，摘录仍是原文连续子串；不把程序简写伪装成可引用原文。未触发过滤且体积小的快照保留旧协议。
 

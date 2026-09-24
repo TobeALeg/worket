@@ -92,3 +92,7 @@ node scripts/qa-distillation-input.mjs prepare OUTPUT_DIR SOURCE_DB JOB_ID
 批量授权及其执行方式单独记录在 `output/distillation-analysis/final/human-reviews/bulk-accept-receipt.json`，含最终审阅文件 SHA-256、已存在与本轮代理追加的数量。完整冻结导出为同目录 `submitted-review-export.json`。这是用户授权后的批量评价，不能推算成 54 次独立人工判断或 100% 语义准确率；页面统计中的前台活动时间也不能作为用户审阅耗时。
 
 接受沿用候选已有来源、范围与状态，未自动采纳 PROPOSED/UNCERTAIN 内容，未回答待澄清问题。隔离原生草稿仍有 38 项未解决事项，其中 32 项阻断，publishedId 为空。没有改写原数据库、部署后台、替换客户端或新增模型调用。下一步需区分过滤修复的日常使用交付与可复用定义的具体裁决。
+
+## v0.1.6 发布交付
+
+用户随后选择更新 Worket，并明确要求打包、推送和发布新版本。源码以 `71a4f94` 固定构建，PR #7 合入 main，v0.1.6 已公开；后台分析能力已启用，本机已运行 `/Applications/Worket.app` 中的 v0.1.6。294 项测试、最终安装包与升级验证通过，旧工作数据及生产配置保持，详见 [发布验收](../releases/v0.1.6-verification.md)。本轮沿用此前真实模型结果，没有再次调用模型，也未将隔离人评草稿直接发布为定义。

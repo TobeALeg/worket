@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-24",
+  "public": {
+    "/health": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "configured": true
+      }
+    },
+    "/v1/capabilities": {
+      "status": 401
+    },
+    "/admin/": {
+      "status": 404
+    }
+  },
+  "authenticatedCapabilities": {
+    "status": 200,
+    "analysisSchemaVersions": [
+      1
+    ],
+    "continuationSchemaVersions": [
+      1
+    ],
+    "ruleSchemaVersions": [
+      1
+    ],
+    "evolutionSchemaVersions": [
+      1
+    ],
+    "evidenceSchemaVersions": [
+      1
+    ],
+    "skillSchemaVersions": [
+      1
+    ]
+  },
+  "realModelInvokedByVerification": false,
+  "deployment": {
+    "configurationAndIdentityUnchanged": {
+      "settings.json": true,
+      "encryption.key": true,
+      "identity-private.pem": true,
+      "identity-public.pem": true
+    },
+    "databaseIntegrity": {
+      "metadata.sqlite": "ok",
+      "improvement.sqlite": "ok"
+    },
+    "hashes": {
+      "server/service.mjs": "9ed91182b72b76f4e3055a20468427210e5d590b3469fa3a1e3a086fbeef5afa",
+      "server/workflow.mjs": "d3b02b8ea8018375cd1166c3926242b773d3db573ad8a101f9fa0adf1ec8b90e",
+      "server/analysis-input.mjs": "9d7d57f7e1531b3d419910422c17ee245ea1d5ce69e6d265bdec574c014d0e66",
+      "server/normalize-unconfirmed-rules.mjs": "f71c2e134acbabac9672803e10ebed5e2a1eeb582626cf2eb0661856cd9cd676",
+      "dist/contracts/definition.js": "489ff18ae7e78edf35e2619fd63ace569b60ebba790022789dde4bbb5e289962"
+    },
+    "version": "/opt/worket/releases/71a4f94",
+    "previous": "/opt/worket/releases/8ffa545",
+    "backup": "/opt/worket/backups/data-pre-v016-20260924-185319.tgz",
+    "rollbackContainer": "worket-before-v016-20260924-185319",
+    "packageSha256": "3cbb347348acdc1673c5d053f6f1f0a5cdf8d03d03e93b7a5489ef30ebf56c5f",
+    "activeBefore": 0,
+    "requestRowsPreserved": 20,
+    "configurationPreserved": true,
+    "health": {
+      "ok": true,
+      "configured": true
+    },
+    "migration": "none"
+  }
+}
