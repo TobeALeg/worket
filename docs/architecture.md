@@ -348,11 +348,13 @@ INACTIVE ──继续原工作──> ACTIVE
 
 窗口 closed 事件清空引用；退出期间以及窗口已销毁时，activate / second-instance 不再调用窗口方法，避免 Object has been destroyed。
 
-角色尺寸由 .pet 的 zoom: .75 统一控制，布局与命中区域同步缩放，内部动画继续使用原有 transform；透明窗口保留气泡和阴影所需空间。
+角色使用实测 SVG 裁切视窗：自由态主体约 78px，完整布局与命中区由 PET_BODY_SIZE 统一为 80.25 × 77；透明窗口保持 304 × 271。贴边以右侧 32 × 68 为基姿势，绕原点旋转成四向，原生收纳窗口尺寸不变。
 
-2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务仍直接读取当前 `pet.html` / `pet.css` 作原版对照。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
+2026-09-24 接入前的外形探索位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务的原版对照现冻结为接入前 `e40e05e` 的 `baseline/` HTML / CSS。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
 
-同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，仅通过眼部 clipPath 叠加到原 v2 有芽底图。用户要求用啾啾替代圆点后，统一显示有芽姿态并移除状态点与符号；SVG 通过原图 alpha mask 与亮度着色在芽尖形成状态灯，朝金色芽颈渐隐，周围加局部柔光，不生成或改写身体素材。状态灯由工作状态决定，版本更新只叠加中性波纹，避免覆盖颜色。自由 / 贴边分别在图集原坐标测量芽尖与遮罩，再按固定 32 × 68 基坐标旋转到四向；CSS 保持贴边主体稳定、限定完成 / 异常提示次数，并支持暂停 / reduced-motion。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；当前 AppUpdateManager 没有向 PetView 发布这些更新状态，原型不扩展真实业务契约。
+同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，仅通过眼部 clipPath 叠加到原 v2 有芽底图。用户要求用啾啾替代圆点后，统一显示有芽姿态并移除状态点与符号；SVG 通过原图 alpha mask 与亮度着色在芽尖形成状态灯，朝金色芽颈渐隐，周围加局部柔光，不生成或改写身体素材。状态灯由工作状态决定，版本更新只叠加中性波纹，避免覆盖颜色。自由 / 贴边分别在图集原坐标测量芽尖与遮罩，再按固定 32 × 68 基坐标旋转到四向；CSS 保持贴边主体稳定、限定完成 / 异常提示次数，并支持暂停 / reduced-motion。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；原型阶段未接版本服务。
+
+同日接入：`renderer/pet-visual.ts` 从 `pet-assets/` 读取原 v2 / v3 素材，按 PetState 或优先的 DistillationActivity 绘制；缓存状态与自由/贴边姿态，避免两秒轮询重复播放有限提示。更新波纹单独增删，不重启工作光效。`AppUpdates.state → pet:get-view → PetView.updateState` 提供真实更新状态；开发模式保持 none，拒绝下载仍 available，下载失败从 receiving 回到 available，校验下载完成才 ready。`pet-motion.ts` 克隆时重命名 SVG ID 并更新所有 mask / clip / filter 引用，使收纳过程保持睁眼和芽尖着色。原便利贴改为按图集坐标对齐的透明按钮，悬停显示操作文字。详见 [原生验收](acceptance/pet-appearance.md)。
 
 ## 沉淀与复用（已开发，真实验收待完成）
 
@@ -507,7 +509,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 2026-09-11 PetPosition.absorb 暂时扩展原生窗口覆盖起始与目标位置，placement.motion 传递起点、终点、时长及动作 ID；renderer/pet-motion.ts 用 Web Animations 执行缩入与显露，完成后移除临时角色。320 毫秒后主进程收小窗口，保存仍使用最终坐标。新拖动和显示器恢复会结束未完成收纳，拖出通过 emerge 做短展开；中间状态不写入偏好。
 
-2026-09-11 记录呼吸仅由 .docked .pet.awake .status-dot 控制，复用全局记录状态映射，不增加计时器或轮询；waiting、carrying、alert 与 sleeping 不使用记录呼吸。
+记录呼吸复用全局记录状态映射，不增加计时器或轮询；2026-09-24 从独立状态圆点迁移到啾啾局部光效，贴边头部与爪尖不移动。
 
 ### 渲染层一致性（2026-09-11）
 

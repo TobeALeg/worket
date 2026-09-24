@@ -1,0 +1,25 @@
+/* Shared by every desktop surface, including review and the pet bubble. */
+:root {
+  color-scheme: light;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  --text: #343d36;
+  --muted: #858d80;
+  --background: #fbfaf7;
+  --surface: #f0f2eb;
+  --line: #e8e8e0;
+  --accent: #38634b;
+  --accent-hover: #2b513c;
+  --hover: #e9eee3;
+  --warning: #aa7b39;
+  --danger: #b74737;
+  --control-height: 28px;
+  --radius: 6px;
+}
+.worket-brand { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.worket-brand strong { font-size: 16px; font-weight: 650; line-height: 1; letter-spacing: -.6px; }
+.worket-logo { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 23px; background: #dfca8d; border-radius: 45%; font-size: 14px; font-weight: 400; color: #79632e; }
+.category-icon { display: inline-block; width: 12px; flex-shrink: 0; font-size: 12px; font-weight: 400; color: #929e8b; text-align: center; }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { nearestPetEdge, dockPet, floatingPet, constrainPet, validPetEdge, placeFloatingPet, bottomPetDock, petMovementArea, PET_SIZE } from "../../dist/desktop/pet-layout.js";
+import { nearestPetEdge, dockPet, floatingPet, constrainPet, validPetEdge, placeFloatingPet, bottomPetDock, petMovementArea, PET_SIZE, PET_BODY_SIZE } from "../../dist/desktop/pet-layout.js";
 const area = { x: 0, y: 25, width: 1440, height: 850 };
 test("edge docking uses left, right and usable top; bottom stays free", () => {
   assert.equal(nearestPetEdge({ x: 20, y: 400 }, area), "left");
@@ -40,8 +40,8 @@ test("detaching restores the normal character around the pointer, old preference
 test("visible pet reaches the upper and left areas without transparent-window margins snapping it back", () => {
   for (const desired of [{ x: 80, y: 80 }, { x: 45, y: 180 }, { x: 700, y: 70 }]) {
     const layout = placeFloatingPet(desired, area);
-    assert.equal(layout.bounds.x + layout.body.x + 39, desired.x);
-    assert.equal(layout.bounds.y + layout.body.y + 35.25, desired.y);
+    assert.equal(layout.bounds.x + layout.body.x + PET_BODY_SIZE.width / 2, desired.x);
+    assert.equal(layout.bounds.y + layout.body.y + PET_BODY_SIZE.height / 2, desired.y);
     assert.deepEqual(placeFloatingPet(layout.center, area), layout, "Release/recovery is stable");
   }
 });

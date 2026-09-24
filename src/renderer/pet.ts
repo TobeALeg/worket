@@ -1,5 +1,6 @@
 import { createPetMotion } from "./pet-motion.js";
-import type { PetPlacement } from "../desktop/pet-layout.js";
+import { createPetVisual, type PetVisualState } from "./pet-visual.js";
+import { PET_BODY_SIZE, PET_BODY_CENTER, type PetPlacement } from "../desktop/pet-layout.js";
 import type { CurrentConversationView, PetView } from "../ui-contract.js";
 
 const root = required<HTMLElement>("#pet-root");
@@ -14,6 +15,11 @@ const paperLabel = required<HTMLElement>("#paper-label");
 let currentConversation: CurrentConversationView | null = null;
 let busy = false;
 let distillationActivity: PetView["distillation"] = null;
+let visualState: PetVisualState = "sleeping";
+let updateState: NonNullable<PetView["updateState"]> = "none";
+const renderVisual = createPetVisual(required<HTMLElement>("#pet-visual"));
+root.style.setProperty("--pet-width", `${PET_BODY_SIZE.width}px`);
+root.style.setProperty("--pet-height", `${PET_BODY_SIZE.height}px`);
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -28,26 +34,31 @@ function renderPlacement(placement: PetPlacement): void {
   root.style.setProperty("--dock-y", `${placement.dock?.y ?? 0}px`);
   root.dataset.edge = placement.edge ?? "free";
   root.classList.toggle("docked", Boolean(placement.edge));
-  const body = placement.body ?? { x: 192, y: 162.5 };
+  renderVisual(visualState, Boolean(placement.edge), updateState);
+  const body = placement.body ?? {
+    x: PET_BODY_CENTER.x - PET_BODY_SIZE.width / 2,
+    y: PET_BODY_CENTER.y - PET_BODY_SIZE.height / 2,
+  };
   root.style.setProperty("--pet-x", `${body.x}px`);
   root.style.setProperty("--pet-y", `${body.y}px`);
-  const bubbleX = Math.max(0, Math.min(body.x + 78 - 238, innerWidth - 238));
+  const bubbleX = Math.max(0, Math.min(body.x + PET_BODY_SIZE.width - 238, innerWidth - 238));
   root.style.setProperty("--bubble-x", `${bubbleX}px`);
   root.style.setProperty("--bubble-bottom", `${innerHeight - body.y + 18}px`);
-  root.style.setProperty("--bubble-top", `${body.y + 70.5 + 18}px`);
-  root.style.setProperty("--bubble-arrow-x", `${Math.max(12, Math.min(212, body.x + 39 - bubbleX))}px`);
+  root.style.setProperty("--bubble-top", `${body.y + PET_BODY_SIZE.height + 18}px`);
+  root.style.setProperty("--bubble-arrow-x", `${Math.max(12, Math.min(212, body.x + PET_BODY_SIZE.width / 2 - bubbleX))}px`);
   root.classList.toggle("bubble-below", body.y < 130);
 }
 window.workpet.onPetPlacement?.(renderPlacement);
 
 function render(state: PetView): void {
+  visualState = state.distillation ? `distilling-${state.distillation.state}` : state.petState;
+  updateState = state.updateState ?? "none";
   renderPlacement(state.placement ?? { edge: state.edge ?? null });
-  pet.className = `pet ${state.petState}`;
+  pet.className = `pet ${visualState}`;
   distillationActivity = state.distillation;
   currentConversation = state.currentConversation;
   if (distillationActivity) {
     const activity = distillationActivity;
-    pet.className = `pet distilling-${activity.state}`;
     root.classList.add("has-context");
     root.classList.remove("recording-context");
     bubble.hidden = false;

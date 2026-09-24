@@ -3,7 +3,6 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const root = new URL('./', import.meta.url);
-const repository = new URL('../../../', root);
 const files = new Map([
   ['/', ['refinement.html', 'text/html; charset=utf-8']],
   ['/index.html', ['refinement.html', 'text/html; charset=utf-8']],
@@ -21,7 +20,7 @@ const files = new Map([
 ]);
 const allowedStates = ['sleeping','awake','waiting','carrying','alert','distilling-running','distilling-ready','distilling-failed'];
 async function baseline(state) {
-  let html = await readFile(new URL('src/renderer/pet.html', repository), 'utf8');
+  let html = await readFile(new URL('baseline/pet.html', root), 'utf8');
   html = html.replace('href="theme.css"', 'href="/baseline-theme.css"').replace('href="pet.css"', 'href="/baseline-pet.css"');
   html = html.replace('<div id="pet" class="pet sleeping">', `<div id="pet" class="pet ${state}">`);
   html = html.replace('<script type="module" src="pet.js"></script>', `<style>.pet-anchor{--pet-x:14px;--pet-y:12px}body[data-paused="true"] *{animation-play-state:paused!important}</style><script>addEventListener('message',event=>{if(event.origin!==location.origin||event.data?.type!=='prototype-state')return;const states=${JSON.stringify(allowedStates)};if(states.includes(event.data.state))document.querySelector('#pet').className='pet '+event.data.state;document.body.dataset.paused=String(Boolean(event.data.paused));});</script>`);
@@ -37,7 +36,7 @@ http.createServer(async (request, response) => {
       const state = allowedStates.includes(url.searchParams.get('state')) ? url.searchParams.get('state') : 'awake';
       data = await baseline(state);type = 'text/html; charset=utf-8';
     } else if(url.pathname === '/baseline-theme.css' || url.pathname === '/baseline-pet.css'){
-      data = await readFile(new URL(`src/renderer/${url.pathname === '/baseline-theme.css' ? 'theme' : 'pet'}.css`,repository));type='text/css; charset=utf-8';
+      data = await readFile(new URL(`baseline/${url.pathname === '/baseline-theme.css' ? 'theme' : 'pet'}.css`,root));type='text/css; charset=utf-8';
     } else {
       const entry = files.get(url.pathname);if(!entry){response.writeHead(404).end('Not found');return;}
       data = await readFile(new URL(entry[0],root));type=entry[1];

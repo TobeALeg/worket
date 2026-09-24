@@ -107,7 +107,10 @@ export interface CurrentConversationView {
 export const WORK_PREPARATION_NOTICE = "记录和交接时，Worket 服务会分析这项工作已有及后续的可见记录、要求和材料版本，自动准备工作状态；不额外读取附件正文。";
 export const RECORDING_UPLOAD_NOTICE = WORK_PREPARATION_NOTICE + "参与改进开启时，点击记录会上传所选聊天已有及后续的用户消息和 AI 回复，供 Worket 管理员改进产品，保存 90 天。不额外读取附件、工具输出或推理摘要；可在“Worket 服务 → 改进数据”关闭或删除。";
 
+export type PetUpdateState = "none" | "available" | "receiving" | "ready";
+
 export interface PetView {
+  updateState?: PetUpdateState;
   distillation?: import("./distillation/activity.js").DistillationActivity | null;
   placement?: PetPlacement;
   edge?: "left" | "right" | "top" | "bottom" | null;
