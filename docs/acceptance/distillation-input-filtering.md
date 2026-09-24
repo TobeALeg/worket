@@ -74,3 +74,13 @@ node scripts/qa-distillation-input.mjs prepare OUTPUT_DIR SOURCE_DB JOB_ID
 原数据库中的失败任务和原快照逐项与隔离副本内的旧版本比较，仍完全一致。新任务、草稿与完整模型输出只存于忽略的 `output/distillation-analysis/final/`；关键文件为 `accepted.json`、`live-summary.json`、`attempt-1/2/3/` 和供人工阅读的 `review.md`。固定代码档案、请求与复用响应均有校验记录；不提交工作正文或模型凭据。
 
 验收后已删除服务器上本次创建的临时代码与记录目录，隔离容器已退出。生产仍运行 `/opt/worket/releases/8ffa545`、原镜像与 uid 1000，公网 `/health` 返回正常。
+
+## 复用 HTML 人工确认页
+
+2026-09-24 用户要求找回已有 HTML 确认页。找到 `codex/conversation-requirements-research` 分支中的 `experiments/conversation-requirements/review/`（原提交 `8d675b2`、`c3994eb`），复用其页面及持久化流程，移入 `scripts/lib/human-review/` 并接入本次实际成功结果。旧研究工作区和审阅结果保持。
+
+启动命令：`node scripts/review-distillation.mjs output/distillation-analysis/final 4319`（新检出需先 `npm run build`）。本机入口为 `http://127.0.0.1:4319/#distillation-4d7816c0-7edf-4e06-810a-c64bb1d413f0`。48 条候选和 6 个独立问题共 54 个审阅步骤，另有 32 个问题按原字段关联在候选旁；与“32 项阻断、6 项非阻断”的分类维度不同。全部 38 个问题均保留，原始 599 条事件可查看。
+
+沿用接受、修改、拒绝、暂放、撤销、逐字引用、编辑暂存、遗漏补充、提交和导出。正式进度保存于 `output/distillation-analysis/final/human-reviews/`；这里只记录用户对提炼结果的判断，尚未接入定义发布。交付前正式页面为 0/54，目录无审阅 JSON，没有替用户作决定。新增模型调用为零。
+
+`npm test` 完成构建及 294/294 测试。新增覆盖结果投影、来源身份和摘录验证、未确认范围与建议状态、问题完整保留，以及旧审阅的幂等、冲突、撤销、提交门槛、落盘重启和 HTTP 同源保护。浏览器在 `html-qa-20260924/` 独立目录验证接受自动前进、撤销、编辑暂存刷新恢复、保存修改、原文前后文、关联问题显示及未完成时提交禁用；页面错误日志为空。正式页面另行核对初始状态和实际渲染后打开给用户，用户本人尚未完成审阅。
