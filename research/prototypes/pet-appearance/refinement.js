@@ -1,71 +1,109 @@
-// Measured from the generated PNG alpha bounds. No raster rewriting or CSS character recreation.
-// Crop rectangles include a common transparent crown area or the fixed 32×68 dock viewport.
-const ATLAS_SIZE = 1254;
-const FREE_SCALE = 78 / 490;
-const DOCK_SCALE = 32 / 269;
-const poses = {
-  'free-rest': { asset: 'clay-poses-v1.png', x: 65, y: 106, width: 504, height: 483, scale: FREE_SCALE },
-  'free-bud': { asset: 'clay-poses-v2.png', x: 682, y: 106, width: 504, height: 483, scale: FREE_SCALE },
-  'dock-rest': { asset: 'clay-poses-v2.png', x: 201, y: 650, width: 269, height: 571, scale: DOCK_SCALE },
-  'dock-bud': { asset: 'clay-poses-v2.png', x: 803, y: 650, width: 269, height: 571, scale: DOCK_SCALE },
-};
-const NS = 'http://www.w3.org/2000/svg';
-let state = new URLSearchParams(location.search).get('state') === 'rest' ? 'rest' : 'bud';
+import { states, updates, createPet } from './clay-pet.js';
+
 const $ = selector => document.querySelector(selector);
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+let paused = motionPreference.matches;
+let state;
+let update;
 
-function pose(name, magnification = 1) {
-  const spec = poses[name];
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', `${spec.x} ${spec.y} ${spec.width} ${spec.height}`);
-  svg.setAttribute('width', String(spec.width * spec.scale * magnification));
-  svg.setAttribute('height', String(spec.height * spec.scale * magnification));
-  svg.setAttribute('aria-hidden', 'true');
-  svg.dataset.pose = name;
-  const image = document.createElementNS(NS, 'image');
-  image.setAttribute('href', `assets/${spec.asset}`);
-  image.setAttribute('width', String(ATLAS_SIZE));
-  image.setAttribute('height', String(ATLAS_SIZE));
-  svg.append(image);
-  return svg;
+function readLocation() {
+  const query = new URLSearchParams(location.search);
+  // Preserve the link used for the approved two-pose study.
+  state = states.find(item => item.id === query.get('state')) ?? states[1];
+  update = updates.find(item => item.id === query.get('update'))?.id ?? (query.get('state') === 'rest' ? 'none' : 'available');
 }
 
-for (const art of document.querySelectorAll('.art')) {
-  const name = art.dataset.pose;
-  const group = document.createElement('div');
-  group.className = name.startsWith('dock') ? 'edge-enlargement' : 'free-enlargement';
-  group.append(pose(name, name.startsWith('dock') ? 3 : 2.4));
-  art.append(group);
+function renderGallery() {
+  $('#state-gallery').replaceChildren(...states.map(item => {
+    const button = document.createElement('button');
+    button.className = 'state-card surface';
+    button.dataset.state = item.id;
+    button.setAttribute('aria-label', `${item.label}${item.reserved ? '（预留状态）' : ''}`);
+    button.setAttribute('aria-pressed', String(item.id === state.id));
+    const art = document.createElement('span');
+    art.className = 'card-art';
+    art.append(createPet({ state: item.id, update }));
+    const label = document.createElement('span');
+    label.className = 'card-label';
+    label.textContent = item.label;
+    button.append(art, label);
+    if (item.reserved) {
+      const reserved = document.createElement('small');
+      reserved.className = 'reserved';
+      reserved.textContent = '预留';
+      button.append(reserved);
+    }
+    button.addEventListener('click', () => {
+      state = item;
+      render();
+      $(`.state-card[data-state="${item.id}"]`).focus({ preventScroll: true });
+    });
+    return button;
+  }));
 }
 
-function renderNative() {
-  $('#native-pet').replaceChildren(pose(`free-${state}`));
+function renderFocus() {
+  $('#focus-pet').replaceChildren(createPet({ state: state.id, update, magnification: 2.4 }));
+  $('#focus-edge').replaceChildren(createPet({ state: state.id, update, edge: 'right', magnification: 2.8 }));
+  $('#native-pet').replaceChildren(createPet({ state: state.id, update }));
   for (const container of document.querySelectorAll('.native-edge')) {
-    const frame = document.createElement('div');
-    frame.className = `dock-window ${container.dataset.edge}`;
-    const body = document.createElement('div');
-    body.className = 'dock-pose';
-    body.append(pose(`dock-${state}`));
-    frame.append(body);
-    container.querySelector('.edge-slot').replaceChildren(frame);
+    container.querySelector('.edge-slot').replaceChildren(createPet({ state: state.id, update, edge: container.dataset.edge }));
   }
-  for (const button of document.querySelectorAll('[data-state]')) button.setAttribute('aria-pressed', String(button.dataset.state === state));
-  const url = new URL(location.href);
-  url.searchParams.delete('variant');
-  url.searchParams.set('state', state);
-  history.replaceState(null, '', url);
+  $('#state-title').textContent = state.label;
+  $('#state-category').textContent = state.reserved ? 'RESERVED' : state.id.startsWith('distilling') ? 'DISTILLATION' : 'DAILY';
+  $('#state-description').textContent = state.detail;
+  const item = updates.find(item => item.id === update);
+  $('#update-description').textContent = item.detail;
+  for (const button of document.querySelectorAll('#update-options button')) button.setAttribute('aria-pressed', String(button.dataset.update === update));
   renderStatus();
 }
+
 function renderStatus() {
-  $('#view-state').textContent = `${state === 'bud' ? '有啾啾' : '日常'} · ${document.body.dataset.background === 'dark' ? '深色' : '浅色'}背景`;
+  const status = updates.find(item => item.id === update);
+  $('#view-state').textContent = `${state.label} · ${status.label} · ${paused ? '动效暂停' : '动效开启'}`;
 }
-for (const button of document.querySelectorAll('[data-state]')) button.addEventListener('click', () => {state = button.dataset.state;renderNative();});
+
+function render(writeUrl = true) {
+  renderGallery();
+  renderFocus();
+  if (writeUrl) {
+    const url = new URL(location.href);
+    url.searchParams.delete('variant');
+    url.searchParams.set('state', state.id);
+    url.searchParams.set('update', update);
+    history.replaceState(null, '', url);
+  }
+}
+
+function setMotion() {
+  paused = paused || motionPreference.matches;
+  document.body.dataset.motion = paused ? 'off' : 'on';
+  $('#motion').textContent = motionPreference.matches ? '已减少动态效果' : paused ? '播放动效' : '暂停动效';
+  $('#motion').disabled = motionPreference.matches;
+  $('#replay').disabled = motionPreference.matches;
+  $('#motion').setAttribute('aria-pressed', String(paused));
+  renderStatus();
+}
+
+for (const item of updates) {
+  const button = document.createElement('button');
+  button.dataset.update = item.id;
+  button.textContent = item.label;
+  button.addEventListener('click', () => { update = item.id; render(); });
+  $('#update-options').append(button);
+}
 $('#background').addEventListener('click', () => {
   const dark = document.body.dataset.background !== 'dark';
   document.body.dataset.background = dark ? 'dark' : 'light';
   $('#background').textContent = dark ? '浅色背景' : '深色背景';
   $('#background').setAttribute('aria-pressed', String(dark));
-  renderStatus();
 });
+$('#motion').addEventListener('click', () => { paused = !paused; setMotion(); });
+motionPreference.addEventListener('change', event => { paused = event.matches; setMotion(); });
+$('#replay').addEventListener('click', () => { renderFocus(); });
 $('#reference').addEventListener('click', () => $('#reference-dialog').showModal());
 $('#close-reference').addEventListener('click', () => $('#reference-dialog').close());
-renderNative();
+window.addEventListener('popstate', () => { readLocation(); render(false); });
+readLocation();
+render();
+setMotion();

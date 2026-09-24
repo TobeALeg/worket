@@ -352,6 +352,8 @@ INACTIVE ──继续原工作──> ACTIVE
 
 2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务仍直接读取当前 `pet.html` / `pet.css` 作原版对照。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
 
+同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，但仅通过眼部 clipPath 叠加到原 v1 / v2 底图，避免更换整图导致主体、小芽、便利贴和爪尖漂移。状态点、沉淀线条和更新提示作为 SVG 局部层，CSS 负责小幅或有限次数动效；四向通过固定 32 × 68 基坐标旋转，状态符号反向旋转以保持可读。睡眠不叠加睁眼层，贴边不执行主体位移，暂停和 reduced-motion 控制局部动画。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；当前 AppUpdateManager 没有向 PetView 发布这些更新状态，原型不扩展真实业务契约。
+
 ## 沉淀与复用（已开发，真实验收待完成）
 
 “沉淀”取代此前将复用能力混入归档的方向。沉淀产生定义对象；ARCHIVED 仍属于原工作生命周期，历史记录保留，主要入口调整为定义视图，归档退到次级区域。

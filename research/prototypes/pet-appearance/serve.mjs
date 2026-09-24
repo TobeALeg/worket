@@ -10,14 +10,16 @@ const files = new Map([
   ['/exploration', ['index.html', 'text/html; charset=utf-8']],
   ['/refinement.css', ['refinement.css', 'text/css; charset=utf-8']],
   ['/refinement.js', ['refinement.js', 'text/javascript; charset=utf-8']],
+  ['/clay-pet.js', ['clay-pet.js', 'text/javascript; charset=utf-8']],
   ['/appearance.css', ['appearance.css', 'text/css; charset=utf-8']],
   ['/appearance.js', ['appearance.js', 'text/javascript; charset=utf-8']],
   ['/assets/previous-material-study.png', ['assets/previous-material-study.png', 'image/png']],
   ['/assets/previous-edge-study.png', ['assets/previous-edge-study.png', 'image/png']],
   ['/assets/clay-poses-v1.png', ['assets/clay-poses-v1.png', 'image/png']],
   ['/assets/clay-poses-v2.png', ['assets/clay-poses-v2.png', 'image/png']],
+  ['/assets/clay-poses-awake-v3.png', ['assets/clay-poses-awake-v3.png', 'image/png']],
 ]);
-const allowedStates = ['sleeping','awake','distilling-running','distilling-ready','distilling-failed'];
+const allowedStates = ['sleeping','awake','waiting','carrying','alert','distilling-running','distilling-ready','distilling-failed'];
 async function baseline(state) {
   let html = await readFile(new URL('src/renderer/pet.html', repository), 'utf8');
   html = html.replace('href="theme.css"', 'href="/baseline-theme.css"').replace('href="pet.css"', 'href="/baseline-pet.css"');

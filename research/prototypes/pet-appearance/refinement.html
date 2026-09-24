@@ -1,43 +1,43 @@
 <!doctype html>
-<!-- Clay refinement prototype. Raster references stay intact; SVG viewports only display atlas regions. -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Worket · 拟物版细化</title>
+  <title>Worket · 拟物桌宠全状态</title>
   <link rel="stylesheet" href="refinement.css">
 </head>
-<body data-background="light">
+<body data-background="light" data-motion="on">
   <main>
-    <header><div><p class="eyebrow">WORKET / CLAY REFINEMENT</p><h1>还是这只土豆。</h1><p class="subtitle">只细化贴边姿态和头顶小芽。</p></div><button id="reference">查看修改前 ↗</button></header>
+    <header>
+      <div><p class="eyebrow">WORKET / CLAY STATES</p><h1>睁开眼睛，开始工作。</h1></div>
+      <div class="tools"><button id="background" aria-pressed="false">深色背景</button><button id="motion" aria-pressed="false">暂停动效</button><button id="reference">修改前 ↗</button></div>
+    </header>
 
-    <div class="studies">
-      <section class="study"><div class="study-heading"><h2><span>01</span> 啾啾更短，连得更自然</h2><span>放大</span></div><div class="pair surface">
-        <figure><div class="art free-art" data-pose="free-rest"></div><figcaption>日常</figcaption></figure>
-        <figure><div class="art free-art" data-pose="free-bud"></div><figcaption>有更新 · 短颈小芽</figcaption></figure>
-      </div><p class="decision">让小芽贴着头顶长出来，保留原来的闭眼笑脸和便利贴。</p></section>
+    <section class="state-section" aria-label="全部桌宠状态">
+      <div class="section-heading"><h2>全部状态</h2><span>啾啾可与每个状态叠加</span></div>
+      <div id="state-gallery" class="state-gallery" role="group" aria-label="选择桌宠状态"></div>
+    </section>
 
-      <section class="study"><div class="study-heading"><h2><span>02</span> 贴边只露小头与爪尖</h2><span>放大</span></div><div class="pair surface">
-        <figure><div class="art edge-art" data-pose="dock-rest"></div><figcaption>日常收纳</figcaption></figure>
-        <figure><div class="art edge-art" data-pose="dock-bud"></div><figcaption>小芽朝桌面内侧</figcaption></figure>
-      </div><p class="decision">爪子压成扁扁的小尖，啾啾随头转向，整体收进窄窗口。</p></section>
-    </div>
+    <section class="focus-section surface" aria-label="当前状态放大预览">
+      <div class="focus-copy"><p class="eyebrow" id="state-category">RECORDING</p><h2 id="state-title">记录中</h2><p id="state-description"></p><button id="replay">重播动作 ↻</button><p class="interaction-hint">悬停或按住身体，查看反馈</p></div>
+      <figure class="focus-free"><div id="focus-pet"></div><figcaption>自由态 · 放大 2.4 倍</figcaption></figure>
+      <figure class="focus-edge"><div id="focus-edge"></div><figcaption>右侧贴边 · 放大 2.8 倍</figcaption></figure>
+      <div class="update-controls"><span>更新啾啾</span><div class="segmented" id="update-options" role="group" aria-label="更新啾啾状态"></div><span id="update-description"></span></div>
+    </section>
 
     <section class="native-section" aria-label="实际尺寸检查">
-      <div class="native-heading"><h2>实际尺寸</h2><div class="native-controls"><div class="segmented" role="group" aria-label="原尺寸状态"><button data-state="rest" aria-pressed="false">日常</button><button data-state="bud" aria-pressed="true">有啾啾</button></div><button id="background" aria-pressed="false">深色背景</button></div></div>
+      <div class="section-heading"><h2>实际尺寸 · 四向贴边</h2><span>主体约 78 px · 侧边 32 × 68 px · 上下 68 × 32 px</span></div>
       <div class="native-grid">
-        <div class="native-free surface"><span>当前原版</span><iframe src="/baseline?state=sleeping" title="当前原版桌宠"></iframe></div>
-        <div class="native-free surface"><span>拟物版 · 主体约 78 px</span><div id="native-pet"></div></div>
+        <div class="native-free surface"><span>自由态</span><div id="native-pet"></div></div>
         <div class="native-edge surface" data-edge="top"><span>上</span><div class="edge-slot"></div></div>
         <div class="native-edge surface" data-edge="right"><span>右</span><div class="edge-slot"></div></div>
         <div class="native-edge surface" data-edge="bottom"><span>下</span><div class="edge-slot"></div></div>
         <div class="native-edge surface" data-edge="left"><span>左</span><div class="edge-slot"></div></div>
       </div>
-      <div class="native-caption"><span>贴边窗口：侧边 32 × 68 px，上下 68 × 32 px</span><span id="view-state" role="status">有啾啾 · 浅色背景</span></div>
     </section>
-    <footer>拟物素材方案预览 · 尚未接入真实状态或替换桌宠</footer>
+    <footer><span>状态造型预览 · 尚未接入真实客户端</span><span id="view-state" role="status" aria-live="polite"></span></footer>
   </main>
-  <dialog id="reference-dialog"><div class="dialog-heading"><h2>修改前的拟物图</h2><button id="close-reference" aria-label="关闭修改前对比">×</button></div><img src="assets/previous-material-study.png" alt="此前拟物版头顶啾啾较高的三态概念图"><img src="assets/previous-edge-study.png" alt="此前贴边版露出较多身体，爪子和啾啾较大的概念图"></dialog>
+  <dialog id="reference-dialog"><div class="dialog-heading"><h2>修改前的闭眼版</h2><button id="close-reference" aria-label="关闭修改前对比">×</button></div><img src="assets/clay-poses-v2.png" alt="上一版闭眼的拟物桌宠，自由态与贴边态各有普通和小芽两种姿态"></dialog>
   <script type="module" src="refinement.js"></script>
 </body>
 </html>
