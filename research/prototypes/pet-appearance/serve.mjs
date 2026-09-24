@@ -5,11 +5,17 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('./', import.meta.url);
 const repository = new URL('../../../', root);
 const files = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/index.html', ['index.html', 'text/html; charset=utf-8']],
+  ['/', ['refinement.html', 'text/html; charset=utf-8']],
+  ['/index.html', ['refinement.html', 'text/html; charset=utf-8']],
+  ['/exploration', ['index.html', 'text/html; charset=utf-8']],
+  ['/refinement.css', ['refinement.css', 'text/css; charset=utf-8']],
+  ['/refinement.js', ['refinement.js', 'text/javascript; charset=utf-8']],
   ['/appearance.css', ['appearance.css', 'text/css; charset=utf-8']],
   ['/appearance.js', ['appearance.js', 'text/javascript; charset=utf-8']],
   ['/assets/previous-material-study.png', ['assets/previous-material-study.png', 'image/png']],
+  ['/assets/previous-edge-study.png', ['assets/previous-edge-study.png', 'image/png']],
+  ['/assets/clay-poses-v1.png', ['assets/clay-poses-v1.png', 'image/png']],
+  ['/assets/clay-poses-v2.png', ['assets/clay-poses-v2.png', 'image/png']],
 ]);
 const allowedStates = ['sleeping','awake','distilling-running','distilling-ready','distilling-failed'];
 async function baseline(state) {
@@ -36,4 +42,4 @@ http.createServer(async (request, response) => {
     }
     response.writeHead(200,{'Content-Type':type,'Cache-Control':'no-store'}).end(request.method === 'HEAD' ? undefined : data);
   } catch(error){console.error(error.message);response.writeHead(500).end('Prototype asset unavailable');}
-}).listen(port,'127.0.0.1',()=>console.log(`Worket pet study: http://127.0.0.1:${port}/?variant=A\nSource: ${fileURLToPath(root)}`));
+}).listen(port,'127.0.0.1',()=>console.log(`Worket clay refinement: http://127.0.0.1:${port}/\nSource: ${fileURLToPath(root)}`));

@@ -350,7 +350,7 @@ INACTIVE ──继续原工作──> ACTIVE
 
 角色尺寸由 .pet 的 zoom: .75 统一控制，布局与命中区域同步缩放，内部动画继续使用原有 transform；透明窗口保留气泡和阴影所需空间。
 
-2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。本机只读 HTTP 服务加载五种候选，并直接读取当前 `pet.html` 与 `pet.css` 作为基线；候选状态只在页面内模拟，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。候选沿用 78 × 70.5 自由布局及 68 × 32 / 32 × 68 紧凑窗口进行比较；并不代表已通过真实 BrowserWindow、拖动或性能验收。现有打包规则排除 `research/`。选型后再接入现有 PetView、PetPlacement 和 createPetMotion，不新增一套业务状态机。
+2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务仍直接读取当前 `pet.html` / `pet.css` 作原版对照。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
 
 ## 沉淀与复用（已开发，真实验收待完成）
 

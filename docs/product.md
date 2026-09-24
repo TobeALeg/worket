@@ -220,7 +220,7 @@ Codex、WorkBuddy、ZCode、Antigravity 使用同一份应用层生成的交接�
 
 桌宠角色按原始尺寸的 75% 展示（身体 78 × 67.5 像素），五官、便利贴与点击区域同步缩放；对话气泡保留原字号。
 
-2026-09-24 外形探索：在 `codex/pet-appearance-exploration` 分支比较软糖小团、豆豆贴纸、纸页信使、像素工友和奶油陶土五种方向，以原尺寸、四向贴边和模拟工作状态判断外形。当前品牌形象仍按上述规则运行，尚未选定或应用新造型。可通过 `npm run prototype:pet` 查看分支原型，设计依据见该分支的 `research/prototypes/pet-appearance/README.md`。
+2026-09-24 外形探索：用户不接受新扩散的五种造型，要求沿此前拟物土豆细化贴边收纳与头顶啾啾。`codex/pet-appearance-exploration` 分支预览已收敛到这一方向：窄头部、小爪尖、短颈芽，贴边后小芽朝桌面内侧；普通态与有芽态均可在原尺寸查看。此为生成素材与浏览器预览，正式造型和更新状态仍未接入客户端。运行 `npm run prototype:pet`，设计依据与边界见 `research/prototypes/pet-appearance/README.md`。
 
 ## 用户主动沉淀与复用（开发实现，真实验收待完成）
 
