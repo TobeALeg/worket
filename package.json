@@ -10,6 +10,7 @@
     "clean": "node scripts/clean.mjs",
     "build": "npm run clean && tsc && node scripts/copy-static.mjs",
     "typecheck": "tsc --noEmit",
+    "prototype:pet": "node research/prototypes/pet-appearance/serve.mjs",
     "test": "npm run build && node --experimental-strip-types --test test/**/*.test.ts",
     "start": "npm run package:mac && ./release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket",
     "dev": "npm run package:mac && ./release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket --dev",

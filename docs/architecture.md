@@ -350,6 +350,8 @@ INACTIVE ──继续原工作──> ACTIVE
 
 角色尺寸由 .pet 的 zoom: .75 统一控制，布局与命中区域同步缩放，内部动画继续使用原有 transform；透明窗口保留气泡和阴影所需空间。
 
+2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。本机只读 HTTP 服务加载五种候选，并直接读取当前 `pet.html` 与 `pet.css` 作为基线；候选状态只在页面内模拟，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。候选沿用 78 × 70.5 自由布局及 68 × 32 / 32 × 68 紧凑窗口进行比较；并不代表已通过真实 BrowserWindow、拖动或性能验收。现有打包规则排除 `research/`。选型后再接入现有 PetView、PetPlacement 和 createPetMotion，不新增一套业务状态机。
+
 ## 沉淀与复用（已开发，真实验收待完成）
 
 “沉淀”取代此前将复用能力混入归档的方向。沉淀产生定义对象；ARCHIVED 仍属于原工作生命周期，历史记录保留，主要入口调整为定义视图，归档退到次级区域。
