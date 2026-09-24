@@ -71,12 +71,13 @@ figcaption { font-size: 9px; color: var(--muted); margin: 8px 0 0; }
 .clay-pet[data-state="carrying"] .free-pose { animation: carry .8s ease-in-out infinite alternate; }
 .clay-pet[data-state="distilling-ready"] .free-pose { animation: carry .45s ease-in-out 3 alternate; }
 .clay-pet:is([data-state="alert"], [data-state="distilling-failed"]) .free-pose { animation: nudge .35s ease-in-out 3; }
-.clay-pet.dock-window[data-state="awake"] .status-badge { animation: status-pulse 2.8s ease-in-out infinite; }
-.clay-pet[data-state="distilling-running"] .status-badge { animation: status-pulse 1.4s ease-in-out infinite; }
-.clay-pet[data-state="distilling-ready"] .status-badge { animation: status-pulse .6s ease-in-out 3; }
+.clay-pet[data-state="awake"] .bud-status { animation: bud-breathe 2.8s ease-in-out infinite; }
+.clay-pet[data-state="distilling-running"] .bud-status { animation: bud-breathe 1.6s ease-in-out infinite; }
+.clay-pet[data-state="distilling-ready"] .bud-status { animation: bud-notice .8s ease-in-out 3; }
+.clay-pet:is([data-state="alert"], [data-state="distilling-failed"]) .bud-status { animation: bud-notice .45s ease-in-out 3; }
 .note-activity { stroke: #fff5ce; stroke-width: 5; stroke-linecap: round; animation: note-pulse 1.4s ease-in-out infinite; }
-.bud-receiving { fill: none; stroke: #bfa166; stroke-width: 3; opacity: .6; animation: bud-signal 2.4s ease-out infinite; }
-.bud-ready { fill: #fff4b0; opacity: .4; animation: bud-ready .8s ease-in-out 3; }
+.update-wave { fill: none; stroke: #a48e68; stroke-width: 2.5; stroke-linecap: round; opacity: .6; }
+.clay-pet[data-update="receiving"] .update-wave { animation: update-wave 2.4s ease-in-out infinite; }
 #focus-pet:hover .clay-pet { transform: translateY(-2px); }
 #focus-pet:active { cursor: grabbing; }
 #focus-pet:active .clay-pet { transform: scale(.98); }
@@ -85,10 +86,10 @@ body[data-motion="off"] .clay-pet * { animation-play-state: paused !important; }
 @keyframes breathe { 50% { transform: translateY(var(--lift)); } }
 @keyframes carry { to { transform: translateY(calc(var(--lift) * 1.5)) rotate(1.5deg); } }
 @keyframes nudge { 33% { transform: rotate(-3deg); } 66% { transform: rotate(3deg); } }
-@keyframes status-pulse { 50% { opacity: .4; } }
+@keyframes bud-breathe { 50% { opacity: .56; } }
+@keyframes bud-notice { 50% { opacity: .35; } }
 @keyframes note-pulse { 0%, 100% { opacity: .1; } 50% { opacity: .8; } }
-@keyframes bud-signal { 0% { transform: scale(.8); opacity: .6; } 85%, 100% { transform: scale(1.4); opacity: 0; } }
-@keyframes bud-ready { 50% { opacity: .75; } }
+@keyframes update-wave { 0%, 100% { opacity: .15; } 45% { opacity: .75; } }
 footer { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #ded5c4; margin-top: 17px; padding-top: 11px; font-size: 9px; color: #9c8e77; }
 dialog { width: min(720px, 94vw); max-height: 88vh; background: #f5efe4; border: 1px solid #dbcfb9; border-radius: 12px; padding: 20px; }
 dialog::backdrop { background: #29231c66; backdrop-filter: blur(4px); }
@@ -100,6 +101,7 @@ body[data-background="dark"] .surface { --muted: #bac3b2; color: #e0e1ce; }
 body[data-background="dark"] .state-card[aria-pressed="true"] { border-color: #b2a075; }
 body[data-background="dark"] .state-card[aria-pressed="true"] .card-label { color: #f0d68a; }
 body[data-background="dark"] .focus-section .eyebrow, body[data-background="dark"] #replay { color: #c6b185; }
+body[data-background="dark"] .update-wave { stroke: #bac4b6; }
 @media (prefers-reduced-motion: reduce) {
   .clay-pet * { animation: none !important; }
   #focus-pet:hover .clay-pet, #focus-pet:active .clay-pet { transform: none; }

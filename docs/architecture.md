@@ -352,7 +352,7 @@ INACTIVE ──继续原工作──> ACTIVE
 
 2026-09-24 外形探索仅位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务仍直接读取当前 `pet.html` / `pet.css` 作原版对照。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
 
-同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，但仅通过眼部 clipPath 叠加到原 v1 / v2 底图，避免更换整图导致主体、小芽、便利贴和爪尖漂移。状态点、沉淀线条和更新提示作为 SVG 局部层，CSS 负责小幅或有限次数动效；四向通过固定 32 × 68 基坐标旋转，状态符号反向旋转以保持可读。睡眠不叠加睁眼层，贴边不执行主体位移，暂停和 reduced-motion 控制局部动画。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；当前 AppUpdateManager 没有向 PetView 发布这些更新状态，原型不扩展真实业务契约。
+同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，仅通过眼部 clipPath 叠加到原 v2 有芽底图。用户要求用啾啾替代圆点后，统一显示有芽姿态并移除状态点与符号；SVG 通过原图 alpha mask 与亮度着色在芽尖形成状态灯，朝金色芽颈渐隐，周围加局部柔光，不生成或改写身体素材。状态灯由工作状态决定，版本更新只叠加中性波纹，避免覆盖颜色。自由 / 贴边分别在图集原坐标测量芽尖与遮罩，再按固定 32 × 68 基坐标旋转到四向；CSS 保持贴边主体稳定、限定完成 / 异常提示次数，并支持暂停 / reduced-motion。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；当前 AppUpdateManager 没有向 PetView 发布这些更新状态，原型不扩展真实业务契约。
 
 ## 沉淀与复用（已开发，真实验收待完成）
 

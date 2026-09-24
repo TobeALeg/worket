@@ -1,33 +1,31 @@
 // State names follow PetState and DistillationActivity. Updates are a separate visual proposal.
 export const states = [
-  { id: 'sleeping', label: '休息', color: '#a6a093', detail: '闭眼休息，安静待机。' },
-  { id: 'awake', label: '记录中', color: '#3f9d70', detail: '睁开眼睛，轻轻呼吸；贴边后只让绿点缓慢明暗。' },
-  { id: 'waiting', label: '等待接入', color: '#d49b22', detail: '睁眼等候，琥珀色提示点常亮。' },
-  { id: 'carrying', label: '携带', color: '#377fd2', detail: '小幅上下起伏，蓝点保持可见。现有状态定义保留，尚无业务触发。', reserved: true },
-  { id: 'alert', label: '提醒', color: '#b6262e', detail: '轻摇三次后停下，留下红色提示。现有状态定义保留，尚无业务触发。', reserved: true },
-  { id: 'distilling-running', label: '沉淀中', color: '#8b6537', detail: '便利贴上的线条依次亮起，棕色提示点缓慢明暗。' },
-  { id: 'distilling-ready', label: '待审阅', color: '#3f9d70', detail: '轻跳三次后安静下来，绿色勾号提示可以审阅。', symbol: 'check' },
-  { id: 'distilling-failed', label: '需处理', color: '#b6262e', detail: '轻摇三次后停下，红色叹号提示需要处理。', symbol: 'alert' },
+  { id: 'sleeping', label: '休息', color: null, detail: '闭眼休息，啾啾熄灯，保留原来的金色。' },
+  { id: 'awake', label: '记录中', color: '#55d59b', detail: '芽尖亮起柔和绿光，缓慢呼吸；贴边时身体保持安静。' },
+  { id: 'waiting', label: '等待接入', color: '#ffae58', detail: '芽尖保持暖橙色，安静等候接入。' },
+  { id: 'carrying', label: '携带', color: '#76baff', detail: '芽尖亮起天蓝色，身体小幅起伏。现有定义中的预留状态。', reserved: true },
+  { id: 'alert', label: '提醒', color: '#ff7969', detail: '珊瑚红光短暂明暗三次，随后常亮。现有定义中的预留状态。', reserved: true },
+  { id: 'distilling-running', label: '沉淀中', color: '#b294f6', detail: '芽尖淡紫色光缓慢明暗，便利贴上的线条依次亮起。' },
+  { id: 'distilling-ready', label: '待审阅', color: '#c1fff1', detail: '芽尖亮起青白色，轻跳三次后安静等候审阅。' },
+  { id: 'distilling-failed', label: '需处理', color: '#ff7969', detail: '珊瑚红光提示需要处理，轻摇三次后停住。' },
 ];
 
 export const updates = [
-  { id: 'none', label: '收起', detail: '没有小芽' },
-  { id: 'available', label: '有更新', detail: '短颈小芽出现' },
-  { id: 'receiving', label: '接收中', detail: '小芽周围轻轻扩散' },
-  { id: 'ready', label: '已就绪', detail: '芽尖短暂亮起' },
+  { id: 'none', label: '无更新', detail: '啾啾颜色表示工作状态' },
+  { id: 'available', label: '有更新', detail: '一道细波纹提示新版本' },
+  { id: 'receiving', label: '接收中', detail: '波纹向外轻轻扩散' },
+  { id: 'ready', label: '已就绪', detail: '两道细波纹表示版本就绪' },
 ];
 
 const NS = 'http://www.w3.org/2000/svg';
 const ATLAS_SIZE = 1254;
 const FREE_SCALE = 78 / 490;
 const DOCK_SCALE = 32 / 269;
-const EDGE_ROTATION = { right: 0, left: 180, top: -90, bottom: 90 };
 // Alpha-measured viewports preserve the approved body, note, paws and sprout pixels.
+// The sprout is now present in every state. The tip mask fades before its gold neck joins the body.
 const poses = {
-  free: { x: 65, y: 106, width: 504, height: 483, scale: FREE_SCALE, asset: 'clay-poses-v1.png', eyeRects: [[212, 377, 60, 59], [360, 377, 60, 59]], dot: [528, 542, 29], note: [402, 270] },
-  'free-bud': { x: 682, y: 106, width: 504, height: 483, scale: FREE_SCALE, asset: 'clay-poses-v2.png', eyeRects: [[830, 377, 61, 59], [976, 377, 61, 59]], dot: [1145, 542, 29], note: [1019, 272], bud: [940, 157] },
-  dock: { x: 201, y: 650, width: 269, height: 571, scale: DOCK_SCALE, asset: 'clay-poses-v2.png', eyeRects: [[359, 855, 47, 61], [359, 957, 47, 61]], dot: [323, 1095, 18] },
-  'dock-bud': { x: 803, y: 650, width: 269, height: 571, scale: DOCK_SCALE, asset: 'clay-poses-v2.png', eyeRects: [[962, 855, 48, 61], [962, 957, 48, 61]], dot: [925, 1095, 18], bud: [856, 938] },
+  free: { x: 682, y: 106, width: 504, height: 483, scale: FREE_SCALE, eyeRects: [[830, 377, 61, 59], [976, 377, 61, 59]], note: [1019, 272], bud: [939, 156], tip: [912, 136, 53, 44], fade: [939, 165, 939, 179], highlight: [939, 149], halo: [34, 30] },
+  dock: { x: 803, y: 650, width: 269, height: 571, scale: DOCK_SCALE, eyeRects: [[962, 855, 48, 61], [962, 957, 48, 61]], bud: [857, 939], tip: [834, 918, 54, 42], fade: [866, 939, 886, 939], highlight: [852, 933], halo: [30, 28] },
 };
 let serial = 0;
 
@@ -41,6 +39,45 @@ function atlasImage(asset, attributes = {}) {
   return svgElement('image', { href: `assets/${asset}`, width: ATLAS_SIZE, height: ATLAS_SIZE, ...attributes });
 }
 
+function budLight(spec, color, defs, id) {
+  const [cx, cy] = spec.bud;
+  const [x, y, width, height] = spec.tip;
+  const [x1, y1, x2, y2] = spec.fade;
+  const fade = svgElement('linearGradient', { id: `${id}-fade`, gradientUnits: 'userSpaceOnUse', x1, y1, x2, y2 });
+  fade.append(svgElement('stop', { offset: 0, 'stop-color': 'white' }), svgElement('stop', { offset: 1, 'stop-color': 'black' }));
+  const fadeMask = svgElement('mask', { id: `${id}-fade-mask`, maskUnits: 'userSpaceOnUse', x, y, width, height });
+  fadeMask.append(svgElement('rect', { x, y, width, height, fill: `url(#${id}-fade)` }));
+  const mask = svgElement('mask', { id: `${id}-tip`, maskUnits: 'userSpaceOnUse', x, y, width, height, style: 'mask-type:alpha' });
+  mask.append(atlasImage('clay-poses-v2.png', { mask: `url(#${id}-fade-mask)` }));
+  const tint = svgElement('filter', { id: `${id}-tint`, filterUnits: 'userSpaceOnUse', x, y, width, height, 'color-interpolation-filters': 'sRGB' });
+  // Tint the existing alpha and luminance, retaining the organic outline and clay shading.
+  const rgb = color.slice(1).match(/../g).map(value => parseInt(value, 16) / 255);
+  const matrix = rgb.flatMap(value => [.2126 * value * .72, .7152 * value * .72, .0722 * value * .72, 0, value * .28]);
+  tint.append(svgElement('feColorMatrix', { type: 'matrix', values: [...matrix, 0, 0, 0, 1, 0].join(' ') }));
+  const halo = svgElement('radialGradient', { id: `${id}-halo` });
+  halo.append(...[[0, .46], [.5, .22], [1, 0]].map(([offset, opacity]) => svgElement('stop', { offset, 'stop-color': color, 'stop-opacity': opacity })));
+  const glint = svgElement('radialGradient', { id: `${id}-glint` });
+  glint.append(svgElement('stop', { offset: 0, 'stop-color': '#f4fff9', 'stop-opacity': .7 }), svgElement('stop', { offset: 1, 'stop-color': color, 'stop-opacity': 0 }));
+  defs.append(fade, fadeMask, mask, tint, halo, glint);
+  const light = svgElement('g', { class: 'bud-status', 'data-color': color });
+  light.append(svgElement('ellipse', { class: 'bud-halo', cx, cy, rx: spec.halo[0], ry: spec.halo[1], fill: `url(#${id}-halo)` }));
+  const tip = svgElement('g', { mask: `url(#${id}-tip)` });
+  tip.append(atlasImage('clay-poses-v2.png', { class: 'bud-tint', filter: `url(#${id}-tint)` }));
+  tip.append(svgElement('ellipse', { cx: spec.highlight[0], cy: spec.highlight[1], rx: 14, ry: 11, fill: `url(#${id}-glint)` }));
+  light.append(tip);
+  return light;
+}
+
+function updateSignal(spec, update, docked) {
+  const [cx, cy] = spec.bud;
+  const signal = svgElement('g', { class: 'update-signal', transform: `translate(${cx} ${cy}) rotate(${docked ? -90 : 0})` });
+  const paths = ['M-26 -18Q0 -40 26 -18', 'M-34 -29Q0 -57 34 -29'];
+  for (const [index, d] of paths.slice(0, update === 'available' ? 1 : 2).entries()) {
+    signal.append(svgElement('path', { class: 'update-wave', d, style: `animation-delay:${index * .35}s` }));
+  }
+  return signal;
+}
+
 function sprite(spec, state, update, magnification, edge) {
   const svg = svgElement('svg', {
     viewBox: `${spec.x} ${spec.y} ${spec.width} ${spec.height}`,
@@ -48,15 +85,16 @@ function sprite(spec, state, update, magnification, edge) {
     height: spec.height * spec.scale * magnification,
     'aria-hidden': 'true',
   });
-  svg.append(atlasImage(spec.asset));
+  const id = `clay-${++serial}`;
+  const defs = svgElement('defs');
+  svg.append(defs, atlasImage('clay-poses-v2.png'));
   if (state.id !== 'sleeping') {
     // Use only the generated eye patches: every pixel outside these clips is the approved atlas.
-    const clipId = `awake-eyes-${++serial}`;
-    const defs = svgElement('defs');
+    const clipId = `${id}-eyes`;
     const clip = svgElement('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' });
     for (const [x, y, width, height] of spec.eyeRects) clip.append(svgElement('rect', { x, y, width, height, rx: 12 }));
     defs.append(clip);
-    svg.append(defs, atlasImage('clay-poses-awake-v3.png', { 'clip-path': `url(#${clipId})`, class: 'awake-eyes' }));
+    svg.append(atlasImage('clay-poses-awake-v3.png', { 'clip-path': `url(#${clipId})`, class: 'awake-eyes' }));
   }
   if (spec.note && state.id === 'distilling-running') {
     const [x, y] = spec.note;
@@ -65,37 +103,20 @@ function sprite(spec, state, update, magnification, edge) {
       style: `animation-delay:${i * 0.2}s`,
     }));
   }
-  if (spec.bud && (update === 'receiving' || update === 'ready')) {
-    const [cx, cy] = spec.bud;
-    svg.append(svgElement('circle', { class: `bud-${update}`, cx, cy, r: update === 'receiving' ? 29 : 15, style: `transform-origin:${cx}px ${cy}px` }));
-  }
-  const [cx, cy, r] = spec.dot;
-  const badge = svgElement('g', { class: 'status-badge' });
-  badge.append(svgElement('circle', { cx, cy, r, fill: state.color, stroke: '#fff7df', 'stroke-width': r * 0.25 }));
-  const symbol = state.symbol ?? (state.id === 'alert' ? 'alert' : null);
-  if (symbol) {
-    const icon = svgElement('path', {
-      d: symbol === 'check'
-        ? `M${cx - r * .45} ${cy}l${r * .3} ${r * .32}l${r * .6} ${-r * .65}`
-        : `M${cx} ${cy - r * .5}v${r * .55}M${cx} ${cy + r * .45}v.2`,
-      fill: 'none', stroke: '#fff9e9', 'stroke-width': r * .21, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
-      transform: `rotate(${-EDGE_ROTATION[edge ?? 'right']} ${cx} ${cy})`,
-    });
-    badge.append(icon);
-  }
-  svg.append(badge);
+  if (state.color) svg.append(budLight(spec, state.color, defs, id));
+  if (update !== 'none') svg.append(updateSignal(spec, update, Boolean(edge)));
   return svg;
 }
 
 export function createPet({ state: stateId = 'awake', update = 'none', edge = null, magnification = 1 } = {}) {
   const state = states.find(item => item.id === stateId) ?? states[1];
-  const pose = `${edge ? 'dock' : 'free'}${update !== 'none' ? '-bud' : ''}`;
+  const pose = edge ? 'dock' : 'free';
   const spec = poses[pose];
   const pet = document.createElement('div');
   pet.className = `clay-pet${edge ? ' dock-window' : ''}${edge ? ` ${edge}` : ''}`;
   pet.dataset.state = state.id;
   pet.dataset.update = update;
-  pet.dataset.pose = pose;
+  pet.dataset.pose = `${pose}-bud`;
   pet.dataset.edge = edge ?? 'free';
   pet.style.setProperty('--magnification', magnification);
   pet.style.setProperty('--lift', `${-1.5 * magnification}px`);

@@ -8,9 +8,9 @@ let update;
 
 function readLocation() {
   const query = new URLSearchParams(location.search);
-  // Preserve the link used for the approved two-pose study.
+  // Keep old bud links meaningful; new visits show the work-state light without update waves.
   state = states.find(item => item.id === query.get('state')) ?? states[1];
-  update = updates.find(item => item.id === query.get('update'))?.id ?? (query.get('state') === 'rest' ? 'none' : 'available');
+  update = updates.find(item => item.id === query.get('update'))?.id ?? (query.get('state') === 'bud' ? 'available' : 'none');
 }
 
 function renderGallery() {
