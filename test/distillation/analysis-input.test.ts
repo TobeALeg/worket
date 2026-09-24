@@ -10,6 +10,7 @@ import { createWorkCore } from '../../dist/core/index.js';
 import { hash } from '../../dist/definitions/storage.js';
 import { LIMITS, validateRequest } from '../../dist/contracts/definition.js';
 import { chunksFor, extractDefinition } from '../../server/workflow.mjs';
+import { analysisAggregate } from '../../server/analysis-input.mjs';
 import { FixtureClient, source as makeSource, result as fixtureResult } from './fixtures.ts';
 import { jobError } from '../../dist/distillation/activity.js';
 
@@ -152,6 +153,25 @@ test('real extraction seam validates per-part quotes, aggregates only evidence a
   assert.ok(aggregate.evidence.some((e: any) => e.content.includes('以后仍用中文')));
   const forged = { ...provider, async call(messages: any) { const out = await provider.call(messages); if (out.result.evidence?.length) out.result.evidence[0].excerpt = '伪造用户要求'; return out; } };
   await assert.rejects(extractDefinition(request, forged, new AbortController().signal), { code: 'INVALID_SOURCE_REF' });
+});
+
+test('dense evidence fits the final budget while preserving every quote and candidate relationship', () => {
+  const lines = Array.from({ length: 180 }, (_, i) => `第 ${i} 项：${'默认中文，引用必须逐字保留。'.repeat(5)}`);
+  const e = event('e1', 'user.prompt', lines.join('\n'));
+  const request = wire({ key: 'work-1', workId: 'w', events: [e] });
+  let start = 0;
+  const evidence = lines.map((excerpt, i) => {
+    const ref = { sourceKey: 'work-1', eventKey: 'e1', excerpt, start, startLine: i + 1 };
+    start += excerpt.length + 1;
+    return ref;
+  });
+  const requirements = lines.map((_, i) => ({ id: `r${i}`, text: `保留第 ${i} 项条件`, scope: 'REUSABLE',
+    sourceKeys: ['work-1/e1'], replacedBy: i === 0 ? 'r1' : null }));
+  const aggregate = analysisAggregate(request, [{ requirements, evidence, issues: [] }]);
+  assert.ok(Buffer.byteLength(JSON.stringify(aggregate)) <= LIMITS.chunkBytes * 4);
+  assert.deepEqual(aggregate.evidence.map((ref: any) => ref.content), lines);
+  assert.deepEqual(aggregate.chunks[0].requirements, requirements);
+  assert.equal(request.sources[0]!.events[0]!.hash, hash(e.content));
 });
 
 test('retry migrates a failed legacy snapshot into a separate frozen view and preserves the old job and source', async () => {

@@ -74,7 +74,9 @@ export function analysisAggregate(request, intermediates) {
     const event = request.sources.find(s => s.key === ref.sourceKey)?.events.find(e => e.key === ref.eventKey);
     ensure(event && event.content.slice(ref.start, ref.start + ref.excerpt.length) === ref.excerpt, 'INVALID_SOURCE_REF');
     const key = JSON.stringify([ref.sourceKey, ref.eventKey, ref.start, ref.excerpt]);
-    evidence.set(key, { workId: ref.sourceKey, eventId: ref.eventKey, kind: event.kind, hash: event.hash,
+    // Hashes authenticate the frozen request locally; repeating one per excerpt
+    // consumes model context without adding evidence. Keep every verified quote.
+    evidence.set(key, { workId: ref.sourceKey, eventId: ref.eventKey, kind: event.kind,
       content: ref.excerpt, excerptOnly: true, startLine: ref.startLine,
       ...(event.document ? { document: event.document } : {}) });
   }
