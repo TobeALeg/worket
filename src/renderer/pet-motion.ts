@@ -1,4 +1,4 @@
-import type { PetPlacement } from "../desktop/pet-layout.js";
+import { PET_BODY_SIZE, type PetPlacement } from "../desktop/pet-layout.js";
 
 // Animate inside a temporary window spanning both poses; native resizing happens last.
 export function createPetMotion(root: HTMLElement, pet: HTMLElement) {
@@ -25,14 +25,29 @@ export function createPetMotion(root: HTMLElement, pet: HTMLElement) {
       wrapper.style.top = `${motion.from.y}px`;
       const clone = pet.cloneNode(true) as HTMLElement;
       clone.removeAttribute("id");
-      clone.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+      // Keep cloned SVG clips, masks and gradients independent from the new dock pose.
+      const ids = new Map<string, string>();
+      clone.querySelectorAll("[id]").forEach(node => {
+        if (node instanceof SVGElement) {
+          const id = `${node.id}-motion-${motion.id}`;
+          ids.set(node.id, id);
+          node.id = id;
+        } else node.removeAttribute("id");
+      });
+      clone.querySelectorAll("svg *").forEach(node => {
+        for (const attribute of node.attributes) {
+          const value = attribute.value.replace(/url\(#([\w-]+)\)/g, (match, id: string) =>
+            ids.has(id) ? `url(#${ids.get(id)})` : match);
+          if (value !== attribute.value) node.setAttribute(attribute.name, value);
+        }
+      });
       clone.querySelector(".paper-action")?.remove();
       clone.setAttribute("aria-hidden", "true");
       wrapper.append(clone);
       document.body.append(wrapper);
       ghost = wrapper;
-      const dx = motion.to.x - motion.from.x - 39;
-      const dy = motion.to.y - motion.from.y - 35.25;
+      const dx = motion.to.x - motion.from.x - PET_BODY_SIZE.width / 2;
+      const dy = motion.to.y - motion.from.y - PET_BODY_SIZE.height / 2;
       wrapper.animate([
         { transform: "translate(0, 0) scale(1)", opacity: 1 },
         { transform: `translate(${dx * .45}px, ${dy * .45}px) scale(.78)`, opacity: 1, offset: .45 },

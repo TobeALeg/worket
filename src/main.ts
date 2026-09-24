@@ -329,6 +329,7 @@ function registerIpc(): void {
   });
   ipcMain.handle("pet:get-view", async () => ({
     ...await requireService().getPetView(),
+    updateState: updates.state,
     distillation: await distillation.call("activity"),
     recordingUploadNoticeRequired: distillation.service.recordings.noticeRequired() || requireService().preparationNoticeRequired(),
     edge: petPosition?.edge ?? null,

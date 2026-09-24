@@ -10,6 +10,7 @@ export type DistillationActivity = {
 };
 export const runningJob = (status: string): boolean => ["PREPARED", "SUBMITTED", "RUNNING"].includes(status);
 export function jobError(error?: string): string {
+  if (error?.includes('INPUT_TOO_LARGE')) return errorText(error);
   if (error?.includes("SERVICE_UPGRADE_REQUIRED")) return "当前后台尚不支持这项约定分析功能，请升级后台后重试。原始记录保持不变。";
   if (error?.includes("INVALID_SOURCE_REF")) return "生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。";
   if (error?.includes("MODEL_TIMEOUT")) return "模型处理超时，可以重试，原始记录仍然保留。";

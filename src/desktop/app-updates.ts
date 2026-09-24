@@ -1,6 +1,7 @@
 import type { MessageBoxOptions, MessageBoxReturnValue } from "electron";
 import { existsSync } from "node:fs";
 import type { Release } from "./github-release.js";
+import type { PetUpdateState } from "../ui-contract.js";
 
 type UpdateOptions = {
   showDialog: (options: MessageBoxOptions) => Promise<MessageBoxReturnValue>;
@@ -19,7 +20,9 @@ export class AppUpdates {
   private dismissedVersion = "";
   private downloaded: { version: string; path: string } | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
+  private visualState: PetUpdateState = "none";
   constructor(options: UpdateOptions) { this.options = options; }
+  get state(): PetUpdateState { return this.visualState; }
 
   start(): void {
     if (!this.options.enabled || this.timer) return;
@@ -49,14 +52,17 @@ export class AppUpdates {
       const release = await this.options.latest();
       if (this.stopped) return;
       if (!release) {
+        this.visualState = "none";
         if (this.manual) await this.notice("暂无可用更新", `当前版本：${this.options.version}`);
         return;
       }
-      if (!this.manual && release.version === this.dismissedVersion) return;
       if (this.downloaded?.version === release.version && existsSync(this.downloaded.path)) {
+        this.visualState = "ready";
         if (this.manual) this.options.reveal(this.downloaded.path);
         return;
       }
+      this.visualState = "available";
+      if (!this.manual && release.version === this.dismissedVersion) return;
       const result = await this.options.showDialog({
         type: "info", title: "Worket 更新", message: `发现新版 Worket ${release.version}`,
         detail: `安装包约 ${(release.archive.size / 1024 ** 2).toFixed(1)} MB。下载后请退出 Worket，解压并将新版拖到“应用程序”中替换。已保存的工作和设置会保留。`,
@@ -66,12 +72,15 @@ export class AppUpdates {
       if (result.response !== 1 || this.stopped) return;
       // Explicit consent makes download failures visible even after a background check.
       this.manual = true;
+      this.visualState = "receiving";
       const path = await this.options.download(release);
       this.downloaded = { version: release.version, path };
       if (this.stopped) return;
+      this.visualState = "ready";
       this.options.reveal(path);
       await this.notice("新版已下载", "已打开安装包所在位置。请先保存编辑并退出 Worket，再解压 ZIP，将 Worket.app 拖到“应用程序”中替换并重新打开。");
     } catch (error) {
+      if (this.visualState === "receiving") this.visualState = "available";
       console.error("Worket update failed", error);
       if (this.manual && !this.stopped)
         await this.notice("更新失败", `${error instanceof Error ? error.message : "无法获取更新"}。当前应用仍可继续使用。`);

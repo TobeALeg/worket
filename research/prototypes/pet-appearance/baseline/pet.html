@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worket</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="pet.css" />
+  </head>
+  <body>
+    <main id="pet-root" class="pet-root">
+      <section id="context-bubble" class="context-bubble" aria-live="polite" hidden>
+        <span id="application-mark" class="application-mark"></span>
+        <span class="context-copy"><small id="context-label"></small><strong id="context-title"></strong><span id="recording-upload-notice"></span></span>
+      </section>
+      <div class="pet-anchor"><div id="pet" class="pet sleeping">
+        <button id="pet-body" class="pet-body" aria-label="打开 Worket">
+          <span class="face" aria-hidden="true"><i class="eye left"></i><i class="eye right"></i><i class="mouth"></i></span>
+          <span class="edge-paws" aria-hidden="true"><i></i><i></i></span>
+          <span class="status-dot" aria-hidden="true"></span>
+        </button>
+        <button id="paper-action" class="paper-action" aria-label="记录当前工作" disabled>
+          <span class="paper-lines" aria-hidden="true"><i></i><i></i><i></i></span>
+          <strong id="paper-label">记录</strong>
+        </button>
+      </div></div>
+    </main>
+    <script type="module" src="pet.js"></script>
+  </body>
+</html>

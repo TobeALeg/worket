@@ -222,6 +222,7 @@ export function createAIService(config) {
             evolutionSchemaVersions: [1],
             evidenceSchemaVersions: [1],
             skillSchemaVersions: [1],
+            analysisSchemaVersions: [1],
             continuationSchemaVersions: [1],
             improvement: config.improvement?.policy() ?? null,
             limits,
@@ -383,7 +384,7 @@ export function createAIService(config) {
       res.end(
         JSON.stringify({
           code,
-          message: code,
+          message: code === 'INPUT_TOO_LARGE' && error instanceof ContractError ? error.message.replace(/^INPUT_TOO_LARGE:\s*/, '') : code,
           retryable: res.statusCode === 429,
         }),
       );

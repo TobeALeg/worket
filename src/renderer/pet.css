@@ -2,7 +2,7 @@
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
 body { -webkit-app-region: no-drag; user-select: none; }
 button { font: inherit; }
-.pet-root { display: grid; justify-items: end; align-content: end; gap: 18px; width: 100%; height: 100%; padding: 20px 34px 37px 16px; }
+.pet-root { position: relative; width: 100%; height: 100%; }
 .context-bubble { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 9px; width: 238px; min-height: 52px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--background); color: var(--text); box-shadow: 0 10px 28px #343d3626; backdrop-filter: blur(16px); pointer-events: none; }
 .context-bubble[hidden] { display: none; }
 .context-bubble::after { content: ""; position: absolute; right: 27px; bottom: -7px; width: 14px; height: 14px; background: var(--background); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
@@ -10,127 +10,59 @@ button { font: inherit; }
 .context-copy { min-width: 0; display: grid; gap: 3px; }
 .context-copy small { color: var(--muted); font-size: 11px; font-weight: 500; }
 .context-copy strong { overflow: hidden; font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
-.pet {
-  zoom: .75;
-  --pet-light: #ffdc75;
-  --pet-base: #f4c867;
-  --pet-deep: #dfa642;
-  position: relative;
-  width: 104px;
-  height: 94px;
-}
-.pet-body {
-  position: relative;
-  width: 104px;
-  height: 90px;
-  border: 0;
-  border-radius: 52% 52% 45% 45% / 58% 58% 39% 39%;
-  background:
-    radial-gradient(circle at 35% 28%, var(--pet-light), transparent 40%),
-    linear-gradient(155deg, var(--pet-light) 4%, var(--pet-base) 56%, var(--pet-deep) 100%);
-  box-shadow: 0 11px 24px rgba(82, 48, 9, .24), inset 0 -7px 10px rgba(157, 83, 4, .16), inset 0 2px 5px rgba(255, 231, 130, .4);
-  cursor: grab;
-  touch-action: none;
-  -webkit-app-region: no-drag;
-  transition: transform .18s ease, background .2s ease;
-}
-.pet:hover .pet-body, .pet:focus-within .pet-body { transform: translateY(-2px); }
-.pet-body:active { transform: translateY(0) scale(.98); }
-.face { position: absolute; left: 0; right: 0; bottom: 17px; height: 28px; }
-.eye { position: absolute; top: 2px; width: 7px; height: 10px; border-radius: 50%; background: #31271d; transition: width .18s ease, height .18s ease, border-radius .18s ease, transform .18s ease; }
-.eye.left { left: 31px; }
-.eye.right { right: 31px; }
-.mouth { position: absolute; left: 45px; top: 16px; width: 15px; height: 9px; border-bottom: 3px solid #31271d; border-radius: 0 0 15px 15px; }
-.paper-action { position: absolute; z-index: 3; left: 65px; top: 8px; width: 34px; height: 31px; margin: 0; padding: 0; overflow: hidden; border: 1px solid rgba(129,102,63,.08); border-radius: 6px 6px 9px 6px; background: var(--background); color: var(--accent); box-shadow: 0 4px 10px rgba(53,40,20,.15); cursor: pointer; transform: rotate(6deg); transform-origin: 50% 100%; -webkit-app-region: no-drag; transition: left .18s ease, top .18s ease, width .18s ease, height .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease; }
-.paper-action::after { content: ""; position: absolute; right: 0; bottom: 0; width: 8px; height: 8px; background: linear-gradient(135deg, rgba(215,199,166,.1) 50%, #e6d8bc 51%); }
-.paper-lines { position: absolute; inset: 8px 7px; transition: opacity .12s ease, transform .18s ease; }
-.paper-lines i { display: block; height: 2px; margin: 4px 0; border-radius: 2px; background: #d7c7a6; }
-.paper-lines i:last-child { width: 65%; }
-.paper-action strong { position: absolute; inset: 0; display: grid; place-items: center; padding-right: 2px; font-size: 10px; font-weight: 800; letter-spacing: .06em; opacity: 0; transform: translateY(4px); transition: opacity .12s ease .04s, transform .18s ease; }
-.paper-action:disabled { cursor: default; }
-.pet:hover .paper-action:not(:disabled), .paper-action:focus-visible { left: 40px; top: -8px; width: 62px; height: 36px; border-color: rgba(139,91,51,.22); background: var(--surface); box-shadow: 0 7px 14px rgba(53,40,20,.2); outline: none; transform: rotate(0) translateY(-2px); }
-.pet:hover .paper-action:not(:disabled) .paper-lines, .paper-action:focus-visible .paper-lines { opacity: 0; transform: translateY(-4px); }
-.pet:hover .paper-action:not(:disabled) strong, .paper-action:focus-visible strong { opacity: 1; transform: translateY(0); }
-.recording-context .paper-action { background: #f4fae9; }
-.recording-context .paper-lines i { background: #a8c39a; }
-.status-dot { position: absolute; right: 2px; bottom: 5px; width: 16px; height: 16px; border: 3px solid #fff9e9; border-radius: 50%; background: #a6a093; }
-.pet.sleeping .eye { top: 7px; width: 12px; height: 3px; border-radius: 3px; }
-.pet.awake { --pet-light: #ffd45f; --pet-base: #f2be4f; --pet-deep: #d99a2d; }
-.pet.awake .pet-body { animation: breathe 2.4s ease-in-out infinite; }
-.pet.awake .status-dot { background: #3f9d70; }
-.pet.waiting .status-dot { background: #d49b22; }
-.pet.carrying { --pet-light: #f5b878; --pet-base: #e99252; --pet-deep: #c96b38; }
-.pet.carrying .pet-body { animation: carry .7s ease-in-out infinite alternate; }
-.pet.carrying .status-dot { background: #377fd2; }
-.pet.alert { --pet-light: #f69a86; --pet-base: #e8735d; --pet-deep: #c94b42; }
-.pet.alert .pet-body { animation: nudge .35s ease-in-out 3; }
-.pet.alert .status-dot { background: #b6262e; }
-@keyframes breathe { 50% { transform: translateY(-2px); } }
-@keyframes carry { to { transform: translateY(-5px) rotate(2deg); } }
-@keyframes nudge { 33% { transform: rotate(-5deg); } 66% { transform: rotate(5deg); } }
+.pet, .pet-anchor { width: var(--pet-width, 80.25px); height: var(--pet-height, 77px); }
+.pet { position: relative; }
+.pet-anchor { position: absolute; left: var(--pet-x, 190.875px); top: var(--pet-y, 159.25px); }
+.pet-body { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: grab; touch-action: none; -webkit-app-region: no-drag; }
+.pet-visual { position: absolute; left: 0; top: 0; display: block; line-height: 0; pointer-events: none; transform-origin: 50% 90%; }
+.pet-visual svg { display: block; overflow: hidden; }
+/* Transparent hit target sits on the atlas note (x 994..1102, y 250..330). */
+.paper-action { position: absolute; z-index: 3; left: 48px; top: 21px; width: 20px; height: 17px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--accent); cursor: pointer; -webkit-app-region: no-drag; transition: left .18s ease, top .18s ease, width .18s ease, height .18s ease, background .18s ease, box-shadow .18s ease; }
+.paper-action strong { display: grid; place-items: center; height: 100%; font-size: 10px; font-weight: 700; opacity: 0; transition: opacity .12s ease; }
+.paper-action:disabled { cursor: default; pointer-events: none; }
+.pet:hover .paper-action:not(:disabled), .paper-action:focus-visible { left: 33px; top: 12px; width: 43px; height: 25px; background: #faf4e7; border-color: #d3bc8c; box-shadow: 0 3px 8px #35281426; }
+.pet:hover .paper-action:not(:disabled) strong, .paper-action:focus-visible strong { opacity: 1; }
+button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; }
 
-.dragging .pet-body { cursor: grabbing; animation: none; transition: none; transform: none; }
-
-#recording-upload-notice { font-size: 10px; line-height: 1.4; color: var(--muted); }
-
-.edge-paws { display: none; }
-/* Compact edge pose: head peeks in, two paws hold the desktop frame. */
-.pet-root.docked { display: block; padding: 0; }
-.docked .context-bubble, .docked .paper-action { display: none; }
-.docked .pet { position: absolute; left: 0; top: 0; width: 68px; height: 32px; zoom: 1; transform-origin: 0 0; }
-.docked[data-edge="left"] .pet { top: 68px; transform: rotate(-90deg); }
-.docked[data-edge="right"] .pet { left: 32px; transform: rotate(90deg); }
-.docked .pet .pet-body { position: absolute; left: 10px; top: -15px; width: 48px; height: 34px; border-radius: 50%; animation: none; transition: none; transform: none; box-shadow: 0 2px 5px rgba(82,48,9,.2), inset 0 -3px 5px rgba(157,83,4,.13); }
-.docked .face { bottom: 7px; height: 7px; }
-.docked .pet .eye { top: 0; width: 5px; height: 7px; }
-.docked .pet.sleeping .eye { top: 4px; width: 6px; height: 2px; }
-.docked .eye.left { left: 14px; }
-.docked .eye.right { right: 14px; }
-.docked .mouth { display: none; }
-.docked .edge-paws { display: block; position: absolute; top: 15px; left: -4px; right: -4px; height: 7px; }
-.docked .edge-paws i { position: absolute; top: 0; width: 11px; height: 7px; border-radius: 0 0 5px 5px; background: var(--pet-light); border-bottom: 1px solid rgba(143,94,23,.3); box-shadow: 0 1px 2px rgba(54,34,9,.15); }
-.docked .edge-paws i:first-child { left: 0; }
-.docked .edge-paws i:last-child { right: 0; }
-.docked .edge-paws i::after { content: ""; position: absolute; top: 3px; left: 4px; width: 3px; height: 3px; border-left: 1px solid rgba(143,94,23,.25); border-right: 1px solid rgba(143,94,23,.25); }
-.docked .status-dot { width: 5px; height: 5px; right: -2px; bottom: 3px; border-width: 1px; }
-
-/* Position the visible pet independently of the transparent bubble area. */
-.pet-root { position: relative; display: block; padding: 0; }
-.pet-anchor { position: absolute; left: var(--pet-x, 192px); top: var(--pet-y, 162.5px); width: 78px; height: 70.5px; }
 .context-bubble { position: absolute; left: var(--bubble-x, 32px); bottom: var(--bubble-bottom, 125.5px); }
 .context-bubble::after { right: auto; left: var(--bubble-arrow-x, 199px); }
 .bubble-below .context-bubble { bottom: auto; top: var(--bubble-top); }
 .bubble-below .context-bubble::after { bottom: auto; top: -7px; }
-.docked .pet-anchor { left: var(--dock-x, 0px); top: var(--dock-y, 0px); width: 68px; height: 32px; }
+#recording-upload-notice { font-size: 10px; line-height: 1.4; color: var(--muted); }
 
-.docked[data-edge="bottom"] .pet { left: 68px; top: 32px; transform: rotate(180deg); }
+/* The measured 32 x 68 right-edge pose rotates around its actual crop origin. */
+.docked .context-bubble, .docked .paper-action { display: none; }
+.docked .pet-anchor { left: var(--dock-x, 0px); top: var(--dock-y, 0px); width: 32px; height: 68px; }
+.docked .pet { position: absolute; left: 0; top: 0; width: 32px; height: 68px; transform-origin: 0 0; }
+.docked[data-edge="left"] .pet { left: 32px; top: 68px; transform: rotate(180deg); }
+.docked:is([data-edge="top"], [data-edge="bottom"]) .pet-anchor { width: 68px; height: 32px; }
+.docked[data-edge="top"] .pet { top: 32px; transform: rotate(-90deg); }
+.docked[data-edge="bottom"] .pet { left: 68px; transform: rotate(90deg); }
 
-.pet-motion-ghost { position: absolute; width: 78px; height: 70.5px; pointer-events: none; transform-origin: center; z-index: 10; }
-.pet-motion-ghost .pet-body { animation: none; transition: none; transform: none; }
-.pet-motion-ghost .status-dot { display: none; }
-
-/* Recording stays visible while docked without moving the eyes or paws. */
-.docked .pet.awake .status-dot { animation: recording-glow 2.8s ease-in-out infinite; }
-@keyframes recording-glow { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+.pet-visual[data-pose="free"][data-state="awake"] { animation: breathe 2.8s ease-in-out infinite; }
+.pet-visual[data-pose="free"][data-state="carrying"] { animation: carry .8s ease-in-out infinite alternate; }
+.pet-visual[data-pose="free"][data-state="distilling-ready"] { animation: carry .45s ease-in-out 3 alternate; }
+.pet-visual[data-pose="free"]:is([data-state="alert"], [data-state="distilling-failed"]) { animation: nudge .35s ease-in-out 3; }
+.pet-visual[data-state="awake"] .bud-status { animation: bud-breathe 2.8s ease-in-out infinite; }
+.pet-visual[data-state="distilling-running"] .bud-status { animation: bud-breathe 1.6s ease-in-out infinite; }
+.pet-visual[data-state="distilling-ready"] .bud-status { animation: bud-notice .8s ease-in-out 3; }
+.pet-visual:is([data-state="alert"], [data-state="distilling-failed"]) .bud-status { animation: bud-notice .45s ease-in-out 3; }
+.note-activity { stroke: #fff5ce; stroke-width: 5; stroke-linecap: round; animation: note-pulse 1.4s ease-in-out infinite; }
+.update-wave { fill: none; stroke: #a48e68; stroke-width: 2.5; stroke-linecap: round; opacity: .6; }
+.pet-visual[data-update="receiving"] .update-wave { animation: update-wave 2.4s ease-in-out infinite; }
+.dragging .pet-body { cursor: grabbing; }
+.dragging .pet-visual { animation: none; }
+.pet-motion-ghost { position: absolute; width: 80.25px; height: 77px; pointer-events: none; transform-origin: center; z-index: 10; }
+.pet-motion-ghost .pet-visual { animation: none; }
+@keyframes breathe { 50% { transform: translateY(-1.5px); } }
+@keyframes carry { to { transform: translateY(-2.25px) rotate(1.5deg); } }
+@keyframes nudge { 33% { transform: rotate(-3deg); } 66% { transform: rotate(3deg); } }
+@keyframes bud-breathe { 50% { opacity: .56; } }
+@keyframes bud-notice { 50% { opacity: .35; } }
+@keyframes note-pulse { 0%, 100% { opacity: .1; } 50% { opacity: .8; } }
+@keyframes update-wave { 0%, 100% { opacity: .15; } 45% { opacity: .75; } }
+@media (prefers-color-scheme: dark) { .update-wave { stroke: #bac4b6; } }
 @media (prefers-reduced-motion: reduce) {
-  .docked .pet.awake .status-dot { animation: none; }
-}
-
-button:focus-visible { outline: 3px solid #007aff; outline-offset: 3px; }
-
-/* Job feedback remains distinct from recording, including the docked pose. */
-.pet.distilling-running .status-dot { background: #8b6537; animation: recording-glow 1.4s ease-in-out infinite; }
-.pet.distilling-running .paper-lines i { animation: extraction-lines 1.4s ease-in-out infinite; }
-.pet.distilling-running .paper-lines i:nth-child(2) { animation-delay: .2s; }
-.pet.distilling-running .paper-lines i:nth-child(3) { animation-delay: .4s; }
-.pet.distilling-ready .status-dot { background: #3f9d70; animation: ready-glow .6s ease-in-out 3; }
-.pet.distilling-ready .pet-body { animation: carry .45s ease-in-out 3 alternate; }
-.pet.distilling-ready .mouth { border-radius: 0 0 12px 12px; }
-.pet.distilling-failed .status-dot { background: #b6262e; }
-.pet.distilling-failed .pet-body { animation: nudge .35s ease-in-out 3; }
-.docked .pet.distilling-ready .pet-body, .docked .pet.distilling-failed .pet-body { animation: none; }
-@keyframes extraction-lines { 50% { opacity: .25; } }
-@keyframes ready-glow { 50% { opacity: .35; box-shadow: 0 0 7px #3f9d70; } }
-@media (prefers-reduced-motion: reduce) {
-  .pet.distilling-running *, .pet.distilling-ready *, .pet.distilling-failed * { animation: none !important; }
+  .pet-visual, .pet-visual * { animation: none !important; }
+  .paper-action, .paper-action strong { transition: none; }
 }

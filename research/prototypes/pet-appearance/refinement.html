@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worket · 拟物桌宠全状态</title>
+  <link rel="stylesheet" href="refinement.css">
+</head>
+<body data-background="light" data-motion="on">
+  <main>
+    <header>
+      <div><p class="eyebrow">WORKET / CLAY STATES</p><h1>状态，亮在啾啾上。</h1></div>
+      <div class="tools"><button id="background" aria-pressed="false">深色背景</button><button id="motion" aria-pressed="false">暂停动效</button><button id="reference">修改前 ↗</button></div>
+    </header>
+
+    <section class="state-section" aria-label="全部桌宠状态">
+      <div class="section-heading"><h2>全部状态</h2><span>芽尖发光表示状态 · 休息时熄灯</span></div>
+      <div id="state-gallery" class="state-gallery" role="group" aria-label="选择桌宠状态"></div>
+    </section>
+
+    <section class="focus-section surface" aria-label="当前状态放大预览">
+      <div class="focus-copy"><p class="eyebrow" id="state-category">RECORDING</p><h2 id="state-title">记录中</h2><p id="state-description"></p><button id="replay">重播动作 ↻</button><p class="interaction-hint">悬停或按住身体，查看反馈</p></div>
+      <figure class="focus-free"><div id="focus-pet"></div><figcaption>自由态 · 放大 2.4 倍</figcaption></figure>
+      <figure class="focus-edge"><div id="focus-edge"></div><figcaption>右侧贴边 · 放大 2.8 倍</figcaption></figure>
+      <div class="update-controls"><span>版本更新</span><div class="segmented" id="update-options" role="group" aria-label="版本更新波纹"></div><span id="update-description"></span></div>
+    </section>
+
+    <section class="native-section" aria-label="实际尺寸检查">
+      <div class="section-heading"><h2>实际尺寸 · 四向贴边</h2><span>主体约 78 px · 侧边 32 × 68 px · 上下 68 × 32 px</span></div>
+      <div class="native-grid">
+        <div class="native-free surface"><span>自由态</span><div id="native-pet"></div></div>
+        <div class="native-edge surface" data-edge="top"><span>上</span><div class="edge-slot"></div></div>
+        <div class="native-edge surface" data-edge="right"><span>右</span><div class="edge-slot"></div></div>
+        <div class="native-edge surface" data-edge="bottom"><span>下</span><div class="edge-slot"></div></div>
+        <div class="native-edge surface" data-edge="left"><span>左</span><div class="edge-slot"></div></div>
+      </div>
+    </section>
+    <footer><span>状态造型预览 · 尚未接入真实客户端</span><span id="view-state" role="status" aria-live="polite"></span></footer>
+  </main>
+  <dialog id="reference-dialog"><div class="dialog-heading"><h2>修改前的闭眼版</h2><button id="close-reference" aria-label="关闭修改前对比">×</button></div><img src="assets/clay-poses-v2.png" alt="上一版闭眼的拟物桌宠，自由态与贴边态各有普通和小芽两种姿态"></dialog>
+  <script type="module" src="refinement.js"></script>
+</body>
+</html>

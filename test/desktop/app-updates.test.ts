@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -59,14 +59,50 @@ function harness(enabled = true) {
 }
 test("developer mode never checks and dismissing a release never downloads", async () => {
   const dev = harness(false); dev.updates.start(); await dev.updates.check(true); assert.equal(dev.checks(), 0);
+  assert.equal(dev.updates.state, "none");
   const h = harness(); await h.updates.check(); await h.updates.check();
   assert.equal(h.downloads(), 0); assert.equal(h.messages.length, 1);
+  assert.equal(h.updates.state, "available", "Dismissing the dialog retains the quiet update signal");
   await h.updates.check(true); assert.equal(h.messages.length, 2);
 });
 test("only explicit download consent downloads and reveals archive", async () => {
   const h = harness(); h.choose(1); await h.updates.check();
   assert.equal(h.downloads(), 1); assert.deepEqual(h.revealed, ["/tmp/worket-fake.zip"]);
   assert.ok(h.messages.includes("新版已下载"));
+  assert.equal(h.updates.state, "ready");
+});
+test("pet update signal follows consent, verified download and retry without losing ready state", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "worket-update-signal-"));
+  const path = join(directory, "archive.zip");
+  const phases: string[] = [];
+  let fail = true;
+  let downloads = 0;
+  const updates = new AppUpdates({ enabled: true, version: "0.1.0", latest: async () => release,
+    showDialog: async options => {
+      if (options.message.startsWith("发现新版")) phases.push(updates.state);
+      return { response: 1, checkboxChecked: false };
+    },
+    download: async () => {
+      downloads++;
+      phases.push(updates.state);
+      if (fail) throw new Error("simulated transfer failure");
+      await writeFile(path, bytes);
+      return path;
+    },
+    reveal: () => { phases.push(updates.state); },
+  });
+  try {
+    await updates.check();
+    assert.deepEqual(phases, ["available", "receiving"]);
+    assert.equal(updates.state, "available", "Failed download must not leave an endless receiving animation");
+    fail = false;
+    phases.length = 0;
+    await updates.check(true);
+    assert.deepEqual(phases, ["available", "receiving", "ready"]);
+    await updates.check();
+    assert.equal(updates.state, "ready");
+    assert.equal(downloads, 2, "Repeated polling must not download a ready archive again");
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 test("duplicate checks coalesce and failures permit retries; background errors stay quiet", async () => {
   const h = harness(); let finish!: (value: null) => void;

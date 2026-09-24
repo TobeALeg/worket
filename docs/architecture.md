@@ -2,6 +2,22 @@
 
 v0.1.5 客户端与生产后台已同步，服务代码为 `8ffa545`。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力为 `[1]`；兼容旧后台时仍保留缺少能力的明确降级。元数据新增 `requests.operation` 区分整理与沉淀请求，已有请求默认 `definition`。配套部署与验证见 [发布验收](releases/v0.1.5-verification.md)。
 
+## 沉淀分析输入（2026-09-24，隔离验收通过）
+
+`distillation/analysis-input.ts` 按工具名、调用 ID、状态和白名单格式产生 KEEP/EXCERPT/OMIT/DUPLICATE 决策。仅复制白名单工具元数据；原始事件与规则版本、事件 hash、原文范围和去重目标共同固定到 Snapshot。`wire()` 从该固定视图生成请求，摘录仍是原文连续子串；不把程序简写伪装成可引用原文。未触发过滤且体积小的快照保留旧协议。
+
+请求的 `analysis.schemaVersion=1` 分别声明原事件数、省略数和摘录数；提交前检查 `analysisSchemaVersions:[1]`。旧任务重试仅在原 ID、类型和正文 hash 一致时补充工具分类元数据，另存快照，既有结果继续按旧快照校验。没有数据库 schema 迁移，不改变记录、交接、持续比较授权或来源删除机制。
+
+`server/analysis-input.mjs` 按 24,000 字节请求正文预算拆分，保留原事件 key、字符偏移和文档行号。最多两个独立提取批次并发，结果按原顺序汇总；任一批失败后停止调度并收束在途请求。提取响应须覆盖本批事件，并为候选来源返回原文片段；程序校验片段后组装汇总证据，再检查最终引用。普通事件的 hash 保留在固定请求中参加校验，不在每个模型引用片段旁重复发送；规范文件引用仍携带文件 hash、名称与行号，供最终条款固定使用。模型覆盖统计只针对实际输入，不能表达被省略正文已被理解。现有 20 次调用与 96,000 字节汇总预算保持；必要内容仍超预算时明确拒绝，不继续静默裁剪。
+
+分析结果中，UNCERTAIN/INSTANCE 且 PROPOSED 的候选若被模型标作 ACTIVE/REUSABLE 规则的 DUPLICATE，`normalize-unconfirmed-rules.mjs` 仅移除这条合并关系：保留两条正文、来源和各自状态，并增加阻止发布的待确认问题。ACTIVE 规则的跨范围合并、替代、来源或摘录错误仍拒绝。结果版本为 `work-definition-analysis-v1.1`。
+
+输入过大错误可返回固定的限制说明，桌面把重复英文错误码转换为可操作文案。生产和安装状态见 [验证记录](acceptance/distillation-input-filtering.md)。
+
+本机人工复核入口 `scripts/review-distillation.mjs` 复用旧研究的 HTML、审阅命令与原子 JSON 存储，模块位于 `scripts/lib/human-review/`。适配器只读已接收结果、固定请求和隔离 SQLite 快照，先重验结果与快照身份，再把 48 个原条目投影为审阅候选；引用在全部原始事件上逐字定位，保留原条目、地址和问题。关联问题内联，其余单列，工具来源不冒充用户或助手。`UNCERTAIN` 可显示及编辑，助手建议不升级为已确认。
+
+服务只绑定回环地址，沿用会话令牌、同源检查、revision 冲突和 operationId 幂等。人评写入运行目录的 `human-reviews/`，编辑缓冲及操作历史可恢复；QA 使用单独目录。未判定、暂放、未保存编辑或未检查遗漏时不能提交。提交仅改变 HumanRequirementsReview，不调用模型，不写 WorkDefinition 或原数据库。
+
 ## 面板展示收敛（2026-09-23）
 
 `recording-sources` 的最近活动列表不再请求或展示首次记录说明，历史聊天仍沿用原有说明规则。history 图标保留原按钮事件及可访问名称；工作详情以弹性布局排列返回按钮和执行者，长名称省略并保留悬停全文。准备状态仅在有实际状态或提示时渲染，删除无状态时的说明占位；工作操作继续使用原生 `details/summary`。此次只调整 renderer，不改变记录、交接或后台准备流程。
@@ -348,7 +364,13 @@ INACTIVE ──继续原工作──> ACTIVE
 
 窗口 closed 事件清空引用；退出期间以及窗口已销毁时，activate / second-instance 不再调用窗口方法，避免 Object has been destroyed。
 
-角色尺寸由 .pet 的 zoom: .75 统一控制，布局与命中区域同步缩放，内部动画继续使用原有 transform；透明窗口保留气泡和阴影所需空间。
+角色使用实测 SVG 裁切视窗：自由态主体约 78px，完整布局与命中区由 PET_BODY_SIZE 统一为 80.25 × 77；透明窗口保持 304 × 271。贴边以右侧 32 × 68 为基姿势，绕原点旋转成四向，原生收纳窗口尺寸不变。
+
+2026-09-24 接入前的外形探索位于 `codex/pet-appearance-exploration` 分支的 `research/prototypes/pet-appearance/`。用户否定五种扩散方案后，默认入口改为 `refinement.html`，使用透明拟物 PNG 图集与 SVG 裁切视窗展示普通 / 有芽、自由 / 贴边姿态；旧五方案保留在 `/exploration` 供追溯。只读本机服务的原版对照现冻结为接入前 `e40e05e` 的 `baseline/` HTML / CSS。预览按 alpha 边界选取坐标，在主体约 78px、侧边 32 × 68 / 上下 68 × 32 下验证几何，不加载生产 pet.js、不调用 IPC 或模型、不持久化产品偏好。生成图保留了材质与形象方向，但不保证不同姿态主体逐像素相同；四向旋转还未完成独立光照素材、原生窗口、拖动和性能验收。现有打包规则排除 `research/`；真实接入仍应复用 PetView、PetPlacement 和 createPetMotion。
+
+同日全状态原型：`clay-pet.js` 集中八种状态、四种更新表现及测量后的裁切坐标，`refinement.js` 负责选择和重播。清醒眼睛来自新生成图集，仅通过眼部 clipPath 叠加到原 v2 有芽底图。用户要求用啾啾替代圆点后，统一显示有芽姿态并移除状态点与符号；SVG 通过原图 alpha mask 与亮度着色在芽尖形成状态灯，朝金色芽颈渐隐，周围加局部柔光，不生成或改写身体素材。状态灯由工作状态决定，版本更新只叠加中性波纹，避免覆盖颜色。自由 / 贴边分别在图集原坐标测量芽尖与遮罩，再按固定 32 × 68 基坐标旋转到四向；CSS 保持贴边主体稳定、限定完成 / 异常提示次数，并支持暂停 / reduced-motion。八种状态源于 `PetState` 与 `DistillationActivity`，更新表现与之正交；原型阶段未接版本服务。
+
+同日接入：`renderer/pet-visual.ts` 从 `pet-assets/` 读取原 v2 / v3 素材，按 PetState 或优先的 DistillationActivity 绘制；缓存状态与自由/贴边姿态，避免两秒轮询重复播放有限提示。更新波纹单独增删，不重启工作光效。`AppUpdates.state → pet:get-view → PetView.updateState` 提供真实更新状态；开发模式保持 none，拒绝下载仍 available，下载失败从 receiving 回到 available，校验下载完成才 ready。`pet-motion.ts` 克隆时重命名 SVG ID 并更新所有 mask / clip / filter 引用，使收纳过程保持睁眼和芽尖着色。原便利贴改为按图集坐标对齐的透明按钮，悬停显示操作文字。详见 [原生验收](acceptance/pet-appearance.md)。
 
 ## 沉淀与复用（已开发，真实验收待完成）
 
@@ -503,7 +525,7 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 2026-09-11 PetPosition.absorb 暂时扩展原生窗口覆盖起始与目标位置，placement.motion 传递起点、终点、时长及动作 ID；renderer/pet-motion.ts 用 Web Animations 执行缩入与显露，完成后移除临时角色。320 毫秒后主进程收小窗口，保存仍使用最终坐标。新拖动和显示器恢复会结束未完成收纳，拖出通过 emerge 做短展开；中间状态不写入偏好。
 
-2026-09-11 记录呼吸仅由 .docked .pet.awake .status-dot 控制，复用全局记录状态映射，不增加计时器或轮询；waiting、carrying、alert 与 sleeping 不使用记录呼吸。
+记录呼吸复用全局记录状态映射，不增加计时器或轮询；2026-09-24 从独立状态圆点迁移到啾啾局部光效，贴边头部与爪尖不移动。
 
 ### 渲染层一致性（2026-09-11）
 

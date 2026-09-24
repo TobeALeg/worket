@@ -58,6 +58,7 @@ export type WireEvent = {
 };
 export type ExtractionRequest = {
   schemaVersion: 1;
+  analysis?: { schemaVersion: 1; ruleVersion: string; originalEvents: number; omittedEvents: number; excerptEvents: number };
   ruleSchemaVersion?: 1;
   evidenceSchemaVersion?: 1;
   skillSchemaVersion?: 1;
@@ -260,6 +261,10 @@ export function validateRequest(
   ensure(value.skillSchemaVersion === undefined || value.skillSchemaVersion === 1, "INVALID_INPUT");
   ensure(value.evidenceSchemaVersion === undefined || value.evidenceSchemaVersion === 1, "INVALID_INPUT");
   ensure(value.schemaVersion === 1);
+  if (value.analysis !== undefined) {
+    object(value.analysis); ensure(value.analysis.schemaVersion === 1); string(value.analysis.ruleVersion);
+    for (const key of ['originalEvents', 'omittedEvents', 'excerptEvents']) ensure(Number.isSafeInteger(value.analysis[key]) && Number(value.analysis[key]) >= 0);
+  }
   string(value.snapshotHash);
   if (value.ruleSchemaVersion !== undefined) ensure(value.ruleSchemaVersion === 1);
   if (value.evolution !== undefined) {
@@ -301,6 +306,11 @@ export function validateRequest(
       ensure(!events.has(event.key));
       events.add(event.key);
     }
+  }
+  if (value.analysis !== undefined) {
+    const analysis = value.analysis as ExtractionRequest['analysis'];
+    const count = (value.sources as ExtractionRequest['sources']).reduce((n, s) => n + s.events.length, 0);
+    ensure(analysis!.originalEvents === count + analysis!.omittedEvents && analysis!.excerptEvents <= count, 'INVALID_INPUT');
   }
 }
 export function validateResult(

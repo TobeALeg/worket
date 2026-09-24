@@ -73,63 +73,106 @@ try {
         bottom: petMetrics.height - petMetrics.body.bottom
       }
     : null;
-  const minimumShadowInsets = { right: 32, bottom: 40 };
+  const minimumShadowInsets = { right: 32, bottom: 34 };
   if (!shadowInsets || shadowInsets.right < minimumShadowInsets.right || shadowInsets.bottom < minimumShadowInsets.bottom) {
     throw new Error(`桌宠阴影安全区不足，窗口边缘会裁切阴影：${JSON.stringify({ shadowInsets, bodyShadow: petMetrics.bodyShadow })}`);
   }
-  const characterVisuals = await pet.evaluate(() => {
-    const character = document.querySelector("#pet");
-    const body = document.querySelector("#pet-body");
-    const eye = document.querySelector(".eye");
-    const mouth = document.querySelector(".mouth");
-    const statusDot = document.querySelector(".status-dot");
-    if (!character || !body || !eye || !mouth || !statusDot) throw new Error("桌宠角色元素不完整");
-    const originalClassName = character.className;
-    const originalEyeTransition = eye.style.transition;
-    eye.style.transition = "none";
-    const states = ["sleeping", "awake", "carrying", "alert"].map((state) => {
-      character.className = `pet ${state}`;
-      const bodyStyle = getComputedStyle(body);
-      const eyeStyle = getComputedStyle(eye);
-      const mouthStyle = getComputedStyle(mouth);
-      return {
-        state,
-        bodyBackground: bodyStyle.backgroundImage,
-        bodyRadius: bodyStyle.borderRadius,
-        animationName: bodyStyle.animationName,
-        eyeWidth: Number.parseFloat(eyeStyle.width),
-        eyeHeight: Number.parseFloat(eyeStyle.height),
-        mouthBorderTop: Number.parseFloat(mouthStyle.borderTopWidth),
-        mouthBorderBottom: Number.parseFloat(mouthStyle.borderBottomWidth),
-        mouthRadius: mouthStyle.borderRadius,
-        statusDotBackground: getComputedStyle(statusDot).backgroundColor
-      };
-    });
-    character.className = originalClassName;
-    eye.style.transition = originalEyeTransition;
-    return { states, statusDotCount: character.querySelectorAll(".status-dot").length };
+  // Check the real polling path before staging individual visual states.
+  const pollingRetainsSprite = await pet.evaluate(async () => {
+    const sprite = document.querySelector("#pet-visual svg");
+    await new Promise(resolve => setTimeout(resolve, 2200));
+    return Boolean(sprite) && sprite === document.querySelector("#pet-visual svg");
   });
-  const sleepingVisual = characterVisuals.states[0];
-  const activeVisuals = characterVisuals.states.slice(1);
-  if (!sleepingVisual || sleepingVisual.eyeWidth < 10 || sleepingVisual.eyeHeight > 4) {
-    throw new Error(`空闲状态没有闭眼：${JSON.stringify(characterVisuals)}`);
+  if (!pollingRetainsSprite) throw new Error("两秒状态轮询重建了角色，会反复触发提示动画");
+  const characterVisuals = await pet.evaluate(async () => {
+    const { createPetVisual } = await import("./pet-visual.js");
+    const host = document.querySelector("#pet-visual");
+    const render = createPetVisual(host);
+    const states = ["sleeping", "awake", "waiting", "carrying", "alert", "distilling-running", "distilling-ready", "distilling-failed"];
+    const updates = ["none", "available", "receiving", "ready"];
+    const results = [];
+    for (const docked of [false, true]) for (const state of states) for (const update of updates) {
+      render(state, docked, update);
+      const svg = host.querySelector("svg");
+      const before = svg;
+      const beforeLight = host.querySelector(".bud-status");
+      render(state, docked, update);
+      results.push({ state, docked, update,
+        eyes: host.querySelectorAll(".awake-eyes").length,
+        color: host.querySelector(".bud-status")?.getAttribute("data-color") ?? null,
+        waves: host.querySelectorAll(".update-wave").length,
+        width: Number(svg.getAttribute("width")), height: Number(svg.getAttribute("height")),
+        retained: before === host.querySelector("svg") && beforeLight === host.querySelector(".bud-status"),
+        base: svg.querySelector(":scope > image").getAttribute("href"),
+      });
+    }
+    return { states: results, statusDotCount: document.querySelectorAll(".status-dot").length };
+  });
+  const colors = { sleeping: null, awake: "#55d59b", waiting: "#ffae58", carrying: "#76baff", alert: "#ff7969",
+    "distilling-running": "#b294f6", "distilling-ready": "#c1fff1", "distilling-failed": "#ff7969" };
+  for (const visual of characterVisuals.states) {
+    if (visual.color !== colors[visual.state] || visual.eyes !== (visual.state === "sleeping" ? 0 : 1)
+      || visual.waves !== (visual.update === "none" ? 0 : visual.update === "available" ? 1 : 2)
+      || !visual.retained || visual.base !== "pet-assets/clay-poses-v2.png"
+      || (visual.docked && (visual.width !== 32 || visual.height > 68))) {
+      throw new Error(`啾啾状态色、眼神、更新提示或原尺寸错误：${JSON.stringify(visual)}`);
+    }
   }
-  if (activeVisuals.some((state) => state.eyeWidth > 9 || state.eyeHeight < 8)) {
-    throw new Error(`工作状态没有统一睁眼：${JSON.stringify(characterVisuals)}`);
+  if (characterVisuals.statusDotCount) throw new Error("旧状态圆点未清理");
+  // Controlled PetView fixtures exercise the production renderer and polling, without recording any chat.
+  await electronApp.evaluate(({ ipcMain }) => {
+    const read = ipcMain._invokeHandlers.get("pet:get-view");
+    ipcMain.removeHandler("pet:get-view");
+    ipcMain.handle("pet:get-view", async (...args) => ({ ...await read(...args), ...globalThis.petVisualFixture }));
+  });
+  const appearanceOutput = join(root, "output", "pet-appearance", "native");
+  await mkdir(appearanceOutput, { recursive: true });
+  async function stage(state, updateState = "none") {
+    await electronApp.evaluate((_, { state, updateState }) => {
+      globalThis.petVisualFixture = {
+        currentConversation: null, updateState,
+        petState: state.startsWith("distilling-") ? "awake" : state,
+        distillation: state.startsWith("distilling-") ? { jobId: "visual-qa", state: state.slice(11),
+          label: "沉淀状态验收", detail: "受控界面状态", activeCount: 1 } : null,
+      };
+    }, { state, updateState });
+    await pet.reload();
+    await pet.waitForSelector(`#pet-visual[data-state="${state}"][data-update="${updateState}"] svg`);
+    await pet.evaluate(async () => {
+      const urls = new Set([...document.querySelectorAll("#pet-visual image")].map(node => node.getAttribute("href")));
+      await Promise.all([...urls].map(src => { const img = new Image(); img.src = src; return img.decode(); }));
+    });
   }
-  if (characterVisuals.states.some((state) => state.mouthBorderTop !== 0 || state.mouthBorderBottom < 2)) {
-    throw new Error(`所有状态都应保持笑嘴：${JSON.stringify(characterVisuals)}`);
+  for (const state of Object.keys(colors)) {
+    await stage(state);
+    await pet.locator("#pet").screenshot({ path: join(appearanceOutput, `${state}-free.png`) });
   }
-  const characterGeometry = new Set(characterVisuals.states.map((state) => `${state.bodyRadius}|${state.mouthRadius}`));
-  const bodyColors = new Set(characterVisuals.states.map((state) => state.bodyBackground));
-  const statusColors = new Set(characterVisuals.states.map((state) => state.statusDotBackground));
-  const expectedAnimations = ["none", "breathe", "carry", "nudge"];
-  if (characterGeometry.size !== 1 || bodyColors.size !== 4 || statusColors.size !== 4 || characterVisuals.statusDotCount !== 1) {
-    throw new Error(`桌宠应保持同一轮廓，并保留原有状态颜色与状态点：${JSON.stringify(characterVisuals)}`);
+  for (const update of ["available", "receiving", "ready"]) {
+    await stage("awake", update);
+    await pet.locator("#pet").screenshot({ path: join(appearanceOutput, `update-${update}.png`) });
   }
-  if (characterVisuals.states.some((state, index) => state.animationName !== expectedAnimations[index])) {
-    throw new Error(`桌宠没有保留原有状态动作：${JSON.stringify(characterVisuals)}`);
-  }
+  await stage("distilling-ready");
+  const noticeSettles = await pet.evaluate(async () => {
+    const sprite = document.querySelector("#pet-visual svg");
+    await new Promise(resolve => setTimeout(resolve, 4500));
+    return sprite === document.querySelector("#pet-visual svg")
+      && !document.querySelector("#pet-visual").getAnimations({ subtree: true }).some(animation => animation.playState === "running");
+  });
+  if (!noticeSettles) throw new Error("待审阅提示未停下或被轮询重播");
+  await pet.locator("#pet-body").hover({ position: { x: 24, y: 45 } });
+  await pet.waitForTimeout(220);
+  const expandedPaper = await pet.locator("#paper-action").boundingBox();
+  if (!expandedPaper || expandedPaper.width !== 43) throw new Error("便利贴没有展开独立操作入口");
+  await pet.locator("#paper-action").click();
+  const paperOpensPanel = await electronApp.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find(window => window.webContents.getURL().endsWith("/panel.html")).isVisible());
+  if (!paperOpensPanel) throw new Error("点击便利贴没有打开审阅面板");
+  await electronApp.evaluate(({ BrowserWindow }) => {
+    globalThis.petVisualFixture = {};
+    BrowserWindow.getAllWindows().find(window => window.webContents.getURL().endsWith("/panel.html")).hide();
+  });
+  await pet.reload();
+  await pet.waitForSelector("#pet-visual svg");
   if (!petMetrics.body || !petMetrics.paper || petMetrics.body.width <= petMetrics.body.height || petMetrics.paper.x < petMetrics.body.x + petMetrics.body.width * .55) {
     throw new Error(`桌宠轮廓或便利贴位置没有对齐 Logo：${JSON.stringify(petMetrics)}`);
   }
@@ -159,7 +202,8 @@ try {
     secondInstanceRestored,
     petMetrics,
     shadowInsets,
-    characterVisuals,
+    characterVisuals: { combinations: characterVisuals.states.length, statusDotCount: characterVisuals.statusDotCount },
+    pollingRetainsSprite, noticeSettles, paperOpensPanel,
     panelMetrics,
     editableControlCount,
     screenshots: ["01-pet.png", "02-panel-empty.png"]

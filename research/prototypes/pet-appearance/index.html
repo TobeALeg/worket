@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Throwaway study: five pet appearances, selected by ?variant=A..E. No Worket IPC or persistence. -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worket · 桌宠外形实验</title>
+  <link rel="stylesheet" href="appearance.css">
+</head>
+<body data-surface="light" data-motion="on">
+  <main>
+    <header class="header">
+      <div><p class="eyebrow"><span class="brand-dot"></span> WORKET / CHARACTER STUDY 01</p><h1>给日常工作，一点性格。</h1></div>
+      <div class="header-actions"><span class="prototype-label">外形探索 · 尚未应用</span><button id="previous" class="text-button">之前的拟物版 <span>↗</span></button></div>
+    </header>
+
+    <nav id="options" class="options" aria-label="外形方案"></nav>
+
+    <section class="detail" aria-label="当前方案预览">
+      <div class="detail-heading"><div class="title-group"><span id="variant-number" class="variant-number"></span><h2 id="variant-title"></h2><span id="recommendation" class="recommendation"></span></div><button id="implementation" class="text-button">实现与取舍 ↗</button></div>
+      <div class="workspace">
+        <section class="hero-stage surface" aria-label="放大造型">
+          <div class="stage-label"><span>轮廓与表情</span><span>放大细节</span></div>
+          <div id="hero"></div>
+          <span id="hero-caption" class="hero-caption"></span>
+        </section>
+        <section class="native-panel" aria-label="实际尺寸与贴边预览">
+          <div class="native-row">
+            <div class="native-example surface"><span class="stage-label">当前 · 原样载入</span><iframe id="baseline" title="当前 Worket 桌宠原尺寸" src="/baseline?state=awake"></iframe></div>
+            <div class="native-example surface"><span class="stage-label">新方案 · 1×</span><div id="native"></div><span class="dimension">78 × 70.5 px 布局</span></div>
+          </div>
+          <div class="edge-header"><span>四向贴边 · 1×</span><span>窗口 68 × 32 / 32 × 68 px</span></div>
+          <div id="edges" class="edge-grid"></div>
+        </section>
+      </div>
+      <div class="controls">
+        <div class="state-controls" role="group" aria-label="模拟工作状态">
+          <button data-state="sleeping">休息</button><button data-state="awake">记录中</button><button data-state="distilling-running">沉淀中</button><button data-state="distilling-ready">完成</button><button data-state="distilling-failed">异常</button>
+        </div>
+        <div class="environment-controls"><button id="motion" aria-pressed="false">暂停动效</button><div role="group" aria-label="背景"><button data-surface="light" aria-label="浅色背景" class="swatch light"></button><button data-surface="dark" aria-label="深色背景" class="swatch dark"></button><button data-surface="busy" aria-label="复杂背景" class="swatch busy"></button></div></div>
+      </div>
+      <div class="assessment"><p id="assessment"></p><span id="status" role="status"></span></div>
+    </section>
+    <footer><span>运行中的代码原型 · 拟物材质为 CSS 近似</span><span>所有工作状态均为模拟</span></footer>
+  </main>
+
+  <nav class="switcher" aria-label="切换方案"><button id="prev" aria-label="上一个方案">←</button><span id="switcher-label"></span><button id="next" aria-label="下一个方案">→</button></nav>
+  <dialog id="reference-dialog"><div class="dialog-heading"><h2>之前的拟物方向</h2><button data-close aria-label="关闭拟物参考">×</button></div><img src="assets/previous-material-study.png" alt="此前生成的黄色拟物土豆及更新信号三态参考图"><p>2026-09-22 的概念图。材质很完整，但放大图不能证明小尺寸表情、透明边缘和贴边动画已解决。</p></dialog>
+  <dialog id="implementation-dialog"><div class="dialog-heading"><h2 id="implementation-title"></h2><button data-close aria-label="关闭实现说明">×</button></div><div id="implementation-body"></div></dialog>
+  <script type="module" src="appearance.js"></script>
+</body>
+</html>

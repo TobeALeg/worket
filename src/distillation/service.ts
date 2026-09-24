@@ -1,4 +1,5 @@
 import { workEvidence } from "../core/work-evidence.js";
+import { prepareAnalysisInput, projectedEvents, toolMetadata, type AnalysisInput, type ToolMetadata } from './analysis-input.js';
 import { assertSourcePresenceReady } from "../core/source-revisions.js";
 import { ContinuousEvolution, eventIdentity, type AutomaticComparison } from './continuous-evolution.js';
 import { type DocumentRole } from "../contracts/rules.js";
@@ -34,6 +35,7 @@ export type Snapshot = {
   contentHash: string;
   baseDefinitionId?: string;
   baseContentHash?: string;
+  analysis?: AnalysisInput;
   sources: {
     workId: string;
     key: string;
@@ -46,6 +48,7 @@ export type Snapshot = {
       kind: string;
       content: string;
       hash: string;
+      tool?: ToolMetadata;
     }[];
     files: {
       id: string;
@@ -207,6 +210,7 @@ export class DistillationService {
           kind: e.kind,
           content: e.content!,
           hash: hash(e.content!),
+          ...(e.kind.startsWith('tool.') ? { tool: toolMetadata(e.metadata) } : {}),
         }));
       ensure(
         events.length,
@@ -315,6 +319,7 @@ export class DistillationService {
       ...(base ? { baseDefinitionId: base.id, baseContentHash: base.contentHash } : {}),
       sources,
     };
+    this.freezeAnalysis(snapshot);
     validateRequest(this.wire(snapshot));
     transaction(this.repository.db, () =>
       this.repository.db
@@ -322,6 +327,33 @@ export class DistillationService {
         .run(snapshot.id, JSON.stringify(snapshot)),
     );
     return snapshot;
+  }
+  private freezeAnalysis(snapshot: Snapshot): void {
+    const analysis = prepareAnalysisInput(snapshot.sources);
+    const large = Buffer.byteLength(JSON.stringify(snapshot.sources)) > LIMITS.chunkBytes;
+    if (!large && analysis.entries.every(e => e.action === 'KEEP')) return;
+    snapshot.analysis = analysis;
+    snapshot.contentHash = hash({ sources: snapshot.sources, analysis, ...(snapshot.baseContentHash ? { baseHash: snapshot.baseContentHash } : {}) });
+  }
+
+  /** Old failed jobs keep their original snapshot; retry freezes a separate, verifiable view. */
+  private upgradeAnalysis(snapshot: Snapshot): Snapshot {
+    if (snapshot.analysis) return snapshot;
+    const next = structuredClone(snapshot);
+    for (const source of next.sources) {
+      const current = new Map(this.core.getWork(source.workId)?.sourceArchive.map(e => [e.id, e]) ?? []);
+      for (const event of source.events) {
+        const original = current.get(event.id);
+        if (original && original.kind === event.kind && hash(original.content ?? '') === event.hash && event.kind.startsWith('tool.'))
+          event.tool = toolMetadata(original.metadata);
+      }
+    }
+    this.freezeAnalysis(next);
+    if (!next.analysis) return snapshot;
+    next.id = randomUUID(); next.capturedAt = new Date().toISOString();
+    validateRequest(this.wire(next));
+    this.repository.db.prepare('INSERT INTO source_snapshots VALUES (?,?)').run(next.id, JSON.stringify(next));
+    return next;
   }
   wire(snapshot: Snapshot): ExtractionRequest {
     const base = snapshot.baseDefinitionId ? this.repository.get(snapshot.baseDefinitionId) : null;
@@ -332,17 +364,23 @@ export class DistillationService {
       evidenceSchemaVersion: 1,
       skillSchemaVersion: 1,
       snapshotHash: snapshot.contentHash,
+      ...(snapshot.analysis ? { analysis: {
+        schemaVersion: 1 as const, ruleVersion: snapshot.analysis.ruleVersion,
+        originalEvents: snapshot.sources.reduce((n, s) => n + s.events.length + s.files.length, 0),
+        omittedEvents: snapshot.analysis.entries.filter(e => e.action === 'OMIT' || e.action === 'DUPLICATE').length,
+        excerptEvents: snapshot.analysis.entries.filter(e => e.action === 'EXCERPT').length,
+      } } : {}),
       ...(base ? { evolution: evolutionBaseline(base, resolveRuleDocuments(base.content, base.materials, this.repository.materials).content) } : {}),
       sources: snapshot.sources.map((s) => ({
         key: s.key,
         events: [
-          ...s.events.map((e) => ({
+          ...(snapshot.analysis ? projectedEvents(s, snapshot.analysis) : s.events.map((e) => ({
             key: e.key,
             sequence: e.sequence,
             kind: e.kind,
             content: e.content,
             hash: e.hash,
-          })),
+          }))),
           ...s.files.map((f, i) => ({
             key: `file-${i + 1}`,
             sequence: Math.max(0, ...s.events.map((e) => e.sequence)) + i + 1,
@@ -470,11 +508,13 @@ export class DistillationService {
         ruleSchemaVersions?: number[];
         evolutionSchemaVersions?: number[];
         skillSchemaVersions?: number[];
+        analysisSchemaVersions?: number[];
       };
       if (this.closed || this.repository.read<Job>("distillation_jobs", job.id).status === "CANCELLED") return;
       ensure(capability.ruleSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持规则协调，请升级后台后重试。原始记录保持不变。");
       if (snapshot.baseDefinitionId) ensure(capability.evolutionSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '当前后台尚不支持增量比较，请升级后重试。');
       ensure(capability.skillSchemaVersions?.includes(1), "SERVICE_UPGRADE_REQUIRED", "当前后台尚不支持技能依赖，请升级后重试。");
+      if (snapshot.analysis) ensure(capability.analysisSchemaVersions?.includes(1), 'SERVICE_UPGRADE_REQUIRED', '当前后台尚不支持精简沉淀输入，请升级后重试。');
       const wire = this.wire(snapshot);
       ensure(
         snapshot.sources.length <=
@@ -758,10 +798,11 @@ export class DistillationService {
           "SOURCE_CHANGED",
         );
         this.assertSources(snapshot, false);
+        const prepared = this.upgradeAnalysis(snapshot);
         const job: Job = {
           id: randomUUID(),
           ...((old.remoteDestination ?? old.automatic?.destination) ? { remoteDestination: old.remoteDestination ?? old.automatic!.destination } : {}),
-          snapshotId: old.snapshotId,
+          snapshotId: prepared.id,
           status: "PREPARED",
           attempt: old.attempt + 1,
           commandId: input.commandId,

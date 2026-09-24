@@ -4,8 +4,8 @@ export type Rectangle = Point & { width: number; height: number };
 export const PET_SIZE = { width: 304, height: 271 };
 export const PET_DOCK_SIZE = { width: 68, height: 32 };
 export const PET_SNAP_DISTANCE = 24;
-// The normal character is bottom-right inside the transparent window (75% scale).
-export const PET_BODY_SIZE = { width: 78, height: 70.5 };
+// 78px clay body, plus the measured transparent crop around its sprout and glow.
+export const PET_BODY_SIZE = { width: 80.25, height: 77 };
 export const PET_BODY_CENTER = { x: 231, y: 197.75 };
 export type PetPlacement = {
   edge: PetEdge;

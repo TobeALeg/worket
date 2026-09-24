@@ -11,16 +11,22 @@ const output = join(process.cwd(), "output", "pet-docking");
 await mkdir(output, { recursive: true });
 const options = {
   executablePath: join(process.cwd(), unpackaged ? "node_modules/electron/dist/Electron.app/Contents/MacOS/Electron" : "release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket"),
-  args: [...(unpackaged ? ["."] : []), `--user-data-dir=${directory}`],
+  args: [...(unpackaged ? ["."] : []), `--user-data-dir=${directory}`, "--dev"],
   env: { ...process.env, WORKPET_SKIP_INTEGRATIONS: "1", WORKPET_DATA_DIR: directory, WORKPET_BRIDGE_CONFIG: join(directory, "bridge.json") }
 };
 let application;
 async function launch() {
   application = await _electron.launch(options);
   await application.firstWindow();
+  // Keep the controlled recording state lit so motion QA covers eye clips and sprout masks too.
+  await application.evaluate(({ ipcMain }) => {
+    const read = ipcMain._invokeHandlers.get("pet:get-view");
+    ipcMain.removeHandler("pet:get-view");
+    ipcMain.handle("pet:get-view", async (...args) => ({ ...await read(...args), petState: "awake", distillation: null }));
+  });
   for (let attempt = 0; attempt < 100; attempt++) {
     const pet = application.windows().find(page => page.url().endsWith("/pet.html"));
-    if (pet) { await pet.waitForSelector("#pet-body"); return pet; }
+    if (pet) { await pet.waitForSelector('#pet-visual[data-state="awake"] svg'); return pet; }
     await new Promise(resolve => setTimeout(resolve, 100));
   }
   throw new Error("Pet window did not load");
@@ -74,10 +80,19 @@ try {
       const sample = await pet.evaluate(() => {
         const ghost = document.querySelector(".pet-motion-ghost");
         return { settling: document.querySelector("#pet-root").dataset.settling,
-          scale: ghost ? new DOMMatrix(getComputedStyle(ghost).transform).a : null };
+          scale: ghost ? new DOMMatrix(getComputedStyle(ghost).transform).a : null,
+          sprite: Boolean(ghost?.querySelector("svg image")),
+          missingReferences: [...(ghost?.querySelectorAll("svg *") ?? [])].flatMap(node =>
+            [...node.attributes].flatMap(attribute => [...attribute.value.matchAll(/url\(#([\w-]+)\)/g)]
+              .filter(match => !ghost.querySelector(`[id="${match[1]}"]`)).map(match => match[1]))),
+          duplicateIds: [...document.querySelectorAll("[id]")].map(node => node.id).filter((id, index, all) => all.indexOf(id) !== index),
+        };
       });
       assert.equal(sample.settling, "true", "The full animation stage remains until absorption completes");
       assert.ok(sample.scale > .18 && sample.scale < 1, "The character visibly shrinks through intermediate frames");
+      assert.equal(sample.sprite, true, "The shrinking ghost retains the approved character");
+      assert.deepEqual(sample.missingReferences, [], "Cloned eyes and sprout filters must resolve within the ghost");
+      assert.deepEqual(sample.duplicateIds, [], "Motion clone must not share SVG identifiers with the live character");
       absorptionSamples++;
     }
     await pet.waitForFunction(() => document.querySelector("#pet-root").dataset.settling !== "true");
