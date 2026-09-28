@@ -176,7 +176,7 @@ export async function extractDefinition(
     model: provider.model,
   };
   if (request.analysis) {
-    result.versions.prompt = request.evolution ? 'work-definition-evolution-analysis-v1.1' : 'work-definition-analysis-v1.1';
+    result.versions.prompt = request.evolution ? 'work-definition-evolution-analysis-v1.2' : 'work-definition-analysis-v1.2';
     const eventKeys = request.sources.flatMap(s => s.events.map(e => `${s.key}/${e.key}`));
     result.coverage = { inputEvents: eventKeys.length, processedEvents: eventKeys.length, processedChunks: chunks.length, eventKeys, exclusions: [] };
   }

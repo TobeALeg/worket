@@ -2,6 +2,12 @@
 
 v0.1.6 客户端与生产后台已同步，服务代码为 `71a4f94`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.6-verification.md)。
 
+## Contract 分析视图 v2（2026-09-28，待部署验证）
+
+`distillation/analysis-input.ts` 以 `contract-input-v2` 固定按证据用途划分的视图：`tool.*` 为 OMIT，其他可见事件为 KEEP；不再解析 shell、工具参数、执行状态或文件扩展名。主动选择的附件仍由 `wire()` 追加，正文、hash 与 NORMATIVE/REFERENCE/INPUT 角色保持不变。省略不删除原始档案。
+
+`upgradeAnalysis()` 比较规则版本：失败任务的 legacy/v1 快照在重试时另存为 v2；相同规则复用已冻结视图。进行中的旧任务和已生成结果继续通过原快照校验，旧 EXCERPT/DUPLICATE 视图仍可读取。沿用 `analysisSchemaVersions:[1]`，无数据库迁移。服务器的分析提示版本为 `work-definition-analysis-v1.2`，对缺失规范/工具正文仅保留引用并提出信息缺口；分批覆盖、逐字引用、最终规则校验不放宽。见 [本次验收](acceptance/contract-input-v2.md)。
+
 ## 沉淀分析输入（2026-09-24，已部署 v0.1.6）
 
 `distillation/analysis-input.ts` 按工具名、调用 ID、状态和白名单格式产生 KEEP/EXCERPT/OMIT/DUPLICATE 决策。仅复制白名单工具元数据；原始事件与规则版本、事件 hash、原文范围和去重目标共同固定到 Snapshot。`wire()` 从该固定视图生成请求，摘录仍是原文连续子串；不把程序简写伪装成可引用原文。未触发过滤且体积小的快照保留旧协议。

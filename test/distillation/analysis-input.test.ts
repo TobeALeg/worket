@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { prepareAnalysisInput, projectedEvents } from '../../dist/distillation/analysis-input.js';
+import { ANALYSIS_RULE_VERSION, prepareAnalysisInput, projectedEvents } from '../../dist/distillation/analysis-input.js';
 import { DistillationService } from '../../dist/distillation/service.js';
 import { createWorkCore } from '../../dist/core/index.js';
 import { hash } from '../../dist/definitions/storage.js';
@@ -39,87 +39,31 @@ function wire(source: ReturnType<typeof record>) {
     originalEvents: source.events.length, omittedEvents: source.events.length - events.length, excerptEvents: input.entries.filter(e => e.action === 'EXCERPT').length }, sources: [{ key: source.key, events }] };
 }
 
-test('filtering protects conversation, normative reads, errors and unknown output; only known code bodies disappear', () => {
-  const source = record(), before = structuredClone(source), input = prepareAnalysisInput([source]);
-  const view = projectedEvents(source, input);
-  assert.equal(view.some(e => e.key === 'e4'), false);
-  for (const key of ['e1', 'e2', 'e6', 'e7', 'e8', 'e9']) assert.equal(view.find(e => e.key === key)?.content, source.events.find(e => e.key === key)!.content);
+test('contract filtering omits execution details while preserving dialogue, decisions and source hashes', () => {
+  const source = record('请遵守 SPEC.md；这段代码是输入要求：\n```ts\nexport const code = 1;\n```');
+  source.events.push(event('e10', 'work.acceptance', '仅本次接受英文；以后仍用中文。'));
+  source.events.push(event('e11', 'tool.call', 'Write\n{"file_path":"SPEC.md","content":"自动生成的规范"}'));
+  const before = structuredClone(source), input = prepareAnalysisInput([source]), view = projectedEvents(source, input);
+  assert.deepEqual(view.map(e => e.key), ['e1', 'e2', 'e9', 'e10']);
+  for (const e of view) assert.equal(e.content, source.events.find(original => original.key === e.key)!.content);
   assert.deepEqual(source, before);
+  assert.equal(input.ruleVersion, ANALYSIS_RULE_VERSION);
+  assert.ok(input.entries.filter(e => e.action === 'OMIT').every(e => e.reason === 'execution-detail'));
   validateRequest(wire(source));
-  source.events[0]!.content = 'changed';
+  // Omitted bodies remain authenticated, so changing hidden history is detected too.
+  source.events[3]!.content = 'changed implementation';
   assert.throws(() => projectedEvents(source, input), { code: 'SOURCE_CHANGED' });
 });
 
-test('user code fences, explicit filenames and ambiguous references protect implementation evidence', () => {
-  for (const text of ['请修改 app.ts，验收按里面的条件。', '上面代码里的限制照办。', '保留这个例子：\n```ts\nexport const code = 1;\n```']) {
-    const source = record(text), view = projectedEvents(source, prepareAnalysisInput([source]));
-    assert.equal(view.find(e => e.key === 'e1')?.content, text);
-    assert.ok(view.some(e => e.key === 'e4'));
-  }
-});
-
-test('literal shell code reads are recognized but document reads, mixed commands and substitutions remain intact', () => {
-  for (const [command, expected] of [
-    ['cd /project && cat src/app.ts', 'OMIT'],
-    ["sed -n '1,120p' src/app.ts", 'OMIT'],
-    ["sed -n '1,120p' docs/SPEC.md", 'KEEP'],
-    ['cat src/app.ts && cat requirements.md', 'KEEP'],
-    ['cat $(choose-file).ts', 'KEEP'],
-  ]) {
-    const source = record();
-    source.events.push(event('e10', 'tool.call', `Bash\n${JSON.stringify({ command })}`, { toolName: 'Bash', callId: 'shell' }));
-    source.events.push(event('e11', 'tool.result', 'export const setting = 1;\n'.repeat(100), { toolName: 'Bash', callId: 'shell', status: 'completed' }));
-    assert.equal(prepareAnalysisInput([source]).entries.at(-1)?.action, expected, command);
-  }
-});
-
-test('test summaries are exact substrings; unrelated success cannot erase failure or its attempted patch', () => {
-  const source = record();
-  source.events.push(event('e10', 'tool.call', 'Edit\n{"file_path":"app.ts","old_string":"old","new_string":"new"}', { toolName: 'Edit', callId: 'edit' }));
-  source.events.push(event('e11', 'tool.result', 'patch failed', { toolName: 'Edit', callId: 'edit', status: 'failed' }));
-  const output = 'ok 1 - first\nok 2 - second\n# tests 2\n# pass 2\n# fail 0\n';
-  source.events.push(event('e12', 'tool.call', 'Bash\n{"command":"npm test"}', { toolName: 'Bash', callId: 'tests' }));
-  source.events.push(event('e13', 'tool.result', output, { toolName: 'Bash', callId: 'tests', status: 'completed' }));
-  const input = prepareAnalysisInput([source]), view = projectedEvents(source, input);
-  assert.ok(view.some(e => e.key === 'e7')); assert.ok(view.some(e => e.key === 'e10'));
-  const summary = view.find(e => e.key === 'e13')!;
-  assert.ok(output.includes(summary.content)); assert.ok(summary.content.includes('# fail 0'));
-  assert.ok(summary.content.length < output.length);
-});
-
-test('identical output from a later invocation stays; only a replay of the same call is deduplicated', () => {
-  const source = record();
-  for (const [key, callId] of [['e10', 'first'], ['e11', 'second'], ['e12', 'second']])
-    source.events.push(event(key!, 'tool.result', 'success', { toolName: 'Bash', callId, status: 'completed' }));
-  const view = projectedEvents(source, prepareAnalysisInput([source]));
-  assert.ok(view.some(e => e.key === 'e10')); assert.ok(view.some(e => e.key === 'e11'));
-  assert.ok(!view.some(e => e.key === 'e12'));
-});
-
-test('writing a requirements document is protected even without an explicit filename in the user message', () => {
-  const source = record();
-  source.events.push(event('e10', 'tool.call', 'Write\n{"file_path":"SPEC.md","content":"每条事实必须有来源"}', { toolName: 'Write', callId: 'doc' }));
-  assert.equal(prepareAnalysisInput([source]).entries.at(-1)?.action, 'KEEP');
-});
-
-test('a completed generated script retains its invocation; failed scripts and trailing commands stay whole', () => {
-  for (const [exitCode, suffix, expected] of [[0, '', 'EXCERPT'], [1, '', 'KEEP'], [0, '\necho next', 'KEEP']] as const) {
-    const source = record();
-    source.events.push(event('e10', 'tool.call', "node --input-type=module <<'JS'\nconsole.log('generated code');\nJS" + suffix, { exitCode }));
-    const input = prepareAnalysisInput([source]);
-    assert.equal(input.entries.at(-1)?.action, expected);
-    if (expected === 'EXCERPT') assert.equal(projectedEvents(source, input).at(-1)?.content, "node --input-type=module <<'JS'\n");
-  }
-});
-
-test('nested archive is omitted only when every embedded event is already in the selected snapshot', () => {
-  const source = record();
-  source.events.push(event('e10', 'tool.call', 'mcp__worket__get_work_archive\n{"work_id":"w"}', { toolName: 'mcp__worket__get_work_archive', callId: 'archive' }));
-  const nested = event('e11', 'tool.result', JSON.stringify({ workInstanceId: 'w', events: [source.events[0]] }), { toolName: 'mcp__worket__get_work_archive', callId: 'archive', status: 'completed' });
-  source.events.push(nested);
-  assert.equal(prepareAnalysisInput([source]).entries.at(-1)?.action, 'OMIT');
-  nested.content = JSON.stringify({ workInstanceId: 'w', events: [{ id: 'missing', kind: 'user.prompt', content: '额外要求' }] }); nested.hash = hash(nested.content);
-  assert.equal(prepareAnalysisInput([source]).entries.at(-1)?.action, 'KEEP');
+test('an older frozen view remains readable without applying the new filter during receive', () => {
+  const source = record(), input = prepareAnalysisInput([source]);
+  input.ruleVersion = 'distillation-input-v1';
+  const entry = input.entries.find(e => e.eventKey === 'e4')!;
+  entry.action = 'EXCERPT'; entry.range = { start: 2, end: 24 };
+  const excerpt = projectedEvents(source, input).find(e => e.key === 'e4')!;
+  assert.equal(excerpt.content, source.events[3]!.content.slice(2, 24));
+  assert.equal(excerpt.hash, hash(excerpt.content));
+  assert.equal(input.ruleVersion, 'distillation-input-v1');
 });
 
 test('long protected Chinese/emoji and documents split losslessly; legacy request behavior stays unchanged', () => {
@@ -187,6 +131,26 @@ test('document evidence keeps the file identity needed to pin an exact normative
   assert.equal(aggregate.evidence[0].startLine, 2);
 });
 
+test('selected normative files survive contract filtering and keep their authoritative role', () => {
+  const core = createWorkCore({ databasePath: join(mkdtempSync(join(tmpdir(), 'worket-contract-files-')), 'work.sqlite') });
+  const service = new DistillationService(core, new FixtureClient());
+  try {
+    const snapshot = service.prepare({ workIds: [makeSource(core).instance.id], includedFileIds: [] });
+    const s = snapshot.sources[0]!;
+    s.events.push(event('tool-1', 'tool.result', '工具正文中另有一个未采纳的规则。'));
+    s.files.push({ id: 'selected', name: 'SPEC.md', path: '/selected/SPEC.md',
+      hash: hash('不得公开客户姓名。'), content: '不得公开客户姓名。', role: 'NORMATIVE' });
+    snapshot.analysis = prepareAnalysisInput(snapshot.sources);
+    const request = service.wire(snapshot);
+    assert.ok(!request.sources[0]!.events.some(e => e.key === 'tool-1'));
+    const file = request.sources[0]!.events.find(e => e.key === 'file-1')!;
+    assert.equal(file.content, '不得公开客户姓名。');
+    assert.equal(file.document?.role, 'NORMATIVE');
+    assert.equal(request.analysis?.omittedEvents, 1);
+    validateRequest(request);
+  } finally { service.close(); core.close(); }
+});
+
 test('an unconfirmed duplicate stays independent and blocks review; active scope conflicts still fail', () => {
   const active = { key: 'language', text: '默认中文', rule: { scope: 'REUSABLE', status: 'ACTIVE' } };
   const proposed = { key: 'new_candidates', text: '新候选中文，旧候选不翻译', rule: { scope: 'UNCERTAIN',
@@ -210,7 +174,7 @@ test('an unconfirmed duplicate stays independent and blocks review; active scope
   }
 });
 
-test('retry migrates a failed legacy snapshot into a separate frozen view and preserves the old job and source', async () => {
+for (const version of [undefined, 'distillation-input-v1']) test(`retry upgrades ${version ?? 'legacy'} into a new frozen view without changing history`, async () => {
   const directory = mkdtempSync(join(tmpdir(), 'worket-analysis-'));
   const core = createWorkCore({ databasePath: join(directory, 'work.sqlite') }), work = makeSource(core), client = new FixtureClient();
   const service = new DistillationService(core, client);
@@ -221,7 +185,11 @@ test('retry migrates a failed legacy snapshot into a separate frozen view and pr
     ] as any);
     const prepared = service.prepare({ workIds: [work.instance.id], includedFileIds: [] });
     assert.ok(prepared.analysis);
-    const legacy = structuredClone(prepared); delete legacy.analysis; for (const s of legacy.sources) for (const e of s.events) delete e.tool;
+    const legacy = structuredClone(prepared);
+    if (version) {
+      legacy.analysis!.ruleVersion = version;
+      for (const entry of legacy.analysis!.entries) { entry.action = 'KEEP'; entry.reason = 'protected-or-unknown'; }
+    } else delete legacy.analysis;
     legacy.id = randomUUID(); legacy.contentHash = hash(legacy.sources); core.definitions.db.prepare('INSERT INTO source_snapshots VALUES (?,?)').run(legacy.id, JSON.stringify(legacy));
     const old = { id: randomUUID(), snapshotId: legacy.id, status: 'INTERRUPTED', attempt: 1, commandId: randomUUID(), createdAt: new Date().toISOString(), error: 'INPUT_TOO_LARGE' };
     core.definitions.db.prepare('INSERT INTO distillation_jobs VALUES (?,?,?)').run(old.id, legacy.id, JSON.stringify(old));
@@ -233,7 +201,12 @@ test('retry migrates a failed legacy snapshot into a separate frozen view and pr
     assert.deepEqual(core.definitions.read('source_snapshots', legacy.id), legacy);
     assert.deepEqual(core.definitions.read('distillation_jobs', old.id), old);
     assert.deepEqual(core.getWork(work.instance.id), before);
-    assert.ok(client.request.analysis.omittedEvents > 0);
+    assert.equal(client.request.analysis.ruleVersion, ANALYSIS_RULE_VERSION);
+    assert.equal(client.request.analysis.omittedEvents, 2);
+    assert.ok(client.request.sources.every((s: any) => s.events.every((e: any) => !e.kind.startsWith('tool.'))));
+    const current = core.definitions.read<any>('source_snapshots', job.snapshotId);
+    assert.equal(current.analysis.ruleVersion, ANALYSIS_RULE_VERSION);
+    assert.deepEqual(current.sources, legacy.sources);
   } finally { service.close(); core.close(); }
 });
 
