@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { listPackage } from "@electron/asar";
 
 const run = (command, args) => execFileSync(command, args, { stdio: "inherit" });
 const { version } = JSON.parse(readFileSync("package.json", "utf8"));
@@ -13,6 +14,10 @@ if (execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim())
 run("npm", ["test"]);
 run("npm", ["run", "package:mac"]);
 const app = "release/Worket-darwin-arm64/Worket.app";
+const localData = listPackage(join(app, "Contents/Resources/app.asar")).filter(path =>
+  /^\/(?:evals|output|research|\.worket-server)(?:\/|$)/.test(path) ||
+  /(?:^|\/)\.env(?:\.|$)|\.(?:sqlite(?:-(?:wal|shm))?|db|pem|key)$/.test(path));
+if (localData.length) throw new Error(`安装包含本地运行数据，停止发布：${localData.join(", ")}`);
 // Ad-hoc signing preserves Electron metadata; this is not Apple notarization.
 run("codesign", ["--force", "--deep", "--sign", "-", "--timestamp=none",
   "--preserve-metadata=identifier,entitlements,requirements,flags,runtime", app]);

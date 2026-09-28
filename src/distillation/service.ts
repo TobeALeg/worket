@@ -1,5 +1,5 @@
 import { workEvidence } from "../core/work-evidence.js";
-import { prepareAnalysisInput, projectedEvents, toolMetadata, type AnalysisInput, type ToolMetadata } from './analysis-input.js';
+import { ANALYSIS_RULE_VERSION, prepareAnalysisInput, projectedEvents, type AnalysisInput } from './analysis-input.js';
 import { assertSourcePresenceReady } from "../core/source-revisions.js";
 import { ContinuousEvolution, eventIdentity, type AutomaticComparison } from './continuous-evolution.js';
 import { type DocumentRole } from "../contracts/rules.js";
@@ -48,7 +48,6 @@ export type Snapshot = {
       kind: string;
       content: string;
       hash: string;
-      tool?: ToolMetadata;
     }[];
     files: {
       id: string;
@@ -210,7 +209,6 @@ export class DistillationService {
           kind: e.kind,
           content: e.content!,
           hash: hash(e.content!),
-          ...(e.kind.startsWith('tool.') ? { tool: toolMetadata(e.metadata) } : {}),
         }));
       ensure(
         events.length,
@@ -338,16 +336,9 @@ export class DistillationService {
 
   /** Old failed jobs keep their original snapshot; retry freezes a separate, verifiable view. */
   private upgradeAnalysis(snapshot: Snapshot): Snapshot {
-    if (snapshot.analysis) return snapshot;
+    if (snapshot.analysis?.ruleVersion === ANALYSIS_RULE_VERSION) return snapshot;
     const next = structuredClone(snapshot);
-    for (const source of next.sources) {
-      const current = new Map(this.core.getWork(source.workId)?.sourceArchive.map(e => [e.id, e]) ?? []);
-      for (const event of source.events) {
-        const original = current.get(event.id);
-        if (original && original.kind === event.kind && hash(original.content ?? '') === event.hash && event.kind.startsWith('tool.'))
-          event.tool = toolMetadata(original.metadata);
-      }
-    }
+    delete next.analysis;
     this.freezeAnalysis(next);
     if (!next.analysis) return snapshot;
     next.id = randomUUID(); next.capturedAt = new Date().toISOString();
