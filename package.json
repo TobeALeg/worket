@@ -38,7 +38,7 @@
     "qa:contract:semantics": "npm run build && WORKET_SEMANTIC_REPLAY_ROOT=test/fixtures/semantic-evolution node scripts/qa-evolution-semantics.mjs",
     "qa:contract:continuous": "npm run build && WORKET_E2E_CONTINUOUS=1 WORKET_E2E_REPLAY=test/fixtures/contracts/video node scripts/qa-contract-e2e.mjs",
     "qa:contract:evolution": "npm run build && node scripts/qa-contract-evolution-baseline.mjs",
-    "package:mac": "npm run build && electron-packager . Worket --platform=darwin --arch=arm64 --app-bundle-id=dev.workpet.desktop --icon=assets/WorkPet.icns --extra-resource=assets/WorkPet.png --asar.unpackDir=integrations --asar.unpack=dist/foreground-context --out=release --overwrite --ignore='^/research($|/)' --ignore='^/test($|/)' --ignore='^/output($|/)' --ignore='^/release($|/)' --ignore='^/server($|/)' --ignore='^/.worket-server($|/)'",
+    "package:mac": "npm run build && electron-packager . Worket --platform=darwin --arch=arm64 --app-bundle-id=dev.workpet.desktop --icon=assets/WorkPet.icns --extra-resource=assets/WorkPet.png --asar.unpackDir=integrations --asar.unpack=dist/foreground-context --out=release --overwrite --ignore='^/research($|/)' --ignore='^/test($|/)' --ignore='^/evals($|/)' --ignore='^/.env($|\\.)' --ignore='^/output($|/)' --ignore='^/release($|/)' --ignore='^/server($|/)' --ignore='^/.worket-server($|/)'",
     "ai:serve": "npm run build:server && node server/start.mjs",
     "build:server": "tsc -p server/tsconfig.json",
     "ai:serve:env": "npm run build:server && node server/start-env.mjs",
