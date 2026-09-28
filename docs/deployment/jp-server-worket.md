@@ -4,8 +4,8 @@
 
 ## 当前状态
 
-- v0.1.6 客户端已于 2026-09-24 正式发布并更新本机，配套后台已同步。沉淀过滤能力 `analysisSchemaVersions:[1]` 与自动准备能力 `continuationSchemaVersions:[1]` 均启用；详见 [发布验收](../releases/v0.1.6-verification.md)。
-- Worket 服务代码来自提交 `71a4f94`（2026-09-24 更新），版本目录为 `/opt/worket/releases/71a4f94`，`/opt/worket/current` 指向当前版本。
+- v0.1.7 客户端已于 2026-09-28 更新本机，配套后台已同步。沉淀过滤能力 `analysisSchemaVersions:[1]` 与自动准备能力 `continuationSchemaVersions:[1]` 均启用；详见 [发布验收](../releases/v0.1.7-verification.md)。
+- Worket 服务代码来自提交 `64315c4`（2026-09-28 更新），版本目录为 `/opt/worket/releases/64315c4`，`/opt/worket/current` 指向当前版本。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -152,3 +152,9 @@ ssh jp-server 'sudo nginx -t'
 部署前无活跃或待领取请求，完成离线导入、持久数据备份、原子切换及配置复核。20 条请求记录保留；运行身份、环境和安全配置保持，settings 与密钥逐字节一致，metadata/improvement 数据库 quick_check=ok，无迁移。备份为 `/opt/worket/backups/data-pre-v016-20260924-185319.tgz`，旧容器 `worket-before-v016-20260924-185319` 保留供回滚。
 
 公网 health 200/configured、匿名 capabilities 401、admin 404；服务器内短期令牌核验分析、自动准备、规则、演进、证据、技能能力均为 [1]。凭据没有输出或离开服务器。本轮部署检查没有新模型调用；真实模型证据沿用发布前固定请求的验证，见 [生产记录](../releases/v0.1.6-production.json) 与 [发布验收](../releases/v0.1.6-verification.md)。
+
+## 2026-09-28 v0.1.7 Contract 输入聚焦
+
+后台由 `71a4f94` 切换到 `64315c4`，更新分析提示以明确工具执行正文的省略边界和缺失资料处理。客户端 `contract-input-v2` 只发送对话、工作决定和主动选入资料；旧失败任务重试会形成新视图，原档案保留。协议仍是 analysis schema 1，无数据库迁移。
+
+首次后台包的依赖缺漏被停服务前的模块导入预检拦住，改为 server/tsconfig.json 完整编译后部署成功。服务原配置、密钥、身份、挂载和安全参数保持；21 条请求和两个 SQLite 的完整性通过。备份 `/opt/worket/backups/data-pre-v017-20260928-174131.tgz`，回滚容器 `worket-before-v017-20260928-174131`。公网健康与认证能力通过，具体见 [生产记录](../releases/v0.1.7-production.json) 与 [发布验收](../releases/v0.1.7-verification.md)。
