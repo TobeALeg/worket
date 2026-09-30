@@ -24,3 +24,5 @@
 安装前后均为 4 项工作、1,573 条来源事件、1 份定义，数据库 `quick_check=ok`；来源事件按 ID 排序后的逐行摘要一致。备份位于本地忽略目录 `output/app-backups/codex-update-20260930/`。
 
 安装 ASAR 与打包 ASAR 相同：`1acc93c43518758bdff0b3e8307fa250f09339e25be05b54a2377c3dbc6a2b0b`。本地核验脚本及报告位于 `output/playwright/codex-update/`；不包含会话正文输出。
+
+用户随后要求发布新更新包，已正式发布 v0.1.8 并安装最终包；以上 0.1.7 本机修复属于发布前历史验收，最终附件及安装状态见 [v0.1.8 发布验收](../releases/v0.1.8-verification.md)。
