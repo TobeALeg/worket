@@ -1,5 +1,8 @@
 import { readCodexHistory } from "./history.js";
-import { access } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, stat } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 
@@ -30,17 +33,28 @@ export interface CodexThreadSummary {
   status: unknown;
 }
 
-export const CODEX_BINARY_CANDIDATES = [
-  "/Applications/ChatGPT.app/Contents/Resources/codex",
-  `${process.env.HOME ?? ""}/Applications/ChatGPT.app/Contents/Resources/codex`,
-  `${process.env.HOME ?? ""}/.codex/plugins/.plugin-appserver/codex`,
-];
+export function getCodexBinaryCandidates(
+  homeDirectory = homedir(),
+  applicationsDirectory = "/Applications",
+): string[] {
+  const bundles = [applicationsDirectory, join(homeDirectory, "Applications")]
+    .flatMap(directory => ["ChatGPT.app", "Codex.app"].map(bundle =>
+      join(directory, bundle, "Contents", "Resources")));
+  return [
+    ...bundles.map(bundle => join(bundle, "codex-cli", "bin", "codex")),
+    ...bundles.map(bundle => join(bundle, "codex")),
+    join(homeDirectory, ".codex", "plugins", ".plugin-appserver", "codex"),
+  ];
+}
+
+export const CODEX_BINARY_CANDIDATES = getCodexBinaryCandidates();
 
 async function findCodexBinary(candidates: string[]): Promise<string> {
   for (const candidate of candidates) {
     if (!candidate.startsWith("/")) continue;
     try {
-      await access(candidate);
+      await access(candidate, constants.X_OK);
+      if (!(await stat(candidate)).isFile()) continue;
       return candidate;
     } catch {
       // Try the next known official bundle location.
