@@ -69,7 +69,6 @@ function confirmation(view) {
   const status = node('div', 'wc-status');
   const seal = node('span', 'wc-seal');
   seal.setAttribute('aria-hidden', 'true');
-  seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></svg>';
   status.append(seal, node('strong', '', '已确认'));
   const identity = node('div', 'wc-identity');
   identity.append(node('span', 'wc-id', view.id), node('span', 'wc-version', view.version));
