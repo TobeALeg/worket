@@ -2,6 +2,12 @@
 
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
 
+## 工作契约设计组件（2026-10-08，尚未接入 renderer）
+
+独立实现位于 [docs/design/work-contract](design/work-contract/README.md)。`tokens.css` 管理设计变量，`contract.css` 管理竖版布局和响应式，SVG 提供图标与纸纹；`contract.js` 将 `ContractView` 渲染为原生 DOM，并通过 `onReuse` / `onDetails` 回调宿主，配套 `.d.ts` 定义接口。数据文本使用 `textContent`，不依赖整张概念图。
+
+组件仅表现已确认版本：宿主需从真实 Definition 取确认时间，并用现有有效规则逻辑投影条款。`setTabColor` 校验六位 HEX，按相对亮度选择黑白文字，仅更新页签变量。预览页自行持久化颜色；核心组件无存储或 IPC，正式分类配色属于展示偏好，不写不可变定义。本次无客户端、数据库或安装产物变更。
+
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 
 `distillation/analysis-input.ts` 以 `contract-input-v2` 固定按证据用途划分的视图：`tool.*` 为 OMIT，其他可见事件为 KEEP；不再解析 shell、工具参数、执行状态或文件扩展名。主动选择的附件仍由 `wire()` 追加，正文、hash 与 NORMATIVE/REFERENCE/INPUT 角色保持不变。省略不删除原始档案。

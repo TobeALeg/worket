@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worket · 工作契约标准组件</title>
+  <link rel="stylesheet" href="contract.css">
+  <link rel="stylesheet" href="preview.css">
+</head>
+<body>
+  <header class="preview-header">
+    <div><p class="preview-brand"><i></i>Worket / Design component</p><h1>工作契约</h1></div>
+    <span class="preview-format">HTML · CSS · SVG</span>
+  </header>
+  <form class="preview-controls" aria-label="组件预览设置">
+    <fieldset class="color-controls"><legend>页签颜色</legend><div id="presets" class="presets"></div>
+      <div class="custom-color">
+        <label class="picker-label">自定义<input id="color-picker" type="color" value="#60765f" aria-label="自定义页签颜色"></label>
+        <input id="color-hex" type="text" value="#60765f" maxlength="7" spellcheck="false" autocomplete="off" aria-label="HEX 颜色值" aria-describedby="color-error">
+        <button id="export-color" type="button">导出 CSS</button>
+      </div>
+      <p id="color-error" class="control-error" role="alert" hidden></p>
+    </fieldset>
+    <details class="preview-options"><summary>尺寸与内容</summary><div class="option-grid">
+      <label>显示宽度<select id="preview-width"><option value="auto">自适应 · 最大 420px</option><option value="320">320px</option><option value="400">400px</option><option value="520">520px</option></select></label>
+      <label>内容样例<select id="sample"><option value="normal">标准内容</option><option value="long">长标题与多条约束</option><option value="minimal">仅保留必要条目</option></select></label>
+      <label class="name-option">契约名称<input id="contract-title" type="text" value="客户方案设计" autocomplete="off"></label>
+    </div></details>
+  </form>
+  <main class="preview-scroll"><div id="stage" class="preview-stage"></div></main>
+  <p id="action-status" class="action-status" role="status"></p>
+  <footer class="preview-footer"><span>标准组件预览 · 用户颜色只改变页签</span><div><a href="README.md">设计规范</a><a href="tokens.css">样式变量</a><a href="contract.css">组件 CSS</a><a href="contract.js">组件 JS</a></div></footer>
+  <dialog id="details-dialog"><div class="dialog-heading"><h2>完整契约</h2><button id="close-details" type="button" aria-label="关闭完整契约">关闭 ×</button></div><div id="detail-content"></div></dialog>
+  <script type="module" src="preview.js"></script>
+</body>
+</html>

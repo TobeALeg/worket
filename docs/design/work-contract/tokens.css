@@ -1,0 +1,23 @@
+/* Worket Contract v1 — component-scoped design tokens; user color changes only the tab. */
+.wc-contract {
+  --wc-canvas: #fbfaf7;
+  --wc-paper: #fffefa;
+  --wc-backing: #efeee5;
+  --wc-ink: #243e32;
+  --wc-text: #4e5650;
+  --wc-muted: #7b8578;
+  --wc-line: #d9dcd0;
+  --wc-sage: #e2e8d8;
+  --wc-gold: #d8bf81;
+  --wc-action: #38634b;
+  --wc-action-hover: #2b513c;
+  --wc-tab-color: #60765f;
+  --wc-tab-ink: #fffdf8;
+  --wc-serif: 'Songti SC', 'STSong', 'Noto Serif CJK SC', Georgia, serif;
+  --wc-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --wc-radius: 11px;
+  --wc-inset: clamp(22px, 7.1cqi, 37px);
+  --wc-row-gap: 13px;
+  --wc-shadow: 0 14px 22px -15px #36453257, 0 3px 7px #38432c0a;
+  --wc-grain-opacity: .045;
+}

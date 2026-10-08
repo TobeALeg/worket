@@ -1,0 +1,48 @@
+/* Demo chrome only. Never ship this stylesheet with the contract component. */
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; color: #343d36; background: #fbfaf7; font-synthesis: none; }
+body { margin: 0; }
+.preview-header { display: flex; justify-content: space-between; align-items: end; gap: 16px; max-width: 900px; margin: auto; padding: 20px 22px 16px; }
+.preview-brand { margin: 0 0 9px; font-size: 11px; color: #858d80; }
+.preview-brand i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: #dfca8d; }
+.preview-header h1 { font-size: 22px; font-weight: 550; letter-spacing: -.7px; margin: 0; }
+.preview-format { color: #7b8577; font-size: 11px; white-space: nowrap; }
+.preview-controls { max-width: 856px; padding: 15px 22px; margin: 0 auto; border-block: 1px solid #e3e6dd; }
+.preview-controls button, .preview-controls input, .preview-controls select, #close-details { box-sizing: border-box; min-height: 29px; color: #374632; border: 1px solid #d6ddcc; border-radius: 5px; background: #fffef9; padding: 5px 8px; font: 11px/1.4 -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; }
+.preview-controls button, #close-details { cursor: pointer; }
+.preview-controls button:hover, #close-details:hover { background: #edf2e6; }
+.preview-controls :focus-visible, .preview-footer a:focus-visible, #close-details:focus-visible { outline: 2px solid #38634b; outline-offset: 2px; }
+.color-controls { border: 0; padding: 0; margin: 0; }
+.color-controls legend { padding: 0; margin-bottom: 9px; font-size: 11px; color: #7f8877; }
+.presets { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.presets button { display: inline-flex; align-items: center; gap: 5px; }
+.presets button[aria-pressed=true] { background: #eaf0e2; border-color: #85987b; }
+.color-dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px #00000014; }
+.custom-color { display: inline-flex; align-items: center; gap: 7px; margin: 8px 0 0 12px; }
+.picker-label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #737f6b; }
+.preview-controls #color-picker { width: 31px; height: 29px; padding: 2px; cursor: pointer; }
+.preview-controls #color-hex { width: 77px; font-family: ui-monospace, monospace; }
+.preview-controls #color-hex[aria-invalid=true] { border-color: #b06e50; }
+.control-error { color: #9b5238; font-size: 11px; margin: 7px 0 0; }
+.preview-options { border-top: 1px solid #e3e6dd; margin-top: 13px; padding-top: 10px; font-size: 11px; color: #737f6b; }
+.preview-options summary { cursor: pointer; width: fit-content; }
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.option-grid label { display: grid; gap: 5px; }
+.option-grid input, .option-grid select { width: 100%; min-width: 0; }
+.name-option { grid-column: 1 / -1; }
+.preview-scroll { padding: 30px 20px 16px; overflow-x: auto; }
+.preview-stage { width: 100%; max-width: 420px; margin-inline: auto; }
+.preview-stage[data-fixed] { max-width: none; margin-inline: auto; }
+.action-status { min-height: 16px; text-align: center; color: #65745a; font-size: 11px; max-width: 440px; margin: 7px auto 15px; padding: 0 20px; }
+.preview-footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; max-width: 900px; border-top: 1px solid #e3e6dd; margin: auto; padding: 14px 22px 24px; color: #7f8778; font-size: 10px; }
+.preview-footer div { display: flex; gap: 15px; }
+.preview-footer a { color: #38634b; text-decoration: none; }
+.preview-footer a:hover { text-decoration: underline; }
+#details-dialog { box-sizing: border-box; width: min(600px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto; border: 1px solid #d7ddcf; border-radius: 12px; padding: 20px; color: #343d36; background: #fbfaf7; }
+#details-dialog::backdrop { background: #2f49305c; }
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dialog-heading h2 { margin: 0; font-size: 18px; font-weight: 550; }
+#detail-content h3 { font-size: 14px; margin: 20px 0 7px; }
+#detail-content p, #detail-content li { font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+#detail-content ul { padding-left: 20px; }
+@media (max-width: 700px) { .custom-color { display: flex; margin-left: 0; margin-top: 9px; }.preview-format { font-size: 10px; }.preview-controls { margin-inline: 0; } }
+@media print { .preview-header, .preview-controls, .preview-footer, .action-status, #details-dialog { display: none; }.preview-scroll { padding: 0; overflow: visible; }.preview-stage { width: 100% !important; max-width: 150mm !important; } }
