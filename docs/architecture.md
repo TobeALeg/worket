@@ -583,7 +583,7 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 
 工作详情的分类行仅展示已有状态；最近回复和执行片段用原生 details，按工作 ID 保留其展开状态，切换工作时重置。展示固定资料时由 materialRoles 将内部 key 映射为用户文字；路径保留在 title，显示文件名。此轮不改变数据契约、IPC、上传授权或模型流程。
 
-## 问题反馈（2026-10-08，本地实现）
+## 问题反馈（2026-10-08）
 
 `src/diagnostics/recorder.ts` 负责主进程白名单运行事件、AsyncLocalStorage trace、按日轮转和故障快照。记录、同步、交接、沉淀、更新、服务请求与界面异常接入；交接依次记录选择、准备、请求打开、等待确认。只记录固定枚举、耗时和 UUID 请求编号，不接收错误原文、堆栈、路径或工作正文。`src/contracts/problem-report.ts` 在采集和接收两端约束事件、图片、授权、大小与报告摘要。
 
@@ -597,4 +597,4 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 
 限制由共享 REPORT_LIMITS 集中定义：3 张截图、每张 5 MiB、16MP，日志 2 MiB、原始报告 18 MiB、JSON 25 MiB；设备滚动 24 小时 20 份/50 MiB，全局 500 份/500 MiB，与模型额度独立。JPEG/PNG 在主进程重新编码为 PNG，服务器再核对 CRC、像素、hash 和清单；不建立分片附件暂存区。
 
-此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。当前为本地实现，公网后台和正式客户端版本尚未更新。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。
+此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。后台已部署提交 4e40d43，Nginx 上传限制调整为 25m；客户端新构建已安装并正常运行，未发布新的公开版本。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。

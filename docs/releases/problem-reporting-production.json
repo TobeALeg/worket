@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-08",
+  "commit": "4e40d439d044f1080050ed1eca467e9a25f8d0d4",
+  "version": "/opt/worket/releases/4e40d43",
+  "previous": "/opt/worket/releases/64315c4",
+  "backup": "/opt/worket/backups/data-pre-feedback-20261008-144809.tgz",
+  "nginxBackup": "/opt/worket/backups/nginx-pre-feedback-20261008-144809.conf",
+  "rollbackContainer": "worket-before-feedback-20261008-144809",
+  "packageSha256": "9c6628e849f83a243a9afd6b77090e3fa9fe0b88e9ac232fc4e9f07775db876f",
+  "activeBefore": 0,
+  "requestRowsPreserved": 22,
+  "configurationPreserved": true,
+  "configurationAndIdentityUnchanged": true,
+  "containerConfigurationPreserved": [
+    "User",
+    "Cmd",
+    "Entrypoint",
+    "WorkingDir",
+    "Env",
+    "Labels",
+    "Binds",
+    "NetworkMode",
+    "ReadonlyRootfs",
+    "CapDrop",
+    "CapAdd",
+    "SecurityOpt",
+    "RestartPolicy",
+    "Tmpfs",
+    "LogConfig",
+    "Privileged",
+    "PortBindings",
+    "Memory",
+    "NanoCpus",
+    "PidsLimit"
+  ],
+  "databaseIntegrity": {
+    "metadata.sqlite": "ok",
+    "improvement.sqlite": "ok",
+    "problem-reports.sqlite": "ok"
+  },
+  "health": {
+    "ok": true,
+    "configured": true
+  },
+  "uploadLimitMiB": 25,
+  "migration": "new separate problem-reports.sqlite; existing databases unchanged",
+  "feedbackBackupPolicy": "pre-upgrade backup contains no report data; historical report backups must not be restored without deletion replay",
+  "verification": {
+    "/health": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "configured": true
+      }
+    },
+    "/v1/capabilities": {
+      "status": 401
+    },
+    "/admin/": {
+      "status": 404
+    },
+    "capabilities": {
+      "status": 200,
+      "problemReportSchemaVersions": [
+        1
+      ],
+      "existingCapabilitiesPreserved": true
+    },
+    "feedback": {
+      "completeReceipt": true,
+      "wireBytes": 5596676,
+      "largerThanOld5MiBLimit": true,
+      "idempotent": true,
+      "descriptionImageAndLogsMatch": true,
+      "adminStoreCanReadAndReview": true,
+      "publicNoteVisible": true,
+      "internalNoteHidden": true,
+      "adminPublic404": true,
+      "adminUnauthenticated401": true,
+      "privateAdminPage200": true,
+      "deleted": true,
+      "deletedReportCannotReturn": true,
+      "syntheticPayloadErased": true,
+      "verificationInvokedModel": false
+    }
+  },
+  "publicChecksFromMac": {
+    "health": 200,
+    "unauthenticatedCapabilities": 401,
+    "publicAdmin": 404
+  },
+  "client": {
+    "runningPath": "/Applications/Worket.app/Contents/MacOS/Worket",
+    "asarSha256": "64ee4c7142c134c540ac89d0a4712bb7d499e69501b39eca171fd69f6c5f65c9",
+    "publicReleaseCreated": false
+  }
+}

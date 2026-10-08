@@ -5,7 +5,7 @@
 ## 当前状态
 
 - v0.1.7 客户端已于 2026-09-28 更新本机，配套后台已同步。沉淀过滤能力 `analysisSchemaVersions:[1]` 与自动准备能力 `continuationSchemaVersions:[1]` 均启用；详见 [发布验收](../releases/v0.1.7-verification.md)。
-- Worket 服务代码来自提交 `64315c4`（2026-09-28 更新），版本目录为 `/opt/worket/releases/64315c4`，`/opt/worket/current` 指向当前版本。
+- Worket 服务代码来自提交 `4e40d43`（2026-10-08 更新），版本目录为 `/opt/worket/releases/4e40d43`，`/opt/worket/current` 指向当前版本；已启用问题反馈协议 `problemReportSchemaVersions:[1]`。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -158,3 +158,17 @@ ssh jp-server 'sudo nginx -t'
 后台由 `71a4f94` 切换到 `64315c4`，更新分析提示以明确工具执行正文的省略边界和缺失资料处理。客户端 `contract-input-v2` 只发送对话、工作决定和主动选入资料；旧失败任务重试会形成新视图，原档案保留。协议仍是 analysis schema 1，无数据库迁移。
 
 首次后台包的依赖缺漏被停服务前的模块导入预检拦住，改为 server/tsconfig.json 完整编译后部署成功。服务原配置、密钥、身份、挂载和安全参数保持；21 条请求和两个 SQLite 的完整性通过。备份 `/opt/worket/backups/data-pre-v017-20260928-174131.tgz`，回滚容器 `worket-before-v017-20260928-174131`。公网健康与认证能力通过，具体见 [生产记录](../releases/v0.1.7-production.json) 与 [发布验收](../releases/v0.1.7-verification.md)。
+
+## 2026-10-08 问题反馈与诊断日志部署
+
+用户明确授权升级后台。从干净提交 `4e40d439d044f1080050ed1eca467e9a25f8d0d4` 独立编译服务契约并构建精简包，SHA-256 为 `9c6628e849f83a243a9afd6b77090e3fa9fe0b88e9ac232fc4e9f07775db876f`。与旧后台的差异集中在反馈功能；部署前活跃/待领取任务为 0，网络隔离容器模块加载通过。
+
+由 `/opt/worket/releases/64315c4` 切换到 `/opt/worket/releases/4e40d43`。停机后备份 `/opt/worket/backups/data-pre-feedback-20261008-144809.tgz`（0600），旧容器 `worket-before-feedback-20261008-144809` 保留；Nginx 原配置保存在 `/opt/worket/backups/nginx-pre-feedback-20261008-144809.conf`。仅将此站点上传限制从 5m 调为 25m，nginx -t 后 reload，公网 /admin 仍为 404。部署脚本带失败回滚，本次健康成功未触发。
+
+原 User、Env、Cmd、Entrypoint、WorkingDir、标签、挂载、网络、重启、日志和安全配置逐项相同；模型设置、加密与签名密钥逐字节一致。原 22 条模型请求保留，原两个 SQLite 和新建 problem-reports.sqlite 的 quick_check 均为 ok；新库权限 0600、数据目录 0700。新增独立库，原业务数据库没有迁移。
+
+从公网提交 5,596,676 字节合成反馈（超过旧 5 MiB 限制），确认描述、规范 PNG、诊断事件完整收到；相同报告重试回执一致、只入库一次。管理员存储读取与处理状态更新、客户端公开说明及内部备注隔离通过。公网管理入口/私有图片 404，本机管理员未登录接口 401、页面 200。测试报告随后删除，文字/图片/日志/备注被清除，重传返回 REPORT_DELETED。该验收使用服务器内临时短期签名，未输出凭据、未改变账号，未上传真实工作内容或调用模型；不能把存储与页面可达性核对写成生产管理员已登录网页验收。
+
+Mac 与服务器侧均确认公网 health 200/configured、匿名 capabilities 401、admin 404；认证能力声明报告 schema 1，原有能力保持。完整机器记录见 [生产验证](../releases/problem-reporting-production.json)。本地最新版仍从 /Applications/Worket.app 运行，代码与构建相同；此次仅后台部署，不新建客户端公开 Release。
+
+此次数据备份发生在反馈库创建前，不含反馈正文。后续反馈库备份最长留存 30 天；恢复前需重放备份后的删除，不能证明完整重放时不恢复历史反馈库。当前没有自动化备份与删除重放作业，操作规则见 server/README.md；不承诺即时擦除历史备份。
