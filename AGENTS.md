@@ -2,6 +2,10 @@
 
 领域术语以 [CONTEXT.md](CONTEXT.md) 为准；产品与架构现状分别见 [docs/product.md](docs/product.md) 和 [docs/architecture.md](docs/architecture.md)。
 
+## 本地更新交付
+
+用户于 2026-10-08 要求每次更新完成后都让本地运行最新版。涉及客户端的改动完成并通过适用检查后，重新构建本地应用，更新 `/Applications/Worket.app` 并正常退出、重启；沿用现有用户数据，替换前保留可恢复的旧应用。交付前核对安装包与构建产物一致、实际运行路径来自最新版；不能只交源码或应用包链接。本地启动不等于获准发布 GitHub Release 或部署公网后台。
+
 ## VPS 管理
 
 用户于 2026-09-15 确认原 VPS 已删除，旧部署记录仅作历史验收证据。2026-09-18 已在 `jp-server` 部署新的 Worket 后台，公网入口为 `https://worket.dandi.site`；客户端仍需手动填写服务地址和管理员签发的访问令牌。服务器运行与待配置状态见 [jp-server 运维记录](docs/deployment/jp-server-worket.md)。
