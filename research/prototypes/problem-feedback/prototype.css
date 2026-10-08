@@ -30,6 +30,7 @@ button { display: inline-flex; align-items: center; justify-content: center; gap
 .context time { margin-left: auto; }
 .field-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; font-size: 12px; font-weight: 500; }
 .field-title span { font-size: 10px; font-weight: 400; color: var(--muted); }
+.field-title .text-button { font-size: 10px; }
 .description { height: 112px; min-height: 80px; resize: vertical; background: #f6f6f0; border: 1px solid #e2e5db; font-size: 12px; padding: 10px; line-height: 1.75; }
 .description::placeholder { color: #99a08e; }
 .field-note { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10px; color: var(--muted); }
@@ -142,6 +143,13 @@ button { display: inline-flex; align-items: center; justify-content: center; gap
 .image-preview-top { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--line); font-size: 11px; }
 #image-preview img { display: block; width: 100%; max-height: 65vh; object-fit: contain; }
 #image-preview > p { font-size: 10px; color: var(--muted); padding: 10px 15px; }
+#capture-preview { padding: 0; width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+#capture-preview img { display: block; width: 100%; max-height: 65vh; object-fit: contain; }
+.capture-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 13px 15px; border-top: 1px solid var(--line); }
+.capture-actions small { color: var(--muted); margin-right: auto; font-size: 10px; }
+#discard-draft { padding: 18px; }
+#discard-draft p { color: var(--muted); font-size: 11px; margin: 12px 0; }
+#discard-draft .capture-actions { padding: 12px 0 0; }
 .admin-frame { width: min(1050px, calc(100vw - 36px)); height: 660px; display: flex; flex-direction: column; background: var(--background); border: 1px solid #cbd1c5; border-radius: 11px; box-shadow: 0 28px 60px #34452b14; overflow: hidden; }
 .admin-header { height: 53px; padding: 0 23px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-bottom: 1px solid var(--line); }
 .admin-header .worket-brand { gap: 8px; }

@@ -5,6 +5,7 @@ const files = new Map([
   ['/', [new URL('./index.html', import.meta.url), 'text/html; charset=utf-8']],
   ['/prototype.css', [new URL('./prototype.css', import.meta.url), 'text/css; charset=utf-8']],
   ['/prototype.js', [new URL('./prototype.js', import.meta.url), 'text/javascript; charset=utf-8']],
+  ['/draft-store.js', [new URL('./draft-store.js', import.meta.url), 'text/javascript; charset=utf-8']],
   ['/sample-window.svg', [new URL('./sample-window.svg', import.meta.url), 'image/svg+xml']],
   ['/theme.css', [new URL('../../../src/renderer/theme.css', import.meta.url), 'text/css; charset=utf-8']],
   ['/panel.css', [new URL('../../../src/renderer/panel.css', import.meta.url), 'text/css; charset=utf-8']],
