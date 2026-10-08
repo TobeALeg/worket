@@ -2,6 +2,8 @@
 
 v0.1.8 已正式发布为 Latest，修复 Codex 更新后的连接路径；本机已安装并重启，原工作记录保留，见 [发布验收](releases/v0.1.8-verification.md)。
 
+2026-10-08 本机版本整理：只保留 `/Applications/Worket.app` 正式版和项目 `release/Worket-darwin-arm64/Worket.app` 开发入口；正式版已运行，历史副本与重复安装包移入废纸篓，工作记录及设置保留。详见 [本机版本清理验收](acceptance/local-app-cleanup.md)。
+
 v0.1.7 的 Contract 输入过滤已同步生产后台并安装到本机，原失败记录在实际应用中重试进入等待检查。公网健康、认证分析能力、打包与旧版升级检查通过，见 [历史发布验收](releases/v0.1.7-verification.md)。
 
 ## Codex 更新兼容（2026-09-30，本机修复）

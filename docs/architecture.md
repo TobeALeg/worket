@@ -501,6 +501,8 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 状态流：闲置 → 检查 → 用户确认 → 下载校验 → Finder 定位；稍后、无更新或失败返回闲置。用户自行退出、替换和重开应用；不存在 autoUpdater 或原生安装调用。开发模式不检查。`scripts/release-mac.mjs` 负责免费 ad-hoc 签名、打包及解压 QA，不要求 Apple 公证，不自动发布。GitHub token 不进入客户端，数据目录和 bundle ID 保持稳定。
 
+本机固定两个应用位置：正式版为 `/Applications/Worket.app`，开发入口为项目 `release/Worket-darwin-arm64/Worket.app`，通过 `npm run dev` 或 `scripts/run-latest.command` 重建并带 `--dev` 启动。两者沿用 `~/Library/Application Support/WorkPet` 和同一单实例锁，日常切换应先退出正在运行的版本；应用副本清理不删除工作库、设置或凭据。2026-10-08 的路径、签名、系统登记和数据验证见 [清理验收](acceptance/local-app-cleanup.md)。
+
 ### 安装身份与显式服务连接
 
 `AutomaticConnection` 在正式版没有既有配置时使用内置 `https://worket.dandi.site`，生成互不复用的安装秘密和用户恢复码；开发环境仍只接受显式 `WORKET_SERVICE_URL`。`ServiceCredentials` 通过 macOS 系统安全存储保存秘密。后台 `/v1/installations` 只保存两个秘密的 SHA-256：安装秘密定位 `DeviceIdentity`，恢复码定位 `UserIdentity`。RS256 令牌以设备为 `sub`、用户为 `uid`；先检查设备撤销和期限，再以用户作为额度、幂等和上传隔离主体。
