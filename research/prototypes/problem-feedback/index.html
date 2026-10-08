@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worket 问题反馈 UI 原型</title>
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/panel.css">
+  <link rel="stylesheet" href="/prototype.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <!-- Throwaway UI prototype: three layouts inside the existing Worket panel, ?variant=A|B|C. -->
+  <header class="lab-header">
+    <div><strong>Worket <span>/ 问题反馈</span></strong><p>交互原型 · 示例数据 · 发送操作不会上传内容</p></div>
+    <div class="lab-actions">
+      <div class="segmented" aria-label="查看端"><button data-surface="client" class="active">用户端</button><button data-surface="admin">管理员</button></div>
+      <select id="scenario" aria-label="预览场景"><option value="normal">正常发送</option><option value="offline">网络不可用</option><option value="missing">日志不可用</option></select>
+      <button data-action="reset" class="text-button">重置</button>
+    </div>
+  </header>
+  <main class="preview-stage"><div id="app" aria-live="polite"></div></main>
+  <nav class="prototype-switcher" aria-label="原型布局切换">
+    <button data-cycle="-1" aria-label="上一个布局">←</button>
+    <div><strong id="variant-name"></strong><span id="state-readout"></span></div>
+    <button data-cycle="1" aria-label="下一个布局">→</button>
+  </nav>
+  <input type="file" id="file-input" accept="image/png,image/jpeg" multiple hidden>
+  <dialog id="image-preview" aria-label="截图预览"><div class="image-preview-top"><span>截图预览</span><button data-action="close-image" class="icon-button" aria-label="关闭截图预览">×</button></div><img alt="用户选择的反馈截图"><p>发送前请检查截图中的个人信息。</p></dialog>
+  <script type="module" src="/prototype.js"></script>
+</body>
+</html>
