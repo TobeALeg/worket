@@ -43,7 +43,7 @@ button { display: inline-flex; align-items: center; justify-content: center; gap
 .add-image { width: 90px; height: 65px; display: flex; flex-direction: column; gap: 5px; background: transparent; border: 1px dashed #cfd5c5; color: var(--muted); font-size: 10px; }
 .add-image:hover, .attachments.drag-over { background: var(--surface); }
 .add-image svg { width: 18px; height: 18px; }
-.attachment-tools { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 10px; }
+.attachment-tools { display: flex; flex-wrap: wrap; gap: 4px; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 10px; }
 .attachment-tools button { font-size: 10px; }
 .diagnostic { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
 .diagnostic-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -198,3 +198,11 @@ button { display: inline-flex; align-items: center; justify-content: center; gap
   .admin-columns { grid-template-columns: minmax(0,1fr); }
   .sheet-head { padding-top: 11px; }
 }
+
+.feedback-entry.active { color: var(--accent); background: var(--surface); }
+.feedback-footer { justify-content: flex-end; }
+.feedback-footer [data-draft-status]:empty { display: none; }
+.feedback-footer [data-draft-status] { margin-right: auto; color: var(--danger); }
+.worket-launcher { width: 44px; height: 44px; border-radius: 50%; padding: 0; }
+
+.work-background { flex: 1; min-height: 0; display: flex; flex-direction: column; }

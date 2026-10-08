@@ -27,7 +27,7 @@
   </nav>
   <input type="file" id="file-input" accept="image/png,image/jpeg" multiple hidden>
   <dialog id="image-preview" aria-label="截图预览"><div class="image-preview-top"><span>截图预览</span><button data-action="close-image" class="icon-button" aria-label="关闭截图预览">×</button></div><img alt="用户选择的反馈截图"><p>发送前请检查截图中的个人信息。</p></dialog>
-  <dialog id="capture-preview" aria-label="确认截图"><div class="image-preview-top"><span>原问题页面截图</span><button data-action="cancel-capture" class="icon-button" aria-label="取消截图">×</button></div><img src="/sample-window.svg" alt="原工作页面截图示例"><div class="capture-actions"><small>确认后加入当前反馈，不会发送。</small><button data-action="cancel-capture">取消</button><button class="primary" data-action="use-capture">使用这张截图</button></div></dialog>
+  <dialog id="capture-preview" aria-label="确认截图"><div class="image-preview-top"><span>原问题页面截图</span><button data-action="cancel-capture" class="icon-button" aria-label="取消截图">×</button></div><img src="/sample-window.svg" alt="原工作页面截图示例"><div class="capture-actions"><small>确认后加入当前反馈，不会发送。</small><button data-action="cancel-capture">取消</button><button class="primary" data-action="use-capture">加入反馈</button></div></dialog>
   <dialog id="discard-draft" aria-label="放弃草稿确认"><h2>放弃这份草稿？</h2><p>草稿文字和截图将从本机移除。</p><div class="capture-actions"><button data-action="keep-draft">继续填写</button><button class="danger" data-action="confirm-discard">放弃草稿</button></div></dialog>
   <script type="module" src="/prototype.js"></script>
 </body>
