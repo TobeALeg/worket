@@ -16,6 +16,7 @@
     "skipLibCheck": true
   },
   "include": [
+    "../src/contracts/problem-report.ts",
     "../src/contracts/definition.ts",
     "../src/contracts/improvement.ts",
     "../src/contracts/recording-view.ts",

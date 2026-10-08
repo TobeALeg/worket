@@ -583,8 +583,18 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 
 工作详情的分类行仅展示已有状态；最近回复和执行片段用原生 details，按工作 ID 保留其展开状态，切换工作时重置。展示固定资料时由 materialRoles 将内部 key 映射为用户文字；路径保留在 title，显示文件名。此轮不改变数据契约、IPC、上传授权或模型流程。
 
-## 问题反馈原型（2026-10-08，未接入正式应用）
+## 问题反馈（2026-10-08，本地实现）
 
-`research/prototypes/problem-feedback/prototype.js` 管理反馈 UI 与模拟工作流程，独立的 `workScreen` 保留正常页面位置；收起只关闭反馈，正常浏览和操作不能重新展开。`draft-store.js` 用浏览器 IndexedDB 保存文字、所选图片文件与本次日志选择，最近编辑后保留 7 天；启动恢复数据但不恢复展开状态。保存成功静默，保存失败仅反馈内提示。
+`src/diagnostics/recorder.ts` 负责主进程白名单运行事件、AsyncLocalStorage trace、按日轮转和故障快照。记录、同步、交接、沉淀、更新、服务请求与界面异常接入；交接依次记录选择、准备、请求打开、等待确认。只记录固定枚举、耗时和 UUID 请求编号，不接收错误原文、堆栈、路径或工作正文。`src/contracts/problem-report.ts` 在采集和接收两端约束事件、图片、授权、大小与报告摘要。
 
-原型数据流为用户编辑 → 本地草稿；图标点击 → 恢复反馈；截图按钮 → 收起 → 示例图片预览 → 用户确认加入草稿 → 保持收起。发送结果、报告收件箱与待发队列仍为内存演示，不访问正式数据库或上传服务。正式诊断、冻结报告及队列的模块关系和授权状态见 [设计规格](specs/problem-reporting.md)，不能将原型状态视为已经实现的生产链路。
+`src/problem-reports/` 分别负责主进程图像解码/规范化、IPC、原子持久化草稿与不可变队列、带身份的报告传输及重试。数据在既有 dataDirectory 下分为 diagnostics 与 problem-reports，目录 0700、文件 0600；没有额外磁盘加密声明。草稿首次打开即冻结最近 10 分钟日志，用户可选保留的最近故障；草稿和未收包 7 天过期，本地总容量 50 MiB。
+
+`src/renderer/problem-feedback.ts` 使用独立 dialog 覆盖原界面，正常页面与其他 dialog 留在 DOM 中。品牌栏图标才触发展开；返回、关闭、Escape、隐藏窗口和重新显示窗口均收起。截图先关闭反馈并等待渲染，再由主进程 capturePage；预览确认仅加入草稿。保存不弹成功提示，失败只在反馈内显示。
+
+发送链：编辑 → 主进程原子写草稿 → 点击发送冻结授权/报告/hash → 原子加入队列并清空草稿 → 能力声明/身份检查 → 完整 JSON 请求 → SQLite 一次提交全部材料 → 匹配报告编号与 hash 的接收回执。收到回执前保持 WAITING/SENDING；网络失败退避重试同一包，最多 10 次；旧服务、身份变化或永久拒绝转 PAUSED。取消先停本地重试，再删除服务器记录；不能核对时明确提示。删除墓碑阻止迟到上传复活。
+
+`server/problem-reports.mjs` 在独立 problem-reports.sqlite 中保存用户材料、日志和处理状态。沿用现有签名身份与撤销检查；/v1/problem-reports 只返回本人报告，/admin/api/problem-reports 沿用 loopback、会话、CSRF 保护。管理员可关联同主体的后台请求元数据，原始错误文本被换成固定代码。内部备注只进管理员响应；客户端仅收到公开说明。完整报告 30 天到期清理，删除墓碑再留 7 天；备份恢复需按运维约定重放删除。
+
+限制由共享 REPORT_LIMITS 集中定义：3 张截图、每张 5 MiB、16MP，日志 2 MiB、原始报告 18 MiB、JSON 25 MiB；设备滚动 24 小时 20 份/50 MiB，全局 500 份/500 MiB，与模型额度独立。JPEG/PNG 在主进程重新编码为 PNG，服务器再核对 CRC、像素、hash 和清单；不建立分片附件暂存区。
+
+此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。当前为本地实现，公网后台和正式客户端版本尚未更新。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。

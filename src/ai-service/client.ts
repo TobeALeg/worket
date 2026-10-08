@@ -32,6 +32,7 @@ export class WorketAIClient implements AIClient {
   constructor(
     readonly config: () => ServiceConfig,
     readonly connect?: () => Promise<void>,
+    readonly diagnostics?: import("../diagnostics/recorder.js").Diagnostics,
   ) {}
   async request(
     path: string,
@@ -54,6 +55,9 @@ export class WorketAIClient implements AIClient {
       "INVALID_SERVICE_URL",
     );
     ensure(!url.username && !url.password, "INVALID_SERVICE_URL");
+    const traceId=this.diagnostics?.traceId() ?? randomUUID(), started=Date.now();
+    const record = !(method === "GET" && /^\/v1\/(continuations|definition-extractions)\//.test(path));
+    if (record) this.diagnostics?.event("connection", "start", {traceId});
     try {
       const response = await fetch(`${config.url.replace(/\/$/, "")}${path}`, {
         method,
@@ -73,8 +77,10 @@ export class WorketAIClient implements AIClient {
           typeof value.message === "string" ? value.message : "服务暂不可用",
           !!value.retryable,
         );
+      if (record) this.diagnostics?.event("connection", "complete", {traceId,elapsedMs:Date.now()-started,...(typeof value.requestId === "string" && /^[a-f0-9-]{36}$/.test(value.requestId) ? {requestId:value.requestId} : {})});
       return value;
     } catch (error) {
+      this.diagnostics?.event("connection", "failed", {traceId,elapsedMs:Date.now()-started,code:"SERVICE_REQUEST_FAILED"});
       if (error instanceof ContractError) throw error;
       throw new ContractError(
         "MODEL_UNAVAILABLE",

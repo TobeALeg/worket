@@ -1,3 +1,8 @@
+import { Diagnostics } from "./diagnostics/recorder.js";
+import { ReportStore } from "./problem-reports/store.js";
+import { ReportClient } from "./problem-reports/client.js";
+import { ProblemReports } from "./problem-reports/service.js";
+import { registerProblemReports } from "./problem-reports/desktop.js";
 import { latestRelease, downloadRelease } from "./desktop/github-release.js";
 import { AppUpdates } from "./desktop/app-updates.js";
 import { createDefaultExecutors } from "./executors/defaults.js";
@@ -31,6 +36,9 @@ import { PetPosition } from "./desktop/pet-position.js";
 import { resizePanelRight } from "./desktop/panel-resize.js";
 import { PET_SIZE } from "./desktop/pet-layout.js";
 
+let diagnostics: Diagnostics;
+let reports: ProblemReports;
+let reportTimer: ReturnType<typeof setTimeout> | null = null;
 let quitting = false;
 let updates: AppUpdates;
 let petPosition: PetPosition | null = null;
@@ -50,6 +58,7 @@ let distillationTimer: ReturnType<typeof setTimeout> | null = null;
 async function syncDistillations(): Promise<void> {
   try {
     await distillation.service.tick();
+  } catch { diagnostics?.event("distillation","failed",{code:"OPERATION_FAILED"});
   } finally {
     if (!quitting) distillationTimer = setTimeout(() => void syncDistillations(), 2000);
   }
@@ -59,6 +68,7 @@ let captureTimer: ReturnType<typeof setTimeout> | null = null;
 async function syncRecordedWorks(): Promise<void> {
   try {
     await service?.syncRecordedWorks();
+  } catch { diagnostics?.event("sync","failed",{code:"OPERATION_FAILED"});
   } finally {
     if (service && !quitting)
       captureTimer = setTimeout(() => void syncRecordedWorks(), 5_000);
@@ -160,6 +170,9 @@ function createWindows(): void {
       sandbox: true,
     },
   });
+  panelWindow.webContents.on("render-process-gone", () => diagnostics?.event("renderer", "failed", {code:"RENDERER_EXIT"}));
+  panelWindow.webContents.on("unresponsive", () => diagnostics?.event("renderer", "failed", {code:"RENDERER_UNRESPONSIVE"}));
+  panelWindow.on("hide", () => panelWindow?.webContents.send("feedback:collapse"));
   panelWindow.on("closed", () => {
     panelWindow = null;
   });
@@ -255,10 +268,13 @@ function revealApp(): void {
 }
 
 function registerIpc(): void {
+  registerProblemReports(ipcMain, () => panelWindow, reports);
   ipcMain.handle("distillation:command", (event, action, input) => {
     if (event.sender !== panelWindow?.webContents)
       throw new Error("INVALID_SENDER");
-    return distillation.call(action, input);
+    return ["start", "publish", "dispatch", "retry"].includes(action)
+      ? diagnostics.operation("distillation", () => distillation.call(action, input))
+      : distillation.call(action, input);
   });
   ipcMain.handle("distillation:configure", (event, input) => {
     if (event.sender !== panelWindow?.webContents)
@@ -336,7 +352,7 @@ function registerIpc(): void {
     placement: petPosition?.placement,
   }));
   ipcMain.handle("panel:record-current-context", async () => {
-    const dashboard = await requireService().recordCurrentContext();
+    const dashboard = await diagnostics.operation("record", () => requireService().recordCurrentContext());
     showPanel(dashboard.selectedWorkId ?? undefined);
     return dashboard;
   });
@@ -397,7 +413,7 @@ function registerIpc(): void {
     requireService().consumeSourceSelection(),
   );
   ipcMain.handle("work:create-from-conversation", (_event, request) =>
-    requireService().createWorkFromConversation(request),
+    diagnostics.operation("record", () => requireService().createWorkFromConversation(request)),
   );
   ipcMain.handle("work:split-points", (_event, workId: string) =>
     requireService().listSplitPoints(workId),
@@ -414,7 +430,7 @@ function registerIpc(): void {
     if (error) throw new Error("无法打开文件，请检查文件权限或默认应用");
   });
   ipcMain.handle("work:refresh", (_event, workId: string) =>
-    requireService().refreshWork(workId),
+    diagnostics.operation("sync", () => requireService().refreshWork(workId)),
   );
   ipcMain.handle("work:complete", (_event, workId: string) =>
     requireService().completeWork(workId),
@@ -431,7 +447,11 @@ function registerIpc(): void {
       requireService().cancelHandoff(workId, confirmation),
   );
   ipcMain.handle("work:handoff", (_event, workId: string, executorId: string) =>
-    requireService().handoff(workId, executorId),
+    diagnostics.operation("handoff", async () => {
+      diagnostics.event("handoff", "selected", executorId === "codex" || executorId === "workbuddy" ? {executor: executorId} : {});
+      const dashboard = await requireService().handoff(workId, executorId);
+      return dashboard;
+    }),
   );
   ipcMain.handle(
     "work:cancel-recording",
@@ -445,8 +465,8 @@ app.whenReady().then(async () => {
     showDialog: (options) => dialog.showMessageBox(options),
     enabled: process.platform === "darwin" && app.isPackaged && !process.argv.includes("--dev"),
     version: app.getVersion(),
-    latest: () => latestRelease((url, init) => net.fetch(url, init), app.getVersion(), process.arch),
-    download: (release) => downloadRelease((url, init) => net.fetch(url, init), release, app.getPath("downloads")),
+    latest: () => diagnostics.operation("update", () => latestRelease((url, init) => net.fetch(url, init), app.getVersion(), process.arch)),
+    download: (release) => diagnostics.operation("update", () => downloadRelease((url, init) => net.fetch(url, init), release, app.getPath("downloads"))),
     reveal: (path) => shell.showItemInFolder(path),
   });
   Menu.setApplicationMenu(Menu.buildFromTemplate([
@@ -458,13 +478,16 @@ app.whenReady().then(async () => {
     { role: "editMenu" },
   ]));
   const dataDirectory = process.env.WORKPET_DATA_DIR ?? app.getPath("userData");
+  diagnostics = new Diagnostics(dataDirectory);
+  process.on("uncaughtExceptionMonitor", () => diagnostics.event("app", "failed", {code:"UNCAUGHT_EXCEPTION"}));
   const executors = createDefaultExecutors({
     launcher: new ElectronWorkBuddyLauncher(),
-    openUrl: (url) => shell.openExternal(url),
+    openUrl: async (url) => {await shell.openExternal(url);diagnostics.event("handoff","open-requested");},
     desktop: {
       openApplication: async (bundleId) => {
         const { execFile } = await import("node:child_process");
         await new Promise<void>((resolve, reject) => execFile("/usr/bin/open", ["-b", bundleId], error => error ? reject(error) : resolve()));
+        diagnostics.event("handoff","open-requested");
       },
       writeClipboard: text => clipboard.writeText(text),
     },
@@ -476,11 +499,15 @@ app.whenReady().then(async () => {
   worketConnection = new AutomaticConnection(credentials,
     app.isPackaged ? PRODUCTION_WORKET_SERVICE_URL : process.env.WORKET_SERVICE_URL);
   worketConnection.initialize();
-  const aiClient = new WorketAIClient(() => credentials.read(), () => worketConnection.ready());
+  reports = new ProblemReports(new ReportStore(dataDirectory), new ReportClient(() => credentials.read(), () => worketConnection.ready()), diagnostics, {version: app.getVersion(), platform: process.platform, arch: process.arch});
+  const aiClient = new WorketAIClient(() => credentials.read(), () => worketConnection.ready(), diagnostics);
+  const syncReports = async () => {try {await reports.tick();} catch {} finally {if (!quitting) reportTimer=setTimeout(() => void syncReports(),5000);}};
+  void syncReports();
   service = new AppService({
     databasePath: join(dataDirectory, "workpet.sqlite"),
     onRecordingStarted: id => distillation.service.recordings.start(id),
     onRecordingStopped: id => distillation.service.recordings.stop(id),
+    onHandoffStep: phase => diagnostics.event("handoff", phase),
     executors,
     aiClient,
   });
@@ -523,6 +550,9 @@ app.on("activate", () => revealApp());
 app.on("before-quit", () => {
   quitting = true;
   updates?.stop();
+  reports?.close();
+  diagnostics?.close();
+  if (reportTimer) clearTimeout(reportTimer);
   if (captureTimer) clearTimeout(captureTimer);
   if (distillationTimer) clearTimeout(distillationTimer);
   distillation?.service.close();

@@ -54,6 +54,7 @@
           ><button class="tab" data-tab="activity" aria-pressed="false">
             运行记录
           </button><button class="tab" data-tab="samples" aria-pressed="false">改进样本</button>
+          <button class="tab" data-tab="reports" aria-pressed="false">问题反馈</button>
         </nav>
         <section id="model-panel" class="tab-panel">
           <form id="config-form">
@@ -294,6 +295,12 @@
             <div id="samples-list"></div>
           </article>
           <article id="sample-detail" class="card" hidden></article>
+        </section>
+        <section id="reports-panel" class="tab-panel" hidden>
+          <article class="card"><div class="section-heading"><h2>问题反馈</h2><button id="refresh-reports">刷新</button></div>
+            <div class="field-pair"><label>处理状态<select id="reports-filter"><option value="">全部</option><option>待排查</option><option>排查中</option><option>待补充</option><option>已解决</option></select></label><label>搜索<input id="reports-search" type="search" placeholder="问题、版本或设备" /></label></div>
+            <div id="reports-list"></div>
+          </article><article id="report-detail" class="card" hidden></article>
         </section>
       </div>
       <div id="message" role="status" hidden></div>

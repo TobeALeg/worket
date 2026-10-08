@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("workpet", {
+  feedback: (action, input) => ipcRenderer.invoke("feedback:command", action, input),
+  onFeedbackCollapse: (callback) => {const listener = () => callback(); ipcRenderer.on("feedback:collapse", listener); return () => ipcRenderer.removeListener("feedback:collapse", listener);},
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
   distillation: (action, input) => ipcRenderer.invoke("distillation:command", action, input),
   chooseDefinitionFile: (kind) => ipcRenderer.invoke("distillation:choose-file", kind),

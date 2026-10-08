@@ -1,3 +1,4 @@
+import { feedbackEntry } from "./problem-feedback.js";
 import { effectiveRules, acceptanceChecks, ruleItems, ruleText } from "../contracts/rules.js";
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
@@ -42,7 +43,7 @@ function show(title: string, html: string, actions = "", back?: { label: string;
   const navigation = back
     ? `<div class="window-navigation"><button data-back class="icon-button" aria-label="${esc(back.label)}" title="${esc(back.label)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg></button>${worketBrand}</div>`
     : `${worketBrand}<button data-close class="icon-button" aria-label="关闭">×</button>`;
-  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${navigation}</header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
+  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${back ? navigation + feedbackEntry : navigation.replace('<button data-close',feedbackEntry + '<button data-close')}</header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
   modal.querySelector("[data-close]")?.addEventListener("click", () => modal.close());
   if (back) bind("[data-back]", back.action);
   modal.oncancel = back ? (event) => {

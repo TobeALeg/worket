@@ -1,3 +1,4 @@
+import { setupProblemFeedback } from "./problem-feedback.js";
 import { chooseExecutor } from "./executor-picker.js";
 import {
   setupDistillation,
@@ -16,6 +17,7 @@ import {
 } from "../ui-contract.js";
 import { setupRecordingSources } from "./recording-sources.js";
 
+const feedback = setupProblemFeedback();
 const list = required<HTMLElement>("#work-list");
 const detail = required<HTMLElement>("#work-detail");
 const notice = required<HTMLElement>("#notice");
@@ -468,6 +470,7 @@ async function refreshPanel(): Promise<void> {
 }
 void refreshPanel();
 window.workpet.onPanelShown((workId) => {
+  feedback.collapse();
   if (workId) void selectWork(workId).catch(showError);
   else void refreshPanel();
 });

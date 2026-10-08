@@ -80,6 +80,7 @@ export interface AppServiceOptions {
   preparationDelayMs?: number;
   onRecordingStarted?: (workId: string) => void;
   onRecordingStopped?: (workId: string) => void;
+  onHandoffStep?: (phase: "preparing" | "prepared" | "opening") => void;
 }
 type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] } | null;
 
@@ -714,7 +715,9 @@ export class AppService {
         current.activeBinding?.id !== initial.activeBinding?.id
       )
         throw new Error("工作状态已改变，未进行交接。");
+      this.options.onHandoffStep?.("preparing");
       const continuation = await this.#preparation.ensure(workId);
+      this.options.onHandoffStep?.("prepared");
       current = await this.#artifacts.verify(this.#requireWork(workId));
       if (
         current.instance.status !== "OPEN" ||
@@ -748,6 +751,7 @@ export class AppService {
           nextStep,
           artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
         });
+        this.options.onHandoffStep?.("opening");
         const receipt = await adapter.deliver({
           workId,
           deliveryId: handoff.id,
