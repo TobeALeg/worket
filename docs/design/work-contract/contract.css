@@ -13,14 +13,13 @@
 .wc-contract button { font: inherit; cursor: pointer; }
 .wc-contract button:focus-visible { outline: 2px solid var(--wc-action); outline-offset: 4px; }
 .wc-contract button:disabled { cursor: default; opacity: .5; }
-.wc-folio { position: relative; padding: 29px 9px 0; }
+.wc-folio { position: relative; padding: 29px 9px 7px; }
 .wc-folio::before {
-  content: ''; position: absolute; inset: 15px 0 -3px;
+  content: ''; position: absolute; inset: 15px 0 0;
   border: 1px solid #c1baa5; border-radius: 13px;
   background: url('./paper-grain.svg') 0 0 / var(--wc-grain-size) var(--wc-grain-size),
     linear-gradient(105deg, #f6f2e5, var(--wc-backing) 66%, #ded9c9);
-  box-shadow: inset 1px 1px 0 #fffdf3, inset -1px -1px 0 #d1cab5,
-    0 1px 0 #f8f5e9, 0 2px 0 #bab49f, var(--wc-shadow);
+  box-shadow: inset 1px 1px 0 #fffdf3, inset -1px -1px 0 #d1cab5, var(--wc-shadow);
 }
 .wc-tab {
   position: absolute; z-index: 1; top: 0; left: 18px;
@@ -45,8 +44,7 @@
   background: radial-gradient(ellipse at 18% 4%, #ffffffb8, transparent 65%),
     linear-gradient(95deg, #e9e1cb38, transparent 22%, #d6c9a915), var(--wc-paper);
   box-shadow: inset 1px 1px 0 #ffffffed, inset -1px -1px 0 #e2dccb,
-    0 1px 0 #eeeadd, 0 2px 0 #c7c0ac, 0 3px 0 #f7f2e7,
-    0 4px 0 #d1c9b7, 0 5px 6px #584e3624, 0 1px 5px #554d3521;
+    0 1px 0 #eeeadd, 0 2px 3px #584e3629;
 }
 .wc-paper::before {
   content: ''; position: absolute; z-index: 3; inset: 0;
@@ -105,7 +103,7 @@
   background: radial-gradient(ellipse at 18% 0, #ffffff80, transparent 80%),
     linear-gradient(110deg, #e5e9dc, var(--wc-sage) 55%, #dbe1d1);
   border-radius: 0 0 calc(var(--wc-radius) - 1px) calc(var(--wc-radius) - 1px);
-  box-shadow: inset 0 2px 1px #fffdf0c2, inset 0 -2px 2px #a8b49745;
+  box-shadow: inset 0 2px 1px #fffdf0c2, inset 0 -1px 0 #a8b49733;
 }
 .wc-confirmation::before {
   content: ''; position: absolute; top: -1px; left: 8px; right: 8px;
