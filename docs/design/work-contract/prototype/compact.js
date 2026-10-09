@@ -1,6 +1,14 @@
 // Read-only, single-page density prototype. No confirmation or database writes.
 const view = await fetch('./compact-data.json').then(response => response.json());
 const total = view.sections.reduce((sum, section) => sum + section.items.length, 0);
+// Combine the reading groups without changing source fields or clause identities.
+const sections = new Map(view.sections.map(section => [section.key, section]));
+const constraintGroups = ['constraints', 'acceptanceCriteria'].map(key => sections.get(key)).filter(Boolean);
+if (constraintGroups.length) sections.set('constraints', {
+  key: 'constraints', label: '约束',
+  items: constraintGroups.flatMap(group => group.items.map(item => ({ ...item, sourceSection: group.key }))),
+});
+sections.delete('acceptanceCriteria');
 const $ = selector => document.querySelector(selector);
 function el(tag, className, text) {
   const element = document.createElement(tag);
@@ -12,6 +20,7 @@ function itemList(section) {
   const list = el('ol', 'sheet-items');
   section.items.forEach(item => {
     const li = el('li'); li.dataset.key = item.key;
+    li.dataset.sourceSection = item.sourceSection || section.key;
     li.append(el('span', 'source-text', item.text));
     const meta = item.meta || '';
     li.dataset.meta = meta;
@@ -39,7 +48,7 @@ function disclosureSummary(heading) {
   return summary;
 }
 function section(key, collapsed = false) {
-  const data = view.sections.find(s => s.key === key);
+  const data = sections.get(key);
   if (!data) return el('div');
   const block = el(collapsed ? 'details' : 'section', `sheet-section section-${key}${collapsed ? ' sheet-disclosure' : ''}`);
   const heading = el('h3');
@@ -72,7 +81,7 @@ const masthead = el('div', 'sheet-masthead');
 masthead.append(el('p', 'wc-kicker', 'WORKING CONTRACT'));
 header.append(masthead, el('h2', 'wc-title', view.title), el('div', 'wc-rule'));
 const disclosures = el('div', 'sheet-disclosures');
-disclosures.append(...['constraints', 'acceptanceCriteria', 'materialRoles', 'methods'].map(key => section(key, true)));
+disclosures.append(...['constraints', 'materialRoles', 'methods'].map(key => section(key, true)));
 const purpose = el('details', 'sheet-section sheet-disclosure sheet-purpose');
 purpose.append(disclosureSummary(el('h3', '', '工作目的')), el('p', 'source-purpose', view.purpose));
 disclosures.append(purpose);
