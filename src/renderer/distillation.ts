@@ -1,11 +1,14 @@
 import { feedbackEntry } from "./problem-feedback.js";
+import { contractDispatchState } from './contract-dispatch.js';
+import { chooseExecutor } from './executor-picker.js';
+import { contractColor, setContractColor, workContract } from './work-contract.js';
+import { publishedFeedback, type ContractFeedback } from '../definitions/contract-view.js';
 import { effectiveRules, acceptanceChecks, ruleItems, ruleText } from "../contracts/rules.js";
 import { errorText, jobError, progressLabel, runningJob, type DistillationActivity } from "../distillation/activity.js";
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
-import { definitionSections, sectionItems } from "../definitions/review.js";
 import { contentItems } from '../contracts/evolution.js';
 import type { EvolutionReview } from '../definitions/evolution.js';
-import { definitionLabels, worketBrand } from "./ui.js";
+import { worketBrand } from "./ui.js";
 import { mountDefinitionReview } from "./definition-review.js";
 import type { Definition, Draft } from "../definitions/repository.js";
 import type { Job, Snapshot } from "../distillation/service.js";
@@ -35,9 +38,11 @@ document.body.append(modal);
 let changed: (dashboard?: DashboardView) => void = () => {};
 let preferenceSave: Promise<unknown> = Promise.resolve();
 let disposeReview: (() => void) | null = null;
+let contractOrigin: 'work' | 'library' = 'work';
 function show(title: string, html: string, actions = "", back?: { label: string; action: () => Promise<void> }): void {
   disposeReview?.();
   disposeReview = null;
+  modal.classList.remove('contract-view');
   modal.removeAttribute("aria-label");
   modal.setAttribute("aria-labelledby", "definition-title");
   const navigation = back
@@ -167,7 +172,7 @@ export async function renderDefinitions(): Promise<void> {
   panel
     .querySelectorAll<HTMLElement>("[data-definition]")
     .forEach(
-      (b) => (b.onclick = () => void openDefinition(b.dataset.definition!)),
+      (b) => (b.onclick = () => { contractOrigin = 'library'; void openDefinition(b.dataset.definition!); }),
     );
   panel
     .querySelectorAll<HTMLElement>("[data-job]")
@@ -273,11 +278,16 @@ export async function openPreparation(workIds: string[], baseDefinitionId?: stri
   await render();
 }
 export async function openJob(id: string): Promise<void> {
+  contractOrigin = document.querySelector<HTMLElement>('#definitions-panel')?.hidden === false ? 'library' : 'work';
   const job: Job = await api("job", { jobId: id });
   if (!runningJob(job.status)) await api("seen", { jobId: id });
   if (job.status === "AWAITING_REVIEW" && job.draftId) {
     await editDraft(await api("draft", { id: job.draftId }));
     return;
+  }
+  if (job.status === 'SAVED' && job.draftId) {
+    const draft: Draft = await api('draft', { id: job.draftId });
+    if (draft.publishedId) { await openDefinition(draft.publishedId); return; }
   }
   const snapshot: Snapshot = await api("snapshot", { id: job.snapshotId });
   show(
@@ -316,17 +326,18 @@ export async function openJob(id: string): Promise<void> {
   }
 }
 async function editDraft(draft: Draft): Promise<void> {
+  const previous: Definition | undefined = draft.baseDefinitionId ? await api('definition', { id: draft.baseDefinitionId }) : undefined;
   show("检查候选定义", "");
   modal.setAttribute("aria-label", "检查候选定义");
   modal.removeAttribute("aria-labelledby");
   disposeReview = mountDefinitionReview(modal, draft, api, async definition => {
-    changed();
-    await openDefinition(definition.id);
-  });
+    await refreshActivity().catch(() => {});
+    await openDefinition(definition.id, publishedFeedback(previous, definition));
+  }, previous ? () => openDefinition(previous.id) : undefined);
 }
 async function openMaterialRecovery(context: { definitionId?: string; workId?: string }): Promise<void> {
   const materials: { key: string; name: string; scope: string; hash: string; kind: string; available: boolean }[] = await api("materialRecovery", context);
-  show("修复固定资料", `<p class="consent">选择与原版本一致的文件或技能目录。恢复会核对完整内容；更新要求或技能请修订约定。</p>${materials.map((material, index) => `<div class="field" data-recovery-key="${esc(material.key)}"><span>${esc(material.name)} · ${esc(material.scope)}</span><span>${material.available ? "可用" : "缺失或损坏"} · ${esc(material.hash.slice(0, 12))}</span>${material.available ? "" : `<button id="recover-material-${index}">${material.kind === "SKILL" ? "选择原版技能目录" : "选择原版文件"}</button>`}</div>`).join("")}`);
+  show("修复固定资料", `<p class="consent">选择与原版本一致的文件或技能目录。恢复会核对完整内容；更新要求或技能请修订约定。</p>${materials.map((material, index) => `<div class="field" data-recovery-key="${esc(material.key)}"><span>${esc(material.name)} · ${esc(material.scope)}</span><span>${material.available ? "可用" : "缺失或损坏"} · ${esc(material.hash.slice(0, 12))}</span>${material.available ? "" : `<button id="recover-material-${index}">${material.kind === "SKILL" ? "选择原版技能目录" : "选择原版文件"}</button>`}</div>`).join("")}`, '', context.definitionId ? { label: '返回契约', action: () => openDefinition(context.definitionId!) } : undefined);
   for (const [index, material] of materials.entries()) if (!material.available) {
     bind(`#recover-material-${index}`, async () => {
       const path = await window.workpet.chooseDefinitionFile(material.kind === "SKILL" ? "SKILL" : undefined);
@@ -336,9 +347,8 @@ async function openMaterialRecovery(context: { definitionId?: string; workId?: s
     });
   }
 }
-async function openDefinition(id: string): Promise<void> {
+async function openDefinition(id: string, feedback?: ContractFeedback): Promise<void> {
   const d: Definition = await api("definition", { id });
-  const { content } = effectiveRules(d.content);
   const versions: Definition[] = await api("versions", {
     key: d.definitionKey,
   });
@@ -350,14 +360,29 @@ async function openDefinition(id: string): Promise<void> {
       label: `v${base?.version ?? '?'} · ${base ? contentItems(base.content).find(row => row.address === entry.target)?.item.text ?? '历史要求' : '历史要求'}`,
     })));
   });
+  const returnLabel = contractOrigin === 'library' ? '返回已沉淀' : '返回工作';
   show(
-    d.content.name,
-    `<label class="inline-field">版本<select id="definition-version">${versions.map((v) => `<option value="${v.id}" ${v.id === id ? "selected" : ""}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString("zh-CN"))}</option>`).join("")}</select></label><div class="definition-summary">${definitionSections
-      .filter(key => sectionItems(content, key).length)
-      .map(key => `<section class="state-grid"><h3><span class="category-icon" aria-hidden="true">${definitionLabels[key][0]}</span>${definitionLabels[key][1]}</h3><div class="state-items">${sectionItems(content, key).map(item => `<div class="state-item"><p>${esc(ruleText(item))}</p>${key === "inputs" ? `<span class="origin">${d.content.inputs.find(i => i.key === item.key)?.required ? "必填" : "选填"}</span>` : ""}</div>`).join("")}</div></section>`)
-      .join("")}</div><details><summary>来源与固定资料</summary>${d.refs.map((ref) => `<p>${esc(ref.workId)} · ${ref.deleted ? "来源已删除" : esc(ref.eventId)}</p>`).join("")}${d.materials.map((m) => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join("")}</details>${d.materials.length ? '<button id="repair-definition-materials">检查与恢复固定资料</button>' : ""}<details><summary>更多</summary><label class="field">删除此定义系列，请输入“永久删除”<input id="definition-delete-confirm"></label><button id="delete-definition">删除定义系列</button></details>`,
-    `<button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button><button id="revise-definition">手工修改</button><button id="use-definition" class="primary">使用</button>`,
+    feedback ? ({ saved: '工作契约已保存', updated: '工作契约已更新', evidence: '依据已记录' })[feedback] : '工作契约',
+    `${feedback ? '<p class="contract-receipt" role="status">已保存到「已沉淀」</p>' : ''}${workContract(d, feedback)}
+    <details class="contract-management"><summary>版本与管理</summary><div class="contract-tools">
+    <label class="inline-field">查看版本<select id="definition-version">${versions.map(v => `<option value="${v.id}" ${v.id === id ? 'selected' : ''}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString('zh-CN'))}${versions[0]?.id === v.id ? ' · 最新' : ''}</option>`).join('')}</select></label>
+    <label class="contract-color">分类颜色<input id="contract-color" type="color" value="${contractColor(d.definitionKey)}"></label>
+    <div class="contract-secondary-actions"><button id="revise-definition" ${versions[0]?.id === id ? '' : 'disabled'}>修改并保存新版本</button><button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button></div>
+    ${versions[0]?.id !== id ? '<p class="consent">正在查看历史版本。切换到最新版本后可修改。</p>' : ''}
+    <details><summary>来源与固定资料</summary>${d.refs.map(ref => `<p>${esc(ref.workId)} · ${ref.deleted ? '来源已删除' : esc(ref.eventId)}</p>`).join('')}${d.materials.map(m => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join('')}</details>
+    ${d.materials.length ? '<button id="repair-definition-materials">检查与恢复固定资料</button>' : ''}
+    <div id="contract-advanced"></div><button id="delete-definition" class="danger-link">删除契约…</button>
+    </div></details>`,
+    `<button id="return-from-contract">${returnLabel}</button><button id="use-definition" class="primary">发起新工作</button>`,
+    { label: returnLabel, action: async () => { modal.close(); if (contractOrigin === 'library') changed(); } },
   );
+  modal.classList.add('contract-view');
+  const sheet = modal.querySelector<HTMLElement>('.contract-sheet')!;
+  setContractColor(sheet, d.definitionKey, contractColor(d.definitionKey));
+  modal.querySelector<HTMLInputElement>('#contract-color')!.addEventListener('input', event => {
+    setContractColor(sheet, d.definitionKey, (event.target as HTMLInputElement).value);
+  });
+  bind('#return-from-contract', async () => { modal.close(); if (contractOrigin === 'library') changed(); });
   modal
     .querySelector("#definition-version")!
     .addEventListener(
@@ -369,7 +394,7 @@ async function openDefinition(id: string): Promise<void> {
   if (additionalEvidence.length) {
     const details = document.createElement('details'); details.id = 'evolution-evidence';
     details.innerHTML = `<summary>此系列的补充依据 · ${additionalEvidence.length}</summary>${additionalEvidence.map((entry, index) => `<p>${esc(entry.label)} ${entry.ref.deleted ? '来源已删除' : `<button data-evolution-evidence="${index}">查看后续原文</button>`}</p>`).join('')}`;
-    modal.querySelector('.definition-card')!.append(details);
+    modal.querySelector('#contract-advanced')!.append(details);
     additionalEvidence.forEach((entry, index) => {
       if (!entry.ref.deleted) bind(`[data-evolution-evidence="${index}"]`, async () => {
         const text = await api('evidence', entry.ref);
@@ -382,15 +407,15 @@ async function openDefinition(id: string): Promise<void> {
   continuousPanel.id = 'continuous-evolution';
   const continuousState = !continuous.enabled ? '未开启' : continuous.destinationChanged ? '服务已变更，需重新开启' : continuous.error ? '上次比较未完成' : continuous.pendingStatus === 'AWAITING_REVIEW' || continuous.pendingStatus === 'NEEDS_SELECTION' ? '等待审阅' : ['PREPARED', 'SUBMITTED', 'RUNNING'].includes(continuous.pendingStatus) ? '正在比较' : continuous.remaining === 0 ? '已达今日上限' : '等待新交互';
   continuousPanel.innerHTML = `<summary>持续比较 · ${esc(continuousState)}</summary><p class="consent">开启后，此约定现有及未来实例中新记录的用户消息、Agent 回复和本次输入会连同最新已确认约定发送到当前 Worket 服务。新交互稳定 2 分钟后比较，每份约定每 24 小时最多 3 次；需保持 Worket 打开。附件正文仍需手动选择，结果经你确认后生效。停止后不再发起新比较，已发送的比较仍可查看。</p>${continuous.error ? `<p class="notice">${esc(jobError(continuous.error))}</p>` : ''}${continuous.enabled ? `<button id="stop-continuous">停止持续比较</button>` : ''}${!continuous.enabled || continuous.destinationChanged ? `<label class="file-choice"><input type="checkbox" id="continuous-consent">允许持续发送以上范围</label><button id="enable-continuous">开启持续比较</button>` : ''}${continuous.pendingJobId && continuous.pendingStatus !== 'SAVED' ? `<button id="open-continuous-job">查看最近比较</button>` : ''}`;
-  modal.querySelector('.definition-card')!.append(continuousPanel);
+  modal.querySelector('#contract-advanced')!.append(continuousPanel);
   bind('#enable-continuous', async () => {
     if (!modal.querySelector<HTMLInputElement>('#continuous-consent')?.checked) throw new Error('请先确认持续比较的发送范围');
     await api('setContinuousEvolution', { definitionId: id, enabled: true, consentVersion: continuous.consentVersion });
-    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
+    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('.contract-management')!.open = true; modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
   });
   bind('#stop-continuous', async () => {
     await api('setContinuousEvolution', { definitionId: id, enabled: false });
-    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
+    await openDefinition(id); modal.querySelector<HTMLDetailsElement>('.contract-management')!.open = true; modal.querySelector<HTMLDetailsElement>('#continuous-evolution')!.open = true;
   });
   bind('#open-continuous-job', () => openJob(continuous.pendingJobId));
   bind('#evolve-definition', async () => {
@@ -399,7 +424,7 @@ async function openDefinition(id: string): Promise<void> {
     show('选择后续工作', available.length
       ? available.map(source => `<label class="file-choice"><input type="checkbox" data-evolution-work="${esc(source.workId)}">${esc(source.title)} · ${source.count} 条新记录</label>`).join('')
       : '<p>使用此约定开展工作并记录新的交互后，可在这里比较更新。</p>',
-      available.length ? '<button id="prepare-evolution" class="primary">确认范围</button>' : '');
+      available.length ? '<button id="prepare-evolution" class="primary">确认范围</button>' : '', { label: '返回契约', action: () => openDefinition(id) });
     if (available.length) bind('#prepare-evolution', () => openPreparation([...modal.querySelectorAll<HTMLInputElement>('[data-evolution-work]:checked')].map(el => el.dataset.evolutionWork!), id));
   });
   bind("#revise-definition", async () => {
@@ -407,14 +432,22 @@ async function openDefinition(id: string): Promise<void> {
       await api("revise", { definitionId: id, commandId: commandId() }),
     );
   });
-  bind("#delete-definition", async () => {
-    await api("deleteDefinition", {
-      definitionKey: d.definitionKey,
-      confirmation: value("#definition-delete-confirm"),
-      commandId: commandId(),
-    });
-    modal.close();
-    changed();
+  bind('#delete-definition', () => deleteDefinition(d));
+}
+async function deleteDefinition(d: Definition): Promise<void> {
+  show('删除契约', `<p>将永久删除「${esc(d.content.name)}」的全部版本、修订草稿及审阅记录。</p><p class="consent">已有工作引用的契约无法删除。原始工作记录会保留。</p><label class="field">输入“永久删除”以继续<input id="definition-delete-confirm" autocomplete="off"></label>`,
+    '<button id="cancel-delete">保留契约</button><button id="confirm-delete" class="danger" disabled>永久删除</button>',
+    { label: '返回契约', action: () => openDefinition(d.id) });
+  const confirmation = modal.querySelector<HTMLInputElement>('#definition-delete-confirm')!;
+  confirmation.addEventListener('input', () => {
+    modal.querySelector<HTMLButtonElement>('#confirm-delete')!.disabled = confirmation.value !== '永久删除';
+  });
+  bind('#cancel-delete', () => openDefinition(d.id));
+  const id = commandId();
+  bind('#confirm-delete', async () => {
+    await api('deleteDefinition', { definitionKey: d.definitionKey, confirmation: confirmation.value, commandId: id });
+    modal.close(); changed();
+    window.dispatchEvent(new CustomEvent('worket-feedback', { detail: '契约已删除' }));
   });
 }
 async function useDefinition(d: Definition): Promise<void> {
@@ -422,9 +455,10 @@ async function useDefinition(d: Definition): Promise<void> {
   const examples: any[] = await api("examples", { definitionId: d.id });
   const { enabled } = await api("improvementPreference");
   show(
-    `使用：${d.content.name}`,
-    `<p class="consent">v${d.version}</p>${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${i.key}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${i.key}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${i.key}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${i.key}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc((m.bundle ? "技能 · " : "") + (d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料"))} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}<details><summary>仅本次的特殊要求</summary>${activeRules.map(({ address, item }) => `<label class="field">${esc(ruleText(item))}<textarea data-rule-override="${esc(address)}" aria-label="仅本次替代：${esc(item.text)}"></textarea></label>`).join("")}</details>${improvementConsent("REUSE", enabled)}`,
-    '<button id="create-defined-work" class="primary">创建本次工作</button>',
+    `发起新工作`,
+    `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.inputs.length ? '' : '<p>此契约不需要额外输入，可以直接创建工作。</p>'}${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${esc(i.key)}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${esc(i.key)}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc((m.bundle ? "技能 · " : "") + (d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料"))} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}<details><summary>仅本次的特殊要求</summary>${activeRules.map(({ address, item }) => `<label class="field">${esc(ruleText(item))}<textarea data-rule-override="${esc(address)}" aria-label="仅本次替代：${esc(item.text)}"></textarea></label>`).join("")}</details>${improvementConsent("REUSE", enabled)}`,
+    '<button id="create-defined-work" class="primary">创建并选择执行者</button>',
+    { label: '返回契约', action: () => openDefinition(d.id) },
   );
   modal.querySelectorAll<HTMLElement>("[data-input-file]").forEach(
     (b) =>
@@ -433,7 +467,7 @@ async function useDefinition(d: Definition): Promise<void> {
           if (path)
             (
               modal.querySelector(
-                `[data-input="${b.dataset.inputFile}"]`,
+                `[data-input="${CSS.escape(b.dataset.inputFile!)}"]`,
               ) as HTMLInputElement
             ).value = path;
         })),
@@ -442,7 +476,10 @@ async function useDefinition(d: Definition): Promise<void> {
   bind("#create-defined-work", async () => {
     const inputs: Record<string, string | number | boolean> = {};
     for (const spec of d.content.inputs) {
-      const text = value(`[data-input="${spec.key}"]`);
+      const field = modal.querySelector<HTMLInputElement>(`[data-input="${CSS.escape(spec.key)}"]`)!;
+      const text = field.value;
+      if (spec.required && !text.trim()) { field.focus(); throw new Error(`请填写「${spec.text}」`); }
+      if (text && spec.valueType === 'NUMBER' && !Number.isFinite(Number(text))) { field.focus(); throw new Error(`「${spec.text}」需要填写数字`); }
       if (text !== "")
         inputs[spec.key] =
           spec.valueType === "NUMBER"
@@ -461,8 +498,49 @@ async function useDefinition(d: Definition): Promise<void> {
       ].map((e) => e.dataset.example!),
       commandId: id,
     });
-    modal.close();
     changed(dashboard);
+    await createdWork(d, dashboard);
+    modal.querySelector<HTMLButtonElement>('#dispatch-created-work')?.click();
+  });
+}
+async function createdWork(d: Definition, dashboard: DashboardView): Promise<void> {
+  const work = dashboard.selectedWork!;
+  const state = contractDispatchState(work);
+  const failed = state === 'failed';
+  const received = state === 'received';
+  const waiting = state === 'waiting' || received;
+  show(received ? '执行者已接手' : waiting ? '等待执行者接手' : failed ? '派发未成功，工作已保留' : '新工作已创建',
+    `<div class="contract-work-result"><h3>${esc(work.title)}</h3><p class="consent">使用 ${esc(d.content.name)} · v${d.version}</p><p role="status">${received ? '工作包已被读取。可以在工作详情中跟进。' : waiting ? '已发起交接，请在目标执行者中确认。收到读取回执后会显示已接手。' : failed ? '可以重新选择执行者，无需再次创建工作。' : '选择执行者接手，也可以稍后在工作详情中派发。'}</p></div>`,
+    `<button id="view-created-work" ${received ? 'class="primary"' : ''}>查看工作</button>${received ? '' : !waiting && work.status === 'OPEN' ? '<button id="dispatch-created-work" class="primary">选择执行者</button>' : '<button id="refresh-created-work" class="primary">检查接手状态</button>'}`,
+    { label: '返回工作', action: async () => { modal.close(); changed(await window.workpet.getDashboard(work.id)); } });
+  bind('#view-created-work', async () => { modal.close(); changed(await window.workpet.getDashboard(work.id)); });
+  bind('#refresh-created-work', async () => { const fresh = await window.workpet.getDashboard(work.id); changed(fresh); await createdWork(d, fresh); });
+  if (state === 'waiting') {
+    const screen = modal.querySelector('.contract-work-result');
+    const poll = async () => {
+      if (!modal.open || modal.querySelector('.contract-work-result') !== screen) return;
+      try {
+        const fresh = await window.workpet.getDashboard(work.id);
+        if (!modal.open || modal.querySelector('.contract-work-result') !== screen) return;
+        if (fresh.selectedWork && contractDispatchState(fresh.selectedWork) !== state) {
+          changed(fresh); await createdWork(d, fresh); return;
+        }
+      } catch { /* The visible refresh action remains available. */ }
+      setTimeout(() => void poll(), 2000);
+    };
+    setTimeout(() => void poll(), 2000);
+  }
+  bind('#dispatch-created-work', async () => {
+    const executorId = await chooseExecutor();
+    if (!executorId) return;
+    try {
+      const next: DashboardView = await api('dispatch', { workId: work.id, executorId, commandId: commandId() });
+      changed(next); await createdWork(d, next);
+    } catch (error) {
+      const fresh = await window.workpet.getDashboard(work.id);
+      changed(fresh); await createdWork(d, fresh);
+      throw error;
+    }
   });
 }
 export async function workDefinitionAction(

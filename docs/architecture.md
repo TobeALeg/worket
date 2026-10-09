@@ -2,7 +2,19 @@
 
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
 
-## 工作契约设计组件（2026-10-08，尚未接入 renderer）
+## 工作契约界面与生命周期（2026-10-09）
+
+`renderer/distillation.ts` 继续作为现有对话框流程的宿主：`prepare/start → activity/openJob → mountDefinitionReview → publish → openDefinition`。发布回调区分首存、新版与仅记录依据；只有真实 Definition 才交给 `renderer/work-contract.ts`。普通打开不重复成功动效。修订关闭返回原契约，未保存更改继续使用原有离开确认。
+
+`definitions/contract-view.ts` 是只读展示投影：先通过 `effectiveRules`，再把 `constraints`、`acceptanceCriteria` 和 REQUIRED methods 合为约束；保留 collection/key 地址，不修改原数据、检查标准或执行义务。输入/交付完整显示，资料与目的原位展开。审阅沿用原字段地址，问题、来源与规则编辑仍绑定原项。
+
+`renderer/contract/` 提供组件作用域 token、纸纹、页签遮罩与蜡封；`work-contract.css` 控制 A4 目标比例、内容自然增高和 reduced-motion。分类色以 definitionKey 为键存 localStorage，校验六位 HEX 并计算文字对比色；不参与内容 hash 或版本号。
+
+`useDefinition → create → createdWork → chooseExecutor → dispatch` 共用既有 IPC。创建 commandId 在该表单内稳定；重试派发使用同一 workId，底层 pending_dispatches 防重。`renderer/contract-dispatch.ts` 明确区分 NOT_DISPATCHED、FAILED、WAITING/STARTING、BOUND + 已读取，等待界面每两秒检查状态，离开该页面就停止。错误后刷新真实工作状态，不能凭 UI 点击推断接手。
+
+版本、修订、删除、固定资料恢复、来源审查和持续比较继续使用原服务；删除保护及不可变版本规则不变。没有数据库迁移、后台协议修改或新的自动提炼授权。只读原型仍独立保留。[本轮验证边界](acceptance/contract-lifecycle-ui.md) 区分真实渲染/API/SQLite 与模拟模型、执行者。
+
+### 工作契约设计组件（2026-10-08，接入前历史）
 
 独立实现位于 [docs/design/work-contract](design/work-contract/README.md)。`tokens.css` 管理设计变量，`contract.css` 管理竖版布局和响应式，SVG 提供图标与纸纹；`contract.js` 将 `ContractView` 渲染为原生 DOM，并通过 `onReuse` / `onDetails` 回调宿主，配套 `.d.ts` 定义接口。数据文本使用 `textContent`，不依赖整张概念图。
 

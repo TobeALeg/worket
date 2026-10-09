@@ -16,9 +16,7 @@
 #edit-all[aria-pressed=true] { color:var(--accent); background:#e9efe2; }
 .dr-edit-hint { color:#8c9484; font-size:10px; margin:0; padding:0 18px 8px; }
 .dr-content { margin:0; width:100%; max-width:none; flex:1; min-height:0; padding:0 18px 10px; overflow:auto; overflow-anchor:none; }
-.dr-group { display:grid; grid-template-columns:51px minmax(0,1fr); border-top:1px solid var(--line); }
-.dr-label { padding-top:11px; font-size:10px; color:var(--muted); display:flex; align-items:baseline; gap:5px; }
-.dr-label > span { width:11px; color:#929e8b; font-size:12px; }
+.dr-group { border-top:1px solid var(--line); }
 .dr-items { padding:4px 0; min-width:0; }
 .dr-item { padding:2px 0; }
 .dr-row { display:flex; align-items:center; gap:5px; min-height:29px; }
@@ -64,10 +62,28 @@
 .dr-resize { position:absolute; top:38px; bottom:51px; right:0; width:8px; z-index:5; cursor:ew-resize; touch-action:none; -webkit-app-region:no-drag; display:flex; align-items:center; justify-content:center; }
 .dr-resize::after { content:""; width:2px; height:24px; border-radius:2px; background:#b7beb0; opacity:.6; }
 .dr-resize:hover::after,.dr-resize:focus-visible::after { background:var(--accent); opacity:1; }
-@media(max-width:380px) { .dr-content{padding-inline:12px}.dr-title{padding-inline:12px}.dr-group{grid-template-columns:46px minmax(0,1fr)}.dr-row{gap:3px} }
+@media(max-width:380px) { .dr-content{padding-inline:12px}.dr-title{padding-inline:12px}.dr-row{gap:3px} }
 
 .dr-source-notice { margin:4px 0 12px; padding:8px; border-left:2px solid #b78c4c; background:#f8f4e9; font-size:11px; }
 .dr-source-notice > p { margin:0 0 6px; }
 .dr-source-notice label { display:flex; align-items:flex-start; gap:5px; margin-top:8px; }
 .dr-source-notice input[type=checkbox] { width:auto; flex-shrink:0; margin:2px 0; }
 .dr-source-notice > button { border:0; background:transparent; font-size:10px; padding:5px 0 0; color:var(--accent); }
+/* The review follows the same reading order as the confirmed contract. */
+.dr-group { display: block; padding: 10px 0; }
+.dr-group h3 { display:flex; align-items:baseline; gap:8px; margin:0 0 5px; font-size:13px; color:var(--accent); }
+.dr-group h3 > span { color:var(--muted); font-size:10px; font-weight:400; }
+.dr-group > summary { display:flex; align-items:center; justify-content:space-between; cursor:pointer; list-style:none; min-height:26px; }
+.dr-group > summary::-webkit-details-marker { display:none; }
+.dr-group > summary h3 { margin:0; }
+.dr-expand { color:var(--muted); font-size:10px; }
+.dr-group .dr-items { padding:0; }
+.dr-group[open] > .dr-items { padding-top:8px; }
+.dr-required { color:var(--accent); font-size:12px; }
+.dr-reference { opacity:.82; margin-top:6px; }
+.dr-reference > .dr-meta { font-size:9px; }
+[data-review-group=deliverables] .dr-text-read { color:var(--accent); font-weight:600; }
+[data-review-group=deliverables] .dr-item + .dr-item { border-top:1px solid var(--line); }
+.dr-when-open, .dr-group[open] > summary .dr-when-closed { display:none; }
+.dr-group[open] > summary .dr-when-open { display:inline; }
+.dr-rule-settings > summary { color:var(--muted); font-size:10px; cursor:pointer; padding:3px 0; }

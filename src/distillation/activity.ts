@@ -56,6 +56,9 @@ const commandErrorText: Record<string, string> = {
   JOB_NOT_PUBLISHABLE: "该沉淀任务当前状态不允许保存，请刷新任务后再试。",
   CANCELLED: "该沉淀任务已取消。",
   NOT_FOUND: "找不到对应的记录，可能已被删除。",
+  EXECUTOR_UNAVAILABLE: "当前执行者不可用，请检查目标应用或选择其他执行者。工作已经保留。",
+  DISPATCH_UNCONFIRMED: "上次交接尚未确认，请先检查目标执行者，避免重复派发。",
+  DEFINITION_IN_USE: "已有工作正在引用这份契约，无法删除。可以修改并保存新版本，已有工作继续使用原版本。",
   INVALID_INPUT: "提交的内容不合法，请检查输入后重试。",
 };
 // IPC preserves only the message, so read the code back from the text before falling back to it.
@@ -88,7 +91,7 @@ export function distillationActivity(jobs: Job[]): DistillationActivity | null {
   return {
     jobId: job.id,
     state: running ? "running" : ready ? "ready" : "failed",
-    label: running ? progressLabel(job.progress) : ready ? "沉淀完成，等待审阅" : job.status === "NEEDS_SELECTION" ? "沉淀需要重新选择来源" : "沉淀未完成，点击处理",
+    label: running ? progressLabel(job.progress) : ready ? "候选已就绪，等待审阅" : job.status === "NEEDS_SELECTION" ? "沉淀需要重新选择来源" : "沉淀未完成，点击处理",
     detail: running ? `${active.length} 项正在处理，可继续其他工作` : ready ? "点击查看候选内容" : jobError(job.error),
     activeCount: active.length,
   };
