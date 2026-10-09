@@ -28,13 +28,6 @@ function itemList(section) {
       const required = el('span', 'item-required', '*');
       required.title = '必填'; required.setAttribute('aria-label', '必填'); li.append(required);
     }
-    const provenance = [];
-    if (meta.includes('模型推断')) provenance.push('模型推断');
-    if (meta.includes('参考方法')) provenance.push('参考方法');
-    if (provenance.length) {
-      const note = el('small', 'item-provenance', provenance.join(' · '));
-      note.title = meta; note.setAttribute('aria-label', meta); li.append(note);
-    }
     list.append(li);
   });
   return list;

@@ -14,7 +14,7 @@ v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg
 
 2026-10-09 `docs/design/work-contract/prototype/` 独立读取显式提供的本机 JSON，不消费展示摘要。按用户最新信息优先级，`deliverables` 与 `inputs` 始终完整渲染，其余四类使用原生 `details` 默认收起，允许同时展开，目的也仅原位展开。必填映射为 `*`，选填不生成符号；原始 `meta` 与推断状态保留。纸页以 A4 为目标比例，内容超出时自然增高，确认区不覆盖正文。没有 IPC、数据库写入、确认或复用动作；不经过已确认版本的 `contract.js`，不扩展正式领域模型。
 
-可用性修订继续限定在此原型：`disclosureSummary` 统一折叠入口，CSS 通过原生 `[open]` 状态切换操作文字和箭头，不增加另一份展开状态。按后续用户反馈，展示用 `sections` 将 `constraints` 与 `acceptanceCriteria` 条目合并为一个约束列表，原字段由 `data-source-section` 保留；原始 JSON、条目 key、正文和 `meta` 不变。当前有约束、资料、方法与工作目的四个折叠入口。必填与来源文字分别渲染；分区标题与左边界一致，交付物仅用字重强调。标准组件、正式客户端与存储接口不变。
+可用性修订继续限定在此原型：`disclosureSummary` 统一折叠入口，CSS 通过原生 `[open]` 状态切换操作文字和箭头，不增加另一份展开状态。按后续用户反馈，展示用 `sections` 将 `constraints` 与 `acceptanceCriteria` 条目合并为一个约束列表，原字段由 `data-source-section` 保留；原始 JSON、条目 key、正文和 `meta` 不变。当前有约束、资料、方法与工作目的四个折叠入口。按最新批注仅渲染必填星号，来源信息保留在原始数据与 `data-meta` 中，不生成来源标签及对应样式；分区标题与左边界一致，交付物仅用字重强调。标准组件、正式客户端与存储接口不变。
 
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 

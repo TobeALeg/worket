@@ -21,7 +21,6 @@ body { margin: 0; }
 .sheet-items li::before { counter-increment: clause; content: counter(clause) ' '; color: #8c967f; font-size: .75em; vertical-align: .08em; }
 .sheet-items li::before { position: absolute; left: 0; top: .1em; }
 .item-required { font: 600 11px/1 var(--wc-sans); color: #45604a; margin-left: 3px; }
-.item-provenance { font: 400 9px/1.5 var(--wc-sans); color: #75674d; margin-left: 5px; white-space: nowrap; }
 .section-deliverables { margin-bottom: 14px; }
 .section-deliverables .sheet-items { font-size: clamp(12px, 2.6cqi, 14px); color: #294734; font-weight: 550; }
 .section-deliverables li { margin: 0; padding: 5px 0 5px 22px; }
