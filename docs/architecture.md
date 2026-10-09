@@ -249,6 +249,8 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 ### WorkBuddy Adapter
 
+连接返回 ENOENT / ECONNREFUSED 时再用 `pgrep -f` 核对 WorkBuddy.app 的主进程路径（实际可执行文件名是 Electron），排除带扩展脚本参数的子进程；确认未运行才抛 `ExecutorNotRunningError`。`AppService` 在来源发现中将该状态映射为空聊天页，并从执行者列表省略；已有工作读取和主动交接不吞掉该错误。进程检查失败或应用仍运行则保留连接故障；协议和正文读取错误也保持失败语义，不缓存未运行状态。
+
 5.5.3 内部扩展安装在 `~/.workbuddy/extensions/worket-capture`，声明 onStartup 与 resident，避免空闲回收后失去读取入口。仅授权 conversations.list/get/requestEntries/requests，通过同用户 0600 Unix socket 提供 list/read/status。历史加载等待 historyReady，分页完整读取并去重；不完整分页失败，不把部分历史当完整导入。
 
 归一化仅接受可见 text、tool 与资料引用，丢弃 reasoning/未知块；回复完成后入库，避免流式首个片段永久占用事件 ID。内部协议不是外部兼容承诺，升级不兼容时应显示接入错误。

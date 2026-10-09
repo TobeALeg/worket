@@ -1,12 +1,26 @@
 import { connect } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { ExecutorNotRunningError } from "../../executors/errors.js";
 import type { NormalizedThread } from "../types.js";
 import type { ConversationPage } from "../../executors/types.js";
+
+async function isWorkBuddyRunning(): Promise<boolean> {
+  try {
+    await promisify(execFile)("/usr/bin/pgrep", ["-f", "/WorkBuddy[.]app/Contents/MacOS/[^ /]+($| --)"], { timeout: 2000 });
+    return true;
+  } catch (error) {
+    if ((error as { code?: unknown }).code === 1) return false;
+    throw error;
+  }
+}
 
 export class WorkBuddyDesktopClient {
   constructor(
     readonly socketPath = join(homedir(), ".workpet", "workbuddy.sock"),
+    readonly isRunning: () => Promise<boolean> = isWorkBuddyRunning,
   ) {}
   async listThreadPage(
     _limit = 30,
@@ -48,13 +62,19 @@ export class WorkBuddyDesktopClient {
         if (body.length > 64 * 1024 * 1024)
           finish(new Error("WorkBuddy 会话过大，未导入不完整历史。"));
       });
-      socket.on("error", (error) =>
-        finish(
-          new Error(
-            `WorkBuddy 接入不可用，请启动或重启 WorkBuddy。${error.message}`,
-          ),
-        ),
-      );
+      socket.on("error", async (error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT" || error.code === "ECONNREFUSED") {
+          try {
+            if (!await this.isRunning()) {
+              finish(new ExecutorNotRunningError("WorkBuddy"));
+              return;
+            }
+          } catch {
+            // An unsuccessful process check cannot establish that the app is absent.
+          }
+        }
+        finish(new Error(`WorkBuddy 接入不可用，请启动或重启 WorkBuddy。${error.message}`));
+      });
       socket.on("end", () => {
         try {
           const response = JSON.parse(body);

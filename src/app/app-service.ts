@@ -26,6 +26,7 @@ import {
 import { LocalRuleExtractor } from "../extractor/local-rule-extractor.js";
 import type { WorkStateExtractor } from "../extractor/types.js";
 import { ExecutorRegistry, conversationPage } from "../executors/registry.js";
+import { ExecutorNotRunningError } from "../executors/errors.js";
 import type {
   ExecutorAdapter,
   ConversationSummary,
@@ -131,7 +132,7 @@ export class AppService {
     this.#preparation = new WorkPreparation(this.#core, this.#continuations, options.aiClient, options.preparationDelayMs);
   }
   async listExecutors(): Promise<ExecutorView[]> {
-    return Promise.all(
+    const executors = await Promise.all(
       this.#executors.all().map(async (adapter) => {
         try {
           await adapter.inspect();
@@ -143,6 +144,7 @@ export class AppService {
             canDeliver: !!adapter.deliver,
           };
         } catch (error) {
+          if (error instanceof ExecutorNotRunningError) return null;
           return {
             id: adapter.id,
             name: adapter.name,
@@ -154,6 +156,7 @@ export class AppService {
         }
       }),
     );
+    return executors.filter((executor): executor is NonNullable<typeof executor> => executor !== null);
   }
   async listConversations(executorId: string): Promise<ConversationView[]> {
     return (await this.listConversationHistory(executorId)).threads;
@@ -183,7 +186,13 @@ export class AppService {
     cursor?: string,
   ): Promise<ConversationPageView> {
     const adapter = this.#executors.get(executorId);
-    const page = await conversationPage(adapter, cursor);
+    let page;
+    try {
+      page = await conversationPage(adapter, cursor);
+    } catch (error) {
+      if (!(error instanceof ExecutorNotRunningError)) throw error;
+      page = { threads: [], nextCursor: null };
+    }
     return {
       ...page,
       threads: page.threads.map((thread) =>
