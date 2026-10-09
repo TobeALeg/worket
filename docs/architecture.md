@@ -351,6 +351,8 @@ COMPLETED ──继续原工作──> OPEN
 
 时间间隔、应用关闭、Mac 重启和 Executor 变化都不改变 WorkInstance 状态。取消记录通过 `cancelRecording` / `work:cancel-recording` 撤销记录授权并清理本地副本，需要二次确认，不新增生命周期状态。底层 `deleteWorkPermanently` 仅负责 Worket 本地数据清理；执行者接口不提供原对话删除能力。清理关联证据时按显式主键 `id` 更新，避免 Electron SQLite 的隐式行标识返回差异。
 
+取消记录弹窗在 renderer 校验确认文字，不匹配时不调用 IPC，只将输入提示变红并播放可重复的短暂抖动，输入时清除校验状态；系统开启减少动态效果时保留红字和焦点提示。`AppService.cancelRecording` 继续校验确认文字，保护本地清理入口。
+
 ### ExecutionEpisode
 
 ```text

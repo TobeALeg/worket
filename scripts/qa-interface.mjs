@@ -63,9 +63,9 @@ await page.addInitScript(() => {
     completeWork: async id => change(id, 'COMPLETED'), resumeWork: async id => change(id, 'OPEN'), archiveWork: async id => change(id, 'ARCHIVED'),
     refreshWork: async () => { throw new Error('连接中断，请重试'); },
     handoff: async id => { selected = works.find(w => w.id === id); selected.captureStatus = 'waiting'; return dashboard(); },
-    cancelRecording: async (id, confirmation) => { if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
+    cancelRecording: async (id, confirmation) => { window.cancelRecordingCalls = (window.cancelRecordingCalls ?? 0) + 1; if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
     copyWorkPackage: async () => {}, exportWorkPackage: async () => '/tmp/fixture.json',
-    consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, closePanel() {},
+    consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, onFeedbackCollapse() {}, closePanel() {},
     getWorketServiceStatus: async () => ({ automatic: true, url: 'https://worket.example.com' }),
     configureWorketService: async () => {},
     distillation: async action => {
@@ -134,7 +134,27 @@ try {
   await menuAction('split'); await shot('06-split'); await page.keyboard.press('Escape');
   await menuAction('cancel-recording');
   await page.locator('#confirm-cancel-recording').click();
-  await page.locator('#cancel-recording-error').waitFor({ state: 'visible' }); await shot('07-cancel-error');
+  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
+  assert.equal(await page.locator('#cancel-recording-confirmation').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  await shot('07-cancel-confirmation');
+  await page.locator('#cancel-recording-confirmation').fill('取消');
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await page.locator('#confirm-cancel-recording').click();
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  assert.equal(await page.evaluate(() => window.cancelRecordingCalls ?? 0), 0);
+  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
+  await page.keyboard.press('Escape');
+  await menuAction('cancel-recording');
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('#confirm-cancel-recording').click();
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().length), 0);
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.keyboard.press('Escape');
   await page.locator('[data-action="complete"]').click(); await page.locator('[data-action="resume"]').waitFor(); await shot('08-completed');
   await page.locator('[data-action="resume"]').click(); await menuAction('archive'); await shot('09-archived');
@@ -186,6 +206,7 @@ try {
   await menuAction('cancel-recording'); await page.locator('#cancel-recording-confirmation').fill('取消记录'); await page.locator('#confirm-cancel-recording').click();
   await page.locator('#work-list').waitFor({ state: 'visible' });
   assert.equal(await page.locator('[data-work-id="split"]').count(), 0);
+  assert.equal(await page.evaluate(() => window.cancelRecordingCalls), 1);
 
   const adminPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   adminPage.on('pageerror', e => errors.push(e.message));

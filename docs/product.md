@@ -203,6 +203,7 @@ Codex、WorkBuddy、ZCode、Antigravity 使用同一份应用层生成的交接�
 - 完整记录不等于把完整聊天塞进目标 Agent；
 - WorkDefinition、WorkInstance、WorkRecord、Executor 和 ExecutionEpisode 必须分离；
 - 用户可以取消记录：撤销该项工作的记录授权、停止后续同步，并清除 Worket 保存的本地副本。Worket 不提供删除外部应用原对话的权限或接口。
+- 取消记录需准确输入“取消记录”；输入不匹配时，原提示文字变红并短暂抖动，焦点回到输入框，不展示技术错误。
 
 ### 不做什么
 
