@@ -64,11 +64,9 @@ masthead.append(el('p', 'wc-kicker', 'WORKING CONTRACT'), el('span', 'sheet-coun
 header.append(masthead, el('h2', 'wc-title', view.title), el('div', 'wc-rule'));
 const disclosures = el('div', 'sheet-disclosures');
 disclosures.append(...['constraints', 'acceptanceCriteria', 'materialRoles', 'methods'].map(key => section(key, true)));
-const legend = el('p', 'sheet-legend', '* 必填 · † 模型推断，待审阅 · 参 参考方法');
 const purpose = el('details', 'sheet-purpose');
 purpose.append(el('summary', '', '工作目的'), el('p', 'source-purpose', view.purpose));
-const notes = el('div', 'sheet-notes'); notes.append(legend, purpose);
-body.append(header, section('deliverables'), section('inputs'), disclosures, notes);
+body.append(header, section('inputs'), section('deliverables'), disclosures, purpose);
 paper.append(body, footer()); folio.append(el('div', 'wc-tab', '草稿'), paper); card.append(folio);
 $('#stage').append(card);
 $('#preview-meta').textContent = `工作契约 · ${total} 条内容 · 待确认`;
