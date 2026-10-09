@@ -14,22 +14,32 @@ body { margin: 0; }
 .sheet-count { font-size: 9px; color: #7f8775; white-space: nowrap; }
 #stage .wc-title { font-size: clamp(18px, 4.5cqi, 25px); line-height: 1.25; letter-spacing: -.035em; margin: 7px 0 10px; }
 #stage .wc-rule { height: 3px; margin: 0 0 12px; }
-.sheet-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-.sheet-pair > :last-child { border-left: 1px solid #cfd1c3; padding-left: 16px; }
 .sheet-section { min-width: 0; }
 .sheet-section h3 { display: flex; align-items: baseline; gap: 7px; font-size: clamp(12px, 2.5cqi, 13px); font-weight: 650; color: #2d503b; margin: 0 0 6px; line-height: 1.2; }
 .sheet-section h3 small { color: #8a927e; font: 400 9px/1.2 ui-monospace, monospace; }
 .sheet-items { counter-reset: clause; list-style: none; margin: 0; padding: 0; font-size: clamp(11px, 2.4cqi, 12.5px); line-height: 1.52; color: #485148; }
-.sheet-items li { display: inline; margin: 0 5px 0 0; overflow-wrap: anywhere; }
+.sheet-items li { display: block; position: relative; padding-left: 13px; margin: 0 0 4px; overflow-wrap: anywhere; }
 .sheet-items li::before { counter-increment: clause; content: counter(clause) ' '; color: #8c967f; font-size: .75em; vertical-align: .08em; }
-.section-constraints li, .section-acceptanceCriteria li { display: block; position: relative; padding-left: 11px; margin: 0 0 3px; }
-.section-constraints li::before, .section-acceptanceCriteria li::before { position: absolute; left: 0; top: .1em; }
-.section-inputs li::before, .section-deliverables li::before, .section-materialRoles li::before { content: none; }
-.section-inputs li:not(:last-child)::after, .section-deliverables li:not(:last-child)::after, .section-materialRoles li:not(:last-child)::after { content: '；'; color: #87917b; }
-.item-marks { font: 500 8px/1 var(--wc-sans); color: #7c836d; margin-left: 3px; white-space: nowrap; vertical-align: .15em; }
-.sheet-column .sheet-section + .sheet-section { margin-top: 10px; padding-top: 9px; border-top: 1px solid #d5d7ca; }
-.section-methods { border-top: 1px solid #cbd0bd; margin-top: 11px; padding-top: 10px; }
-.section-methods .sheet-items { font-size: clamp(11px, 2.3cqi, 12px); }
+.sheet-items li::before { position: absolute; left: 0; top: .1em; }
+.item-marks { font: 500 9px/1 var(--wc-sans); color: #7c836d; margin-left: 3px; white-space: nowrap; vertical-align: .15em; }
+.section-deliverables { border-left: 2px solid #688063; padding: 3px 0 2px 12px; }
+.section-deliverables h3 { font-size: 15px; margin-bottom: 8px; }
+.section-deliverables .sheet-items { font-size: clamp(12px, 2.6cqi, 14px); color: #294734; font-weight: 550; }
+.section-deliverables li { margin: 0; padding: 5px 0 5px 23px; }
+.section-deliverables li + li { border-top: 1px solid #cbd0bd70; }
+.section-deliverables li::before { content: counter(clause, decimal-leading-zero); top: 7px; font: 400 9px/1.5 ui-monospace, monospace; }
+.section-inputs { margin: 17px 0 14px; }
+.section-inputs .sheet-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 16px; }
+.section-inputs li { padding: 0; margin: 0; }
+.section-inputs li::before { content: none; }
+.sheet-disclosures { border-top: 1px solid #bbc4ac; border-bottom: 1px solid #bbc4ac; }
+.sheet-disclosure + .sheet-disclosure { border-top: 1px solid #d4d7c8; }
+.sheet-disclosure summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 11px 1px; list-style: none; }
+.sheet-disclosure summary::-webkit-details-marker { display: none; }
+.sheet-disclosure h3 { margin: 0; }
+.disclosure-arrow { color: #7c896e; font-size: 16px; line-height: 1; }
+.sheet-disclosure[open] .disclosure-arrow { transform: rotate(45deg); }
+.sheet-disclosure .sheet-items { padding: 0 1px 10px; }
 .sheet-notes { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin-top: 9px; }
 .sheet-legend { color: #7c856f; font-size: 9px; line-height: 1.5; margin: 0; }
 .sheet-purpose { color: #67775e; font-size: 10px; }
@@ -49,8 +59,7 @@ body { margin: 0; }
 summary:focus-visible, select:focus-visible { outline: 2px solid #38634b; outline-offset: 3px; }
 @container (max-width: 440px) {
   #stage .wc-body { padding: 14px 14px 9px; }
-  .sheet-pair { gap: 10px; }
-  .sheet-pair > :last-child { padding-left: 10px; }
+  .section-inputs .sheet-items { column-gap: 12px; }
 }
 @media (max-height: 700px) {
   .prototype-toolbar p { display: none; }

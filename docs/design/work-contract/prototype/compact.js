@@ -14,9 +14,9 @@ function itemList(section) {
     const li = el('li'); li.dataset.key = item.key;
     li.append(el('span', 'source-text', item.text));
     const meta = item.meta || '';
+    li.dataset.meta = meta;
     const marks = [];
-    if (meta.includes('必填')) marks.push('必');
-    if (meta.includes('选填')) marks.push('选');
+    if (meta.includes('必填')) marks.push('*');
     if (meta.includes('模型推断')) marks.push('†');
     if (meta.includes('参考方法')) marks.push('参');
     if (marks.length) {
@@ -27,13 +27,17 @@ function itemList(section) {
   });
   return list;
 }
-function section(key) {
+function section(key, collapsed = false) {
   const data = view.sections.find(s => s.key === key);
   if (!data) return el('div');
-  const block = el('section', `sheet-section section-${key}`);
+  const block = el(collapsed ? 'details' : 'section', `sheet-section section-${key}${collapsed ? ' sheet-disclosure' : ''}`);
   const heading = el('h3');
-  heading.append(el('span', '', data.label), el('small', '', String(data.items.length).padStart(2, '0')));
-  block.append(heading, itemList(data));
+  heading.append(el('span', '', key === 'deliverables' ? '交付物' : data.label), el('small', '', String(data.items.length).padStart(2, '0')));
+  if (collapsed) {
+    const summary = el('summary');
+    const arrow = el('span', 'disclosure-arrow', '+'); arrow.setAttribute('aria-hidden', 'true');
+    summary.append(heading, arrow); block.append(summary, itemList(data));
+  } else block.append(heading, itemList(data));
   return block;
 }
 function footer() {
@@ -58,18 +62,14 @@ const header = el('header', 'wc-header');
 const masthead = el('div', 'sheet-masthead');
 masthead.append(el('p', 'wc-kicker', 'WORKING CONTRACT'), el('span', 'sheet-count', `${total} 条约定`));
 header.append(masthead, el('h2', 'wc-title', view.title), el('div', 'wc-rule'));
-const leftColumn = el('div', 'sheet-column');
-leftColumn.append(section('inputs'), section('constraints'));
-const rightColumn = el('div', 'sheet-column');
-rightColumn.append(section('deliverables'), section('acceptanceCriteria'), section('materialRoles'));
-const columns = el('div', 'sheet-pair');
-columns.append(leftColumn, rightColumn);
-const legend = el('p', 'sheet-legend', '必 必填 · 选 选填 · † 模型推断，待审阅 · 参 参考方法');
+const disclosures = el('div', 'sheet-disclosures');
+disclosures.append(...['constraints', 'acceptanceCriteria', 'materialRoles', 'methods'].map(key => section(key, true)));
+const legend = el('p', 'sheet-legend', '* 必填 · † 模型推断，待审阅 · 参 参考方法');
 const purpose = el('details', 'sheet-purpose');
 purpose.append(el('summary', '', '工作目的'), el('p', 'source-purpose', view.purpose));
 const notes = el('div', 'sheet-notes'); notes.append(legend, purpose);
-body.append(header, columns, section('methods'), notes);
+body.append(header, section('deliverables'), section('inputs'), disclosures, notes);
 paper.append(body, footer()); folio.append(el('div', 'wc-tab', '草稿'), paper); card.append(folio);
 $('#stage').append(card);
-$('#preview-meta').textContent = `单页全文 · ${total} 条内容 · 待确认`;
+$('#preview-meta').textContent = `工作契约 · ${total} 条内容 · 待确认`;
 $('#preview-width').addEventListener('change', event => $('#stage').style.setProperty('--prototype-width', `${event.target.value}px`));
