@@ -14,6 +14,8 @@ v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg
 
 2026-10-09 `docs/design/work-contract/prototype/` 独立读取显式提供的本机 JSON，不消费展示摘要。按用户最新信息优先级，`deliverables` 与 `inputs` 始终完整渲染，其余四类使用原生 `details` 默认收起，允许同时展开，目的也仅原位展开。必填映射为 `*`，选填不生成符号；原始 `meta` 与推断状态保留。纸页以 A4 为目标比例，内容超出时自然增高，确认区不覆盖正文。没有 IPC、数据库写入、确认或复用动作；不经过已确认版本的 `contract.js`，不扩展正式领域模型。
 
+可用性修订继续限定在此原型：`disclosureSummary` 统一五个折叠入口，CSS 通过原生 `[open]` 状态切换操作文字和箭头，不增加另一份展开状态。必填与来源文字分别渲染，原始 `meta` 保留；分区标题与左边界一致，交付物仅用字重强调。标准组件、正式客户端与存储接口不变。
+
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 
 `distillation/analysis-input.ts` 以 `contract-input-v2` 固定按证据用途划分的视图：`tool.*` 为 OMIT，其他可见事件为 KEEP；不再解析 shell、工具参数、执行状态或文件扩展名。主动选择的附件仍由 `wire()` 追加，正文、hash 与 NORMATIVE/REFERENCE/INPUT 角色保持不变。省略不删除原始档案。
