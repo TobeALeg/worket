@@ -1,4 +1,4 @@
-import { feedbackEntry } from "./problem-feedback.js";
+import { showPageHeader } from "./window-header.js";
 import { contractDispatchState } from './contract-dispatch.js';
 import { chooseExecutor } from './executor-picker.js';
 import { contractColor, setContractColor, workContract } from './work-contract.js';
@@ -8,7 +8,6 @@ import { errorText, jobError, progressLabel, runningJob, type DistillationActivi
 import { IMPROVEMENT_POLICY } from "../contracts/improvement.js";
 import { contentItems } from '../contracts/evolution.js';
 import type { EvolutionReview } from '../definitions/evolution.js';
-import { worketBrand } from "./ui.js";
 import { mountDefinitionReview } from "./definition-review.js";
 import type { Definition, Draft } from "../definitions/repository.js";
 import type { Job, Snapshot } from "../distillation/service.js";
@@ -45,16 +44,9 @@ function show(title: string, html: string, actions = "", back?: { label: string;
   modal.classList.remove('contract-view');
   modal.removeAttribute("aria-label");
   modal.setAttribute("aria-labelledby", "definition-title");
-  const navigation = back
-    ? `<div class="window-navigation"><button data-back class="icon-button" aria-label="${esc(back.label)}" title="${esc(back.label)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14" /></svg></button>${worketBrand}</div>`
-    : `${worketBrand}<button data-close class="icon-button" aria-label="关闭">×</button>`;
-  modal.innerHTML = `<div class="dialog-shell"><header class="window-bar">${back ? navigation + feedbackEntry : navigation.replace('<button data-close',feedbackEntry + '<button data-close')}</header><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
-  modal.querySelector("[data-close]")?.addEventListener("click", () => modal.close());
-  if (back) bind("[data-back]", back.action);
-  modal.oncancel = back ? (event) => {
-    event.preventDefault();
-    modal.querySelector<HTMLButtonElement>("[data-back]")?.click();
-  } : null;
+  modal.innerHTML = `<div class="dialog-shell"><div class="window-header-slot"></div><div class="dialog-card definition-card"><h2 id="definition-title">${esc(title)}</h2><div id="definition-error" class="notice" hidden role="alert"></div>${html}</div>${actions ? `<footer class="dialog-actions">${actions}</footer>` : ""}</div>`;
+  const returnPage = () => preferenceSave.then(() => back ? back.action() : modal.close());
+  modal.oncancel = (event) => { event.preventDefault(); modal.querySelector<HTMLButtonElement>("#window-back")?.click(); };
   const preference = modal.querySelector<HTMLInputElement>("#improvement-consent");
   preference?.addEventListener("change", () => {
     const enabled = preference.checked;
@@ -73,6 +65,7 @@ function show(title: string, html: string, actions = "", back?: { label: string;
   });
   modal.scrollTop = 0;
   if (!modal.open) modal.showModal();
+  showPageHeader({ dialog: modal, label: back?.label ?? "返回工作面板", back: returnPage, beforeNavigate: () => preferenceSave.then(() => {}) });
 }
 function bind(selector: string, action: () => Promise<void>): void {
   modal.querySelector(selector)?.addEventListener("click", (event) => {
@@ -246,6 +239,7 @@ export async function openPreparation(workIds: string[], baseDefinitionId?: stri
       baseDefinitionId ? '确认约定更新范围' : "选择沉淀附件",
       `<p class="consent">截至 ${esc(new Date(snapshot.capturedAt).toLocaleString())}</p>${snapshot.sources.map((s) => `<section class="state-section"><h3>${esc(s.title)}</h3><p>${s.events.length} 条记录 · ${s.status === "OPEN" ? "当前快照" : s.status === "COMPLETED" ? "已完成" : "已归档"}</p>${s.files.map((f) => f.content !== undefined ? `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}" checked> ${esc(f.name)} — 含正文</label><label>文件用途<select data-file-role="${esc(f.id)}">${[["REFERENCE", "仅供参考"], ["NORMATIVE", "采用为规范"], ["INPUT", "本次输入"]].map(([v, label]) => `<option value="${v}" ${(f.role ?? "REFERENCE") === v ? "selected" : ""}>${label}</option>`).join("")}</select></label>` : f.availability === "MISSING" ? `<label class="file-choice unavailable"><input type="checkbox" data-file-id="${esc(f.id)}" disabled> ${esc(f.name)} — 文件已不可用，仅保留文件信息</label>` : `<label class="file-choice"><input type="checkbox" data-file-id="${esc(f.id)}"> ${esc(f.name)} — ${f.availability === "CHANGED" ? "内容已更新，勾选后重新分析" : "仅文件信息"}</label>`).join("")}</section>`).join("")}<button id="apply-range">更新附件内容范围</button>${baseDefinitionId ? `<p class="consent">当前已确认约定、所选新交互与附件将交由 Worket 服务及模型供应商处理。</p><details class="policy-details"><summary>云端处理与留存</summary><p>未勾选改进授权时，后台不持久保存正文；结果内存暂存最多 10 分钟，收取或取消后清除；无正文运行元数据默认保留 30 天。正文可能含敏感信息，ID 替换不代表匿名化。供应商留存以服务公布政策为准。</p></details><label class="file-choice"><input id="consent" type="checkbox">我确认本次范围及云端处理</label>${improvementConsent("DISTILLATION", enabled)}` : ""}`,
       `<button id="start-distillation" class="primary">${baseDefinitionId ? '比较新交互' : '开始沉淀'}</button>`,
+      baseDefinitionId ? { label: "返回契约", action: () => openDefinition(baseDefinitionId) } : undefined,
     );
     bind("#apply-range", async () => {
       const ids = [
@@ -319,10 +313,13 @@ export async function openJob(id: string): Promise<void> {
     });
   }
   if (["PREPARED", "SUBMITTED", "RUNNING"].includes(job.status)) {
-    const token = modal.innerHTML;
-    setTimeout(() => {
-      if (modal.open && modal.innerHTML === token) void openJob(id);
-    }, 2000);
+    const screen = modal.querySelector(".definition-card");
+    const poll = () => {
+      if (!modal.open || modal.querySelector(".definition-card") !== screen) return;
+      if (document.querySelector("#app-menu[open]")) setTimeout(poll, 2000);
+      else void openJob(id);
+    };
+    setTimeout(poll, 2000);
   }
 }
 async function editDraft(draft: Draft): Promise<void> {

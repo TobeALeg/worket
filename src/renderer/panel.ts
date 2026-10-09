@@ -353,6 +353,8 @@ setupDistillation(
   () => [...selectedDistillationIds],
 );
 required("#archive-records").addEventListener("click", () => {
+  feedback.collapse();
+  document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => dialog.close());
   detailOpen = false;
   filter = "ARCHIVED";
   render();

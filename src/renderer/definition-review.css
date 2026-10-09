@@ -2,11 +2,7 @@
 #definition-dialog.draft-review { position:fixed; inset:0; width:100%; max-width:none; height:100%; max-height:none; margin:0; padding:0; border:0; border-radius:0; background:var(--background); overflow:hidden; }
 .draft-review::backdrop { background:var(--background); backdrop-filter:none; }
 .dr-shell { display:flex; flex-direction:column; height:100%; min-height:0; }
-.dr-bar { height:38px; flex-shrink:0; padding:0 17px; display:flex; align-items:center; gap:7px; border-bottom:1px solid var(--line); -webkit-app-region:drag; }
-.dr-bar strong { font-size:16px; letter-spacing:-.6px; }
-.dr-bar > span:last-of-type { font-size:10px; color:var(--muted); }
 .draft-review button { -webkit-app-region:no-drag; min-height:0; box-shadow:none; }
-.dr-close { margin-left:auto; border:0; padding:2px 7px; background:transparent; color:var(--muted); }
 .dr-controls { flex:1; min-height:0; min-width:0; border:0; padding:0; margin:0; display:flex; flex-direction:column; }
 .dr-title { display:flex; flex-shrink:0; align-items:center; gap:7px; padding:14px 18px 12px; }
 .dr-title #definition-name { width:0; min-width:0; flex:1; padding:0; border:0; background:transparent; font-size:18px; font-weight:650; letter-spacing:-.5px; border-radius:0; }

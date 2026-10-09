@@ -131,7 +131,7 @@ for (const trial of selected) {
         await panel.locator('[data-action="complete"]').click();
         const labels = await panel.locator('[data-criterion]').evaluateAll(elements => elements.map(element => [...element.parentElement.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim()));
         trial.verifyAcceptance(labels); report.acceptanceLabels=labels;
-        await panel.locator('#definition-dialog [data-close]').click();
+        await panel.locator('#definition-dialog #window-back').click();
       } assert.match(pkg.markdown, /下一期完全不同的脚本/);
       if (verdict.expected === 'BLOCK') {
         assert.match(pkg.markdown, /30 words/); assert.ok(!pkg.markdown.includes('50 words')); assert.ok(!pkg.markdown.includes('70 words'));

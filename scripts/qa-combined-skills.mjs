@@ -37,7 +37,7 @@ try{
  const unchanged=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);assert.equal(unchanged.materials?.length??0,0,'conflicting selection cannot partially save');
  await select('template',template);report.checks.nameCollisionCannotPartiallySave=true;
  await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
- await panel.locator('[data-review-action="close"]').click();await open();
+ await panel.locator('#window-back').click();await open();
  assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true}).count(),2,'saved draft must retain both selected materials after reopen');
  report.checks.reopenRetainsSelections=true;
  await app.close();app=undefined;dependency('原件已改写 v2');
@@ -59,7 +59,7 @@ try{
  const checked=await refreshed.json();assert.ok(!checked.error);assert.ok(!checked.result.isError);assert.equal(readFileSync(join(format.directory,'references/format.md'),'utf8'),'依赖格式 v1');report.checks.mcpRebuildsDamagedDerivedEnvironment=true;
  report.checks.restartFrozenVersionPublicationAndMcp=true;report.checks.syntheticSkillExecution=true;
  await panel.locator('#tab-definitions').click();await panel.locator(`[data-definition="${pkg.definition.id}"]`).click();await panel.locator('#revise-definition').click();
- dependency('依赖格式 v2');await select('template',template);await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();await panel.locator('[data-review-action="close"]').click();
+ dependency('依赖格式 v2');await select('template',template);await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();await panel.locator('#window-back').click();
  await panel.locator(`[data-definition="${pkg.definition.id}"]`).click();await panel.locator('#revise-definition').click();
  assert.equal(await panel.locator('[data-review-action="material"][data-address="materialRoles.template"]').innerText(),'更换资料','manual revision must resume its saved selections');
  await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();

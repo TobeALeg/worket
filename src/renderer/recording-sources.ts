@@ -1,4 +1,5 @@
 import { RECORDING_UPLOAD_NOTICE, type ConversationView, type DashboardView } from "../ui-contract.js";
+import { showPageHeader } from "./window-header.js";
 
 const RECENT_SOURCE_COUNT = 5;
 
@@ -170,6 +171,7 @@ export function setupRecordingSources(
     history.textContent = "正在加载聊天…";
     more.hidden = true;
     if (!dialog.open) dialog.showModal();
+    showPageHeader({ dialog, label: "返回最近活动", back: () => dialog.close(), returnFocus: document.querySelector<HTMLElement>("#record-history") });
     try {
       const executors = await window.workpet.listExecutors();
       executor.replaceChildren(
@@ -191,9 +193,6 @@ export function setupRecordingSources(
     .querySelector("#record-history")!
     .addEventListener("click", () => void open());
   executor.addEventListener("change", () => void loadHistory());
-  document
-    .querySelector("#history-close")!
-    .addEventListener("click", () => dialog.close());
   document
     .querySelector("#history-retry")!
     .addEventListener("click", () => void loadHistory());

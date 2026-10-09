@@ -5,7 +5,8 @@ import type { Draft, Definition } from "../definitions/repository.js";
 import { definitionSections, resolveReviewField, reviewFieldValue, reviewFingerprint, sameAddress, sectionItems, type DefinitionSection, type ItemAddress } from "../definitions/review.js";
 import { errorText } from "../distillation/activity.js";
 
-import { definitionLabels as labels, worketBrand } from "./ui.js";
+import { definitionLabels as labels } from "./ui.js";
+import { showPageHeader } from "./window-header.js";
 
 const escape = (value: unknown) => String(value).replace(/[&<>"']/gu, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const idOf = (a: ItemAddress) => `${a.section}.${a.key}`;
@@ -15,6 +16,7 @@ type Item = DefinedItem & Partial<Pick<InputSpec, "valueType" | "required" | "ch
 
 /** The draft is local until save. Evidence remains tied to original keys, never row indices. */
 export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, api: Api, onPublished: (definition: Definition) => Promise<void>, onReturn?: (() => Promise<void>) | undefined): () => void {
+  modal.oncancel = null;
   let draft = initial, content = structuredClone(initial.content), resolutions = structuredClone(initial.resolutions);
   let bindings: Record<string, string> = {}, editMode = false, busy = false, closed = false;
   let onlyChanges = !!initial.evolution;
@@ -157,7 +159,8 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const focus = active?.dataset.address, property = active?.dataset.property, text = active?.hasAttribute("data-text");
     const selection = text ? [active?.selectionStart, active?.selectionEnd] : null;
     modal.classList.add("draft-review");
-    modal.innerHTML = `<div class="dr-shell"><header class="dr-bar">${worketBrand}<span>${initial.baseDefinitionId ? "修订契约" : "审阅契约"}</span><button data-review-action="close" aria-label="${onReturn ? '返回契约' : '关闭'}" class="dr-close">${onReturn ? '返回契约' : '×'}</button></header><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span>${draft.evolution ? `<button data-review-action="show-all">${onlyChanges ? "查看完整约定" : "只看变化"}</button>` : ""}<button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${sourceNoticeHtml()}${draft.evolution ? `<p class="dr-meta" id="evolution-summary">${draft.evolution.changes.length} 项新增或变更 · ${draft.evolution.evidence.length} 项重复依据 · ${draft.evolution.ignored.length} 项本次/历史要求${draft.evolution.changes.length ? "" : " · 约定内容保持不变"}</p>${evolutionEvidenceHtml()}` : ""}${documentPreview ? `<section class="dr-settings"><h3>${escape(documentPreview.name)} · 采用新版条款</h3><p>当前条款：${escape(documentPreview.previousText)}</p><pre>${escape(documentPreview.text.split("\n").map((line, i) => `${i + 1}  ${line}`).join("\n"))}</pre><label>起始行<input id="doc-start-line" type="number" min="1" value="${documentPreview.previous.startLine}"></label><label>结束行<input id="doc-end-line" type="number" min="1" value="${documentPreview.previous.endLine}"></label><button data-review-action="adopt-document">采用所选行（保存到草稿）</button><button data-review-action="cancel-document">取消</button></section>` : ""}${reviewGroups()}${draft.issues.some(i => !targets.get(i.id)) ? `<section class="dr-unlinked"><h3>其他待定</h3><div data-issues-for="unlinked">${draft.issues.filter(i => !targets.get(i.id)).map(issueHtml).join("")}</div></section>` : ""}</main><footer class="dr-footer"><span id="dr-status"></span>${undo ? '<button class="dr-undo" data-review-action="undo">撤销</button>' : ""}<div><button id="save-draft" data-review-action="save">暂存</button><button id="publish-definition" data-review-action="publish" class="primary">${draft.evolution && !draft.evolution.changes.length ? "确认记录依据" : "确认保存"}</button></div></footer></fieldset><div class="dr-resize" role="separator" tabindex="0" aria-label="调整浮窗宽度" aria-orientation="vertical" title="拖动右边缘调宽"></div></div>`;
+    modal.innerHTML = `<div class="dr-shell"><div class="window-header-slot"></div><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}><span id="dr-count"></span>${draft.evolution ? `<button data-review-action="show-all">${onlyChanges ? "查看完整约定" : "只看变化"}</button>` : ""}<button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div>${editMode ? '<p class="dr-edit-hint">点文字修改 · 必填可切换</p>' : ""}<div id="definition-error" role="alert" hidden></div><main class="dr-content">${sourceNoticeHtml()}${draft.evolution ? `<p class="dr-meta" id="evolution-summary">${draft.evolution.changes.length} 项新增或变更 · ${draft.evolution.evidence.length} 项重复依据 · ${draft.evolution.ignored.length} 项本次/历史要求${draft.evolution.changes.length ? "" : " · 约定内容保持不变"}</p>${evolutionEvidenceHtml()}` : ""}${documentPreview ? `<section class="dr-settings"><h3>${escape(documentPreview.name)} · 采用新版条款</h3><p>当前条款：${escape(documentPreview.previousText)}</p><pre>${escape(documentPreview.text.split("\n").map((line, i) => `${i + 1}  ${line}`).join("\n"))}</pre><label>起始行<input id="doc-start-line" type="number" min="1" value="${documentPreview.previous.startLine}"></label><label>结束行<input id="doc-end-line" type="number" min="1" value="${documentPreview.previous.endLine}"></label><button data-review-action="adopt-document">采用所选行（保存到草稿）</button><button data-review-action="cancel-document">取消</button></section>` : ""}${reviewGroups()}${draft.issues.some(i => !targets.get(i.id)) ? `<section class="dr-unlinked"><h3>其他待定</h3><div data-issues-for="unlinked">${draft.issues.filter(i => !targets.get(i.id)).map(issueHtml).join("")}</div></section>` : ""}</main><footer class="dr-footer"><span id="dr-status"></span>${undo ? '<button class="dr-undo" data-review-action="undo">撤销</button>' : ""}<div><button id="save-draft" data-review-action="save">暂存</button><button id="publish-definition" data-review-action="publish" class="primary">${draft.evolution && !draft.evolution.changes.length ? "确认记录依据" : "确认保存"}</button></div></footer></fieldset><div class="dr-resize" role="separator" tabindex="0" aria-label="调整浮窗宽度" aria-orientation="vertical" title="拖动右边缘调宽"></div></div>`;
+    showPageHeader({ dialog: modal, label: onReturn ? "返回契约" : "返回工作面板", back: close, beforeNavigate: preserveDraft });
     modal.querySelector(".dr-content")!.scrollTop = scroll;
     updateStatus();
     modal.querySelectorAll<HTMLTextAreaElement>("textarea").forEach(fitTextarea);
@@ -214,9 +217,16 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     undo = null; // Saved bindings now refer to fixed copies; old pending paths cannot be restored.
     savedState = signature(); message = "已暂存";
   }
+  async function preserveDraft() {
+    if (busy) throw new Error("正在保存，请稍后返回。");
+    if (signature() === savedState) return;
+    busy = true;
+    const controls = modal.querySelector<HTMLFieldSetElement>(".dr-controls")!;
+    controls.disabled = true;
+    try { await save(); } finally { busy = false; controls.disabled = false; }
+  }
   async function close() {
-    if (busy) return;
-    if (signature() !== savedState && !window.confirm("修改尚未暂存，关闭将放弃这些修改。")) return;
+    await preserveDraft();
     if (onReturn) await onReturn(); else modal.close();
   }
   function removeItem(address: ItemAddress) {
@@ -303,7 +313,6 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const action = button.dataset.reviewAction!, addressId = button.dataset.address;
     void (async () => {
       if (action === 'check-sources') { await checkSources(); render(); return; }
-      if (action === "close") return close();
       if (action === "show-all") { onlyChanges = !onlyChanges; render(); return; }
       if (action === 'evolution-evidence' && draft.evolution) {
         const entry = [...draft.evolution.evidence, ...draft.evolution.ignored][Number(button.dataset.entry)];
@@ -373,7 +382,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
       }
     })().catch(async err => { busy = false; if (!closed) { if (String(err).includes('SOURCE_REVIEW_REQUIRED')) await checkSources().catch(() => {}); render(); error(err); } });
   }, { signal });
-  modal.addEventListener("cancel", event => { event.preventDefault(); void close().catch(error); }, { signal });
+  modal.addEventListener("cancel", event => { event.preventDefault(); modal.querySelector<HTMLButtonElement>("#window-back")?.click(); }, { signal });
   let resizing = false, lastX = 0;
   function setupResize() {
     const handle = modal.querySelector<HTMLElement>(".dr-resize")!;

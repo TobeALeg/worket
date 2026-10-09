@@ -605,6 +605,8 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 
 `renderer/definition-review.ts` 管理一个候选的本地编辑副本、决策、来源展开、固定资料绑定和单次撤销；`definition-review.css` 只限定审阅布局，基础颜色与品牌继承共享 theme。`distillation.ts` 负责进入与退出，服务、准备、定义、复用和验收使用共享 dialog-shell：固定品牌栏 → 可滚动 dialog-card → 固定主要操作栏；历史采用相同容器。编辑态/只读态 → 暂存（revision 校验）→ 显式确认 → 不可变定义；保存期间禁用操作，后台刷新不替换审阅 DOM。
 
+`renderer/window-header.ts` 在主页面和当前打开的全页 dialog 之间移动同一个顶栏 DOM，保留反馈、应用菜单、关闭按钮及其监听器。页面只提供返回回调和可选离开前保存；dialog 关闭后恢复底层页面的顶栏与返回焦点，父页刷新不抢占反馈子页顶栏。右上角关闭仍调用 `panel:close` 收起窗口，不执行页面返回；审阅返回和菜单跳转先通过 revision 校验暂存修改，未完成保存不离开。轻量确认、执行者选择及截图预览保留独立弹层行为。
+
 `definitions/review.ts` 为界面和仓库共用字段定位：支持章节、章节加 key、原始数组位置和唯一裸 key；数组位置始终以 originalContent 解析，跨章节重名不猜测。未能定位的 Issue 保留在独立区域；不生成虚构证据或自动作出语义选择。编辑不改写来源，原始依据始终可核验；保存后的 basis 由仓库按既有规则记录为 USER_AUTHORED。
 
 仓库 update 增加可选 replaceResolutions，审阅界面用完整集合替换，以便“重新决定”在暂存与重启后仍有效；旧调用继续增量语义。REWRITE/DELETE 比较原始候选的实际内容，排除 basis，允许先暂存文字、稍后采用修改。发布沿用既有未处理问题、必需资料、版本和来源校验。

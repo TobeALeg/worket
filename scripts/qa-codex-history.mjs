@@ -137,7 +137,7 @@ try {
       assert.match(await panel.locator('#source-review-notice').innerText(),/每次必须检查分页末尾/);
       assert.ok(await panel.locator('#publish-definition').isDisabled());
       await panel.screenshot({path:join(output,'absent-source-review.png')});
-      await panel.locator('[data-review-action="close"]').click();
+      await panel.locator('#window-back').click();
       report.checks.absentEvidenceVisibleAndBlocked=true;
     }
     fixture.turns.push(removed); writeFileSync(dataPath, JSON.stringify(fixture));

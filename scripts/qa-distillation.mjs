@@ -129,7 +129,7 @@ async function checkCompactPage(name, action) {
       await panel.waitForFunction(width => innerWidth === width, size.width);
       const layout = await panel.locator('#definition-dialog').evaluate((dialog, action) => {
         const button = dialog.querySelector(action).getBoundingClientRect();
-        const header = dialog.querySelector('.window-bar').getBoundingClientRect();
+        const header = dialog.querySelector('.brand-row').getBoundingClientRect();
         return { overflow: dialog.scrollWidth > dialog.clientWidth, button: { x: button.x, y: button.y, right: button.right, bottom: button.bottom }, headerTop: header.top, width: innerWidth, height: innerHeight };
       }, action);
       assert.equal(layout.overflow, false, `${name}: horizontal overflow`);
@@ -379,7 +379,7 @@ try {
   await panel.locator("#use-definition").click();
   assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
   await panel.screenshot({ path: join(output, "09-opt-out-after-restart.png") });
-  await panel.locator('[data-close]').click();
+  await panel.locator('#window-back').click();
   // A source file deleted from disk must not block the direct distill action.
   const existingJobs = await panel.evaluate(
     () => window.workpet.distillation('jobs').then(jobs => jobs.map(j => j.id)),

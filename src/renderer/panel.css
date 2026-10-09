@@ -31,9 +31,11 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 label { font-size: 12px; }
 .field { display: grid; gap: 5px; }
 .topbar { position: sticky; top: 0; z-index: 4; background: var(--background); -webkit-app-region: drag; }
-.brand-row, .window-bar { height: 38px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; gap: 7px; border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
+.brand-row { height: 38px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; gap: 7px; border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
 .brand-actions { display: flex; gap: 4px; align-items: center; }
 .window-navigation { display: flex; align-items: center; gap: 8px; }
+.window-header-slot { height: 38px; flex-shrink: 0; }
+.icon-button[hidden] { display: none; }
 .filters { display: flex; gap: 13px; padding: 0 18px; border-bottom: 1px solid var(--line); -webkit-app-region: no-drag; }
 .filter { position: relative; flex: 1; min-width: 0; white-space: nowrap; padding: 7px 0; min-height: 34px; border: 0; border-radius: 0; background: transparent; color: var(--muted); font-size: 11px; }
 .filter.active { color: var(--accent); }
@@ -115,7 +117,6 @@ dialog { width: min(440px, calc(100vw - 24px)); max-width: calc(100vw - 24px); m
 dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 #definition-dialog, .page-dialog { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; border: 0; border-radius: 0; overflow: hidden; box-shadow: none; }
 .dialog-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.window-bar { flex-shrink: 0; }
 .dialog-card { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px 18px; }
 .dialog-card > * { min-width: 0; flex-shrink: 0; }
 .dialog-shell > .dialog-card { flex: 1; min-height: 0; overflow: auto; }
@@ -159,7 +160,7 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 [data-state="ready"] .extraction-indicator { border-color: var(--accent); background: #38634b20; }
 [data-state="failed"] .extraction-indicator { border-color: var(--danger); background: #b7473718; }
 @keyframes extraction-turn { to { transform: rotate(360deg); } }
-@media (max-width: 380px) { main, .dialog-card { padding: 12px; } .brand-row, .window-bar, .filters { padding-inline: 12px; } .filters { gap: 10px; } }
+@media (max-width: 380px) { main, .dialog-card { padding: 12px; } .brand-row, .filters { padding-inline: 12px; } .filters { gap: 10px; } }
 @media (max-height: 600px) {
   .compact-work .detail-head h2, .progress-section li p { -webkit-line-clamp: 1; }
   .progress-overview { gap: 8px; margin-bottom: 8px; }
