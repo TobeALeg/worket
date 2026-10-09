@@ -3,29 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Worket · 契约紧凑展示原型</title>
+  <title>Worket · 单页工作契约</title>
   <link rel="stylesheet" href="component/contract.css">
   <link rel="stylesheet" href="component/prototype/compact.css">
 </head>
 <body>
   <header class="prototype-toolbar">
     <div><h1>工作契约 <span>展示原型</span></h1><p id="preview-meta"></p></div>
-    <label>宽度<select id="preview-width"><option value="420">420px</option><option value="320">320px</option></select></label>
+    <label>宽度<select id="preview-width"><option value="520">520px</option><option value="420">420px</option><option value="320">320px</option></select></label>
   </header>
   <main id="stage"></main>
-  <dialog id="detail-dialog" aria-labelledby="detail-title">
-    <header class="detail-header">
-      <div><p id="detail-kicker"></p><h2 id="detail-title"></h2></div>
-      <button type="button" id="close-detail" aria-label="关闭条款">×</button>
-    </header>
-    <div id="detail-content"></div>
-    <footer class="detail-footer"><span>原文 · 待审阅</span><button type="button" id="show-all"></button></footer>
-  </dialog>
-  <nav class="prototype-switcher" aria-label="原型方案切换">
-    <button type="button" id="previous-variant" aria-label="上一个方案">←</button>
-    <div><span id="variant-name" aria-live="polite"></span><span id="variant-description"></span></div>
-    <button type="button" id="next-variant" aria-label="下一个方案">→</button>
-  </nav>
   <script type="module" src="component/prototype/compact.js"></script>
 </body>
 </html>

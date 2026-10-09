@@ -12,7 +12,7 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg` 作为独立蜡封装饰；语义仍由“已确认”文本提供。标题样式收紧，数据结构和操作回调保持不变。
 
-2026-10-09 `docs/design/work-contract/prototype/` 增加三种紧凑展示实验，独立读取显式提供的本机 JSON，以 `?variant=A/B/C` 切换。`purposeSummary / sections[].summary` 是手工展示投影，原目的、条款和来源状态仍在只读详情中；没有 IPC、数据库写入、确认或复用动作。该候选预览不经过已确认版本的 `contract.js`，不扩展正式领域模型，选择结果与摘要生产方式待定。
+2026-10-09 `docs/design/work-contract/prototype/` 独立读取显式提供的本机 JSON。用户要求单页高信息密度后，三方案切换改为一个双栏全文视图，不再消费 `purposeSummary / sections[].summary`；27 条原文直接渲染，原目的使用原生 `details` 同页展开。候选状态的完整辅助文本与紧凑图例同步保留。纸页以 A4 为目标比例，内容超出时自然增高，确认区不覆盖正文。没有 IPC、数据库写入、确认或复用动作；不经过已确认版本的 `contract.js`，不扩展正式领域模型。
 
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 

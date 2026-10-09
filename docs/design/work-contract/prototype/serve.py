@@ -21,7 +21,7 @@ with TemporaryDirectory(prefix="work-contract-preview-") as temporary:
     (root / "compact-data.json").symlink_to(fixture)
     handler = partial(SimpleHTTPRequestHandler, directory=root)
     with ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
-        print(f"http://127.0.0.1:{args.port}/?variant=A", flush=True)
+        print(f"http://127.0.0.1:{args.port}/", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
