@@ -12,6 +12,8 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg` 作为独立蜡封装饰；语义仍由“已确认”文本提供。标题样式收紧，数据结构和操作回调保持不变。
 
+2026-10-09 `docs/design/work-contract/prototype/` 增加三种紧凑展示实验，独立读取显式提供的本机 JSON，以 `?variant=A/B/C` 切换。`purposeSummary / sections[].summary` 是手工展示投影，原目的、条款和来源状态仍在只读详情中；没有 IPC、数据库写入、确认或复用动作。该候选预览不经过已确认版本的 `contract.js`，不扩展正式领域模型，选择结果与摘要生产方式待定。
+
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 
 `distillation/analysis-input.ts` 以 `contract-input-v2` 固定按证据用途划分的视图：`tool.*` 为 OMIT，其他可见事件为 KEEP；不再解析 shell、工具参数、执行状态或文件扩展名。主动选择的附件仍由 `wire()` 追加，正文、hash 与 NORMATIVE/REFERENCE/INPUT 角色保持不变。省略不删除原始档案。
