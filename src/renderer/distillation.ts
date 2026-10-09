@@ -120,6 +120,8 @@ async function refreshActivity(): Promise<void> {
   button.dataset.state = activity.state;
   button.querySelector("[data-activity-label]")!.textContent = activity.label;
   button.querySelector("[data-activity-detail]")!.textContent = activity.detail;
+  button.title = `${activity.label}。${activity.detail}`;
+  button.setAttribute("aria-label", button.title);
 }
 async function openServiceSettings(connected = false): Promise<void> {
   const status = await window.workpet.getWorketServiceStatus();

@@ -152,9 +152,14 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 .service-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .service-status.connected::before { background: var(--accent); }
 .service-status + .consent { margin-top: -8px; }
-.distillation-activity { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; margin-bottom: 10px; text-align: left; background: var(--surface); }
-.distillation-activity strong, .distillation-activity small { display: block; }
-.distillation-activity small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.distillation-activity { display: flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; min-height: 22px; padding: 2px 0; margin-bottom: 6px; border: 0; background: transparent; color: var(--muted); font-size: 10px; font-weight: 400; line-height: 16px; text-align: left; }
+.distillation-activity:hover { background: transparent; color: var(--accent); }
+.distillation-activity > span:last-child { min-width: 0; }
+.distillation-activity strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+.distillation-activity small { display: none; }
+.distillation-activity .extraction-indicator { width: 10px; height: 10px; border-width: 1.5px; }
+.distillation-activity[data-state="ready"] { color: var(--accent); }
+.distillation-activity[data-state="failed"] { color: var(--danger); }
 .extraction-indicator { display: inline-block; flex-shrink: 0; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; vertical-align: middle; }
 [data-state="running"] .extraction-indicator, .extraction-indicator.running { animation: extraction-turn 1.2s linear infinite; }
 [data-state="ready"] .extraction-indicator { border-color: var(--accent); background: #38634b20; }

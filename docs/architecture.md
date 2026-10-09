@@ -601,6 +601,8 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 主进程已有 DistillationService.tick 负责关闭面板后的收取；轮询在 finally 继续调度。服务端 extractDefinition 上报分批完成数及泛化阶段，service 仅在运行请求的内存 Map 中保存进度并随结束清理；客户端将进度投影到 Job。activity.ts 统一生成面板与桌宠状态，Job.seenStatus 持久保存已查看阶段，新状态可再次提醒。桌宠专用 IPC 校验 sender 后打开面板并定位 jobId；候选不自动抢占其他编辑界面。
 
+2026-10-09：主面板 `.distillation-activity` 使用单行、无背景、10px 字体与 10px 指示图标；`refreshActivity` 将完整 label/detail 同步到 title 和 aria-label，保留任务跳转及运行/就绪/失败状态，任务页的加载图标尺寸不变。
+
 workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的 USER_STATED 误标作保守降级为 INFERRED，并添加 blocking UNSUPPORTED_SOURCE；引用与摘录真实性检查仍保持拒绝，已有发布门槛要求处理确认问题。此修复不把工具文本提升为用户指令，不额外调用模型。
 
 ## 紧凑审阅与窗口调宽（2026-09-21）
