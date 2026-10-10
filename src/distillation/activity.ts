@@ -7,6 +7,7 @@ export type DistillationActivity = {
   label: string;
   detail: string;
   activeCount: number;
+  activeWorkIds: string[];
 };
 export const runningJob = (status: string): boolean => ["PREPARED", "SUBMITTED", "RUNNING"].includes(status);
 export function jobError(error?: string): string {
@@ -94,5 +95,6 @@ export function distillationActivity(jobs: Job[]): DistillationActivity | null {
     label: running ? progressLabel(job.progress) : ready ? "候选已就绪，等待审阅" : job.status === "NEEDS_SELECTION" ? "沉淀需要重新选择来源" : "沉淀未完成，点击处理",
     detail: running ? `${active.length} 项正在处理，可继续其他工作` : ready ? "点击查看候选内容" : jobError(job.error),
     activeCount: active.length,
+    activeWorkIds: [],
   };
 }

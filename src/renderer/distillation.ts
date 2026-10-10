@@ -14,6 +14,20 @@ import type { Job, Snapshot } from "../distillation/service.js";
 import type { DashboardView, WorkDetailView } from "../ui-contract.js";
 const api = (action: string, input: unknown = {}) =>
   window.workpet.distillation(action, input);
+let activeWorkIds = new Set<string>();
+
+export function syncWorkDistillationActions(workId: string): void {
+  const running = activeWorkIds.has(workId);
+  for (const button of document.querySelectorAll<HTMLButtonElement>(
+    '#work-detail button[data-action="distill"], #work-detail button[data-action="distill-files"]',
+  )) {
+    button.dataset.idleLabel ??= button.textContent ?? "沉淀";
+    button.disabled = running;
+    button.textContent = running ? "沉淀中" : button.dataset.idleLabel;
+    if (running) button.setAttribute("aria-label", "该工作已有沉淀任务正在运行");
+    else button.removeAttribute("aria-label");
+  }
+}
 const esc = (value: unknown) =>
   String(value).replace(
     /[&<>"']/g,
@@ -114,6 +128,9 @@ export function setupDistillation(
 async function refreshActivity(): Promise<void> {
   const activity: DistillationActivity | null = await api("activity");
   const button = document.querySelector<HTMLButtonElement>("#distillation-activity")!;
+  activeWorkIds = new Set(activity?.activeWorkIds ?? []);
+  const workId = document.querySelector<HTMLElement>("#work-detail")?.dataset.currentWorkId;
+  if (workId) syncWorkDistillationActions(workId);
   button.hidden = !activity;
   if (!activity) return;
   button.dataset.job = activity.jobId;

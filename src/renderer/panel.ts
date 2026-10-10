@@ -3,6 +3,7 @@ import { chooseExecutor } from "./executor-picker.js";
 import {
   setupDistillation,
   renderDefinitions,
+  syncWorkDistillationActions,
   workDefinitionAction,
 } from "./distillation.js";
 import { errorText } from "../distillation/activity.js";
@@ -182,6 +183,7 @@ function renderDetail(work: WorkDetailView | null): void {
       () => void performAction(work.id, button.dataset.action ?? "", button),
     );
   }
+  syncWorkDistillationActions(work.id);
 }
 
 function progressSection(work: WorkDetailView, field: "completedActions" | "pendingActions"): string {
@@ -254,6 +256,7 @@ async function performAction(workId: string, action: string, button: HTMLButtonE
   } finally {
     button.disabled = false;
     actionPending = false;
+    if (dashboard.selectedWork?.id === workId) syncWorkDistillationActions(workId);
   }
 }
 
