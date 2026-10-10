@@ -200,28 +200,25 @@ try {
   const resized = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).getBounds());
   assert.equal(resized.x, bounds.x);
   assert.equal(resized.width, bounds.width + 20);
-  await panel.locator('[data-review-action="optional"][data-issue="excel-scope"]').click();
-  assert.equal(await panel.locator('.dr-item[data-section="inputs"]').count(), 3, 'Conditional delivery creates an input');
-  await panel.locator('[data-review-action="undo"]').click();
-  assert.equal(await panel.locator('.dr-item[data-section="inputs"]').count(), 2, 'Undo removes the generated input');
-  await panel.locator('[data-review-action="exclude"][data-issue="excel-scope"]').click();
-  await panel.locator('.dr-removed').waitFor();
-  await panel.locator('[data-review-action="undo"]').click();
-  await panel.locator('[data-review-action="keep"][data-issue="excel-scope"]').click();
+  await panel.locator('[data-review-action="delete"][data-address="deliverables.excel"]').click();
+  await panel.locator('[data-review-action="history"][data-group="deliverables"]').waitFor();
+  assert.equal(await panel.locator('.dr-item[data-key="excel"]').count(),0);
+  await panel.locator('[data-review-action="history"][data-group="deliverables"]').click();
+  await panel.locator('[data-review-action="confirm"][data-address="deliverables.excel"]').click();
+  await panel.locator('[data-review-action="details"][data-address="methods.outline"]').click();
   await panel.locator('[data-review-action="reference"][data-issue="method-scope"]').click();
   await panel.locator('#edit-all').click();
   await panel.locator('#definition-name').fill('可复用竞品报告');
   const purpose = panel.locator('.dr-item[data-section="purpose"]');
   const originalPurpose = await purpose.locator('[data-text]').inputValue();
   await purpose.locator('[data-text]').fill(originalPurpose + '，便于复核');
-  await purpose.locator('[data-review-action="evidence"]').click();
+  await purpose.locator('details.dr-evidence > summary').click();
   await purpose.locator('[data-review-action="load-evidence"]').click();
   await purpose.locator('.dr-evidence pre').waitFor();
   const firstInput = panel.locator('.dr-item[data-section="inputs"]').first();
   await firstInput.locator('[data-review-action="toggle-property"]').click();
-  assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /选填/);
+  assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /可选/);
   await firstInput.locator('[data-review-action="toggle-property"]').click();
-  await firstInput.locator('[data-review-action="settings"]').click();
   await firstInput.locator('[data-property="valueType"]').selectOption('CHOICE');
   await firstInput.locator('[data-property="choices"]').fill('客户丙\n客户丁');
   await firstInput.locator('[data-property="choices"]').blur();
@@ -238,7 +235,7 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, materialPath);
   await material.locator('[data-review-action="material"]').click();
-  await panel.getByText(/^report-format\.txt(?: · (?:待暂存|已固定))?$/).waitFor();
+  await material.locator('.dr-text-read').filter({hasText:"report-format.txt"}).waitFor();
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
@@ -255,17 +252,15 @@ try {
   await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
-  assert.equal(await panel.getByText(/^report-format\.txt(?: · (?:待暂存|已固定))?$/).count(), 1);
+  assert.equal(await panel.locator('.dr-text-read').filter({hasText:"report-format.txt"}).count(), 1);
   await panel.screenshot({ path: join(output, '02a-review-edit.png') });
   await panel.locator('#edit-all').click();
-  assert.equal(await panel.locator('[data-text]').count(), 0);
+  assert.equal(await panel.locator('.dr-item[data-section="purpose"]').count(), 0);
   assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.scrollWidth <= el.clientWidth), true);
   await panel.screenshot({ path: join(output, '02b-review-ready.png') });
   // Current rule drafts require explicit adoption in addition to the fixture's custom questions.
   for (const section of ['deliverables', 'constraints', 'acceptanceCriteria']) {
-    const keep = panel.locator(`.dr-item[data-section="${section}"] [data-review-action="keep"]`);
-    assert.equal(await keep.count(), 1);
-    await keep.click();
+    await panel.locator(`.dr-item[data-section="${section}"] [data-review-action="confirm"]`).first().click();
   }
   await panel.locator('#publish-definition').click();
   await panel.locator("#use-definition").waitFor();
@@ -277,6 +272,8 @@ try {
   await panel.locator('[data-input="market"]').fill("欧洲市场");
   assert.equal(await panel.locator("#improvement-consent").isChecked(), improvementQA);
   await panel.locator("#create-defined-work").click();
+  await panel.getByRole('dialog',{name:'交接给执行者'}).getByRole('button',{name:'取消',exact:true}).click();
+  await panel.locator('#definition-dialog #window-back').click();
   await panel.locator("#definition-dialog").waitFor({ state: "hidden" });
   const dashboard = await panel.evaluate(() => window.workpet.getDashboard());
   workId = dashboard.selectedWorkId;
@@ -379,6 +376,7 @@ try {
   await panel.locator("#use-definition").click();
   assert.equal(await panel.locator("#improvement-consent").isChecked(), false);
   await panel.screenshot({ path: join(output, "09-opt-out-after-restart.png") });
+  await panel.locator('#window-back').click();
   await panel.locator('#window-back').click();
   // A source file deleted from disk must not block the direct distill action.
   const existingJobs = await panel.evaluate(

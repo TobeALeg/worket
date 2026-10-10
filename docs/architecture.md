@@ -14,7 +14,19 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 版本、修订、删除、固定资料恢复、来源审查和持续比较继续使用原服务；删除保护及不可变版本规则不变。没有数据库迁移、后台协议修改或新的自动提炼授权。只读原型仍独立保留。[本轮验证边界](acceptance/contract-lifecycle-ui.md) 区分真实渲染/API/SQLite 与模拟模型、执行者。
 
-### 沉淀审阅交互预览（2026-10-10，未接入）
+### 沉淀确认页接入（2026-10-10）
+
+`definition-review.ts` 仍以 `Draft.content / originalContent / issues / resolutions / materials` 驱动页面，四分区只合并展示，不合并数据集合。稳定地址为 section.key；相同 key 的方法与资料独立操作。Reference 文件名和完整路径来自待选绑定或固定副本的 originalPath，不展示内部固定副本路径或示例分类。
+
+确认本地条目时记录当前会话决定，并对关联的真实 Issue 生成 CHOOSE / REWRITE；删除修改实际 content、清理该资料角色的待选绑定并生成既有 DELETE。暂存调用 update(expectedRevision, content, issueResolutions, replaceResolutions, materialBindings)，发布沿用 publish 与 sourceReview；没有 IPC、协议或数据库迁移。会话勾选不伪装为新增后台状态；已有 Resolution 在重开时恢复确认状态，没有 Issue 的条目由最终版本发布统一确认。
+
+删除记录保存编辑后的条目、稳定顺序与实际选择路径，仅用于当前页恢复；重开可从 originalContent 对照恢复原始条目，已删除资料的绑定不伪造。资料恢复走现有 materialBindings 重新固定原件，固定副本被回收后不能当作仍存在。单层撤销包含内容、问题决定、选择路径及会话状态；成功暂存后清除撤销，避免撤销升级已固定资料。
+
+`definition-review-motion.ts` 用 Web Animations 的 finished 串行衔接 320ms 划线与 400ms 抽离，空间收拢延后 120ms；动画期间延后整页重绘，局部状态更新不替换动画节点。撤销、保存、恢复与离开清理旧动画，防止完成回调隐藏已恢复的条目。来源详情的原生展开状态在异步重绘时保留。官方 Tabler SVG 与 MIT 许可位于 renderer/review-icons。
+
+真实 Electron 回归覆盖动效中间帧、确认/删除/恢复、动画中撤销、资料删除暂存与重绑、重启固定版本、规范更新和正式发布；模型响应及原生文件选择为隔离测试夹具，API、SQLite 与材料固定流程使用真实实现。详见 [验收](acceptance/distillation-review-ui.md)。
+
+### 沉淀审阅交互预览（2026-10-10，以下为接入前历史）
 
 对话内预览独立使用候选快照与 `pending / confirmed / deleted` 决策映射；删除保留原条目，只投影为正文隐藏，分区展开状态控制删除记录是否可见。短暂的划线与折叠阶段仅在内存中运行，恢复、撤销与确认保存会取消未完成动效，防止旧计时器隐藏已恢复条目。预览状态版本 8 兼容版本 7 的已有选择，持久化决定、条文编辑与展开状态；完成全部选择或确认时收起删除记录。未调用正式 `update / publish`，没有 IPC、数据库或客户端产物变化。
 

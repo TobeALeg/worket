@@ -1,3 +1,4 @@
+import {openReviewDetails} from './lib/review-controls.mjs';
 // New synthetic semantic trials through real Electron, HTTP, model, review and immutable versions.
 // Expected behavior is evaluated locally only; it is never included in model messages.
 import assert from 'node:assert/strict';
@@ -82,7 +83,8 @@ for (const trial of selected) {
     await panel.locator('#evolution-summary').waitFor();
     const contextRule = ['constraints', 'deliverables', 'methods'].flatMap(section => candidate.content[section].map(item => ({ section, item }))).find(({ item }) => item.basis.refs?.some(ref => ref.role === 'CONTEXT'));
     if (contextRule) {
-      await panel.locator(`[data-review-action="evidence"][data-address="${contextRule.section}.${contextRule.item.key}"]`).click();
+      await openReviewDetails(panel,`${contextRule.section}.${contextRule.item.key}`);
+      await panel.locator(`.dr-item[data-section="${contextRule.section}"][data-key="${contextRule.item.key}"] details.dr-evidence > summary`).click();
       assert.match(await panel.locator('body').innerText(), /背景引用/);
       assert.match(await panel.locator('body').innerText(), /直接依据/);
     }

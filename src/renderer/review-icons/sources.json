@@ -1,0 +1,37 @@
+[
+  {
+    "file": "icons-outline-circle-check.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/circle-check.svg",
+    "sha256": "c4cb2e026be5f4c217c3ff9b0ccefb9a26b7a135bc82eef28a8bead0cc02a958"
+  },
+  {
+    "file": "icons-outline-circle-x.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/circle-x.svg",
+    "sha256": "aaa9501a0ad80eb2620a1c6a01203425f3f0021b68e4788199b906ccfe82471d"
+  },
+  {
+    "file": "icons-filled-circle-check.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/filled/circle-check.svg",
+    "sha256": "c97f7118e8eea509624430c767b1dfdfdb3b63b08f22b31a1957d5a350e6afca"
+  },
+  {
+    "file": "icons-filled-circle-x.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/filled/circle-x.svg",
+    "sha256": "28dab774923eaee40e5ec9692bc558a43b949e98217d32cc5c09a1f178d14df0"
+  },
+  {
+    "file": "icons-filled-circle.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/filled/circle.svg",
+    "sha256": "c802ae8a2aa74414fd86d3f85ab70991a0ac56f6aff66ece2db9b90233ce78cb"
+  },
+  {
+    "file": "LICENSE",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/LICENSE",
+    "sha256": "b740a1d46122672da62833e97f7e7c8a13fa85cbc7445b584b297cc00dde93db"
+  },
+  {
+    "file": "icons-outline-chevron-down.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/chevron-down.svg",
+    "sha256": "5a2e5c2a155ce06264a3f7299073ed636142dfd0b324b747387d9cfbf9fb5e3e"
+  }
+]

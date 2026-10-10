@@ -26,17 +26,61 @@ async function launch(){
 }
 const open=()=>panel.evaluate(async id=>(await import('./distillation.js')).openJob(id),job.id);
 async function materialControl(role){
- const selector=`[data-review-action="material"][data-address="materialRoles.${role}"]`;
- const group=panel.locator(`details[data-review-group]:has(${selector})`);
- if(await group.count() && await group.getAttribute('open')===null)await group.locator('summary').click();
- return panel.locator(selector);
+ const address=`materialRoles.${role}`;
+ const body=panel.locator(`[data-review-action="details"][data-address="${address}"]`);
+ if(await body.getAttribute('aria-expanded')==='false') await body.click();
+ return panel.locator(`[data-review-action="material"][data-address="${address}"]`);
 }
 async function select(role,path){
  const control=await materialControl(role);
  await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},path);await control.click();
 }
 try{
- await launch();await open();await select('builder',skill);await select('template',template);
+ await launch();await open();
+ assert.deepEqual(await panel.locator('.dr-group h3').allTextContents(),['Input输入','Output输出','Reference Documents参考文档','Constraints约束']);
+ assert.equal(await panel.locator('#dr-count,.dr-source,.dr-mini').count(),0);
+ const shared='materialRoles.template',method='methods.builder';
+ await select('builder',skill);await select('template',template);
+ const refBody=panel.locator(`[data-review-action="details"][data-address="${shared}"]`);
+ assert.equal(await refBody.locator('.dr-text-read').innerText(),'FORMAT.md');
+ assert.equal(await panel.locator('.dr-item[data-section="materialRoles"][data-key="template"] .dr-path').innerText(),template);
+ await refBody.click();
+ const deleteButton=panel.locator(`[data-review-action="delete"][data-address="${shared}"]`);
+ // Record actual intermediate frames. An asynchronous source check also runs in this page.
+ await panel.evaluate(()=>{
+  const row=document.querySelector('.dr-item[data-section="materialRoles"][data-key="template"]');
+  const samples=[];window.__reviewFrames=samples;
+  row.querySelector('[data-review-action="delete"]').addEventListener('click',()=>{
+   const start=performance.now();function frame(){
+    const inner=row.querySelector('.dr-item-inner'),style=getComputedStyle(inner);
+    samples.push({ms:performance.now()-start,connected:row.isConnected,hidden:row.hidden,height:row.getBoundingClientRect().height,opacity:Number(style.opacity),transform:style.transform});
+    if(performance.now()-start<1000)requestAnimationFrame(frame);
+   }requestAnimationFrame(frame);
+  },{once:true});
+ });
+ await deleteButton.click();
+ await panel.locator('[data-review-action="history"][data-group="materialRoles"]').waitFor();
+ const frames=await panel.evaluate(()=>window.__reviewFrames);
+ assert.ok(frames.some(f=>f.ms<300&&f.connected&&!f.hidden&&f.height>20),'row remains mounted during strike');
+ assert.ok(frames.some(f=>f.ms>320&&f.ms<650&&f.connected&&f.opacity>0&&f.opacity<1&&f.transform!=='none'),'withdrawal must have visible intermediate motion');
+ report.checks.deletionMotion={mark:320,withdraw:400,frames};
+ assert.equal(await refBody.count(),0,'default preview excludes deleted references');
+ await panel.locator('[data-review-action="history"][data-group="materialRoles"]').click();
+ assert.equal(await deleteButton.getAttribute('aria-pressed'),'true');
+ await panel.locator(`[data-review-action="confirm"][data-address="${shared}"]`).click();
+ assert.equal(await panel.locator('[data-review-action="history"][data-group="materialRoles"]').count(),0);
+ assert.equal(await panel.locator(`[data-review-action="confirm"][data-address="${shared}"]`).getAttribute('aria-pressed'),'true');
+ // Undo while the line is still drawing must not be hidden later by its old promise.
+ await deleteButton.click();await panel.locator('[data-review-action="undo"]').click();
+ await panel.waitForTimeout(800);assert.equal(await refBody.count(),1);
+ report.checks.deleteRestoreAndInFlightUndo=true;
+ await panel.locator(`[data-review-action="confirm"][data-address="${method}"]`).click();
+ await panel.locator(`[data-review-action="delete"][data-address="${method}"]`).click();
+ await panel.locator('[data-review-action="history"][data-group="constraints"]').waitFor();
+ await panel.locator('[data-review-action="history"][data-group="constraints"]').click();
+ await panel.locator(`[data-review-action="confirm"][data-address="${method}"]`).click();
+ report.checks.sameKeySectionIsolation=true;
+
  if(process.env.WORKET_SAME_KEY_REVIEW==='1'){
   await panel.locator('#edit-all').click();
   await panel.locator('[data-review-action="delete"][data-address="methods.builder"]').click();
@@ -69,13 +113,28 @@ try{
   assert.equal(readFileSync(join(dirname(saved.materials.find(m=>m.bundle).path),'references/format.md'),'utf8'),'固定格式 v1');
   report.checks.savedMaterialVersionNotChangedByUndo=true;
  }
+ if(process.env.WORKET_SAVE_UNDO==='1')writeFileSync(template,'本轮固定模板 v1');
+ // Deleting a bound reference uses the real update interface; restoration repins its real original path.
+ await panel.locator(`[data-review-action="delete"][data-address="${shared}"]`).click();
+ await panel.locator('[data-review-action="history"][data-group="materialRoles"]').waitFor();
+ await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
+ const withoutReference=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);
+ assert.equal(withoutReference.content.materialRoles.some(role=>role.key==='template'),false);
+ assert.equal(withoutReference.materials.some(material=>material.role==='template'),false);
+ await panel.locator('[data-review-action="history"][data-group="materialRoles"]').click();
+ await panel.locator(`[data-review-action="confirm"][data-address="${shared}"]`).click();
+ await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
+ const restoredReference=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);
+ assert.equal(restoredReference.materials.find(material=>material.role==='template').originalPath,template);
+ report.checks.referenceDeletionAndRepinning=true;
  await panel.locator('#edit-all').click();await panel.locator('#definition-name').fill('');await panel.locator('#window-back').click();await panel.locator('#definition-error').filter({hasText:'请填写工作名称'}).waitFor();assert.equal(await panel.locator('#definition-dialog').isVisible(),true);assert.equal(await panel.locator('.dr-controls').evaluate(el=>el.disabled),false);
  await panel.locator('#definition-name').fill('返回自动暂存验收');await panel.locator('#window-back').click();await open();assert.equal(await panel.locator('#definition-name').inputValue(),'返回自动暂存验收');assert.equal(await panel.locator('#definition-dialog .brand-actions > .feedback-entry').count(),1);assert.equal(await panel.locator('#definition-dialog #close-panel').count(),1);
  await panel.locator('#edit-all').click();await panel.locator('#definition-name').fill('菜单跳转暂存验收');await panel.locator('#app-menu summary').click();await panel.locator('#service-settings').click();await panel.getByRole('heading',{name:'Worket 服务',exact:true}).waitFor();await panel.locator('#window-back').click();await open();assert.equal(await panel.locator('#definition-name').inputValue(),'菜单跳转暂存验收');report.checks.returnAndMenuPreserveDraft=true;
+ await materialControl('builder');await materialControl('template');
  assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true,includeHidden:true}).count(),2,'saved draft must retain both selected materials after reopen');
  report.checks.reopenRetainsSelections=true;
  await app.close();app=undefined;writeFileSync(template,'后来修改的模板 v2');writeFileSync(join(skill,'references/format.md'),'后来修改的技能 v2');
- await launch();await open();assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true,includeHidden:true}).count(),2);
+ await launch();await open();await materialControl('builder');await materialControl('template');assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true,includeHidden:true}).count(),2);
  await panel.screenshot({path:join(output,'restored-draft.png')});
  unlinkSync(template);rmSync(skill,{recursive:true});
  await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
