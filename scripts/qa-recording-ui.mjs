@@ -30,6 +30,7 @@ await page.addInitScript(() => {
     listExecutors: async () => [{ id: 'fixture', name: 'Fixture' }],
     listConversationHistory: async () => ({ threads: [thread], nextCursor: null }),
     consumeSourceSelection: async () => null, onPanelShown() {}, setPetMousePassthrough() {},
+    onFeedbackCollapse() { return () => {}; }, feedback: async () => null,
     distillation: async action => action === 'recordingNotice' ? { required: !localStorage.getItem('noticeAccepted') && !localStorage.getItem('optOut') } : action === 'improvementPreference' ? { enabled: true } : [],
   };
 });

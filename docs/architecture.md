@@ -1,5 +1,17 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 问题反馈与诊断模块（2026-10-11，选择性回迁）
+
+以 Windows 适配后的 `main`（`a8d1f06`）为基线，迁移 `codex/problem-reporting` 中独立功能提交 `144f7f2` 的报告协议、诊断、客户端、后台与单页反馈 UI，不引入契约业务变更或分支后续公共导航重构。平台检测、Win32 Helper、命名管道、托盘、凭据读取保护及双平台更新逻辑保持主线实现。
+
+`contracts/problem-report.ts` 集中定义白名单事件、图片/报告校验、hash、容量与留存；`diagnostics/recorder.ts` 用 AsyncLocalStorage 在交接、准备和服务请求间传递 traceId，按天落盘、轮转、固定故障现场，写入失败不阻塞原业务。`problem-reports/store.ts` 独立保存草稿和队列，以临时文件、可写句柄 fsync、rename 提交，避免只读句柄在 Windows 上刷盘失败；不修改 Work Core SQLite。POSIX 使用 0700/0600，Windows 依赖用户数据目录的账户 ACL，不能把 POSIX mode 视为 Windows ACL 或加密保证。
+
+数据流：面板主动操作 → 受信任 IPC → 本地草稿；确认发送 → 冻结报告/授权及目的地身份 → 持久队列 → 能力检查 → `/v1/problem-reports` → 完整校验与 SQLite 接收 → hash 回执。后台使用独立 `problem-reports.sqlite`，不要求模型已配置、不扣模型额度。旧后台缺少 `problemReportSchemaVersions:[1]` 时停止上传并保留可导出报告。上传之前/连接之后检查身份；重试保持原包，取消使用删除墓碑防止迟到请求复活。
+
+发送状态：`WAITING → SENDING → RECEIVED`；可重试失败回 `WAITING`，永久失败/身份变化转 `PAUSED`，取消/到期/删除结束发送。处理状态另为待排查、排查中、待补充、已解决。管理员接口沿用 loopback、会话与 CSRF 保护；公开接口只读本人报告和公开说明，不包含内部备注。后台请求关联只查同一主体元数据，并过滤原始错误文本。
+
+截图只响应用户主动操作，PNG/JPEG 解码后重编码 PNG；文字和画面仍是用户提交材料，不宣称自动脱敏。日志不包含工作库、Source Archive、路径、正文、令牌或堆栈。草稿/未发正文 7 天、日志 7 天/20 MiB、队列 50 MiB、后台报告 30 天，参数共用协议常量。线上发布还需升级后台、检查反向代理请求体上限、备份留存及删除重放；本轮仅本机隔离验收。模块职责和验证见 [设计](specs/problem-reporting.md)、[主线验收](acceptance/problem-reporting-main-2026-10-11.md)、[后台运行约定](../server/README.md)。
+
 ## Windows 平台层回迁（2026-10-11）
 
 主线选择性回迁 Windows v0.1.3 的平台代码，不整体合并实验分支。`createForegroundApplicationDetector` 选择 Cocoa / Win32 Helper，打包助手放在外置 resources；Win32 只读取进程身份和窗口标题，Worket 面板前台时按窗口 Z-order 查找后方受支持应用。无法确认会话时沿用原有保守匹配/手工选择，不读取屏幕内容。

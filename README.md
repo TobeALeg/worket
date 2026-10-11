@@ -31,6 +31,8 @@ Worket 在本地保存记录与来源线索。开始记录后，所选工作的�
 
 点击“沉淀”直接固定当前记录快照并开始后台处理，完成后审阅候选再保存。需要分析附件正文时，通过工作详情三点菜单中的“含附件沉淀”选择。参与改进沿用“应用菜单 → Worket 服务 → 改进数据”的持久设置。
 
+问题反馈通过面板右上角图标进入，支持描述、截图、静默持久草稿及按次选择附上诊断日志。只有主动发送才上传冻结报告；本机日志不采集聊天/文件正文或凭据，所选文字与截图须自行检查。私有后台可查看与处理，用户只看到公开说明并可删除。主线已合入源码并在 Windows 本机隔离验收，线上后台尚未因本次合入而升级；详见 [设计边界](docs/specs/problem-reporting.md) 和 [验收记录](docs/acceptance/problem-reporting-main-2026-10-11.md)。
+
 ## 打包
 
 ```bash
@@ -48,6 +50,7 @@ npm test
 npm run typecheck
 npm run qa:current-context
 npm run qa:package
+npm run qa:problem-reporting
 npm run qa:desktop-roundtrip:list
 ```
 
@@ -66,6 +69,8 @@ npm run qa:desktop-roundtrip
 ```
 
 脚本会使用临时 Worket 数据库，并等待用户在 Codex 新增一轮对话。随后它通过 Deep Link 新建并提交 WorkBuddy 接力任务；成功条件同时要求真实桌面 Conversation ID、同一 Binding/ExecutionEpisode 内成对的 `get_work_context` 成功审计、MCP 返回的随机 proof token 出现在可见回复中，以及 WorkBuddy 用户 Prompt 和回复经只读接口写回同一 WorkInstance。WorkBuddy 页面可能短暂显示空白，验收器不会据此判定成功。旧 CLI 验收已移除：它产生的 CLI 会话不能代表当前桌面会话读取链。
+
+`qa:problem-reporting` 在已完成本机平台打包后，用临时数据与本机 HTTP 服务验证反馈闭环；需要 Node.js 24（SQLite 后台），不发送真实工作材料。脚本可选择 macOS / Windows 产物路径，本轮只在 Windows 实机运行。
 
 ## 数据边界
 

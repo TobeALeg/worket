@@ -66,6 +66,7 @@ await page.addInitScript(() => {
     cancelRecording: async (id, confirmation) => { if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
     copyWorkPackage: async () => {}, exportWorkPackage: async () => '/tmp/fixture.json',
     consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, closePanel() {},
+    onFeedbackCollapse() { return () => {}; }, feedback: async () => null,
     getWorketServiceStatus: async () => ({ automatic: true, url: 'https://worket.example.com' }),
     configureWorketService: async () => {},
     distillation: async action => {

@@ -24,6 +24,7 @@
     "eval:extraction:adjudicate": "node evals/extraction/adjudication-server.mjs",
     "eval:extraction:test": "node --test evals/extraction/test/*.test.mjs",
     "qa:package": "node scripts/qa-electron.mjs --packaged",
+    "qa:problem-reporting": "node scripts/qa-problem-reporting.mjs --packaged",
     "qa:contract": "npm run build && node scripts/qa-contract-baseline.mjs",
     "qa:recording-scale": "npm run build && node scripts/qa-recording-scale.mjs",
     "qa:recording-view": "npm run build && WORKET_SOURCE_ABSENCE=1 WORKET_RECORDING_VIEW=1 node scripts/qa-codex-history.mjs",

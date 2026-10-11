@@ -1,3 +1,4 @@
+import { reportRoute } from "./problem-reports.mjs";
 import { createServer } from "node:http";
 import {
   randomUUID,
@@ -217,6 +218,7 @@ export function createAIService(config) {
       if (req.method === "GET" && req.url === "/v1/capabilities") {
         res.end(
           JSON.stringify({
+            problemReportSchemaVersions: config.reports ? [1] : [],
             schemaVersions: [1],
             ruleSchemaVersions: [1],
             evolutionSchemaVersions: [1],
@@ -236,6 +238,11 @@ export function createAIService(config) {
           }),
         );
         return;
+      }
+      if (req.url?.startsWith("/v1/problem-reports")) {
+        const token=req.headers.authorization?.replace(/^Bearer /, "");
+        const claims=JSON.parse(Buffer.from(token.split(".")[1], "base64url"));
+        if (await reportRoute(req,res,config.reports,subject,claims.sub,()=>authenticate(token,config))) return;
       }
       if (req.url?.startsWith("/v1/improvement-samples")) {
         ensure(config.improvement, "NOT_FOUND");
@@ -376,7 +383,7 @@ export function createAIService(config) {
         ? 401
         : code === "NOT_FOUND"
           ? 404
-          : ["QUOTA_EXCEEDED", "CONCURRENCY_LIMIT"].includes(code)
+          : ["QUOTA_EXCEEDED", "CONCURRENCY_LIMIT", "REPORT_RATE_LIMITED"].includes(code)
             ? 429
             : code === "IDEMPOTENCY_CONFLICT"
               ? 409
@@ -392,7 +399,7 @@ export function createAIService(config) {
   });
   server.requestTimeout = 30000;
   server.headersTimeout = 10000;
-  const cleanup = setInterval(() => { expire(); config.improvement?.expire(); }, Math.min(limits.resultTtlMs, 60_000));
+  const cleanup = setInterval(() => { expire(); config.improvement?.expire(); config.reports?.expire(); }, Math.min(limits.resultTtlMs, 60_000));
   cleanup.unref();
   return {
     server,
@@ -446,6 +453,7 @@ export function createAIService(config) {
         await new Promise((resolve) => setTimeout(resolve, 10));
       db.close();
       config.improvement?.close();
+      config.reports?.close();
     },
   };
 }

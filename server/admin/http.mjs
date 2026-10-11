@@ -1,3 +1,4 @@
+import { DIAGNOSTIC_CODES } from "../../dist/contracts/problem-report.js";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { ModelProvider } from "../workflow.mjs";
@@ -5,6 +6,7 @@ import { ensure, ContractError } from "../../dist/contracts/definition.js";
 const assets = new Map([
   ["/admin/", ["index.html", "text/html; charset=utf-8"]],
   ["/admin/admin.css", ["admin.css", "text/css; charset=utf-8"]],
+  ["/admin/reports.js", ["reports.js", "text/javascript; charset=utf-8"]],
   ["/admin/admin.js", ["admin.js", "text/javascript; charset=utf-8"]],
 ]);
 const digest = (value) => createHash("sha256").update(value).digest("hex");
@@ -34,6 +36,7 @@ const reply = (res, value, status = 200) => {
 export function createAdminHandler({
   store,
   improvement,
+  reports,
   getRuntime,
   providerFactory = (config) => new ModelProvider(config),
 }) {
@@ -178,6 +181,25 @@ export function createAdminHandler({
         if (req.method === "GET") reply(res, improvement.get(sample[1]));
         else if (req.method === "DELETE") reply(res, improvement.delete(sample[1]));
         else if (req.method === "PUT") reply(res, improvement.review(sample[1], await body(req)));
+        else throw new ContractError("NOT_FOUND");
+        return true;
+      }
+      if (path === "/admin/api/problem-reports" && req.method === "GET") {
+        reply(res,{items:reports.list()}); return true;
+      }
+      const problem=path.match(/^\/admin\/api\/problem-reports\/([a-zA-Z0-9-]{1,100})\/([a-f0-9-]{36})(?:\/images\/([a-f0-9-]{36}))?$/);
+      if (problem) {
+        if (problem[3] && req.method === "GET") {
+          res.setHeader("Content-Type","image/png"); res.end(reports.image(problem[1],problem[2],problem[3]));
+        } else if (!problem[3] && req.method === "GET") {
+          const report=reports.get(problem[1],problem[2],true);
+          const ids=[...new Set(report.report.diagnostics?.events.map(event=>event.requestId).filter(Boolean) ?? [])];
+          const statement=getRuntime().db.prepare("SELECT id,status,created,updated,calls,error,operation FROM requests WHERE subject=? AND id=?");
+          const requests=ids.map(id=>statement.get(problem[1],id)).filter(Boolean).map(row=>({...row,error:row.error ? (DIAGNOSTIC_CODES.includes(row.error) ? row.error : "SERVICE_REQUEST_FAILED") : null}));
+          reply(res,{...report,requests});
+        }
+        else if (!problem[3] && req.method === "PUT") reply(res,reports.review(problem[1],problem[2],await body(req)));
+        else if (!problem[3] && req.method === "DELETE") reply(res,reports.delete(problem[1],problem[2]));
         else throw new ContractError("NOT_FOUND");
         return true;
       }

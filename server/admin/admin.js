@@ -1,3 +1,4 @@
+import { setupReportInbox } from "./reports.js";
 const $ = (id) => document.getElementById(id);
 let csrf = "",
   configuration = null,
@@ -47,12 +48,13 @@ function bind(id, event, action) {
     }
   });
 }
+const reportsInbox=setupReportInbox(api,message);
 function showTab(tab) {
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
     button.setAttribute("aria-pressed", String(button.dataset.tab === tab));
   });
-  for (const name of ["model", "clients", "activity", "samples"])
+  for (const name of ["model", "clients", "activity", "samples", "reports"])
     $(`${name}-panel`).hidden = name !== tab;
 }
 async function session() {
@@ -81,6 +83,7 @@ async function session() {
       : "首次设置";
   if (state.authenticated) await load();
   else {
+    reportsInbox.clear();
     configuration = null;
     $("samples-list").replaceChildren();
     $("sample-detail").replaceChildren();
@@ -328,6 +331,7 @@ document.querySelectorAll("[data-tab]").forEach(
   (button) =>
     (button.onclick = () => {
       showTab(button.dataset.tab);
+      if (button.dataset.tab === "reports") void reportsInbox.refresh().catch(error => message(error.message, true));
       if (button.dataset.tab === "samples") void samples().catch(error => message(error.message, true));
       if (button.dataset.tab === "activity")
         void activity().catch((error) => message(error.message, true));

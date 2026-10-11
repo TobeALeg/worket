@@ -6,12 +6,13 @@
     <title>Worket</title>
     <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="panel.css" />
+    <link rel="stylesheet" href="problem-feedback.css" />
     <link rel="stylesheet" href="definition-review.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="brand-row"><h1 class="worket-brand"><span class="worket-logo" aria-hidden="true">•‿•</span><strong>Worket</strong></h1>
-      <div class="brand-actions"><details class="secondary-menu" id="app-menu"><summary aria-label="应用菜单" title="应用菜单"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg></summary><div class="menu-items"><button id="archive-records" data-filter="ARCHIVED">归档记录</button><button id="service-settings">Worket 服务</button></div></details><button id="close-panel" class="icon-button" aria-label="关闭">×</button></div></div>
+      <div class="brand-actions"><button class="icon-button feedback-entry" data-feedback-open aria-label="反馈问题" title="反馈问题"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a7 7 0 0 1-7 7H8l-5 3V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3z"/><path d="M11.5 7v4m0 3h.01"/></svg></button><details class="secondary-menu" id="app-menu"><summary aria-label="应用菜单" title="应用菜单"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg></summary><div class="menu-items"><button id="archive-records" data-filter="ARCHIVED">归档记录</button><button id="service-settings">Worket 服务</button></div></details><button id="close-panel" class="icon-button" aria-label="关闭">×</button></div></div>
       <section class="toolbar">
         <div class="filters" role="tablist" aria-label="工作阶段">
           <button id="tab-recent" class="filter" role="tab" aria-selected="false" aria-controls="sources-panel" tabindex="-1" data-filter="RECENT">最近活动</button>
@@ -40,7 +41,7 @@
 
     <dialog id="history-dialog" class="page-dialog" aria-labelledby="history-title">
       <div class="dialog-shell">
-        <header class="window-bar"><span class="worket-brand"><span class="worket-logo" aria-hidden="true">•‿•</span><strong>Worket</strong></span><button id="history-close" class="icon-button" aria-label="关闭历史聊天">×</button></header>
+        <header class="window-bar"><span class="worket-brand"><span class="worket-logo" aria-hidden="true">•‿•</span><strong>Worket</strong></span><button class="icon-button feedback-entry" data-feedback-open aria-label="反馈问题" title="反馈问题"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a7 7 0 0 1-7 7H8l-5 3V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3z"/><path d="M11.5 7v4m0 3h.01"/></svg></button><button id="history-close" class="icon-button" aria-label="关闭历史聊天">×</button></header>
         <div class="dialog-card">
           <h2 id="history-title">历史聊天</h2>
           <label class="field">执行者<select id="history-executor"></select></label>

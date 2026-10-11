@@ -164,6 +164,8 @@ export interface CreateWorkFromMessageRequest {
 }
 
 export interface WorkPetApi {
+  feedback(action: string, input?: unknown): Promise<any>;
+  onFeedbackCollapse(callback: () => void): () => void;
   resizePanelRight(phase: "start" | "move" | "end", screenX: number): void;
   openArtifact(workId: string, itemId: string): Promise<void>;
   distillation(action: string, input?: unknown): Promise<any>;
