@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createCodexExecutor } from "../../dist/adapters/codex/executor.js";
 
 import {
   resolveThreadFromRecentActivity,
@@ -18,6 +19,25 @@ test("没有窗口标题时只在最新 Codex 任务足够新且不含歧义时�
     threads[0],
     { ...threads[1], updatedAt: "2026-09-03T03:59:58.000Z" }
   ], new Date("2026-09-03T04:01:00.000Z")), null);
+});
+
+test("Windows Codex 的通用窗口标题沿用无标题容器的严格活动判定", async () => {
+  const now = Date.now();
+  const threads = [
+    { id: "active", title: "Windows 当前任务", preview: "", cwd: "C:\\work", updatedAt: new Date(now).toISOString(), status: "working" },
+    { id: "older", title: "旧任务", preview: "", cwd: "C:\\work", updatedAt: new Date(now - 60_000).toISOString(), status: "completed" },
+  ];
+  const source = {
+    async listThreadPage() { return { threads, nextCursor: null }; },
+    async readThread(): Promise<never> { throw new Error("not used"); },
+    close() {},
+  };
+  const adapter = createCodexExecutor({ codex: source });
+  for (const windowTitle of ["ChatGPT", "Codex"]) {
+    assert.equal((await adapter.resolveCurrent({ bundleId: "Codex.exe", name: "Codex", windowTitle }))?.id, "active");
+  }
+  threads[1] = { ...threads[1], status: "working", updatedAt: threads[0].updatedAt };
+  assert.equal(await adapter.resolveCurrent({ bundleId: "Codex.exe", name: "Codex", windowTitle: "Codex" }), null);
 });
 
 test("Codex 只在窗口标题与唯一任务标题相符时识别当前聊天，不以最近任务猜测", () => {

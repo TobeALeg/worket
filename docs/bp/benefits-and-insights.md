@@ -13,6 +13,35 @@
 | B007 | 2026-09-21 | 把抽取质量变成可复现、可审计的产品工程过程 | runner 与合成 E0 已完成；真实用户质量和业务收益待验证 |
 | B008 | 2026-09-24 | 让桌宠用自身变化传达产品状态 | 认可的拟物形象与啾啾状态灯已接入客户端，真实窗口验收见本条 |
 | B009 | 2026-09-29 | 用工作契约 UI 表达通用工作约定的沉淀 | 用户提出郑重表彰微小工作的情绪价值；白纸、衬线体、钢印和红色正式标记预览待确认 |
+| B013 | 2026-10-11 | 用统一工作模型承载不同操作系统的桌面接入 | 主线已迁移 Windows 基础适配并本地验收；真实双执行者闭环与 macOS 回归待验证，未发布 |
+
+## B013 — 用统一工作模型承载不同操作系统的桌面接入
+
+日期：2026-10-11。讨论起因与用户观点：用户指出当前实现基于 macOS，询问增加 Windows 版本的改动范围、工程量与复杂度；本轮为可行性评估，尚未授权实施双平台功能。
+
+Worket 当前主线依据（核实提交 `847df15`）：[工作核心](../../src/core/work-core.ts)、[执行者接口](../../src/executors/types.ts)、[前台识别接口](../../src/adapters/foreground/context.ts) 已将工作数据、执行者接入和部分桌面能力分开，界面为 Electron 渲染器，后台通过既有接口提供分析能力。但主线 [构建脚本](../../scripts/copy-static.mjs) 无条件调用 `xcrun`，前台识别仅有 macOS Helper；Codex 程序查找、WorkBuddy socket、应用启动、Dock 避让、打包与更新均包含 macOS 假设。上述观察只适用于主线，不能据此断言项目从未实现 Windows 版本。
+
+2026-10-11 全分支核实与评估修正：远端 `experiments/pi-bench-calibration-2026-09-13` 的 `621f12c` 已包含 Windows x64 v0.1.3 适配，覆盖 Win32 Helper、Codex 查找、WorkBuddy 命名管道、托盘、任务栏避让、打包和更新。分支内 [Windows 验收记录](https://github.com/TobeALeg/worket/blob/experiments/pi-bench-calibration-2026-09-13/docs/acceptance/worket-windows-v0.1.3.md) 记录 122 项测试、真实打包启动与 Codex 历史导入通过；WorkBuddy 真实双向交接、DPAPI、高 DPI/多屏与休眠恢复等仍未完成。本轮核实的是已有源码和历史验收记录，没有重新运行这些验收。
+
+最新开发分支为 `codex/problem-reporting`，截至 `67f8073`（2026-10-11）完整包含主线并增加 51 个提交，已有契约全流程、新审阅页和问题反馈实现。Windows 分支未包含这些近期功能；Git merge-tree 预检两分支存在 9 个冲突文件。助手工程建议：以最新开发分支为基础，选择性迁移旧 Windows 适配并核对后续业务变化，而非将实验目录和旧版发布状态全部直接并入。此为整合建议，未切换、合并、安装或发布；上一轮从零适配的工程量估计需按已有代码复用程度重新估算。条目由本机新建的 B010 调整为 B013，以避开最新开发分支已经使用的 B010/B011/B012，已有远端条目未变更。
+
+已核实的外部事实（2026-10-11）：Electron [safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage) 在 macOS 使用 Keychain，在 Windows 使用 DPAPI；现有凭据接口有复用基础。Node.js [本地 IPC](https://nodejs.org/api/net.html#ipc-support) 在 Windows 使用命名管道，在其他系统使用 Unix domain socket，当前 WorkBuddy `.sock` 通道需要两端共同适配。Windows 提供 [GetForegroundWindow](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getforegroundwindow) 获取前台窗口；这不证明具体执行者能准确解析当前会话或提供完整历史。本轮没有竞品事实比较。
+
+助手提出的设计判断：沿用同一代码库、工作身份和工作定义，把前台应用识别、程序发现、应用启动、本地 IPC 和桌面边缘策略集中在平台适配层，有机会减少双平台维护中的业务语义分叉，并覆盖使用不同桌面系统的用户。建议先整合并验证最新 macOS arm64 与 Windows x64、优先打通 Codex 和 WorkBuddy 的记录—沉淀—复用—交接闭环，再扩大执行者与系统范围。已有旧版平台代码不等于最新业务功能已双平台验收，潜在用户收益仍待验证。
+
+可展示场景：分别在 Mac 与 Windows 上读取真实会话、生成和确认相同结构的工作定义、发起新工作并交给可用执行者，展示两端一致的工作语义。此场景尚待实现；双平台安装不自动意味着两台设备同步同一工作，恢复用户身份也不等于迁移本地数据库和资料。
+
+待验证事项：各执行者 Windows 版本的安装位置、配置路径、历史格式、Hook/MCP 与 Deep Link 行为；前台会话准确性；任务栏、混合 DPI、多屏和透明窗口交互；含中文与空格的路径及文件引用；凭据重启读取；Windows 打包、更新和 macOS 回归。跨设备同步与资料迁移需独立设计和验证。
+
+BP 候选表达（设计方向）：**让不同桌面系统上的用户使用同一套工作约定与交接方式。** 不得将此写成已交付的双平台能力或跨设备工作连续性。
+
+### 2026-10-11 用户授权后的主线迁移
+
+用户观点：明确只迁移既有 Windows 分支的适配部分到 `main`，其他方向留在本地测试；此前建议以最新开发分支为基础不再作为本轮方案。
+
+Worket 当前依据：已以 `847df15` 为基线，选择性迁移 `621f12c` 的 Win32 Helper、Codex 发现、WorkBuddy IPC、托盘、窗口边缘、打包与更新代码，保留主线 v0.1.8 的业务实现和当前桌宠。Windows 本机已通过自动测试、真实桌面包与合成更新验收，真实 Codex 列表及完整历史可只读获取。依据：[平台实现](../../src/adapters/foreground/context.ts)、[打包入口](../../scripts/package-desktop.mjs)、[本次验收](../acceptance/windows-main-2026-10-11.md)。没有合并实验目录/最新功能分支，没有发布 Release 或部署后台。
+
+助手判断与潜在用户价值：本次迁移说明共享核心可保留近期业务规则，只针对操作系统边界改动；可减少为 Windows 维护一套过时工作模型的风险。这是代码复用层面的依据，不是节省维护成本、效率或留存的实测结论。可展示同一主线在 Windows 运行原有桌宠与面板、读取真实 Codex 历史；跨系统完整复用/交接、WorkBuddy 真实 Windows 接入、macOS 本轮回归和跨设备连续性仍待验证。BP 表述须区分“主线支持 Windows 构建并本地通过基础验收”与“正式发布且所有执行者功能等价”。
 
 ## B009 — 用成就界面表达通用工作契约的沉淀
 

@@ -43,7 +43,7 @@ test('same-name versions and case collisions are rejected; identical same-name r
 test('substituted environment root never writes through a symlink',()=>{
  const f=setup();try{
   const outside=join(f.root,'outside');mkdirSync(outside);writeFileSync(join(outside,'keep'),'unchanged');
-  mkdirSync(join(f.store.directory,'skill-environments'));symlinkSync(outside,join(f.store.directory,'skill-environments','definition'));
+  mkdirSync(join(f.store.directory,'skill-environments'));symlinkSync(outside,join(f.store.directory,'skill-environments','definition'),process.platform==='win32'?'junction':'dir');
   assert.throws(()=>skillEnvironment(f.store.directory,'definition',f.materials),/INVALID_MATERIAL_PATH/);assert.equal(readFileSync(join(outside,'keep'),'utf8'),'unchanged');
  }finally{rmSync(f.root,{recursive:true,force:true});}
 });

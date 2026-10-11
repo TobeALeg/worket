@@ -1,0 +1,2 @@
+# Frozen request/response evidence must retain identical bytes on every OS.
+test/fixtures/** -text

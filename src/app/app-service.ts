@@ -8,7 +8,7 @@ import { conversationProjectLabel } from "../executors/project-label.js";
 import { createHash, randomUUID } from "node:crypto";
 import { ArtifactTracker } from "../artifacts/tracker.js";
 import {
-  MacForegroundApplicationDetector,
+  createForegroundApplicationDetector,
   type CurrentApplicationContext,
   type ForegroundApplicationDetector,
 } from "../adapters/foreground/context.js";
@@ -103,8 +103,7 @@ export class AppService {
     this.#executors = new ExecutorRegistry(options.executors);
     this.#foreground =
       options.foreground ??
-      new MacForegroundApplicationDetector(
-        undefined,
+      createForegroundApplicationDetector(
         options.executors.flatMap((adapter) => [...adapter.bundleIds]),
       );
     this.#artifacts = new ArtifactTracker(this.#core);

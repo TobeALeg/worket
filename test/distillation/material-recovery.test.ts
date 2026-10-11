@@ -25,7 +25,7 @@ test('explicit exact-version recovery restores corrupt, missing and unreadable f
     const outside = join(f.directory, 'outside'); writeFileSync(outside, '不能覆盖');
     assert.throws(() => f.store.restore({ ...material, path: outside }, source), /INVALID_MATERIAL_PATH/);
     assert.equal(readFileSync(outside, 'utf8'), '不能覆盖');
-    unlinkSync(material.path); symlinkSync(outside, material.path);
+    unlinkSync(material.path); symlinkSync(process.platform === 'win32' ? f.directory : outside, material.path, process.platform === 'win32' ? 'junction' : 'file');
     assert.throws(() => f.store.restore(material, source), /INVALID_MATERIAL_PATH/);
     assert.equal(readFileSync(outside, 'utf8'), '不能覆盖');
   } finally { f.close(); }
@@ -38,7 +38,7 @@ test('reselecting identical content repairs named instance copies without changi
     assert.deepEqual(f.store.copy(source, 'script', true), material);
     assert.equal(readFileSync(material.path, 'utf8'), '本次输入');
     const outside = join(f.directory, 'external'); mkdirSync(outside); writeFileSync(join(outside, 'SCRIPT.md'), '外部文件');
-    rmSync(dirname(material.path), { recursive: true }); symlinkSync(outside, dirname(material.path));
+    rmSync(dirname(material.path), { recursive: true }); symlinkSync(outside, dirname(material.path), process.platform === 'win32' ? 'junction' : 'dir');
     assert.throws(() => f.store.restore(material, source), /INVALID_MATERIAL_PATH/);
     assert.equal(readFileSync(join(outside, 'SCRIPT.md'), 'utf8'), '外部文件');
   } finally { f.close(); }
@@ -52,11 +52,11 @@ test('skill recovery validates the whole original version, repairs extras and pe
     writeSkillFixture(source, '不同版本'); assert.throws(() => f.store.restore(material, source), /MATERIAL_VERSION_MISMATCH/);
     assert.equal(existsSync(join(root, 'unexpected')), true);
     writeSkillFixture(source); f.store.restore(material, source); f.store.verify(material);
-    assert.equal(existsSync(join(root, 'unexpected')), false); assert.ok(lstatSync(script).mode & 0o111);
+    assert.equal(existsSync(join(root, 'unexpected')), false); if (process.platform !== 'win32') assert.ok(lstatSync(script).mode & 0o111);
     assert.ok(existsSync(join(root, 'assets/empty')));
     assert.deepEqual(f.store.copySkill(source, 'builder'), material);
     rmSync(root, { recursive: true }); f.store.restore(material, source); f.store.verify(material);
-    symlinkSync('/tmp', join(source, 'external'));
+    symlinkSync(tmpdir(), join(source, 'external'), process.platform === 'win32' ? 'junction' : 'dir');
     assert.throws(() => f.store.restore(material, source), /UNSUPPORTED_FILE/); f.store.verify(material);
   } finally { f.close(); }
 });

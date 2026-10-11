@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## Windows 平台层回迁（2026-10-11）
+
+主线选择性回迁 Windows v0.1.3 的平台代码，不整体合并实验分支。`createForegroundApplicationDetector` 选择 Cocoa / Win32 Helper，打包助手放在外置 resources；Win32 只读取进程身份和窗口标题，Worket 面板前台时按窗口 Z-order 查找后方受支持应用。无法确认会话时沿用原有保守匹配/手工选择，不读取屏幕内容。
+
+Codex 的现代/旧版 macOS bundle 路径保留，新增 Windows 绝对路径候选与 `HOME` 补全。WorkBuddy 客户端和扩展统一使用按用户 home 派生的命名管道，非 Windows 仍用私有 Unix socket；Hook 所有权判断和文件 URL 按本机路径语义处理。Windows 通过托盘而非 Dock 恢复窗口，位置策略仅使用屏幕工作区、不进入 macOS Dock 两侧区域。更新按 platform/arch 选择 ZIP，仍由用户确认下载、SHA256 校验后手动替换整个便携目录。
+
+`launch-desktop.mjs` / `package-desktop.mjs` 共用构建入口，在本机编译平台助手；发布仍分别使用 `release:mac` 与 `release:win`。打包排除研究、评测、服务端及本地运行数据，集成脚本保持 asar unpack。冻结证据 fixtures 禁止 Git 自动换行转换，保证跨系统 hash 不变；测试使用真实 Node 子进程与本机 IPC，但不依赖未安装的外部应用或 Windows 特权符号链接。业务领域模型、后台接口和数据库结构未变。验证与未验范围见 [验收记录](acceptance/windows-main-2026-10-11.md)。
+
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
 
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）

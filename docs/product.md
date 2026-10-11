@@ -1,5 +1,11 @@
 # 产品定义：工作记录、接力与沉淀复用
 
+## 主线 Windows 基础支持（2026-10-11，本地验收，未发布）
+
+按用户要求，仅将旧 Windows 分支 `621f12c` 的平台适配迁移到当前 `main`（基线 v0.1.8），不合并实验内容或 `codex/problem-reporting` 的功能。源码现可构建 macOS arm64 与 Windows x64；Windows 提供 Win32 前台窗口元数据识别、Codex 程序发现、WorkBuddy 命名管道、托盘入口、任务栏避让与本平台更新附件选择。工作模型、界面和后台协议保持主线现状，无数据迁移或跨设备同步。
+
+Windows 本机已通过全量自动测试、真实打包应用基础交互和合成更新链路；真实 Codex 会话列表与完整历史已只读验证。WorkBuddy 真实桌面扩展和交接闭环、高 DPI/多屏、休眠恢复及当前 macOS 构建回归仍待验证。ZCode / Antigravity 应用启动仍仅支持 macOS。本次不递增版本、不发布安装包、不部署后台。详见 [本次验收](acceptance/windows-main-2026-10-11.md)。
+
 v0.1.8 已正式发布为 Latest，修复 Codex 更新后的连接路径；本机已安装并重启，原工作记录保留，见 [发布验收](releases/v0.1.8-verification.md)。
 
 v0.1.7 的 Contract 输入过滤已同步生产后台并安装到本机，原失败记录在实际应用中重试进入等待检查。公网健康、认证分析能力、打包与旧版升级检查通过，见 [历史发布验收](releases/v0.1.7-verification.md)。

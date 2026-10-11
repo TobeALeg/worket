@@ -23,7 +23,7 @@ export async function installZCodeIntegration(appPath: string, root = join(homed
       const handlers = object(entry).hooks;
       return !(Array.isArray(handlers) && handlers.length === 1 &&
         Array.isArray(object(handlers[0]).args) &&
-        String((object(handlers[0]).args as unknown[])[0]).endsWith("/integrations/executor-hooks/hook-proxy.mjs") &&
+        String((object(handlers[0]).args as unknown[])[0]).replaceAll("\\", "/").endsWith("/integrations/executor-hooks/hook-proxy.mjs") &&
         (object(handlers[0]).args as unknown[])[1] === "zcode");
     }), {
       hooks: [{ type: "process", command: node, args: [proxy, "zcode", event], timeoutMs: 5000 }],

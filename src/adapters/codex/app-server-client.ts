@@ -2,7 +2,7 @@ import { readCodexHistory } from "./history.js";
 import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { createInterface } from "node:readline";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 
@@ -44,14 +44,21 @@ export function getCodexBinaryCandidates(
     ...bundles.map(bundle => join(bundle, "codex-cli", "bin", "codex")),
     ...bundles.map(bundle => join(bundle, "codex")),
     join(homeDirectory, ".codex", "plugins", ".plugin-appserver", "codex"),
+    join(homeDirectory, ".codex", "plugins", ".plugin-appserver", "codex.exe"),
+    ...[process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, "Programs") : "", process.env.ProgramFiles ?? ""]
+      .filter(isAbsolute)
+      .flatMap(directory => ["Codex", "ChatGPT"].flatMap(app => [
+        join(directory, app, "resources", "codex-cli", "bin", "codex.exe"),
+        join(directory, app, "resources", "codex.exe"),
+      ])),
   ];
 }
 
 export const CODEX_BINARY_CANDIDATES = getCodexBinaryCandidates();
 
-async function findCodexBinary(candidates: string[]): Promise<string> {
+export async function findCodexBinary(candidates: string[]): Promise<string> {
   for (const candidate of candidates) {
-    if (!candidate.startsWith("/")) continue;
+    if (!isAbsolute(candidate)) continue;
     try {
       await access(candidate, constants.X_OK);
       if (!(await stat(candidate)).isFile()) continue;
@@ -75,7 +82,7 @@ export class CodexAppServerClient {
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
   >();
 
-  constructor(binaryCandidates: string[] = CODEX_BINARY_CANDIDATES) {
+  constructor(binaryCandidates: string[] = CODEX_BINARY_CANDIDATES, readonly spawnProcess: typeof spawn = spawn) {
     this.#binaryCandidates = binaryCandidates;
   }
 
@@ -94,9 +101,10 @@ export class CodexAppServerClient {
   }
   async #connect(): Promise<void> {
     const binary = await findCodexBinary(this.#binaryCandidates);
-    const child = spawn(binary, ["app-server", "--stdio"], {
+    const child = this.spawnProcess(binary, ["app-server", "--stdio"], {
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env },
+      env: { ...process.env, ...(process.platform === "win32" && !process.env.HOME ? { HOME: homedir() } : {}) },
+      windowsHide: true,
     });
     this.#process = child;
 

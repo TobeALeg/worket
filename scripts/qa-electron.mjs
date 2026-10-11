@@ -7,13 +7,20 @@ const root = process.cwd();
 const output = join(root, "output", "playwright");
 await mkdir(output, { recursive: true });
 const testDirectory = await mkdtemp(join(tmpdir(), "workpet-ui-qa-"));
-const packagedExecutable = process.env.WORKPET_EXECUTABLE_PATH;
+const packagedExecutable = process.env.WORKPET_EXECUTABLE_PATH ??
+  (process.argv.includes("--packaged")
+    ? process.platform === "win32"
+      ? join(root, "release", "Worket-win32-x64", "Worket.exe")
+      : join(root, "release", "Worket-darwin-arm64", "Worket.app", "Contents", "MacOS", "Worket")
+    : undefined);
 
 const electronApp = await electron.launch({
-  executablePath: packagedExecutable ?? join(root, "node_modules", "electron", "dist", "Electron.app", "Contents", "MacOS", "Electron"),
+  executablePath: packagedExecutable ?? (process.platform === "win32"
+    ? join(root, "node_modules", "electron", "dist", "electron.exe")
+    : join(root, "node_modules", "electron", "dist", "Electron.app", "Contents", "MacOS", "Electron")),
   args: packagedExecutable
     ? [`--user-data-dir=${testDirectory}`, "--dev"]
-    : [".", `--user-data-dir=${testDirectory}`],
+    : [".", `--user-data-dir=${testDirectory}`, "--dev"],
   cwd: root,
   env: {
     ...process.env, WORKPET_SKIP_INTEGRATIONS: "1",
@@ -23,8 +30,12 @@ const electronApp = await electron.launch({
 });
 
 try {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  const pages = electronApp.windows();
+  const deadline = Date.now() + 15_000;
+  let pages = electronApp.windows();
+  while (Date.now() < deadline && (!pages.some(page => page.url().endsWith("/pet.html")) || !pages.some(page => page.url().endsWith("/panel.html")))) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    pages = electronApp.windows();
+  }
   const pet = pages.find((page) => page.url().endsWith("/pet.html"));
   const panel = pages.find((page) => page.url().endsWith("/panel.html"));
   if (!pet || !panel) throw new Error(`窗口不完整：${pages.map((page) => page.url()).join(", ")}`);
@@ -35,8 +46,8 @@ try {
   if (appIdentity.name !== "Worket") {
     throw new Error(`应用显示名称错误：期望 Worket，实际 ${appIdentity.name}`);
   }
-  if (packagedExecutable && appIdentity.executable !== "Worket") {
-    throw new Error(`打包程序仍以 ${appIdentity.executable} 运行，macOS 会显示错误的应用名`);
+  if (packagedExecutable && appIdentity.executable !== (process.platform === "win32" ? "Worket.exe" : "Worket")) {
+    throw new Error(`打包程序仍以 ${appIdentity.executable} 运行，系统会显示错误的应用名`);
   }
   const updateMenu = await electronApp.evaluate(({ Menu }) =>
     Menu.getApplicationMenu()?.items[0]?.submenu?.items.some(item => item.label === "检查更新…")

@@ -25,7 +25,7 @@ function setup() {
 test('skill directory remains executable with relative companions, version isolation and source deletion', () => {
   const f = setup();
   try {
-    const alias = join(f.directory, 'installed-skill'); symlinkSync(f.path, alias);
+    const alias = join(f.directory, 'installed-skill'); symlinkSync(f.path, alias, process.platform === 'win32' ? 'junction' : 'dir');
     const d1 = f.publish(f.draft, { builder: alias }), w1 = f.create(d1), p1 = buildWorkPackage(w1, f.core.definitions);
     assert.equal(p1.skills.length, 1); assert.equal(p1.fixedMaterials.length, 0);
     assert.ok(existsSync(join(p1.skills[0].directory, 'assets/empty')), 'empty companion directories are preserved');
@@ -49,7 +49,7 @@ test('skill publication and dispatch reject missing, changed, extra or linked co
   const f = setup();
   try {
     assert.throws(() => f.publish(f.draft, {}), /MATERIAL_MISSING/);
-    symlinkSync('/tmp', join(f.path, 'external')); assert.throws(() => f.publish(), /UNSUPPORTED_FILE/); unlinkSync(join(f.path, 'external'));
+    const external = join(f.path, 'external'); symlinkSync(tmpdir(), external, process.platform === 'win32' ? 'junction' : 'dir'); assert.throws(() => f.publish(), /UNSUPPORTED_FILE/); if (process.platform === 'win32') rmSync(external); else unlinkSync(external);
     const definition = f.publish(), work = f.create(definition), bundle = dirname(definition.materials[0].path), companion = join(bundle, 'references/format.md');
     const bytes = readFileSync(companion); unlinkSync(companion);
     assert.throws(() => buildWorkPackage(work, f.core.definitions), /MATERIAL_MISSING/);

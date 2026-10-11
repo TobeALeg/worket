@@ -1,23 +1,25 @@
 # Worket
 
-Worket 是一个本地 macOS 工作记录工具。用户悬浮桌宠并点击头顶展开的便利贴后，它识别当前前台的 Codex 或 WorkBuddy 工作上下文，把可见 Prompt、回复、工具记录与资料引用整理成独立的 `WorkInstance` / `WorkRecord`，并可交给另一端继续。
+Worket 是一个支持 macOS arm64 与 Windows x64 的本地工作记录工具。用户悬浮桌宠并点击头顶展开的便利贴后，它识别当前前台的 Codex 或 WorkBuddy 工作上下文，把可见 Prompt、回复、工具记录与资料引用整理成独立的 `WorkInstance` / `WorkRecord`，并可交给另一端继续。
 
 它不是 Agent，也不替用户执行任务。Codex 与 WorkBuddy 都只是可替换的执行环境。
 
 ## 本地运行
 
-要求：macOS arm64、已安装 ChatGPT/Codex Desktop 与 WorkBuddy Desktop、Node.js 24。
+要求：macOS arm64 或 Windows x64、Node.js 24，以及要接入的 Codex / WorkBuddy Desktop。Windows 构建还需要系统 .NET Framework C# 编译器（脚本自动查找 `csc.exe`）。请在目标系统上构建，不支持跨系统编译前台识别助手。
 
 ```bash
 npm ci
 npm start
 ```
 
+`npm start` / `npm run dev` 会按当前系统打包并启动名为 Worket 的桌面程序。Windows 是便携目录版本，通过托盘菜单打开面板、检查更新或退出；移动应用时需保留整个目录。ZCode / Antigravity 的应用启动仍仅支持 macOS，本次没有扩展这些执行者的 Windows 接入。当前主线 Windows 的验证范围及限制见 [验收记录](docs/acceptance/windows-main-2026-10-11.md)。
+
 Worket 启动后分别安装已接入执行者的本机配置：Codex Hook/MCP，WorkBuddy 用户级 Hook/MCP 和最小读取权限扩展。单个执行者不可用不阻止应用启动。WorkBuddy 历史读取已在 5.5.3 验证；内部扩展接口未来升级可能需要适配。更新后重启目标应用使配置生效。
 
-接入安装是启动前提：自动安装失败时 Worket 会显示错误并退出，不会在半接入状态下开始记录。
+执行者接入分别安装并反馈状态；单个接入失败不阻止应用启动，但该执行者在接入可用前不能读取历史或完成交接。
 
-开发中的最新版本固定从 [scripts/run-latest.command](scripts/run-latest.command) 启动：双击它，或在终端运行该路径。它会先停止本项目已运行的开发版，再构建最新源码并启动名为 `Worket` 的 macOS 应用包，不会再以 `Electron` 的名称出现在系统界面中。
+macOS 开发中的最新版本也可从 [scripts/run-latest.command](scripts/run-latest.command) 启动：双击它，或在终端运行该路径。它会先停止本项目已运行的开发版，再构建最新源码并启动名为 `Worket` 的 macOS 应用包，不会再以 `Electron` 的名称出现在系统界面中。Windows 使用 `npm run dev`。
 
 日常使用时，先聚焦目标聊天。识别成功后，桌宠上方会显示来源应用生成的会话标题；悬浮小土豆，让头顶便利贴展开为“记录”，再点击便利贴。记录后同一张便利贴变为“打开”，点击桌宠身体也可以打开面板。即使 Worket 面板仍在前台，桌宠也会识别它后方最近的受支持工作窗口；侧边面板只读展示和管理已有工作，不是新的记录入口。
 
@@ -35,6 +37,8 @@ Worket 在本地保存记录与来源线索。开始记录后，所选工作的�
 npm run package:mac
 ```
 
+Windows 构建机运行 `npm run package:win`，产物为 `release/Worket-win32-x64/Worket.exe`（需保留同目录资源）。本次迁移没有递增版本或发布 Windows v0.1.8 Release。
+
 产物位于 `release/Worket-darwin-arm64/Worket.app`。启动打包产物时会自动安装或更新本机接入配置，使 WorkBuddy 指向该稳定路径；随后重启 Codex 与 WorkBuddy 使新配置生效。应用继续使用原来的 `.workpet` 配置键与 `WorkPet` 用户数据目录，已有本地工作不会因显示名称调整而迁移或丢失。
 
 ## 验证
@@ -47,7 +51,7 @@ npm run qa:package
 npm run qa:desktop-roundtrip:list
 ```
 
-`qa:current-context` 使用临时数据库启动真实 Electron 应用，强制让 Worket 面板保持前台，再通过便利贴识别并记录真实 Codex 任务，同时检查应用标题气泡、记录后“打开”和只读 Work State。`qa:package` 验证打包后的真实 Worket 应用名称、窗口、桌宠入口与面板基本布局。`qa:desktop-roundtrip:list` 只读取本机 Codex 任务并列出哪些任务满足“至少二十轮用户输入、两份不同附件”，不向 WorkBuddy 发送内容。
+`npm test`、`typecheck`、`qa:package` 与 `node scripts/qa-updates.mjs` 可在两个系统上运行，`qa:package` 前需先完成本机平台打包。其他专项桌面 QA 部分仍使用 macOS 路径或 Unix 环境变量语法，不能直接视为 Windows 已验收。`qa:current-context` 使用临时数据库启动真实 Electron 应用，强制让 Worket 面板保持前台，再通过便利贴识别并记录真实 Codex 任务，同时检查应用标题气泡、记录后“打开”和只读 Work State。`qa:package` 验证打包后的真实 Worket 应用名称、窗口、桌宠入口与面板基本布局。`qa:desktop-roundtrip:list` 只读取本机 Codex 任务并列出哪些任务满足“至少二十轮用户输入、两份不同附件”，不向 WorkBuddy 发送内容。
 
 `qa:workbuddy-context` 使用临时数据库验证实际 WorkBuddy 历史读取、重复导入与增量去重，不发送消息。`node scripts/qa-parallel-recording.mjs` 在打包应用中用三个合成适配器验证列表、分页、多会话记录、执行者选择和取消交接。
 
@@ -76,7 +80,7 @@ npm run qa:desktop-roundtrip
 
 ## 半自动更新与 GitHub 发布
 
-无需 Apple 付费开发者会员。应用直接读取公开仓库 `TobeALeg/worket` 的 GitHub 最新稳定 Release。入口位于 macOS 的 **Worket → 检查更新…** 和桌宠右键菜单。
+无需 Apple 付费开发者会员。应用直接读取公开仓库 `TobeALeg/worket` 的 GitHub 最新稳定 Release，并只选择当前系统和架构的附件。入口位于 macOS 的 **Worket → 检查更新…**、Windows 托盘菜单和桌宠右键菜单。
 
 正常启动的打包应用会在启动时检查，此后每小时检查。发现新版后提示“稍后 / 下载新版”；只有点击下载才下载安装包。同一版本选择稍后后，本次运行不再自动提醒，仍可手动检查。开发启动 `npm run dev` 或 `--dev` 不检查更新。
 
@@ -89,6 +93,8 @@ npm run qa:desktop-roundtrip
 
 应用不会自动解压、替换、安装或重启。已保存的工作和设置继续保存在 `~/Library/Application Support/WorkPet`，替换应用包不删除此目录。重启间隙暂停录制，重新启动后按原有绑定继续同步；未提交表单需自行保存。
 
+Windows 下载后在资源管理器中选中 ZIP；退出 Worket，解压并替换整个 `Worket-win32-x64` 目录，再运行 `Worket.exe`，不能只替换 EXE。数据目录为 `%APPDATA%\WorkPet`，不随便携程序目录替换；程序尚未代码签名，可能显示 SmartScreen 提示。
+
 已有旧版仍需先手动安装一次带本功能的版本。免费发布包采用 ad-hoc 临时签名，**不是 Apple Developer ID 签名，也没有 Apple 公证**，macOS 可能提示无法验证开发者；仅在确认来源可信后，按系统“隐私与安全性”的提示允许打开。半自动更新不会绕过系统检查。
 
 ### 发布者每次发布
@@ -100,6 +106,8 @@ npm run release:mac
 ```
 
 脚本要求 macOS ARM64 和干净工作区，执行测试、打包、ad-hoc 签名、ZIP 打包、解压签名验证、真实应用 QA，最后生成 SHA256。不需要证书、Apple 账号或公证凭据；不会自动上传或公开发布。
+
+Windows x64 构建机使用 `npm run release:win`，同样要求干净工作区，执行测试、打包、检查本地数据隔离、ZIP 解压与桌面/更新 QA，生成 `Worket-<版本>-win32-x64.zip` 及 `.zip.sha256`。该脚本不签名、不上传、不公开发布。
 
 必须同时上传以下两个附件，名称须严格匹配版本和架构：
 

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, mkdir, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { AntigravitySource, normalizeTranscript } from "../../dist/adapters/antigravity/source.js";
 import { installAntigravityIntegration } from "../../dist/adapters/antigravity/install.js";
@@ -32,10 +33,11 @@ test("Antigravity discovers summaries but reads only a selected validated transc
   try {
     const db = new DatabaseSync(join(root, "conversation_summaries.db"));
     db.exec("CREATE TABLE conversation_summaries(conversation_id TEXT, title TEXT, preview TEXT, workspace_uris TEXT, last_modified_time TEXT, status TEXT, parent_conversation_id TEXT, app_data_dir TEXT)");
-    db.prepare("INSERT INTO conversation_summaries VALUES(?,?,?,?,?,?,?,?)").run(id, "Task", "summary only", '["file:///tmp/space%20name"]', "2026-09-16 00:00:00+00:00", "IDLE", "", "antigravity");
+    const workspace = join(root, "space name");
+    db.prepare("INSERT INTO conversation_summaries VALUES(?,?,?,?,?,?,?,?)").run(id, "Task", "summary only", JSON.stringify([pathToFileURL(workspace).href]), "2026-09-16 00:00:00+00:00", "IDLE", "", "antigravity");
     db.close();
     const source = new AntigravitySource(root);
-    assert.equal((await source.listThreadPage()).threads[0]!.cwd, "/tmp/space name");
+    assert.equal((await source.listThreadPage()).threads[0]!.cwd, workspace);
     await assert.rejects(source.readThread(id), /未用摘要替代/);
     await assert.rejects(source.readThread("../../config"), /ID 无效/);
     const path = join(root, "brain", id, ".system_generated/logs"); await mkdir(path, { recursive: true });

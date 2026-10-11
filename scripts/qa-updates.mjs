@@ -8,7 +8,7 @@ import { _electron as electron } from "playwright";
 
 const directory = await mkdtemp(join(tmpdir(), "worket-updates-qa-"));
 const archive = Buffer.from("Worket synthetic update download QA");
-const name = "Worket-99.0.0-darwin-arm64.zip";
+const name = `Worket-99.0.0-${process.platform}-${process.arch}.zip`;
 const sha = createHash("sha256").update(archive).digest("hex");
 let downloads = 0;
 const server = createServer((request, response) => {
@@ -27,7 +27,8 @@ const address = server.address();
 let desktop;
 try {
   desktop = await electron.launch({
-    executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), "release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket"),
+    executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), process.platform === "win32"
+      ? "release/Worket-win32-x64/Worket.exe" : "release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket"),
     args: ["--dev", `--user-data-dir=${directory}`],
     env: { ...process.env, WORKPET_SKIP_INTEGRATIONS: "1", WORKPET_DATA_DIR: directory,
       WORKPET_BRIDGE_CONFIG: join(directory, "bridge.json") },
@@ -41,7 +42,8 @@ try {
     let choice = 0;
     const fetcher = (url, init) => net.fetch(base + new URL(url).pathname, init);
     const updates = new AppUpdates({ enabled: true, version: app.getVersion(),
-      latest: () => latestRelease(fetcher, app.getVersion(), "arm64"),
+      platform: process.platform,
+      latest: () => latestRelease(fetcher, app.getVersion(), process.platform, process.arch),
       download: release => downloadRelease(fetcher, release, directory),
       showDialog: async options => { messages.push(options); return { response: choice }; },
       reveal: path => revealed.push(path),

@@ -10,6 +10,7 @@ type UpdateOptions = {
   reveal: (path: string) => void;
   enabled: boolean;
   version: string;
+  platform?: NodeJS.Platform;
 };
 
 export class AppUpdates {
@@ -23,6 +24,18 @@ export class AppUpdates {
   private visualState: PetUpdateState = "none";
   constructor(options: UpdateOptions) { this.options = options; }
   get state(): PetUpdateState { return this.visualState; }
+
+  private installDetail(): string {
+    return this.options.platform === "win32"
+      ? "下载后请退出 Worket，解压 ZIP，将整个 Worket 文件夹移动到固定位置，再运行其中的 Worket.exe。已保存的工作和设置会保留。"
+      : "下载后请退出 Worket，解压并将新版拖到“应用程序”中替换。已保存的工作和设置会保留。";
+  }
+
+  private installedNotice(): string {
+    return this.options.platform === "win32"
+      ? "已打开安装包所在位置。请先保存编辑并退出 Worket，解压 ZIP，将整个文件夹移动到固定位置，再运行其中的 Worket.exe。"
+      : "已打开安装包所在位置。请先保存编辑并退出 Worket，再解压 ZIP，将 Worket.app 拖到“应用程序”中替换并重新打开。";
+  }
 
   start(): void {
     if (!this.options.enabled || this.timer) return;
@@ -65,7 +78,7 @@ export class AppUpdates {
       if (!this.manual && release.version === this.dismissedVersion) return;
       const result = await this.options.showDialog({
         type: "info", title: "Worket 更新", message: `发现新版 Worket ${release.version}`,
-        detail: `安装包约 ${(release.archive.size / 1024 ** 2).toFixed(1)} MB。下载后请退出 Worket，解压并将新版拖到“应用程序”中替换。已保存的工作和设置会保留。`,
+        detail: `安装包约 ${(release.archive.size / 1024 ** 2).toFixed(1)} MB。${this.installDetail()}`,
         buttons: ["稍后", "下载新版"], defaultId: 1, cancelId: 0,
       });
       this.dismissedVersion = release.version;
@@ -78,7 +91,7 @@ export class AppUpdates {
       if (this.stopped) return;
       this.visualState = "ready";
       this.options.reveal(path);
-      await this.notice("新版已下载", "已打开安装包所在位置。请先保存编辑并退出 Worket，再解压 ZIP，将 Worket.app 拖到“应用程序”中替换并重新打开。");
+      await this.notice("新版已下载", this.installedNotice());
     } catch (error) {
       if (this.visualState === "receiving") this.visualState = "available";
       console.error("Worket update failed", error);

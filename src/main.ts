@@ -9,6 +9,7 @@ import { ServiceCredentials } from "./ai-service/credentials.js";
 import { AutomaticConnection, PRODUCTION_WORKET_SERVICE_URL } from "./ai-service/connection.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { createForegroundApplicationDetector } from "./adapters/foreground/context.js";
 
 import {
   app,
@@ -20,6 +21,7 @@ import {
   screen,
   clipboard,
   shell,
+  Tray,
 } from "electron";
 
 import { ElectronWorkBuddyLauncher } from "./adapters/workbuddy/launcher.js";
@@ -41,6 +43,7 @@ const petPositionPath = () =>
   );
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let service: AppService | null = null;
 let bridge: WorkPetHttpBridge | null = null;
 let distillation: DistillationDesktop;
@@ -90,6 +93,12 @@ function applicationResourceRoot(): string {
   return app.isPackaged ? process.resourcesPath : app.getAppPath();
 }
 
+function applicationIconPath(): string {
+  return app.isPackaged
+    ? join(applicationResourceRoot(), "WorkPet.png")
+    : join(applicationResourceRoot(), "assets", "WorkPet.png");
+}
+
 function integrationResourceRoot(): string {
   return app.isPackaged
     ? join(process.resourcesPath, "app.asar.unpacked")
@@ -98,11 +107,22 @@ function integrationResourceRoot(): string {
 
 async function configureDock(): Promise<void> {
   if (process.platform !== "darwin" || !app.dock) return;
-  const iconPath = app.isPackaged
-    ? join(applicationResourceRoot(), "WorkPet.png")
-    : join(applicationResourceRoot(), "assets", "WorkPet.png");
-  app.dock.setIcon(iconPath);
+  app.dock.setIcon(applicationIconPath());
   await app.dock.show();
+}
+
+function configureWindowsTray(): void {
+  if (process.platform !== "win32" || tray) return;
+  app.setAppUserModelId("dev.workpet.desktop");
+  tray = new Tray(applicationIconPath());
+  tray.setToolTip("Worket");
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: "打开 Worket", click: () => revealApp() },
+    { label: "检查更新…", click: () => updates.check(true) },
+    { type: "separator" },
+    { label: "退出", click: () => app.quit() },
+  ]));
+  tray.on("double-click", () => revealApp());
 }
 
 function createWindows(): void {
@@ -118,6 +138,7 @@ function createWindows(): void {
     hasShadow: false,
     skipTaskbar: true,
     focusable: false,
+    icon: applicationIconPath(),
     webPreferences: {
       preload,
       contextIsolation: true,
@@ -153,6 +174,7 @@ function createWindows(): void {
     resizable: true,
     alwaysOnTop: true,
     backgroundColor: "#fbfaf7",
+    icon: applicationIconPath(),
     webPreferences: {
       preload,
       contextIsolation: true,
@@ -443,9 +465,10 @@ function registerIpc(): void {
 app.whenReady().then(async () => {
   updates = new AppUpdates({
     showDialog: (options) => dialog.showMessageBox(options),
-    enabled: process.platform === "darwin" && app.isPackaged && !process.argv.includes("--dev"),
+    enabled: ["darwin", "win32"].includes(process.platform) && app.isPackaged && !process.argv.includes("--dev"),
+    platform: process.platform,
     version: app.getVersion(),
-    latest: () => latestRelease((url, init) => net.fetch(url, init), app.getVersion(), process.arch),
+    latest: () => latestRelease((url, init) => net.fetch(url, init), app.getVersion(), process.platform, process.arch),
     download: (release) => downloadRelease((url, init) => net.fetch(url, init), release, app.getPath("downloads")),
     reveal: (path) => shell.showItemInFolder(path),
   });
@@ -463,6 +486,7 @@ app.whenReady().then(async () => {
     openUrl: (url) => shell.openExternal(url),
     desktop: {
       openApplication: async (bundleId) => {
+        if (process.platform !== "darwin") throw new Error("此执行者的 Windows 应用启动尚未接入，请先使用 Codex 或 WorkBuddy。");
         const { execFile } = await import("node:child_process");
         await new Promise<void>((resolve, reject) => execFile("/usr/bin/open", ["-b", bundleId], error => error ? reject(error) : resolve()));
       },
@@ -475,7 +499,11 @@ app.whenReady().then(async () => {
   );
   worketConnection = new AutomaticConnection(credentials,
     app.isPackaged ? PRODUCTION_WORKET_SERVICE_URL : process.env.WORKET_SERVICE_URL);
-  worketConnection.initialize();
+  try { worketConnection.initialize(); }
+  catch (error) {
+    if (process.platform !== "win32") throw error;
+    console.warn("Worket service credentials unavailable", error);
+  }
   const aiClient = new WorketAIClient(() => credentials.read(), () => worketConnection.ready());
   service = new AppService({
     databasePath: join(dataDirectory, "workpet.sqlite"),
@@ -483,6 +511,10 @@ app.whenReady().then(async () => {
     onRecordingStopped: id => distillation.service.recordings.stop(id),
     executors,
     aiClient,
+    foreground: createForegroundApplicationDetector(
+      executors.flatMap(adapter => [...adapter.bundleIds]),
+      app.isPackaged ? join(process.resourcesPath, process.platform === "win32" ? "foreground-context.exe" : "foreground-context") : undefined,
+    ),
   });
   distillation = new DistillationDesktop(
     service,
@@ -507,6 +539,7 @@ app.whenReady().then(async () => {
   registerIpc();
   // Workspace visibility changes the macOS process type; restore the Dock afterwards.
   await configureDock();
+  configureWindowsTray();
   if (process.env.WORKPET_SKIP_INTEGRATIONS !== "1") void worketConnection.ready().catch(() => {});
   if (process.env.WORKPET_SKIP_INTEGRATIONS !== "1")
     void new IntegrationInstaller(
@@ -523,6 +556,8 @@ app.on("activate", () => revealApp());
 app.on("before-quit", () => {
   quitting = true;
   updates?.stop();
+  tray?.destroy();
+  tray = null;
   if (captureTimer) clearTimeout(captureTimer);
   if (distillationTimer) clearTimeout(distillationTimer);
   distillation?.service.close();

@@ -18,7 +18,7 @@ export function createCodexExecutor(options: {
     id: "codex",
     name: "Codex",
     mark: "⌘",
-    bundleIds: ["com.openai.codex", "DOVE.tauri"],
+    bundleIds: ["com.openai.codex", "DOVE.tauri", "Codex.exe", "ChatGPT.exe"],
     environment: { type: "CODEX_DESKTOP", name: "Codex Desktop" },
     source: codex,
     install: installCodexIntegration,
@@ -27,10 +27,11 @@ export function createCodexExecutor(options: {
     },
     async resolveCurrent(app) {
       const { threads } = await conversationPage(adapter);
-      const thread = app.windowTitle?.trim()
+      const rawWindowTitle = app.windowTitle?.trim() ?? "";
+      const windowTitle = /^(?:ChatGPT|Codex)$/iu.test(rawWindowTitle) ? "" : rawWindowTitle;
+      const thread = windowTitle
         ? resolveThreadFromWindowTitle(
-            app.windowTitle?.replace(/\s+[—–-]\s+(?:Codex|ChatGPT)$/iu, "") ??
-              null,
+            windowTitle.replace(/\s+[—–-]\s+(?:Codex|ChatGPT)$/iu, ""),
             threads,
           )
         : resolveThreadFromRecentActivity(threads);

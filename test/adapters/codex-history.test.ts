@@ -65,8 +65,9 @@ test('real stdio client preserves method-not-found fallback and refuses a failed
   const { join } = await import('node:path'); const { tmpdir } = await import('node:os');
   const { historyFixture, writeHistoryFixture } = await import('../../scripts/lib/codex-history-fixture.mjs');
   const { CodexAppServerClient } = await import('../../dist/adapters/codex/app-server-client.js');
+  const { spawn } = await import('node:child_process');
   const directory = mkdtempSync(join(tmpdir(), 'worket-history-stdio-')), fixture = historyFixture();
-  const { binary, dataPath } = writeHistoryFixture(directory, fixture), client = new CodexAppServerClient([binary]);
+  const { binary, dataPath } = writeHistoryFixture(directory, fixture), client = new CodexAppServerClient([binary], ((binary, args, options) => spawn(process.execPath, [binary, ...args], options)) as typeof spawn);
   try {
     const modern = await client.readThread(fixture.thread.id);
     assert.equal(modern.events.length, 4);
