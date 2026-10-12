@@ -48,3 +48,5 @@ if (process.platform === "darwin") {
     fileURLToPath(new URL("../src/adapters/foreground/windows-context.cs", import.meta.url)),
   ]);
 }
+
+await import("./sync-browser-catalog.mjs");

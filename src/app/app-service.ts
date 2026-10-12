@@ -1,3 +1,4 @@
+import { deliveryMarkers } from "../executors/delivery-markers.js";
 import { DeliveryLedger } from "../connectors/delivery-ledger.js";
 import { normalizeSelectedContent, type SelectedContent } from "../connectors/selected-content.js";
 import { inlineWorkPackage } from "../connectors/inline-package.js";
@@ -552,12 +553,9 @@ export class AppService {
     if (work && (work.instance.status !== "OPEN" || work.activeBinding?.adapter !== adapter.id || work.activeBinding.conversationId !== thread.threadId))
       throw new Error("该会话属于已停止的执行片段，请主动继续或选择当前目标会话。");
     if (!work) {
-      const markers = thread.events.filter(event => event.kind === "user.prompt").map(event => {
-        const match = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
-        if (!match) return null;
-        const candidate = this.#core.getWork(match[1]!);
-        return candidate?.instance.status === "OPEN" && candidate.activeBinding?.adapter === adapter.id && candidate.activeBinding.conversationId === `pending:${match[2]}` ? candidate : null;
-      }).filter((candidate): candidate is WorkSnapshot => !!candidate);
+      const markers = thread.events.filter(event => event.kind === "user.prompt")
+        .map(event => this.#pendingDelivery(adapter.id, event.content))
+        .filter((candidate): candidate is WorkSnapshot => !!candidate);
       const unique = new Map(markers.map(candidate => [candidate.instance.id, candidate]));
       if (unique.size > 1) throw new Error("选定内容包含多个待交接工作，请缩小导入范围。");
       const pending = [...unique.values()][0];
@@ -596,15 +594,15 @@ export class AppService {
     const id =
       typeof payload.session_id === "string" ? payload.session_id : null;
     if (!id) return { accepted: false, appendedCount: 0 };
-    if (executorId === "qwenwork") {
-      if (payload.hook_event_name !== "UserPromptSubmit" || typeof payload.prompt !== "string") return { accepted: false, appendedCount: 0 };
-      const input: SelectedContent = { schemaVersion: 1, adapterId: executorId, conversationId: id,
-        title: "QwenWork 有限事件", url: "", scope: "HOOK_EVENTS", messages: [{ role: "user", content: payload.prompt }] };
+    const adapter = this.#executors.get(executorId);
+    if (adapter.capabilities?.source === "HOOK_EVENTS") {
+      const input = adapter.normalizeHook?.(payload);
+      if (!input || input.adapterId !== adapter.id || input.conversationId !== id) return { accepted: false, appendedCount: 0 };
       this.previewSelectedContent(input);
-      const match = payload.prompt.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
-      const work = this.#core.findWorkByBinding(executorId, id) ?? (match ? this.#core.getWork(match[1]!) : null);
+      const work = this.#core.findWorkByBinding(executorId, id) ??
+        input.messages.map(message => message.role === "user" ? this.#pendingDelivery(executorId, message.content) : null).find(candidate => !!candidate);
       if (work?.instance.status !== "OPEN" || work.activeBinding?.adapter !== executorId ||
-          (work.activeBinding.conversationId !== id && work.activeBinding.conversationId !== `pending:${match?.[2]}`)) return { accepted: false, appendedCount: 0 };
+          (work.activeBinding.conversationId !== id && !work.activeBinding.conversationId.startsWith("pending:"))) return { accepted: false, appendedCount: 0 };
       const before = work.sourceArchive.length;
       await this.importSelectedContent(input);
       return { accepted: true, appendedCount: this.#requireWork(work.instance.id).sourceArchive.length - before, workInstanceId: work.instance.id };
@@ -621,11 +619,7 @@ export class AppService {
       if (thread.threadId !== id) throw new Error("来源会话身份不一致，已拒绝确认交接");
       const matches = thread.events.filter(event => {
         if (event.kind !== "user.prompt") return false;
-        const markers = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
-        const candidate = markers?.[1] ? this.#core.getWork(markers[1]) : null;
-        return candidate?.instance.status === "OPEN" &&
-          candidate.activeBinding?.adapter === executorId &&
-          candidate.activeBinding.conversationId === `pending:${markers?.[2]}`;
+        return !!this.#pendingDelivery(executorId, event.content);
       });
       if (matches.length === 1) payload = { ...payload, hook_event_name: "UserPromptSubmit", prompt: matches[0]!.content };
       // Another notification may have completed binding while readThread awaited.
@@ -636,17 +630,9 @@ export class AppService {
       payload.hook_event_name === "UserPromptSubmit" &&
       typeof payload.prompt === "string"
     ) {
-      const marker = payload.prompt.match(/\[WORKPET:([a-zA-Z0-9-]+)\]/u)?.[1];
-      const deliveryId = payload.prompt.match(
-        /\[DELIVERY:([a-zA-Z0-9-]+)\]/u,
-      )?.[1];
-      const candidate = marker ? this.#core.getWork(marker) : null;
+      const candidate = this.#pendingDelivery(executorId, payload.prompt);
       const binding = candidate?.activeBinding;
-      if (
-        candidate?.instance.status === "OPEN" &&
-        binding?.adapter === executorId &&
-        binding.conversationId === `pending:${deliveryId}`
-      ) {
+      if (candidate && binding) {
         work = this.#core.bindConversation(
           candidate.instance.id,
           executorId,
@@ -944,6 +930,13 @@ export class AppService {
     this.#preparation.close();
     this.#executors.close();
     this.#core.close();
+  }
+
+  #pendingDelivery(adapterId: string, prompt: string): WorkSnapshot | null {
+    const markers = deliveryMarkers(prompt);
+    const candidate = markers ? this.#core.getWork(markers.workId) : null;
+    return candidate?.instance.status === "OPEN" && candidate.activeBinding?.adapter === adapterId &&
+      candidate.activeBinding.conversationId === `pending:${markers?.deliveryId}` ? candidate : null;
   }
 
   #historySource(id: string) {

@@ -1,3 +1,4 @@
+import { deliveryMarkers } from "../executors/delivery-markers.js";
 import { createHash } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import type { NormalizedSourceEvent } from "../adapters/types.js";
@@ -14,11 +15,11 @@ export class DeliveryLedger {
   annotate(workId: string, events: NormalizedSourceEvent[]): NormalizedSourceEvent[] {
     return events.map(event => {
       if (event.kind !== "user.prompt") return event;
-      const match = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
-      if (!match || match[1] !== workId) return event;
-      const row = this.db.prepare("SELECT prompt_hash FROM connector_deliveries WHERE delivery_id=? AND work_id=?").get(match[2]!, workId);
+      const match = deliveryMarkers(event.content);
+      if (!match || match.workId !== workId) return event;
+      const row = this.db.prepare("SELECT prompt_hash FROM connector_deliveries WHERE delivery_id=? AND work_id=?").get(match.deliveryId, workId);
       return row?.prompt_hash === hash(event.content)
-        ? { ...event, metadata: { ...event.metadata, worketDelivery: { verified: true, deliveryId: match[2] } } }
+        ? { ...event, metadata: { ...event.metadata, worketDelivery: { verified: true, deliveryId: match.deliveryId } } }
         : event;
     });
   }

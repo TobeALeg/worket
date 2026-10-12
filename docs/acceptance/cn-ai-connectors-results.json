@@ -1,0 +1,135 @@
+{
+  "localElectron": {
+    "environment": "actual local Electron, isolated database, synthetic content",
+    "thirdPartySend": false,
+    "thirdPartyHistoryRead": false,
+    "browserPermissionInstalled": false,
+    "actualModelCalls": false,
+    "checks": {
+      "actualImportExtractionDedupeRevision": true,
+      "actualNativeHostToBridgeStagedWithoutCapture": true,
+      "browserCannotDirectlyPostToBridge": true,
+      "actualRestartRestoresWorkAndClearsInbox": true,
+      "stalePreviewCannotRestoreRedactedAuthorization": true
+    },
+    "status": "PASS"
+  },
+  "installedApps": {
+    "timestamp": "2026-10-12T18:00:06.554Z",
+    "products": {
+      "WorkBuddy": {
+        "installed": true,
+        "versions": [
+          {
+            "path": "/Applications/WorkBuddy.app",
+            "CFBundleIdentifier": "com.tencent.workbuddy.mac",
+            "CFBundleShortVersionString": "5.7.7"
+          }
+        ],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "QwenWork": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "千问办公": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "Kimi": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "豆包": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "Coze": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "扣子": {
+        "installed": false,
+        "versions": [],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "ZCode": {
+        "installed": true,
+        "versions": [
+          {
+            "path": "/Applications/ZCode.app",
+            "CFBundleIdentifier": "dev.zcode.app",
+            "CFBundleShortVersionString": "3.14.4"
+          }
+        ],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "Antigravity": {
+        "installed": true,
+        "versions": [
+          {
+            "path": "/Applications/Antigravity.app",
+            "CFBundleIdentifier": "com.google.antigravity",
+            "CFBundleShortVersionString": "2.16.0"
+          }
+        ],
+        "thirdPartyConversationTest": "NOT_RUN"
+      },
+      "ChatGPT": {
+        "installed": true,
+        "versions": [
+          {
+            "path": "/Applications/ChatGPT.app",
+            "CFBundleIdentifier": "com.openai.codex",
+            "CFBundleShortVersionString": "26.1007.30912"
+          }
+        ],
+        "thirdPartyConversationTest": "NOT_RUN"
+      }
+    },
+    "workbuddyStatus": {
+      "connected": false,
+      "reason": "ECONNREFUSED"
+    },
+    "modifiedConfiguration": false,
+    "privateContentRead": false
+  },
+  "browserSelection": {
+    "syntheticPage": true,
+    "userBrowserProfileAccessed": false,
+    "nativeRegistered": false,
+    "checks": {
+      "popupAutomation": "Popup not exposed to Playwright; no permission bypass attempted"
+    },
+    "status": "NOT_VERIFIED"
+  },
+  "regression": {
+    "count": 311,
+    "passed": 311,
+    "failed": 0
+  },
+  "review": {
+    "standards": "repaired and rechecked",
+    "spec": "stale-preview repaired and rechecked"
+  },
+  "permissions": {
+    "newThirdPartySetup": "pending explicit approval",
+    "dailyInstallReplaced": false,
+    "published": false,
+    "pushed": false
+  },
+  "workbuddyDiagnosis": {
+    "mainRunning": true,
+    "mainStartedLocal": "2026-10-10 13:27:08",
+    "extensionUpdatedLocal": "2026-10-10 18:42:50",
+    "socketListener": false,
+    "existingManifest": "active",
+    "privateContentRead": false,
+    "nextStep": "normal restart and status-only verification, awaiting approval"
+  }
+}

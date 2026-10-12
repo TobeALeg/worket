@@ -54,6 +54,7 @@ export interface ExecutorAdapter {
   source?: ConversationSource;
   capabilities?: ConnectorCapabilities;
   installation?: "EXPLICIT";
+  normalizeHook?(payload: Record<string, unknown>): import("../connectors/selected-content.js").SelectedContent | null;
   reconcileHistory?(
     thread: NormalizedThread,
     archive: readonly SourceEvent[],

@@ -1,5 +1,8 @@
 const $ = id => document.getElementById(id);
 let capture = null;
+for (const item of globalThis.WORKET_WEB_CONNECTORS) {
+  const option = document.createElement('option'); option.value = item.id; option.textContent = item.name; $('site').append(option);
+}
 $('capture').addEventListener('click', async () => {
   try {
     capture = null; $('stage').disabled = true;
@@ -11,8 +14,7 @@ $('capture').addEventListener('click', async () => {
     if (result.content.length > 200000) throw new Error('选区过大，请缩小范围');
     const url = new URL(result.url); if (url.protocol !== 'https:') throw new Error('仅支持 HTTPS 网页');
     capture = result; $('content').value = result.content; $('conversation').value = ''; 
-    const sites = { 'kimi.com': 'kimi-work', 'doubao.com': 'doubao-work', 'coze.cn': 'coze-web', 'qwenwork.ai': 'qwenwork-web' };
-    $('site').value = sites[url.hostname.replace(/^www\./, '')] ?? 'web-selected';
+    $('site').value = globalThis.WORKET_WEB_CONNECTORS.find(item => item.hosts.includes(url.hostname))?.id ?? 'web-selected';
     $('stage').disabled = false; $('status').textContent = '请核对角色、会话标识及正文。当前选区不代表完整对话。';
   } catch (e) { $('status').textContent = String(e.message ?? e); }
 });

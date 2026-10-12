@@ -5,6 +5,7 @@ import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { _electron as electron } from 'playwright';
 import { encodeFrame } from '../integrations/browser-native/host.mjs';
 const directory = await mkdtemp(join(tmpdir(), 'worket-cn-live-'));
@@ -73,6 +74,27 @@ try {
   dashboard = await panel.evaluate(workId => window.workpet.getDashboard(workId), id); assert.equal(dashboard.selectedWork.id, id); assert.equal(dashboard.selectedWork.eventCount, beforeStage.selectedWork.eventCount);
   assert.equal((await panel.evaluate(() => window.workpet.listSelectedInbox())).length, 0);
   report.checks.actualRestartRestoresWorkAndClearsInbox = true;
+  // Delayed preview interface fixture in a separate actual renderer. Tests authorization UI
+  // timing only; the production IPC/SQLite path above remains independently exercised.
+  const previewFixture = join(directory, 'preview-race.html');
+  const moduleUrl = pathToFileURL(resolve('dist/renderer/selected-import.js')).href;
+  await writeFile(previewFixture, `<html><body><div class="source-actions"></div><script type="module">
+    window.savedInputs=[];
+    window.workpet={previewSelectedContent(input){return new Promise(resolve=>{window.finishPreview=()=>resolve({thread:{events:input.messages.map(m=>({kind:m.role,content:m.content}))},notice:'synthetic preview'});});},async importSelectedContent(input){window.savedInputs.push(input);return {};},async listSelectedInbox(){return [];}};
+    const module=await import(${JSON.stringify(moduleUrl)});module.setupSelectedImport(()=>{});
+  </script></body></html>`);
+  await app.evaluate(async ({ BrowserWindow }, path) => { const window = new BrowserWindow({ show: false, webPreferences: { nodeIntegration: false, contextIsolation: true } }); await window.loadFile(path); }, previewFixture);
+  const race = app.windows().find(page => page.url().endsWith('/preview-race.html')); assert.ok(race);
+  await race.locator('#import-selected').click();
+  await race.locator('[data-site]').selectOption('kimi-work'); await race.locator('[data-url]').fill(fixture.url); await race.locator('[data-conversation]').fill('before-redaction'); await race.locator('[data-text]').fill('synthetic old text');
+  await race.locator('[data-preview-button]').click(); await race.waitForFunction(() => !!window.finishPreview);
+  await race.locator('[data-text]').fill('synthetic redacted text'); await race.locator('[data-conversation]').fill('after-redaction');
+  await race.evaluate(() => window.finishPreview());
+  await race.waitForTimeout(50); assert.equal(await race.locator('[data-confirm]').isDisabled(), true); assert.equal(await race.locator('[data-preview]').isHidden(), true);
+  await race.locator('[data-preview-button]').click(); await race.evaluate(() => window.finishPreview()); await race.waitForFunction(() => !document.querySelector('[data-confirm]').disabled);
+  await race.locator('[data-confirm]').click();
+  const saved = await race.evaluate(() => window.savedInputs); assert.equal(saved.length, 1); assert.equal(saved[0].conversationId, 'after-redaction'); assert.equal(saved[0].messages[0].content, 'synthetic redacted text');
+  report.checks.stalePreviewCannotRestoreRedactedAuthorization = true;
   // No target website is opened or sent to in this local UI pass.
   report.status = 'PASS'; await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2)); console.log(JSON.stringify(report));
 } catch (error) { report.status = 'FAIL'; report.error = String(error); await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2)); throw error; }

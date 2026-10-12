@@ -23,7 +23,7 @@
 
 - `src/executors/types.ts`：能力与传输；无完整历史的 source 可缺省，历史列表不会伪造数据。
 - `src/connectors/selected-content.ts`：只允许用户/助手正文；不读取本地路径或附件 URL。提供 message.id 时支持同 ID 修订。无 ID 使用角色/正文 hash 与同快照出现次数，重复相同的无 ID 文本可能合并，修改可能成为新消息。
-- `src/connectors/catalog.ts`：产品身份与官方入口；消息 URL 去掉查询/hash/凭据。实际 conversationId 必须显式选择，不能依标题推断。网页、Code 和模型 API 分开。
+- `src/connectors/catalog.ts`：产品身份与官方入口；构建通过 sync-browser-catalog 生成扩展 options/host 列表，避免两份目录漂移；消息 URL 去掉查询/hash/凭据。实际 conversationId 必须显式选择，不能依标题推断。网页、Code 和模型 API 分开。
 - `src/connectors/inline-package.ts`：完整有效上下文，500000 字符上限拒绝超限；保持用户原始消息在 JSON 原文段，不隐式读取附件。既有复制/导出工作包保持兼容，新增完整网页包入口。
 - `src/connectors/delivery-ledger.ts`：本地 `connector_deliveries` 表只记录交付正文摘要，按 workId/deliveryId/hash 验证原封不动的启动包。原档案保留，提取及再次交付不递归复制回声；改过正文则继续作为用户证据。旧代码回滚可忽略此独立表。
 - `src/connectors/inbox.ts`：最多 10 项、10 分钟、重启清空；暂存不是采集或上传授权。
@@ -56,7 +56,7 @@ WORKPET_DATA_DIR="$TASK_DATA_DIR" WORKPET_BRIDGE_CONFIG="$TASK_DATA_DIR/bridge.j
 
 `src/adapters/qwenwork/install.ts` 不参加自动安装。确认安装版与文档一致、应用路径和 settings 配置后才调用；它保留无关 Hook，仅增加 UserPromptSubmit 代理，需重启应用。未自动增加 MCP；按官方连接器页面显式添加 STDIO：command 为本机 Node，args 为当前独立 worktree 的 `integrations/workbuddy-marketplace/plugins/workpet/bridge/mcp-proxy.mjs`。开发测试同样设置隔离 WORKPET_BRIDGE_CONFIG。
 
-当前桌面交付为完整内联包，即使没有 MCP 仍可开展工作。有限 Hook 仅提供绑定/已授权用户提交；官方历史或助手正文接口尚未核实，不读私有数据库补齐。配置开启后通过本次双标记的合成消息验收，不把 SessionStart 或 Stop 当作完整回复。
+当前桌面交付为完整内联包，即使没有 MCP 仍可开展工作。有限 Hook 仅提供绑定/已授权用户提交；适配器 normalizeHook 解释具体载荷，应用层仅按通用能力验证授权/绑定；官方历史或助手正文接口尚未核实，不读私有数据库补齐。配置开启后通过本次双标记的合成消息验收，不把 SessionStart 或 Stop 当作完整回复。
 
 ## 检查命令
 

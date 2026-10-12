@@ -26,7 +26,6 @@ export function normalizeSelectedContent(value: SelectedContent): NormalizedThre
   if (!Array.isArray(value.messages) || !value.messages.length || value.messages.length > 2000) throw new Error("请选择 1–2000 条可见消息。");
   if (JSON.stringify(value).length > 1_000_000) throw new Error("选定内容超过 1 MB；请缩小范围，未截断导入。");
   const url = value.scope === "SELECTED_CONTENT" ? validateSourceUrl(value.adapterId, value.url) : "";
-  if (value.scope === "HOOK_EVENTS" && value.adapterId !== "qwenwork") throw new Error("未接入此有限事件来源。");
   const missing = value.missingAttachments ?? [];
   if (!Array.isArray(missing) || missing.length > 100 || missing.some(x => typeof x !== "string" || x.length > 1024)) throw new Error("附件引用无效。");
   const seen = new Set<string>(), counts = new Map<string, number>(), now = new Date().toISOString();

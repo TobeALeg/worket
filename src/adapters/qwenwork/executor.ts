@@ -1,3 +1,4 @@
+import { normalizeQwenWorkHook } from "./hook.js";
 import { access } from "node:fs/promises";
 import type { ExecutorAdapter } from "../../executors/types.js";
 import type { ManualDelivery } from "../../executors/manual-delivery.js";
@@ -6,7 +7,7 @@ export function createQwenWorkExecutor(options: { desktop?: ManualDelivery }): E
   return { id: "qwenwork", name: "QwenWork 桌面（有限事件）", mark: "Q", bundleIds: [],
     environment: { type: "QWENWORK_DESKTOP", name: "QwenWork Desktop" }, installation: "EXPLICIT",
     capabilities: { deliveryMode: "INLINE_PACKAGE", transport: "CLIPBOARD", source: "HOOK_EVENTS", mcp: false, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
-    install: installQwenWorkIntegration,
+    install: installQwenWorkIntegration, normalizeHook: normalizeQwenWorkHook,
     async inspect() { await access("/Applications/QwenWork.app"); }, async resolveCurrent() { return null; },
     ...(options.desktop ? { async deliver(request: import("../../executors/types.js").DeliveryRequest) {
       // Path is inspected rather than inventing a bundle identifier or deep-link protocol.

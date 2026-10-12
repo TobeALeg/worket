@@ -33,3 +33,20 @@ test('WorkBuddy and Qwen executable hooks time out and fail open when local brid
     }
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(directory, { recursive: true, force: true }); }
 });
+
+test('MCP proxy allows slower context preparation while hook forwarding keeps a short deadline', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'worket-slow-mcp-'));
+  const server = createServer(async (req, res) => {
+    for await (const chunk of req) {}
+    setTimeout(() => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ jsonrpc: '2.0', id: 7, result: { syntheticContext: true } })); }, 3000);
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const config = join(directory, 'bridge.json'); await writeFile(config, JSON.stringify({ host: '127.0.0.1', port: (server.address() as { port: number }).port, token: 'synthetic' }));
+  try {
+    const child = spawn(process.execPath, [resolve('integrations/workbuddy-marketplace/plugins/workpet/bridge/mcp-proxy.mjs')], { env: { ...process.env, WORKPET_BRIDGE_CONFIG: config } });
+    let stdout = ''; child.stdout.on('data', chunk => stdout += chunk);
+    child.stdin.end(JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'get_work_context' } }) + '\n');
+    assert.equal(await new Promise(resolve => child.on('close', resolve)), 0);
+    assert.equal(JSON.parse(stdout).result.syntheticContext, true);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(directory, { recursive: true, force: true }); }
+});

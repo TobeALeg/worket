@@ -14,10 +14,10 @@ export function setupSelectedImport(onRecorded: (value: DashboardView) => void):
     for (const item of WEB_CONNECTORS) { const option = document.createElement("option"); option.value = item.id; option.textContent = item.name; site.append(option); }
     const jsonMode = element<HTMLInputElement>("[data-json-mode]"), role = element<HTMLSelectElement>("[data-role]"), text = element<HTMLTextAreaElement>("[data-text]");
     let loadedSingle: SelectedContent["messages"][number] | undefined;
-    let reviewed: SelectedContent | null = null, inboxId: string | null = null, busy = false;
+    let reviewed: SelectedContent | null = null, inboxId: string | null = null, busy = false, editRevision = 0;
     const confirm = element<HTMLButtonElement>("[data-confirm]"), preview = element<HTMLPreElement>("[data-preview]"), error = element<HTMLParagraphElement>("[data-error]");
     const fail = (value: unknown) => { error.hidden = !value; error.textContent = value ? String(value) : ""; };
-    const invalidate = () => { reviewed = null; confirm.disabled = true; preview.hidden = true; };
+    const invalidate = () => { editRevision++; reviewed = null; confirm.disabled = true; preview.hidden = true; };
     dialog.addEventListener("input", invalidate);
     site.addEventListener("change", () => { url.value = WEB_CONNECTORS.find(item => item.id === site.value)?.url ?? ""; invalidate(); });
     site.dispatchEvent(new Event("change")); messages.value = JSON.stringify([{ role: "user", content: "" }], null, 2);
@@ -40,10 +40,10 @@ export function setupSelectedImport(onRecorded: (value: DashboardView) => void):
     });
     element("[data-preview-button]").addEventListener("click", async () => {
       try {
-        fail(null); invalidate();
+        fail(null); invalidate(); const previewRevision = editRevision;
         const input: SelectedContent = { schemaVersion: 1, adapterId: site.value, url: url.value, conversationId: conversation.value.trim(), title: title.value,
           scope: "SELECTED_CONTENT", messages: jsonMode.checked ? JSON.parse(messages.value) : [{ ...(loadedSingle?.id ? { id: loadedSingle.id } : {}), role: role.value as "user" | "assistant", content: text.value }], missingAttachments: attachments.value.split("\n").map(x => x.trim()).filter(Boolean) };
-        const result = await window.workpet.previewSelectedContent(input); if (!dialog.open) return;
+        const result = await window.workpet.previewSelectedContent(input); if (!dialog.open || previewRevision !== editRevision) return;
         reviewed = input; preview.textContent = `${result.notice}\n\n${result.thread.events.map(event => `[${event.kind}]\n${event.content}`).join("\n\n")}\n\n附件未导入：${input.missingAttachments?.join("、") || "未指定（不能据此推断无附件）"}`;
         preview.hidden = false; confirm.disabled = false;
       } catch (e) { fail(e); }

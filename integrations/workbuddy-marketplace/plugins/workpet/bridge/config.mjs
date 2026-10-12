@@ -11,7 +11,7 @@ export async function readBridgeConfig() {
   return parsed;
 }
 
-export async function postToWorkPet(path, body, timeoutMs = 2500) {
+export async function postToWorkPet(path, body, timeoutMs = 60_000) {
   const config = await readBridgeConfig();
   const response = await fetch(`http://${config.host}:${config.port}${path}`, {
     method: "POST",
