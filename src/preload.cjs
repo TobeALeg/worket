@@ -1,6 +1,14 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("workpet", {
+  previewSelectedContent: input => ipcRenderer.invoke("connectors:preview", input),
+  importSelectedContent: input => ipcRenderer.invoke("connectors:import", input),
+  listSelectedInbox: () => ipcRenderer.invoke("connectors:inbox"),
+  readSelectedInbox: id => ipcRenderer.invoke("connectors:inbox-read", id),
+  removeSelectedInbox: id => ipcRenderer.invoke("connectors:inbox-remove", id),
+  chooseSelectedImport: () => ipcRenderer.invoke("connectors:choose-import"),
+  exportInlinePackage: workId => ipcRenderer.invoke("connectors:export-inline", workId),
+  copyInlinePackage: workId => ipcRenderer.invoke("connectors:copy-inline", workId),
   feedback: (action, input) => ipcRenderer.invoke("feedback:command", action, input),
   onFeedbackCollapse: (callback) => {const listener = () => callback(); ipcRenderer.on("feedback:collapse", listener); return () => ipcRenderer.removeListener("feedback:collapse", listener);},
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),

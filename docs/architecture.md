@@ -600,3 +600,11 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 调宽经 preload 的 panel:resize-right 发送 start/move/end，主进程核验发送窗口和有限坐标；`desktop/panel-resize.ts` 以起始 bounds 计算宽度，保持 x/y/height，限定 360–1000px 及当前显示器右边界。默认窗口宽度 410px，不增加渲染进程 Node 权限。
 
 工作详情的分类行仅展示已有状态；最近回复和执行片段用原生 details，按工作 ID 保留其展开状态，切换工作时重置。展示固定资料时由 materialRoles 将内部 key 映射为用户文字；路径保留在 title，显示文件名。此轮不改变数据契约、IPC、上传授权或模型流程。
+
+## 国内连接器与提取接口（2026-10-12，独立开发分支）
+
+ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与增量，HOOK_EVENTS/SELECTED_CONTENT 走显式选定入档，不能伪装完整历史或因未加载消息触发来源删除。`normalizeSelectedContent → AppService.importSelectedContent → sourceDelta → SourceArchive → workEvidence → WorkStateExtractor` 共用现有来源修订和序号进度；本地策略通过 `extractor/index.ts` 构造或 AppServiceOptions.extractor 注入，传输代码不解释业务要求。
+
+交付由应用层根据 MCP_REFERENCE/INLINE_PACKAGE 生成；内联正文完整包含当前有效证据与接续快照，不隐式读取文件，不截断。`connector_deliveries` 只持久化正文摘要以核验交付回声；完全相同的已知启动包仍保留档案，不递归成为新要求；改过正文仍是业务证据。此独立表可由旧版本忽略，不改变核心工作身份。
+
+网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与 stage 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。

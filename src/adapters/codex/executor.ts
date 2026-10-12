@@ -15,6 +15,7 @@ export function createCodexExecutor(options: {
 }): ExecutorAdapter {
   const codex = options.codex ?? new CodexAppServerClient();
   const adapter: ExecutorAdapter = {
+    capabilities: { deliveryMode: "MCP_REFERENCE", transport: "DEEP_LINK", source: "HISTORY", mcp: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     id: "codex",
     name: "Codex",
     mark: "⌘",
@@ -46,7 +47,7 @@ export function createCodexExecutor(options: {
             url.searchParams.set("prompt", request.prompt);
             if (request.cwd) url.searchParams.set("path", request.cwd);
             await options.openUrl!(url.toString());
-            return { guidance: "新聊天已准备好，请在 Codex 确认发送。" };
+            return { status: "DRAFT_PREPARED", guidance: "新聊天已准备好，请在 Codex 确认发送。" };
           },
         }
       : {}),

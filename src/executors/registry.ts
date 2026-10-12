@@ -5,6 +5,7 @@ export async function conversationPage(
   cursor?: string,
 ): Promise<ConversationPage> {
   const source = adapter.source;
+  if (!source) return { threads: [], nextCursor: null };
   if (source.listThreadPage) return source.listThreadPage(30, cursor);
   return {
     threads: cursor ? [] : ((await source.listRecentThreads?.(100)) ?? []),
@@ -37,6 +38,6 @@ export class ExecutorRegistry {
     );
   }
   close(): void {
-    for (const adapter of this.all()) adapter.source.close();
+    for (const adapter of this.all()) adapter.source?.close();
   }
 }

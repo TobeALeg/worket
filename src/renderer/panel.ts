@@ -1,3 +1,4 @@
+import { setupSelectedImport } from "./selected-import.js";
 import { setupProblemFeedback } from "./problem-feedback.js";
 import { chooseExecutor } from "./executor-picker.js";
 import {
@@ -148,7 +149,7 @@ function renderDetail(work: WorkDetailView | null): void {
     <div class="detail-head"><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" && work.dispatchReadAt ? "已接手" : "等待接手"}</span>` : ""}</p></div>
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
     ${work.currentStageTask ? `<p class="detail-meta" data-current-stage>${escapeHtml(work.currentStageTask)}</p>` : ""}
-    <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
+    <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制完整网页工作包</button><button data-action="export-inline">导出完整网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
     ${work.status !== "OPEN" && recordingNoticeRequired ? `<p class="field-help">${escapeHtml(RECORDING_UPLOAD_NOTICE)}</p>` : ""}
     ${work.status === "OPEN" ? `${preparationNotice ? `<div class="detail-actions"><span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? "")}">${escapeHtml(preparationNotice)}</span></div>` : ""}<div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
     <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
@@ -257,6 +258,8 @@ async function performAction(workId: string, action: string, button: HTMLButtonE
 
 async function runAction(workId: string, action: string): Promise<void> {
   const selected = dashboard.selectedWork;
+  if (action === "export-inline") { await window.workpet.exportInlinePackage(workId); return; }
+  if (action === "copy-inline") { await window.workpet.copyInlinePackage(workId); notice.hidden = false; notice.textContent = "完整网页工作包已复制；文件需另行上传。"; return; }
   if (action === "cancel-handoff") {
     if (
       !confirm(
@@ -442,6 +445,7 @@ const recordingSources = setupRecordingSources((result) => {
   filter = result.selectedWork?.status ?? "OPEN";
   void renderWithRecordingNotice();
 });
+setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = result.selectedWork?.status ?? "OPEN"; void renderWithRecordingNotice(); });
 let refreshing = false;
 async function refreshPanel(): Promise<void> {
   if (refreshing || actionPending || document.querySelector("dialog[open], .secondary-menu[open]") || document.activeElement?.matches("input, textarea, select")) return;

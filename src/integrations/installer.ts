@@ -11,7 +11,7 @@ export class IntegrationInstaller {
         try {
           return [
             adapter.id,
-            (await adapter.install?.(this.appPath)) ?? "not-required",
+            adapter.installation === "EXPLICIT" ? "requires-explicit-setup" : (await adapter.install?.(this.appPath)) ?? "not-required",
           ] as const;
         } catch (error) {
           return [adapter.id, `unavailable: ${String(error)}`] as const;

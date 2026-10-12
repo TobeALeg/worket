@@ -15,6 +15,7 @@ export function createWorkBuddyExecutor(options: {
 }): ExecutorAdapter {
   const buddy = options.workbuddy ?? new WorkBuddyDesktopClient();
   const adapter: ExecutorAdapter = {
+    capabilities: { deliveryMode: "MCP_REFERENCE", transport: "DEEP_LINK", source: "HISTORY", mcp: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     id: "workbuddy",
     name: "WorkBuddy",
     mark: "W",
@@ -42,7 +43,7 @@ export function createWorkBuddyExecutor(options: {
       await options.launcher.openNewConversation(
         buildWorkBuddyDeepLink(request.prompt),
       );
-      return {};
+      return { status: "OPENED", guidance: "已请求启动任务，实际发送及接手仍需目标消息确认。" };
     },
   };
   return adapter;

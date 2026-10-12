@@ -23,7 +23,7 @@ test('application handoff reaches all default transports with v3 and current del
       async openApplication(bundleId) { opened = bundleId; },
       writeClipboard(prompt) { prompts.set(opened === 'dev.zcode.app' ? 'zcode' : 'antigravity', prompt); },
     },
-  });
+  }).filter(adapter => ["codex", "workbuddy", "zcode", "antigravity"].includes(adapter.id));
   // This transport test uses synthetic applications, not host-installed executors.
   for (const adapter of adapters) adapter.inspect = async () => { await source.listThreadPage(); };
   const app = new AppService({ databasePath: join(directory, 'work.sqlite'), executors: adapters, foreground: { async detect() { return null; } } });

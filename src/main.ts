@@ -1,3 +1,5 @@
+import { SelectedContentInbox } from "./connectors/inbox.js";
+import type { SelectedContent } from "./connectors/selected-content.js";
 import { Diagnostics } from "./diagnostics/recorder.js";
 import { ReportStore } from "./problem-reports/store.js";
 import { ReportClient } from "./problem-reports/client.js";
@@ -54,6 +56,7 @@ let panelWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let service: AppService | null = null;
 let bridge: WorkPetHttpBridge | null = null;
+const selectedInbox = new SelectedContentInbox();
 let distillation: DistillationDesktop;
 let credentials: ServiceCredentials;
 let worketConnection: AutomaticConnection;
@@ -414,6 +417,38 @@ function registerIpc(): void {
   ipcMain.handle("dashboard:get", (_event, workId?: string) =>
     requireService().dashboardWithContext(workId),
   );
+  const selectedSender = (event: Electron.IpcMainInvokeEvent) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error("INVALID_SENDER");
+  };
+  ipcMain.handle("connectors:preview", (event, input: SelectedContent) => {
+    selectedSender(event); if (input.scope !== "SELECTED_CONTENT") throw new Error("仅支持主动导入");
+    return requireService().previewSelectedContent(input);
+  });
+  ipcMain.handle("connectors:import", (event, input: SelectedContent) => {
+    selectedSender(event); if (input.scope !== "SELECTED_CONTENT") throw new Error("仅支持主动导入");
+    return requireService().importSelectedContent(input);
+  });
+  ipcMain.handle("connectors:inbox", event => { selectedSender(event); return selectedInbox.list(); });
+  ipcMain.handle("connectors:inbox-read", (event, id: string) => { selectedSender(event); return selectedInbox.read(id); });
+  ipcMain.handle("connectors:inbox-remove", (event, id: string) => { selectedSender(event); selectedInbox.remove(id); });
+  ipcMain.handle("connectors:copy-inline", (event, workId: string) => { selectedSender(event); clipboard.writeText(requireService().exportInlinePackage(workId)); });
+  ipcMain.handle("connectors:export-inline", async (event, workId: string) => {
+    selectedSender(event);
+    const text = requireService().exportInlinePackage(workId);
+    const result = await dialog.showSaveDialog({ defaultPath: "work-package-inline.md", filters: [{ name: "Markdown", extensions: ["md"] }] });
+    if (result.canceled || !result.filePath) return null;
+    writeFileSync(result.filePath, text, { mode: 0o600 }); return result.filePath;
+  });
+  ipcMain.handle("connectors:choose-import", async event => {
+    selectedSender(event);
+    const result = await dialog.showOpenDialog({ properties: ["openFile"], filters: [{ name: "选定内容 JSON", extensions: ["json"] }] });
+    const path = result.filePaths[0]; if (!path) return null;
+    const info = await stat(path); if (!info.isFile() || info.size > 1_000_000) throw new Error("导入文件超过 1 MB 或不是文件");
+    const { readFile } = await import("node:fs/promises");
+    const input = JSON.parse(await readFile(path, "utf8")) as SelectedContent;
+    if (input.scope !== "SELECTED_CONTENT") throw new Error("只能选择主动内容文件");
+    requireService().previewSelectedContent(input); return input;
+  });
   ipcMain.handle("executors:list", () => requireService().listExecutors());
   ipcMain.handle("conversations:list", (_event, executorId: string) =>
     requireService().listConversations(executorId),
@@ -517,7 +552,7 @@ app.whenReady().then(async () => {
       },
       writeClipboard: text => clipboard.writeText(text),
     },
-  });
+  }).filter(adapter => process.env.WORKET_CONNECTOR_ISOLATION !== "1" || adapter.capabilities?.source !== "HISTORY");
   credentials = new ServiceCredentials(
     join(dataDirectory, "worket-service.enc"),
     !app.isPackaged || process.argv.includes("--dev"),
@@ -564,6 +599,7 @@ app.whenReady().then(async () => {
         prepareContinuation: workId => requireService().prepareContinuation(workId),
       },
     ),
+    onSelectedContent: input => ({ stagedId: selectedInbox.stage(input), captured: false }),
     onHook: (executorId, payload) =>
       requireService().syncHook(executorId, payload),
   });

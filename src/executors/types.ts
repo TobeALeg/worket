@@ -21,6 +21,15 @@ export interface ConversationSource {
   readThread(id: string): Promise<NormalizedThread>;
   close(): void;
 }
+export type DeliveryMode = "MCP_REFERENCE" | "INLINE_PACKAGE";
+export interface ConnectorCapabilities {
+  deliveryMode: DeliveryMode;
+  transport: "DEEP_LINK" | "CLIPBOARD" | "WEB_CLIPBOARD";
+  source: "HISTORY" | "HOOK_EVENTS" | "SELECTED_CONTENT";
+  mcp: boolean;
+  sendsAutomatically: boolean;
+  files: "LOCAL_REFERENCES" | "MANUAL_UPLOAD";
+}
 export interface DeliveryRequest {
   workId: string;
   deliveryId: string;
@@ -31,6 +40,8 @@ export interface DeliveryRequest {
   cwd?: string;
 }
 export interface DeliveryReceipt {
+  /** Observed transport result; never evidence of sending or reading. */
+  status?: "OPENED" | "DRAFT_PREPARED";
   conversationId?: string;
   guidance?: string;
 }
@@ -40,7 +51,9 @@ export interface ExecutorAdapter {
   mark: string;
   bundleIds: readonly string[];
   environment: ExecutionEnvironment;
-  source: ConversationSource;
+  source?: ConversationSource;
+  capabilities?: ConnectorCapabilities;
+  installation?: "EXPLICIT";
   reconcileHistory?(
     thread: NormalizedThread,
     archive: readonly SourceEvent[],

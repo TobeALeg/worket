@@ -173,7 +173,7 @@ export function setupRecordingSources(
     try {
       const executors = await window.workpet.listExecutors();
       executor.replaceChildren(
-        ...executors.map((item) => {
+        ...executors.filter(item => !item.capabilities || item.capabilities.source === "HISTORY").map((item) => {
           const option = document.createElement("option");
           option.value = item.id;
           option.textContent = item.name;

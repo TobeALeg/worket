@@ -7,6 +7,7 @@ import { installZCodeIntegration } from "./install.js";
 export function createZCodeExecutor(options: { zcode?: ConversationSource; desktop?: ManualDelivery } = {}): ExecutorAdapter {
   const source = options.zcode ?? new ZCodeSource();
   return {
+    capabilities: { deliveryMode: "MCP_REFERENCE", transport: "CLIPBOARD", source: "HISTORY", mcp: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     id: "zcode", name: "ZCode", mark: "Z", bundleIds: ["dev.zcode.app"],
     environment: { type: "ZCODE_DESKTOP", name: "ZCode Desktop" }, source,
     install: installZCodeIntegration,

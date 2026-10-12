@@ -11,10 +11,11 @@ export async function readBridgeConfig() {
   return parsed;
 }
 
-export async function postToWorkPet(path, body) {
+export async function postToWorkPet(path, body, timeoutMs = 2500) {
   const config = await readBridgeConfig();
   const response = await fetch(`http://${config.host}:${config.port}${path}`, {
     method: "POST",
+    signal: AbortSignal.timeout(timeoutMs),
     headers: { "Content-Type": "application/json", "X-WorkPet-Token": config.token },
     body: JSON.stringify(body)
   });

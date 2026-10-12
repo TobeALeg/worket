@@ -34,7 +34,8 @@ export function sourceDelta(work: WorkSnapshot, thread: NormalizedThread, missin
   const binding = work.activeBinding!, latest = latestSourceObservations(work);
   const scopeStartExternalId = [...latest.values()].map(sourceIdentity).find(identity => identity?.scopeStartExternalId)?.scopeStartExternalId;
   const start = thread.events.findIndex(event => scopeStartExternalId ? event.externalId === scopeStartExternalId : latest.has(event.externalId));
-  const scope = scopeStartExternalId && start === -1 ? [] : start === -1 ? thread.events : thread.events.slice(start);
+  const explicitlySelected = thread.events.some(event => event.metadata?.captureScope === "SELECTED_CONTENT");
+  const scope = scopeStartExternalId && start === -1 ? [] : !scopeStartExternalId && explicitlySelected ? thread.events : start === -1 ? thread.events : thread.events.slice(start);
   const occupied = new Set(work.sourceArchive.map(event => event.externalId));
   const observed = new Set<string>();
   const output: NormalizedSourceEvent[] = [];

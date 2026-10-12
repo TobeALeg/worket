@@ -1,3 +1,6 @@
+import { DeliveryLedger } from "../connectors/delivery-ledger.js";
+import { normalizeSelectedContent, type SelectedContent } from "../connectors/selected-content.js";
+import { inlineWorkPackage } from "../connectors/inline-package.js";
 import { packageMaterialVersions } from "../handoff/material-versions.js";
 import { SourcePresence } from "./source-presence.js";
 import { sourceDelta, unavailableSourceRange } from "./source-delta.js";
@@ -23,7 +26,7 @@ import {
   type WorkCore,
   type WorkSnapshot,
 } from "../core/index.js";
-import { LocalRuleExtractor } from "../extractor/local-rule-extractor.js";
+import { createWorkStateExtractor } from "../extractor/index.js";
 import type { WorkStateExtractor } from "../extractor/types.js";
 import { ExecutorRegistry, conversationPage } from "../executors/registry.js";
 import type {
@@ -65,6 +68,8 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
     return Number(binding.conversationId.split(":")[1]) > Date.now()
       ? "waiting"
       : "stopped";
+  const limited = work.sourceArchive.some(event => event.episodeId === binding.episodeId && ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
+  if (limited) return "selected";
   if (
     work.definition.kind === "REUSABLE" &&
     !work.packageReadAt
@@ -75,6 +80,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
 export interface AppServiceOptions {
   databasePath: string;
   aiClient?: AIClient;
+  extractor?: WorkStateExtractor;
   executors: ExecutorAdapter[];
   foreground?: ForegroundApplicationDetector;
   preparationDelayMs?: number;
@@ -86,6 +92,7 @@ type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] }
 
 export class AppService {
   readonly #sourcePresence = new SourcePresence();
+  readonly #deliveryLedger: DeliveryLedger;
   readonly #core: WorkCore;
   readonly #executors: ExecutorRegistry;
   readonly #foreground: ForegroundApplicationDetector;
@@ -98,9 +105,11 @@ export class AppService {
   #notice: string | null = null;
   #sourceSelection: string | undefined;
   readonly #handoffs = new Set<string>();
+  #selectedImportQueue: Promise<unknown> = Promise.resolve();
   readonly #syncingWorks = new Map<string, Promise<WorkSyncResult>>();
   constructor(readonly options: AppServiceOptions) {
     this.#core = createWorkCore({ databasePath: options.databasePath });
+    this.#deliveryLedger = new DeliveryLedger(this.#core.definitions.db);
     this.#executors = new ExecutorRegistry(options.executors);
     this.#foreground =
       options.foreground ??
@@ -140,6 +149,7 @@ export class AppService {
             mark: adapter.mark,
             available: true,
             canDeliver: !!adapter.deliver,
+            ...(adapter.capabilities ? { capabilities: adapter.capabilities } : {}),
           };
         } catch (error) {
           return {
@@ -282,7 +292,7 @@ export class AppService {
     threadId: string,
   ): Promise<ConversationPreview> {
     const adapter = this.#executors.get(executorId),
-      thread = await adapter.source.readThread(threadId);
+      thread = await this.#historySource(adapter.id).readThread(threadId);
     const userPromptCount = thread.events.filter(
       (e) => e.kind === "user.prompt",
     ).length;
@@ -320,7 +330,7 @@ export class AppService {
       this.#notice = "这个聊天已经属于一份 WorkRecord。";
       return this.dashboard(existing.instance.id);
     }
-    const thread = await adapter.source.readThread(request.threadId);
+    const thread = await this.#historySource(adapter.id).readThread(request.threadId);
     if (thread.threadId !== request.threadId)
       throw new Error("来源会话身份不一致，未开始记录。");
     existing = this.#core.findWorkByBinding(adapter.id, request.threadId);
@@ -363,7 +373,7 @@ export class AppService {
     const binding = work.activeBinding ?? work.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
     if (work.activeBinding && unavailableSourceRange(work)) {
-      const thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId);
+      const thread = await this.#historySource(binding.adapter).readThread(binding.conversationId);
       if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致");
       return thread.events.filter(event => event.kind === 'user.prompt' && event.content.trim()).map(event => ({ externalId: event.externalId, label: event.content.replace(/\s+/gu, ' ').slice(0, 100), timestamp: event.timestamp })).reverse();
     }
@@ -388,7 +398,7 @@ export class AppService {
     const binding = sourceWork.activeBinding ?? sourceWork.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
     const adapter = this.#executors.get(binding.adapter),
-      thread = await adapter.source.readThread(binding.conversationId);
+      thread = await this.#historySource(adapter.id).readThread(binding.conversationId);
     if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致，未创建新记录");
     const selected = currentSourceEvents(sourceWork.sourceArchive).find(event =>
       event.externalId === request.startExternalId && event.episodeId === binding.episodeId && event.kind === "user.prompt");
@@ -456,8 +466,9 @@ export class AppService {
       !binding ||
       /^(pending|waiting):/.test(binding.conversationId)
     ) { this.#sourcePresence.reset(workId); return null; }
+    if (!this.#executors.get(binding.adapter).source) return null;
     let thread: NormalizedThread;
-    try { thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId); }
+    try { thread = await this.#historySource(binding.adapter).readThread(binding.conversationId); }
     catch (error) { this.#sourcePresence.reset(workId); throw error; }
     const latest = this.#core.getWork(workId);
     if (
@@ -519,6 +530,60 @@ export class AppService {
     return this.#preparation.noticeRequired();
   }
 
+  previewSelectedContent(input: SelectedContent): { thread: NormalizedThread; notice: string } {
+    const adapter = this.#executors.get(input.adapterId);
+    if (adapter.capabilities?.source !== input.scope) throw new Error("连接器与采集范围不符。");
+    return { thread: normalizeSelectedContent(input), notice: "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
+  }
+
+  /** User confirmation belongs in the UI. This seam only consumes selected, validated data. */
+  importSelectedContent(input: SelectedContent): Promise<DashboardView> {
+    const selected = structuredClone(input);
+    const operation = this.#selectedImportQueue.then(() => this.#importSelectedContent(selected));
+    this.#selectedImportQueue = operation.catch(() => undefined);
+    return operation;
+  }
+
+  async #importSelectedContent(input: SelectedContent): Promise<DashboardView> {
+    if (this.#closed) throw new Error("APP_CLOSED");
+    const { thread } = this.previewSelectedContent(input);
+    const adapter = this.#executors.get(input.adapterId);
+    let work = this.#core.findWorkByBinding(adapter.id, thread.threadId);
+    if (work && (work.instance.status !== "OPEN" || work.activeBinding?.adapter !== adapter.id || work.activeBinding.conversationId !== thread.threadId))
+      throw new Error("该会话属于已停止的执行片段，请主动继续或选择当前目标会话。");
+    if (!work) {
+      const markers = thread.events.filter(event => event.kind === "user.prompt").map(event => {
+        const match = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
+        if (!match) return null;
+        const candidate = this.#core.getWork(match[1]!);
+        return candidate?.instance.status === "OPEN" && candidate.activeBinding?.adapter === adapter.id && candidate.activeBinding.conversationId === `pending:${match[2]}` ? candidate : null;
+      }).filter((candidate): candidate is WorkSnapshot => !!candidate);
+      const unique = new Map(markers.map(candidate => [candidate.instance.id, candidate]));
+      if (unique.size > 1) throw new Error("选定内容包含多个待交接工作，请缩小导入范围。");
+      const pending = [...unique.values()][0];
+      if (pending) {
+        work = this.#core.bindConversation(pending.instance.id, adapter.id, pending.activeBinding!.conversationId, thread.threadId);
+        this.#core.definitions.db.prepare("UPDATE pending_dispatches SET status='BOUND' WHERE work_id=?").run(work.instance.id);
+      } else {
+        if (input.scope === "HOOK_EVENTS") throw new Error("未授权此会话的有限事件。");
+        if (thread.events.some(event => event.kind === "user.prompt" && /^\[WORKPET:/u.test(event.content))) throw new Error("交付标记已失效或目标不符，未创建另一份工作。");
+        work = this.#core.createWork({ definition: { key: "general-work", name: "通用工作", version: 1 },
+          executor: { type: "AGENT", name: adapter.name }, environment: adapter.environment,
+          source: { adapter: adapter.id, conversationId: thread.threadId } });
+      }
+    }
+    thread.events = this.#deliveryLedger.annotate(work.instance.id, thread.events);
+    const result = await this.#ingestDelta(work, thread);
+    await this.#updateRecordedState(result.work);
+    this.#notice = `已导入 ${result.newEvents.length} 条选定内容。未加载历史和附件正文未包含；本地导入不证明目标已读工作包。`;
+    return this.dashboard(work.instance.id);
+  }
+
+  exportInlinePackage(workId: string): string {
+    const work = this.#requireWork(workId);
+    return inlineWorkPackage(work, buildWorkPackage(work, this.#core.definitions));
+  }
+
   async syncHook(
     executorId: string,
     payload: Record<string, unknown>,
@@ -531,6 +596,19 @@ export class AppService {
     const id =
       typeof payload.session_id === "string" ? payload.session_id : null;
     if (!id) return { accepted: false, appendedCount: 0 };
+    if (executorId === "qwenwork") {
+      if (payload.hook_event_name !== "UserPromptSubmit" || typeof payload.prompt !== "string") return { accepted: false, appendedCount: 0 };
+      const input: SelectedContent = { schemaVersion: 1, adapterId: executorId, conversationId: id,
+        title: "QwenWork 有限事件", url: "", scope: "HOOK_EVENTS", messages: [{ role: "user", content: payload.prompt }] };
+      this.previewSelectedContent(input);
+      const match = payload.prompt.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
+      const work = this.#core.findWorkByBinding(executorId, id) ?? (match ? this.#core.getWork(match[1]!) : null);
+      if (work?.instance.status !== "OPEN" || work.activeBinding?.adapter !== executorId ||
+          (work.activeBinding.conversationId !== id && work.activeBinding.conversationId !== `pending:${match?.[2]}`)) return { accepted: false, appendedCount: 0 };
+      const before = work.sourceArchive.length;
+      await this.importSelectedContent(input);
+      return { accepted: true, appendedCount: this.#requireWork(work.instance.id).sourceArchive.length - before, workInstanceId: work.instance.id };
+    }
     let work = this.#core.findWorkByBinding(executorId, id);
     // Some executors notify with only a conversation ID. Read only when this
     // executor has an outstanding user-initiated delivery; never persist an
@@ -539,7 +617,7 @@ export class AppService {
       this.#core.listWorks("OPEN").some(candidate =>
         candidate.activeBinding?.adapter === executorId &&
         candidate.activeBinding.conversationId.startsWith("pending:"))) {
-      const thread = await this.#executors.get(executorId).source.readThread(id);
+      const thread = await this.#historySource(executorId).readThread(id);
       if (thread.threadId !== id) throw new Error("来源会话身份不一致，已拒绝确认交接");
       const matches = thread.events.filter(event => {
         if (event.kind !== "user.prompt") return false;
@@ -736,11 +814,13 @@ export class AppService {
         const currentStage = continuation.currentStageId
           ? continuation.stages.find(stage => stage.id === continuation.currentStageId)
           : undefined;
-        const latestUserPrompt = current.sourceArchive.findLast(event => event.kind === "user.prompt" && event.content?.trim());
+        const latestUserPrompt = workEvidence(current.sourceArchive).findLast(event => event.kind === "user.prompt" && event.content?.trim());
         const title = currentStage?.task.text ?? latestUserPrompt?.content?.replace(/\s+/gu, " ").slice(0, 96) ?? handoff.currentTask ?? current.definition.name;
         const nextStep = currentStage?.remaining[0]?.text ??
           (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取 v3 接续状态与最新用户消息证据，核对当前阶段。");
-        const prompt = buildWorkBootstrap({
+        const prompt = adapter.capabilities?.deliveryMode === "INLINE_PACKAGE"
+          ? inlineWorkPackage(current, buildWorkPackage(current, this.#core.definitions, continuation), handoff.id)
+          : buildWorkBootstrap({
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
@@ -751,6 +831,7 @@ export class AppService {
           artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
         });
         this.options.onHandoffStep?.("opening");
+        this.#deliveryLedger.record(workId, handoff.id, prompt);
         const receipt = await adapter.deliver({
           workId,
           deliveryId: handoff.id,
@@ -865,8 +946,14 @@ export class AppService {
     this.#core.close();
   }
 
+  #historySource(id: string) {
+    const source = this.#executors.get(id).source;
+    if (!source) throw new Error("此连接器不支持完整历史，请主动导入选定内容。");
+    return source;
+  }
+
   #extractor(): WorkStateExtractor {
-    return new LocalRuleExtractor();
+    return this.options.extractor ?? createWorkStateExtractor();
   }
 
   #synchronizeObjective(
@@ -1035,7 +1122,8 @@ export class AppService {
     let pkg: ReturnType<typeof buildWorkPackage> | undefined;
     try { pkg = buildWorkPackage(work, this.#core.definitions); } catch { /* Detail must remain available for repairing materials. */ }
     const state = pkg?.state ?? work.state;
-    const sourceNotice = work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
+    const limited = work.sourceArchive.some(event => ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
+    const sourceNotice = limited ? "仅有选定内容或有限事件；完整历史、未加载分支及附件正文未包含。" : work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
     const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
       .prepare("SELECT status,read_at FROM pending_dispatches WHERE work_id=?")

@@ -13,9 +13,10 @@ export const WORK_STATE_LABELS = {
 export type WorkStateField = keyof typeof WORK_STATE_LABELS;
 export type WorkStatus = "OPEN" | "COMPLETED" | "ARCHIVED";
 export type PetState = "sleeping" | "awake" | "waiting" | "carrying" | "alert";
-export type CaptureStatus = "recording" | "waiting" | "stopped";
+export type CaptureStatus = "recording" | "waiting" | "stopped" | "selected";
 export const CAPTURE_STATUS_LABELS = {
   recording: "正在记录",
+  selected: "选定内容记录",
   waiting: "等待确认",
   stopped: "已停止记录",
 } as const;
@@ -75,6 +76,7 @@ export interface WorkDetailView extends WorkSummaryView {
 }
 
 export interface ExecutorView {
+  capabilities?: import("./executors/types.js").ConnectorCapabilities;
   id: string;
   name: string;
   mark: string;
@@ -164,6 +166,14 @@ export interface CreateWorkFromMessageRequest {
 }
 
 export interface WorkPetApi {
+  previewSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<{ thread: import("./adapters/types.js").NormalizedThread; notice: string }>;
+  importSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<DashboardView>;
+  listSelectedInbox(): Promise<{ id: string; title: string; adapterId: string; expiresAt: number }[]>;
+  readSelectedInbox(id: string): Promise<import("./connectors/selected-content.js").SelectedContent>;
+  removeSelectedInbox(id: string): Promise<void>;
+  chooseSelectedImport(): Promise<import("./connectors/selected-content.js").SelectedContent | null>;
+  exportInlinePackage(workId: string): Promise<string | null>;
+  copyInlinePackage(workId: string): Promise<void>;
   feedback(action: string, input?: unknown): Promise<any>;
   onFeedbackCollapse(callback: () => void): () => void;
   resizePanelRight(phase: "start" | "move" | "end", screenX: number): void;

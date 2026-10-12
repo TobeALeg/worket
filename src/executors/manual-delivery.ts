@@ -11,5 +11,5 @@ export async function deliverViaClipboard(
 ): Promise<DeliveryReceipt> {
   await desktop.openApplication(bundleId);
   desktop.writeClipboard(request.prompt);
-  return { guidance: `启动指令已复制，请在 ${name} 新建聊天并粘贴发送；发送后自动确认记录。` };
+  return { status: "OPENED", guidance: `启动指令已复制，请在 ${name} 新建聊天并粘贴发送；确认目标消息后才会绑定记录。` };
 }
