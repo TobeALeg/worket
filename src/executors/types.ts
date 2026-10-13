@@ -27,6 +27,7 @@ export interface ConnectorCapabilities {
   transport: "DEEP_LINK" | "CLIPBOARD" | "WEB_CLIPBOARD";
   source: "HISTORY" | "HOOK_EVENTS" | "SELECTED_CONTENT";
   mcp: boolean;
+  manualSelection?: boolean;
   sendsAutomatically: boolean;
   files: "LOCAL_REFERENCES" | "MANUAL_UPLOAD";
 }

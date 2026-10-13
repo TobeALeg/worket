@@ -50,3 +50,22 @@ test('MCP proxy allows slower context preparation while hook forwarding keeps a 
     assert.equal(JSON.parse(stdout).result.syntheticContext, true);
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(directory, { recursive: true, force: true }); }
 });
+test('Qwen test-scoped executable ignores unrelated sessions before transport and permits only initiated synthetic sessions', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'worket-qwen-scope-')), calls: any[] = [];
+  const server = createServer(async (req, res) => { let text = ''; for await (const chunk of req) text += chunk; calls.push(JSON.parse(text)); res.setHeader('Content-Type', 'application/json'); res.end('{}'); });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const config = join(directory, 'bridge.json'), scope = join(directory, 'scope.json');
+  await writeFile(config, JSON.stringify({ host: '127.0.0.1', port: (server.address() as { port: number }).port, token: 'synthetic' }));
+  await writeFile(scope, JSON.stringify({ sessions: [], deliveries: [{ workId: 'synthetic-work', deliveryId: 'synthetic-delivery' }] }));
+  async function submit(session_id: string, prompt: string) {
+    const child = spawn(process.execPath, [resolve('integrations/executor-hooks/qwenwork-hook.mjs')], { env: { ...process.env, WORKPET_BRIDGE_CONFIG: config, WORKPET_QWEN_SCOPE: scope } });
+    child.stdin.end(JSON.stringify({ hook_event_name: 'UserPromptSubmit', session_id, prompt }));
+    assert.equal(await new Promise(resolve => child.on('close', resolve)), 0);
+  }
+  try {
+    await submit('unrelated', 'synthetic unselected text'); assert.equal(calls.length, 0);
+    await submit('selected', '[WORKPET:synthetic-work]\n[DELIVERY:synthetic-delivery]\nsynthetic task'); assert.equal(calls.length, 1);
+    await submit('selected', 'synthetic updated requirement'); assert.equal(calls.length, 2);
+    await submit('unrelated', 'synthetic other task'); assert.equal(calls.length, 2);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(directory, { recursive: true, force: true }); }
+});

@@ -70,6 +70,9 @@ test('Qwen finite hook binds only initiated delivery, captures user events witho
     assert.equal((await app.syncHook('qwenwork', payload)).appendedCount, 0);
     assert.equal(app.core().getWork(id)!.activeBinding!.conversationId, 'qwen-synthetic');
     const event = app.core().getWork(id)!.sourceArchive.at(-1)!; assert.equal(event.metadata.captureScope, 'HOOK_EVENTS');
+    const manual = await app.importSelectedContent({ schemaVersion: 1, adapterId: 'qwenwork', conversationId: 'qwen-synthetic', title: 'selected response', url: '', scope: 'SELECTED_CONTENT', messages: [{ id: 'visible-reply', role: 'assistant', content: 'synthetic manually selected reply' }] });
+    assert.equal(manual.selectedWork!.id, id);
+    const reply = app.core().getWork(id)!.sourceArchive.at(-1)!; assert.equal(reply.metadata.captureOrigin, 'DESKTOP_VISIBLE'); assert.equal(reply.metadata.captureScope, 'SELECTED_CONTENT');
     await app.handoff(id, 'kimi-work'); assert.equal((await app.syncHook('qwenwork', payload)).accepted, false);
   } finally { app.close(); }
 });
@@ -77,6 +80,7 @@ test('inbox stages without capture, expires, and does not grant arbitrary operat
   let now = 1000; const inbox = new SelectedContentInbox(() => now), id = inbox.stage(fixture());
   assert.equal(inbox.list().length, 1); const input = inbox.read(id); input.messages[0].content = 'modified'; assert.notEqual(inbox.read(id).messages[0]!.content, 'modified');
   assert.throws(() => inbox.stage({ ...fixture(), scope: 'HOOK_EVENTS' }), /浏览器/);
+  assert.throws(() => inbox.stage({ ...fixture(), adapterId: 'qwenwork', url: '' }), /桌面来源/);
   now += 600001; assert.throws(() => inbox.read(id), /过期/); assert.equal(inbox.list().length, 0);
 });
 test('failed extraction retries, queued imports serialize, and a stopped binding rejects late extraction results', async () => {

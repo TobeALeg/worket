@@ -6,7 +6,7 @@ import { installQwenWorkIntegration } from "./install.js";
 export function createQwenWorkExecutor(options: { desktop?: ManualDelivery }): ExecutorAdapter {
   return { id: "qwenwork", name: "QwenWork 桌面（有限事件）", mark: "Q", bundleIds: [],
     environment: { type: "QWENWORK_DESKTOP", name: "QwenWork Desktop" }, installation: "EXPLICIT",
-    capabilities: { deliveryMode: "INLINE_PACKAGE", transport: "CLIPBOARD", source: "HOOK_EVENTS", mcp: false, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
+    capabilities: { deliveryMode: "INLINE_PACKAGE", transport: "CLIPBOARD", source: "HOOK_EVENTS", mcp: false, manualSelection: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     install: installQwenWorkIntegration, normalizeHook: normalizeQwenWorkHook,
     async inspect() { await access("/Applications/QwenWork.app"); }, async resolveCurrent() { return null; },
     ...(options.desktop ? { async deliver(request: import("../../executors/types.js").DeliveryRequest) {

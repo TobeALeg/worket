@@ -10,7 +10,7 @@ export function createWebExecutors(options: { openUrl?: (url: string) => Promise
     ...(options.desktop && (!item.url || options.openUrl) ? { async deliver(request: import("../executors/types.js").DeliveryRequest) {
       if (item.url) await options.openUrl!(item.url);
       options.desktop!.writeClipboard(request.prompt);
-      return { status: "OPENED" as const, guidance: "工作包已复制，请在目标会话粘贴发送。网页消息须主动导入后才会绑定；附件另行选择上传。" };
+      return { status: "OPENED" as const, guidance: ("modeGuidance" in item ? item.modeGuidance + " " : "") + "工作包已复制，请在目标会话粘贴发送。网页消息须主动导入后才会绑定；附件另行选择上传。" };
     } } : {}),
   }));
 }

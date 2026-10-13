@@ -19,13 +19,14 @@ export interface SelectedContent {
   missingAttachments?: string[];
 }
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-export function normalizeSelectedContent(value: SelectedContent): NormalizedThread {
+export function normalizeSelectedContent(value: SelectedContent, options: { environmentType?: string; desktopSelection?: boolean } = {}): NormalizedThread {
   if (!value || value.schemaVersion !== 1 || !["SELECTED_CONTENT", "HOOK_EVENTS"].includes(value.scope)) throw new Error("选定内容格式无效。");
   if (!/^[a-z][a-z0-9-]*$/.test(value.adapterId) || typeof value.conversationId !== "string" || !value.conversationId.trim() || value.conversationId.length > 2048 || /[\x00-\x1f]/.test(value.conversationId) || /^(pending|waiting):/.test(value.conversationId)) throw new Error("请提供有效的实际会话标识。");
   if (typeof value.title !== "string" || value.title.length > 512) throw new Error("标题过长或无效。");
   if (!Array.isArray(value.messages) || !value.messages.length || value.messages.length > 2000) throw new Error("请选择 1–2000 条可见消息。");
   if (JSON.stringify(value).length > 1_000_000) throw new Error("选定内容超过 1 MB；请缩小范围，未截断导入。");
-  const url = value.scope === "SELECTED_CONTENT" ? validateSourceUrl(value.adapterId, value.url) : "";
+  if (typeof value.url !== "string") throw new Error("来源地址格式无效。");
+  const url = value.scope === "SELECTED_CONTENT" && !options.desktopSelection ? validateSourceUrl(value.adapterId, value.url) : "";
   const missing = value.missingAttachments ?? [];
   if (!Array.isArray(missing) || missing.length > 100 || missing.some(x => typeof x !== "string" || x.length > 1024)) throw new Error("附件引用无效。");
   const seen = new Set<string>(), counts = new Map<string, number>(), now = new Date().toISOString();
@@ -43,8 +44,8 @@ export function normalizeSelectedContent(value: SelectedContent): NormalizedThre
     return { id, externalId: id, sequence: sequence + 1,
       kind: message.role === "user" ? "user.prompt" as const : "agent.response" as const,
       content: message.content, timestamp, executorType: message.role === "user" ? "HUMAN" as const : "AGENT" as const,
-      environmentType: value.scope === "HOOK_EVENTS" ? "QWENWORK_DESKTOP" : "WEB_SELECTED",
-      metadata: { captureScope: value.scope, historyComplete: false, sourceUrl: url,
+      environmentType: options.environmentType ?? (value.scope === "HOOK_EVENTS" ? "QWENWORK_DESKTOP" : "WEB_SELECTED"),
+      metadata: { captureOrigin: value.scope === "HOOK_EVENTS" ? "HOOK" : options.desktopSelection ? "DESKTOP_VISIBLE" : "WEB_PAGE", captureScope: value.scope, historyComplete: false, sourceUrl: url,
         messageIdentity: message.id ? "PROVIDED" : "CONTENT_HASH", missingAttachments: missing },
     };
   });

@@ -533,8 +533,9 @@ export class AppService {
 
   previewSelectedContent(input: SelectedContent): { thread: NormalizedThread; notice: string } {
     const adapter = this.#executors.get(input.adapterId);
-    if (adapter.capabilities?.source !== input.scope) throw new Error("连接器与采集范围不符。");
-    return { thread: normalizeSelectedContent(input), notice: "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
+    const desktopSelection = adapter.capabilities?.source === "HOOK_EVENTS" && adapter.capabilities.manualSelection === true && input.scope === "SELECTED_CONTENT";
+    if (!desktopSelection && adapter.capabilities?.source !== input.scope) throw new Error("连接器与采集范围不符。");
+    return { thread: normalizeSelectedContent(input, { desktopSelection, environmentType: adapter.environment.type }), notice: "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
   }
 
   /** User confirmation belongs in the UI. This seam only consumes selected, validated data. */

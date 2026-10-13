@@ -2,9 +2,14 @@
 export const WEB_CONNECTORS = [
   { id: "qwenwork-web", name: "QwenWork 网页", mark: "Q", url: "https://qwenwork.ai/", hosts: ["qwenwork.ai", "www.qwenwork.ai"] },
   { id: "kimi-work", name: "Kimi Work 网页", mark: "K", url: "https://www.kimi.com/", hosts: ["www.kimi.com", "kimi.com"] },
-  { id: "doubao-work", name: "豆包工作网页", mark: "豆", url: "https://www.doubao.com/work", hosts: ["www.doubao.com", "doubao.com"] },
+  { id: "doubao-work", name: "豆包工作网页", mark: "豆", url: "https://www.doubao.com/chat/", modeGuidance: "请在豆包网页切换到“工作”模式并新建任务；/work 是客户端下载介绍页。", hosts: ["www.doubao.com", "doubao.com"] },
   { id: "coze-web", name: "扣子网页", mark: "扣", url: "https://www.coze.cn/", hosts: ["www.coze.cn", "coze.cn"] },
   { id: "web-selected", name: "其他网页（手动复制）", mark: "↗", url: null, hosts: [] },
+] as const;
+/** Desktop visible-text selection is distinct from browser activeTab capture. */
+export const SELECTED_IMPORT_CONNECTORS = [
+  ...WEB_CONNECTORS,
+  { id: "qwenwork", name: "QwenWork 桌面（选定正文）", mark: "Q", url: null, desktop: true },
 ] as const;
 export function validateSourceUrl(adapterId: string, value: string): string {
   const url = new URL(value);

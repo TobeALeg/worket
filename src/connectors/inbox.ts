@@ -7,6 +7,7 @@ export class SelectedContentInbox {
   #prune() { for (const [id, item] of this.#items) if (item.expiresAt <= this.now()) this.#items.delete(id); }
   stage(input: SelectedContent): string {
     if (input.scope !== "SELECTED_CONTENT") throw new Error("浏览器只能提交主动选定内容。");
+    if (input.adapterId === "qwenwork") throw new Error("浏览器不能提交桌面来源。");
     normalizeSelectedContent(input); this.#prune();
     if (this.#items.size >= 10) throw new Error("待确认内容过多，请先确认或丢弃。");
     const id = randomUUID(); this.#items.set(id, { input: structuredClone(input), expiresAt: this.now() + 10 * 60_000 });

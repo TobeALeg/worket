@@ -42,17 +42,17 @@ WORKPET_DATA_DIR="$TASK_DATA_DIR" WORKPET_BRIDGE_CONFIG="$TASK_DATA_DIR/bridge.j
 
 `TASK_DATA_DIR` 必须先由 `mktemp -d` 生成。ISOLATION 模式不注册任何 HISTORY 适配器，避免验收启动时扫描私人会话；SKIP 阻止已有自动集成安装与服务启动注册。不要直接运行普通 `npm run dev` 验收：既有程序会自动安装历史执行者集成。不要覆盖 `/Applications/Worket.app`。
 
-## 网页扩展配对（尚未执行）
+## 网页扩展配对（临时合成验收已完成，日常浏览器未配置）
 
 1. 审阅 `integrations/browser-extension`。只声明 activeTab/scripting/nativeMessaging，没有 host_permissions、Cookies、history 或全部标签页采集。加载扩展本身属于持久访问设置，须获明确批准；先在单独测试浏览器配置使用。
-2. 取得实际扩展 ID；执行 `node scripts/prepare-browser-native.mjs <实际扩展ID> <审阅输出目录>`。这只生成 bundle，不注册。ID 限定 `[a-p]{32}`，manifest.allowed_origins 精确到该 ID。
-3. 审阅输出中的 shell runner、pairing.json 与 native manifest 后，批准再把 manifest 注册到选定浏览器 NativeMessagingHosts。若测试分支未替换日常 Worket，必须给 runner 明确设置隔离实例的 WORKPET_BRIDGE_CONFIG；不要把它指向日常旧实例或直接改写 ~/.workpet/bridge.json。
+2. 取得实际扩展 ID；执行 `node scripts/prepare-browser-native.mjs <实际扩展ID> <审阅输出目录> <隔离bridge.json绝对路径>`。这只生成 bundle，不注册。ID 限定 `[a-p]{32}`，manifest.allowed_origins 精确到该 ID。
+3. 审阅输出中的 shell runner、pairing.json 与 native manifest 后，批准再把 manifest 注册到选定浏览器 NativeMessagingHosts。Chrome 146+ 支持在独立 `--user-data-dir` 的 NativeMessagingHosts 子目录注册；本轮真实 Chrome for Testing 148 协议验收已验证这一路径，优先避免日常浏览器目录。若测试分支未替换日常 Worket，必须给 runner 明确设置隔离实例的 WORKPET_BRIDGE_CONFIG；不要把它指向日常旧实例或直接改写 ~/.workpet/bridge.json。
 4. 打开用户批准的会话，选中一条可见消息→点击扩展→核对角色/会话/脱敏正文→提交→Worket 最近活动的“导入选定网页内容”→待确认箱→预览→确认。
 5. 多条消息逐条选择，或导入所选消息的稳定 JSON 格式。不自动翻页，不推断未加载历史完整性，不抓取附件正文。待确认内容可丢弃；停止记录/归档后不允许来自旧会话的增量写入。
 
-未加载扩展/未注册 host 时 native 请求明确失败，不退回无授权 HTTP 或私有接口。真正发送或上传文件仍由用户在目标应用操作。网页手动导入支持 Kimi Work、豆包工作、扣子、QwenWork 和通用 HTTPS；产品主页共用域名不证明具体模式，用户必须核对自己选择的是 Work 会话。
+未加载扩展/未注册 host 时 native 请求明确失败，不退回无授权 HTTP 或私有接口。真正发送或上传文件仍由用户在目标应用操作。豆包实际打开 `/chat/` 并由用户切换工作模式；官方 `/work` 是下载介绍页，不能用其打开成功证明工作会话能力。网页手动导入支持 Kimi Work、豆包工作、扣子、QwenWork 和通用 HTTPS；产品主页共用域名不证明具体模式，用户必须核对自己选择的是 Work 会话。
 
-## QwenWork 显式设置（尚未执行）
+## QwenWork 显式设置（应用已安装，实际 Hook/MCP 尚未激活）
 
 `src/adapters/qwenwork/install.ts` 不参加自动安装。确认安装版与文档一致、应用路径和 settings 配置后才调用；它保留无关 Hook，仅增加 UserPromptSubmit 代理，需重启应用。未自动增加 MCP；按官方连接器页面显式添加 STDIO：command 为本机 Node，args 为当前独立 worktree 的 `integrations/workbuddy-marketplace/plugins/workpet/bridge/mcp-proxy.mjs`。开发测试同样设置隔离 WORKPET_BRIDGE_CONFIG。
 
@@ -66,3 +66,17 @@ WORKPET_DATA_DIR="$TASK_DATA_DIR" WORKPET_BRIDGE_CONFIG="$TASK_DATA_DIR/bridge.j
 - `node scripts/check-cn-apps.mjs`：公开安装版本与已有 WorkBuddy status-only 握手，绝不列出或读取历史。
 
 验收报告、截图默认在忽略的 `output/playwright/cn-connectors`；可提交的无敏感结果摘要见 `docs/acceptance/cn-ai-connectors.md`。新增产品需先确认官方契约，再添加适配器和夹具，不把候选清单当已连接清单。
+
+2026-10-13 批准后的进展：临时独立浏览器 Native Messaging 已在实际 Chrome for Testing 中通过发送→待确认箱→应用接口提取；移除 manifest 后请求明确失败，整个临时目录删除。报告是实际 browser/native 传输 + 合成 payload，不是线上第三方回复。`node scripts/qa-native-browser.mjs` 可重跑；activeTab 实际扩展菜单操作与确认链路已由下述独立收尾验收补齐。官方依据：[Chrome Native Messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging)。
+
+QwenWork 测试安装函数可传 `{bridgeConfig,captureScope}`，以脚本参数固定隔离桥接与测试范围，不依赖应用注入环境变量。范围文件只包含已批准测试的 `{sessions:[],deliveries:[{workId,deliveryId}]}`；代理先识别允许的交付并登记该测试 session，其他 session 在传输前忽略。此范围测试已通过，不代表 QwenWork 应用已产生实际事件。获批安装的 1.0.4 已核验签名；原生界面因锁屏未启动，未写入全局 `.qwenwork` Hook 配置或导入 MCP。目前应用首次登录、协议和真实配置激活仍是下一步，避免把离线代理测试冒充应用闭环。
+
+QwenWork 手动回复回流：在“导入选定内容”选择 QwenWork 桌面，当前工作有已绑定 session 时自动填入；用户只粘贴该测试任务的可见助手正文、选择助手角色并预览确认。此路径明确标记 DESKTOP_VISIBLE，不冒充 Hook 或完整 transcript。nativeMessaging 待确认箱不能提交该桌面来源。
+
+## 浏览器扩展完整本机闭环验收
+
+构建后执行 `node scripts/qa-browser-roundtrip.mjs`。可设置 `WORKET_QA_CHROMIUM` 指向已有 Chrome for Testing；不下载浏览器。脚本使用临时 browser user-data-dir、临时 NativeMessagingHosts、独立 Worket 数据库/user-data-dir/mock keychain，开启 SKIP_INTEGRATIONS 与 CONNECTOR_ISOLATION；不加载日常浏览器配置或私人会话。临时加载/配对属于已获批准的测试范围，其他环境须先明确范围。
+
+出现 `WAITING_REAL_EXTENSION_ACTION` 后，只在标题为 `WORKET SYNTHETIC SELECTION TEST` 的测试窗口点击扩展菜单中的“Worket 选定网页内容”。脚本已建立合成文字选区；实际菜单操作才取得 Chrome activeTab。不要改为调用 `chrome.action.openPopup()`、添加 host_permissions 或给站点永久授权：独立实测 openPopup 本身不能授予 activeTab。脚本以单独 CDP 连接识别真实 popup，随后用真实 popup 与 Electron 控件完成采集、暂存、预览、取消、确认、编辑、重启和清理验收。最多等待实际菜单操作 15 分钟，超时明确失败并执行清理。
+
+报告和合成截图位于 `output/playwright/cn-connectors/roundtrip/`。`PASS_SYNTHETIC_BROWSER_ELECTRON_ROUNDTRIP` 不包含线上模型；真实站点下一步只需选一个用户已登录的产品，发送合成任务，再导入其真实回复及带双标记的重新交付。Kimi 登录入口：https://www.kimi.com/ 。新增协议由用户确认；ZCode 和 Qwen 原生 UI 属于独立验收，不是本项依赖。

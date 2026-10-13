@@ -1,4 +1,4 @@
-# 国内连接器验收（2026-10-12）
+# 国内连接器验收（2026-10-13）
 
 范围：独立 `codex/cn-ai-connectors`，基线 `main@4103f2d`。日常 `/Applications/Worket.app` 未覆盖，原 `/Users/dandi/YanGuan` 未切换或修改；未推送、发布或部署。临时测试目录使用新数据库、新 Electron 用户目录、mock keychain、SKIP_INTEGRATIONS 和 CONNECTOR_ISOLATION。没有读取私人会话、浏览器数据库、Cookies 或账户密钥。
 
@@ -15,20 +15,20 @@
 | Native Messaging framing | PASS（协议与真实本机子进程） | 拆分帧、精确 origin、超限/不完整帧；准备 bundle 未注册，真实 host→Electron bridge 进入待确认箱 |
 | Worket 本地预览确认→SQLite→提取→剪贴板 | PASS（真实本机 UI） | `scripts/qa-cn-connectors.mjs`，实际 IPC/SQLite/default extractor/clipboard，非模型/第三方执行证据 |
 | 待确认箱不自动入档、浏览器 Origin 拒绝、重启恢复 | PASS（真实本机） | qa-cn-connectors 报告；重启清箱而保留工作，未调用外部模型 |
-| 临时 Chromium 扩展加载 | 已运行，选区操作未验证 | action popup 未作为 Playwright page 暴露，没有绕过权限；Native Host 未在日常或测试浏览器注册 |
+| 临时 Chromium 扩展/Native Messaging | PASS（合成选区与确认闭环） | 真实 Chrome 扩展菜单操作→popup 采集→Native Host→真实 Electron 待确认/预览/导入/提取；移除注册后拒绝。没有日常浏览器注册，不代表线上 AI 往返 |
 | 提取语义质量 | 未新增验收 | 旧关键词提取器保留；不同消息的冲突要求未必自动替代。工作包保留原文/未解决状态，由后续策略更新处理 |
 
 审阅修复后的最终 `npm test`（含重新构建）**311/311 通过**，`npm run typecheck` 与 `git diff --check` 通过。增加了提取失败重试、停止后迟到结果保护、主动回填较早消息和交付回声去重检查。
 
 ## 逐产品本机结果
 
-公开安装元数据与 WorkBuddy status-only 握手来自 `scripts/check-cn-apps.mjs`，没有列出或读取会话。
+公开安装元数据与 WorkBuddy status-only 握手来自 `scripts/check-cn-apps.mjs`，没有列出或读取会话。JSON 的 `installedApps` 是 2026-10-13 02:00 UTC+8 的历史快照；之后 QwenWork 安装状态以 `approvedSetup` 为准，未把旧快照当当前状态。
 
 | 产品 | 代码交付 | 本机实际结果 | 完整第三方闭环 |
 | --- | --- | --- | --- |
 | WorkBuddy 5.7.7 | 保留 HISTORY/deep link/MCP/Hook；短超时降级 | 已安装且进程运行；现有扩展 socket 无监听，返回 ECONNREFUSED | 未运行发送/来源/回复验收；需正常重启使已有扩展重新激活（已请求允许）；隔离 Hook 配置需批准 |
 | ZCode 3.14.4 | 保留 HISTORY/剪贴板/MCP/Hook | 公开安装版本核实 | 未读取真实会话；隔离合成 task 的原生往返待设置 |
-| QwenWork 桌面 | 有限用户 Hook、显式配置函数、内联包 | 未在 system/user Applications 发现已检查名称的安装包 | 待安装、版本/包名核对、Hook/MCP 显式配置批准；不承诺完整历史/助手全文 |
+| QwenWork 桌面 | 有限用户 Hook、显式配置函数、内联包和手动选定回复 | 已按批准安装并验签 1.0.4 | 首次启动/登录及实际配置未验收（先前锁屏阻塞，本轮未操作该原生 UI）；不承诺完整历史或自动助手全文 |
 | Kimi Work 网页 | 官方入口、完整内联包、主动导入 | Worket 内部 Kimi 格式合成任务闭环通过 | 真实账号发送/返回导入未验收；不使用 Kimi Code API |
 | 豆包工作网页 | 官方 work 入口、完整内联包、主动导入 | 同一工作切换到豆包的接口合成验收通过 | 未宣称内测 API 已开放；真实账号闭环待验 |
 | 扣子网页 | 官方入口、完整内联包、主动导入 | 取消、失败恢复与再次交付的接口合成通过 | 无远程 MCP 实现，不暴露 localhost；真实账号闭环待验 |
@@ -44,7 +44,7 @@
 
 ## 最小后续操作
 
-已单独请求浏览器测试配对及 QwenWork 安装/Hook/MCP 设置批准；没有收到批准前不执行。先在独立浏览器配置注册审阅后的精确-origin Host 并确认选区流程，再使用一个无敏感的真实目标会话验证发送→双标记绑定→助手返回主动导入。WorkBuddy 先仅启动已有应用、确认扩展 status，若需改写 Hook/MCP 则提供审阅后的精确配置并请求批准。
+两项业务批准已于 2026-10-13 收到，临时浏览器 Native Messaging 已验收并清理，QwenWork 已安装验签。本轮独立收尾已在可操作桌面完成浏览器扩展合成闭环；不再把锁屏视为所有任务的共同阻碍。当前最小下一步是在一个真实站点（优先 Kimi）由用户完成必要登录/协议，再验证真实发送→双标记绑定→助手返回主动导入。WorkBuddy 需先观察是否有运行任务或未保存输入，再决定可否正常重启；本轮未强退或改写其现有配置。
 
 ## WorkBuddy 不扩大访问的诊断
 
@@ -59,3 +59,42 @@ code-review 的两轴审阅以 main@4103f2d 为固定点、实施 spec 为需求
 补充本机检查报告 `stalePreviewCannotRestoreRedactedAuthorization: true`；此项为真实 renderer + 延迟接口夹具，不能冒充第三方服务。
 
 最终复测保留旧版同一行双标记兼容；Hook 显式使用 2500ms 超时，MCP 默认 60000ms，慢上下文代理测试通过，避免记录层超时策略阻断正常 MCP 准备。
+
+## 真实站点尝试（2026-10-13，浏览器现有 Chrome 会话）
+
+这部分使用实际生产站点，不是 fixture。只新建测试标签页，不查询浏览历史、Cookies、会话数据库或私人聊天；未接受新协议、填写账号凭据、付费或增加权限。
+
+- Kimi：实际提交无敏感提示 `20261013-KIMI-A`（只要求 KIMI_INITIAL_OK，不调用工具）后弹出登录页面，协议未勾选。页面未生成目标回复；登录阻塞，不记为发送成功或 Work 闭环。
+- 豆包：实际 `/work` 是客户端下载介绍；从普通站点进入 `/chat/`，明确点击“工作”，界面出现“新工作任务/云电脑”及工作编辑器。只输入合成提示 `20261013-DOUBAO-A` 后触发“使用豆包或飞书账号登录”与协议选项，没有目标回复。连接器打开入口已修正为实际 `/chat/`，交付提示要求用户切换“工作”模式；不把介绍页当可发送会话。
+- 扣子：实际首页跳至 `/overview`；点击“使用网页版”出现个人版手机号登录与协议复选框，尚未登录，未发送任务。
+- ZCode：尝试通过现有电脑控制打开已安装应用，工具明确返回 Mac 锁定，要求人工解锁。没有取得原生界面或发送合成任务；不通过替代控制方式绕过锁屏。
+
+无二维码/凭据的证据截图在 `output/playwright/cn-connectors/online/`：`kimi-login-required.jpg`、`doubao-login-required.jpg`、`coze-login-required.jpg`。为安全排除登录二维码，前两张只保留手机登录/协议区域。已保留待登录标签页并向用户报告具体阻碍；等待人工登录/协议处理及解锁后继续真实发送→导入→完整包交付→回复回流。以上均未达到线上往返通过。
+
+## 两项批准后的执行（2026-10-13）
+
+用户对临时测试浏览器配对及官方 QwenWork 安装/合成范围 Hook/MCP 回复“都同意”，业务批准已到位；没有自动批准审查拒绝。机器锁屏及站点登录是独立实际阻碍，不是上述两项业务批准未到位。
+
+1. 真正 Chrome for Testing 148 以独立临时 user-data-dir 加载扩展并精确-origin 注册 Native Messaging。实际 `chrome.runtime.sendNativeMessage` 启动本机 Host，提交合成 payload 到 private-token bridge，stage 不入档；应用接口确认后进入默认提取器。删除 manifest 后再请求得到 host-not-found，关闭浏览器并删除整个临时目录。报告 `online/native-browser-report.json` 为 PASS_BROWSER_NATIVE_TRANSPORT；activeTab 选区操作未混入该传输结论。
+2. 通过官网实际 Apple silicon 下载链接取得 QwenWork 1.0.4；DMG SHA256 `bc4b95d136627117534693303bfe27d4c735d9db2e04f7ae22bd74f64608a51a`。DMG 无附带 SLA，codesign deep/strict 通过，Developer ID 为 Taobao (China) Software CO.,LTD，TeamIdentifier XN6U3EV979，Gatekeeper accepted / Notarized Developer ID。新安装至 `/Applications/QwenWork.app`，安装后再验签通过，挂载盘已卸载；未覆盖 Worket 或其他应用，未去除 quarantine 或改安全设置。官方来源：https://qwenwork.ai/ → https://assets.qwenwork.ai/release/latest/qwenwork-darwin-arm64.dmg 。
+3. 合成范围 Hook 参数和发送前 session/delivery 白名单已实现并通过真实代理子进程测试；未知会话不会传往桥接。QwenWork 真实 GUI 未启动，用户级 `.qwenwork` 尚未创建，Hook/MCP 配置没有据此宣称完成。解锁后继续首次启动/登录、实际配置和合成会话回执。
+
+安装与临时浏览器传输都已实际执行；第一批消费端任务发送、回复及同一工作回流仍等待解锁和人工登录，不宣布整体目标完成。
+
+QwenWork 的选定回复入口已补齐：允许用户主动选取桌面可见正文并导入到已绑定的同一测试 session，标记为 SELECTED_CONTENT / DESKTOP_VISIBLE；与自动 UserPromptSubmit 的 HOOK_EVENTS / HOOK 分开。浏览器待确认箱拒绝冒充桌面来源。接口夹具通过，但未将其写成真实 QwenWork 模型回复。
+
+## 独立收尾实证（2026-10-13）
+
+工作树 HEAD `f5d8a85` 的现有未提交改动在两次内容哈希检查间保持稳定。所有构建与新增验收先在独立副本执行，没有覆盖日常 Worket 或原仓库源码。类型检查通过；完整 `npm test` 为 **313/313 PASS**，旧 311 项报告保留为历史结果。首次沙箱运行因本机 loopback `EPERM` 失败，获自动审批的隔离本机复测通过。
+
+`qa-browser-roundtrip.mjs` 通过 **PASS_SYNTHETIC_BROWSER_ELECTRON_ROUNDTRIP**：
+
+- 真正 Chrome for Testing 148 中的合成 HTTPS 页面，以 Playwright 建立明确的文字选区，再由 Computer Use 点击实际扩展菜单项。没有调用 `openPopup()` 充当 activeTab 授权，也未增加 host_permissions。
+- popup 的真实“读取当前选区”与“发送到 Worket 待确认箱”按钮，经真实浏览器 Native Messaging 启动 Host 子进程，进入独立 Electron 实例；只包含所选正文，未选文本未采集，URL 去掉 query。
+- 待确认不入档；真实 Worket 预览、取消仍不入档且保留暂存；再次预览确认后才入 SQLite 并经默认提取器得到英文要求。
+- 重复导入不增加记录；编辑正文会撤销旧确认，重新预览后增加“结论需注明来源”的要求并保持同一工作 ID。
+- Worket 重启后已确认工作及要求保留、待确认箱为空。删除临时 native manifest 后请求明确失败；浏览器、Electron 与整个临时配置目录均清理。
+
+产物在忽略目录 `output/playwright/cn-connectors/roundtrip/`：`report.json`、`01-extension-selected.png`、`02-worket-preview.png`、`03-worket-recorded.png`。测试 URL 虽使用 Kimi 域名，但由 route.fulfill 返回合成页面，**没有访问 Kimi 服务、账号或模型**。这证明浏览器插件与 Worket 的本机闭环，不证明任何产品的真实模型往返、Qwen Hook 激活或 ZCode 接通。
+
+补充直接 Native 子进程→loopback→暂存→确认导入→默认提取独立复测也通过。原 02:05 的 `browser-selection-report.json: NOT_VERIFIED` 是历史失败，已由此完整实际 action 测试补齐；程序打开 popup 不授予 activeTab 的负向观察仍成立。

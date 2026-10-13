@@ -97,7 +97,9 @@
       "reason": "ECONNREFUSED"
     },
     "modifiedConfiguration": false,
-    "privateContentRead": false
+    "privateContentRead": false,
+    "historicalSnapshot": true,
+    "currentQwenStatusSource": "approvedSetup"
   },
   "browserSelection": {
     "syntheticPage": true,
@@ -106,19 +108,24 @@
     "checks": {
       "popupAutomation": "Popup not exposed to Playwright; no permission bypass attempted"
     },
-    "status": "NOT_VERIFIED"
+    "status": "NOT_VERIFIED",
+    "historicalResult": true,
+    "supersededBy": "browserRoundtrip"
   },
   "regression": {
-    "count": 311,
-    "passed": 311,
-    "failed": 0
+    "count": 313,
+    "passed": 313,
+    "failed": 0,
+    "previousReportedCount": 311,
+    "verifiedDate": "2026-10-13",
+    "isolatedSnapshot": true
   },
   "review": {
     "standards": "repaired and rechecked",
     "spec": "stale-preview repaired and rechecked"
   },
   "permissions": {
-    "newThirdPartySetup": "pending explicit approval",
+    "newThirdPartySetup": "approved for specified temporary browser pairing and QwenWork synthetic setup",
     "dailyInstallReplaced": false,
     "published": false,
     "pushed": false
@@ -131,5 +138,101 @@
     "existingManifest": "active",
     "privateContentRead": false,
     "nextStep": "normal restart and status-only verification, awaiting approval"
+  },
+  "onlineAttempts": {
+    "date": "2026-10-13",
+    "browser": "existing Chrome session, new test tabs",
+    "kimi": {
+      "productionSite": true,
+      "syntheticPromptAttempted": true,
+      "replyReceived": false,
+      "blocker": "LOGIN_AND_TERMS_REQUIRED"
+    },
+    "doubao": {
+      "productionSite": true,
+      "workModeObserved": true,
+      "actualChatUrl": "https://www.doubao.com/chat/",
+      "introUrl": "https://www.doubao.com/work",
+      "syntheticPromptAttempted": true,
+      "replyReceived": false,
+      "blocker": "LOGIN_AND_TERMS_REQUIRED"
+    },
+    "coze": {
+      "productionSite": true,
+      "webAppButtonClicked": true,
+      "syntheticPromptSent": false,
+      "replyReceived": false,
+      "blocker": "LOGIN_AND_TERMS_REQUIRED"
+    },
+    "zcode": {
+      "nativeControlAttempted": true,
+      "syntheticPromptSent": false,
+      "blocker": "MAC_LOCKED_MANUAL_UNLOCK_REQUIRED"
+    },
+    "privateHistoryRead": false,
+    "credentialsEntered": false,
+    "termsAccepted": false
+  },
+  "nativeBrowser": {
+    "browser": "Chrome for Testing 148, headless temporary profile",
+    "nativeRegisteredInTemporaryProfileOnly": true,
+    "actualBrowserNativeTransport": true,
+    "activeTabSelection": "SEPARATE_PENDING_DESKTOP_UNLOCK",
+    "payload": "synthetic fixture",
+    "thirdPartyConversation": false,
+    "privateBrowserProfileRead": false,
+    "permissionsRemovedAfterTest": true,
+    "extensionWorker": "chrome-extension://jdnlfmlljlfeajhkohlldchecelenbcd/background.js",
+    "stagingDoesNotArchive": true,
+    "actualAppInterfaceExtraction": true,
+    "nativeRegistrationRemovalVerified": true,
+    "status": "PASS_BROWSER_NATIVE_TRANSPORT",
+    "historicalTransportResult": true,
+    "selectionNowVerifiedBy": "browserRoundtrip"
+  },
+  "approvedSetup": {
+    "businessApprovalReceived": true,
+    "qwenworkInstalled": true,
+    "qwenworkVersion": "1.0.4",
+    "qwenworkBundleId": "com.qwenwork.desktop.mac",
+    "signatureValid": true,
+    "notarized": true,
+    "publisher": "Taobao (China) Software CO.,LTD",
+    "teamId": "XN6U3EV979",
+    "dmgSha256": "bc4b95d136627117534693303bfe27d4c735d9db2e04f7ae22bd74f64608a51a",
+    "qwenGuiLaunched": false,
+    "qwenGlobalHookConfigured": false,
+    "qwenMcpImported": false,
+    "macUnlockRequired": true,
+    "newWebLoginsCompleted": false,
+    "historicalSetupSnapshot": true,
+    "macUnlockRequiredWasHistorical": true
+  },
+  "browserRoundtrip": {
+    "syntheticOnly": true,
+    "thirdPartyCalled": false,
+    "dailyProfileRead": false,
+    "nativeRegisteredInTemporaryProfileOnly": true,
+    "checks": {
+      "actualActionSelectionOnly": true,
+      "actualPopupToInboxWithoutArchive": true,
+      "cancelKeepsStagedWithoutArchive": true,
+      "actualConfirmationDefaultExtraction": true,
+      "repeatedImportDedupe": true,
+      "editRequiresNewPreviewAndSameWork": true,
+      "restartPreservesConfirmedWork": true,
+      "nativeRemovalVerified": true
+    },
+    "status": "PASS_SYNTHETIC_BROWSER_ELECTRON_ROUNDTRIP",
+    "temporaryProfileRemoved": true,
+    "evidenceRecordedAt": "2026-10-13T07:56:38.261013+00:00",
+    "browser": "Chrome for Testing 148.0.7778.96",
+    "extensionAction": "Native Computer Use click on Chrome extension menu item; no openPopup permission bypass"
+  },
+  "remainingAcceptance": {
+    "realAiRoundtrip": "NOT_VERIFIED_LOGIN_AND_TERMS_REQUIRED",
+    "dailyBrowserPairing": "NOT_CONFIGURED",
+    "qwenGuiHookMcp": "NOT_VERIFIED",
+    "zcodeNativeUi": "SEPARATE_PENDING_APPROVAL_NO_ACTION_BY_THIS_TASK"
   }
 }
