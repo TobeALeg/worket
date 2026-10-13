@@ -503,6 +503,7 @@ function registerIpc(): void {
     (_event, workId: string, confirmation: string) =>
       requireService().cancelHandoff(workId, confirmation),
   );
+  ipcMain.handle("work:reopen-handoff", (_event, workId: string) => requireService().reopenHandoff(workId));
   ipcMain.handle("work:handoff", (_event, workId: string, executorId: string) =>
     diagnostics.operation("handoff", async () => {
       diagnostics.event("handoff", "selected", executorId === "codex" || executorId === "workbuddy" ? { executor: executorId } : {});

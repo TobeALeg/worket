@@ -226,6 +226,7 @@ export interface WorkPetApi {
   completeWork(workId: string): Promise<DashboardView>;
   archiveWork(workId: string): Promise<DashboardView>;
   resumeWork(workId: string): Promise<DashboardView>;
+  reopenHandoff(workId: string): Promise<DashboardView>;
   cancelHandoff(workId: string, confirmation: string): Promise<DashboardView>;
   handoff(workId: string, executorId: string): Promise<DashboardView>;
   cancelRecording(workId: string, confirmation: string): Promise<DashboardView>;

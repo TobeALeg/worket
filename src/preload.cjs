@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld("workpet", {
   completeWork: (workId) => ipcRenderer.invoke("work:complete", workId),
   archiveWork: (workId) => ipcRenderer.invoke("work:archive", workId),
   resumeWork: (workId) => ipcRenderer.invoke("work:resume", workId),
+  reopenHandoff: (workId) => ipcRenderer.invoke("work:reopen-handoff", workId),
   cancelHandoff: (workId, confirmation) => ipcRenderer.invoke("work:cancel-handoff", workId, confirmation),
   handoff: (workId, executorId) => ipcRenderer.invoke("work:handoff", workId, executorId),
   cancelRecording: (workId, confirmation) => ipcRenderer.invoke("work:cancel-recording", workId, confirmation),

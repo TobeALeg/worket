@@ -43,7 +43,7 @@ export interface DeliveryRequest {
 }
 export interface DeliveryReceipt {
   /** Observed transport result; never evidence of sending or reading. */
-  status?: "OPENED" | "DRAFT_PREPARED";
+  status?: "OPEN_REQUESTED" | "OPENED" | "DRAFT_PREPARED";
   conversationId?: string;
   guidance?: string;
 }

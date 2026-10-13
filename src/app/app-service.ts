@@ -572,6 +572,7 @@ export class AppService {
           source: { adapter: adapter.id, conversationId: thread.threadId } });
       }
     }
+    this.#deliveryLedger.forgetRequest(work.instance.id);
     thread.events = this.#deliveryLedger.annotate(work.instance.id, thread.events);
     const result = await this.#ingestDelta(work, thread);
     await this.#updateRecordedState(result.work);
@@ -646,6 +647,7 @@ export class AppService {
             "UPDATE pending_dispatches SET status='BOUND' WHERE work_id=?",
           )
           .run(work.instance.id);
+        this.#notice = "目标会话已由来源确认绑定；工作包读取情况见本工作状态。";
       }
     }
     if (
@@ -655,6 +657,7 @@ export class AppService {
       work.activeBinding.conversationId !== id
     )
       return { accepted: false, appendedCount: 0 };
+    this.#deliveryLedger.forgetRequest(work.instance.id);
     const result = await this.#readBoundWork(work.instance.id);
     return {
       accepted: !!result,
@@ -820,13 +823,15 @@ export class AppService {
         });
         this.options.onHandoffStep?.("opening");
         this.#deliveryLedger.record(workId, handoff.id, prompt);
-        const receipt = await adapter.deliver({
+        const request = {
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
           title,
           prompt,
-        });
+        };
+        this.#deliveryLedger.saveRequest(request);
+        const receipt = await adapter.deliver(request);
         const latest = this.#requireWork(workId);
         if (
           receipt.conversationId &&
@@ -838,16 +843,58 @@ export class AppService {
             pending,
             receipt.conversationId,
           );
-        this.#notice = receipt.conversationId
-          ? `已交给 ${adapter.name}，后续继续记录在同一项工作中。`
-          : `已打开 ${adapter.name}，等待确认目标会话。${receipt.guidance ?? ""}`;
+        if (!this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")) this.#deliveryLedger.forgetRequest(workId);
+        this.#notice = !this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+          ? `目标会话已由 ${adapter.name} 来源确认绑定，工作包读取情况见本工作状态。`
+          : `已请求打开 ${adapter.name}，等待用户发送与来源确认。${receipt.guidance ?? ""}`;
       } catch (error) {
-        this.#core.stopCapture(workId);
-        this.#restoreBinding(current);
-        this.#notice = `${adapter.name} 未能启动，${current.activeBinding ? "已恢复原来源记录" : "未保留活动的待确认绑定"}。${String(error)}`;
+        this.#deliveryLedger.forgetRequest(workId);
+        // A genuine source notification can arrive while the open request is pending.
+        // Its binding must win even if the transport subsequently reports failure.
+        if (this.#requireWork(workId).activeBinding?.conversationId === pending) {
+          this.#core.stopCapture(workId);
+          this.#restoreBinding(current);
+          this.#notice = `${adapter.name} 打开请求失败，${current.activeBinding ? "已恢复原来源记录" : "未保留活动的待确认绑定"}。${String(error)}`;
+        } else {
+          this.#notice = `打开请求报错，工作来源状态已改变，未回滚已确认的来源。${String(error)}`;
+        }
         throw error;
       }
       return this.dashboard(workId);
+    } finally {
+      this.#handoffs.delete(workId);
+    }
+  }
+  async reopenHandoff(workId: string): Promise<DashboardView> {
+    if (this.#handoffs.has(workId)) throw new Error("这项工作正在交接，请等待本次结果。");
+    const work = this.#requireWork(workId);
+    const binding = work.activeBinding;
+    if (work.instance.status !== "OPEN" || !binding?.conversationId.startsWith("pending:"))
+      throw new Error("交接已确认或已取消，未重新打开。");
+    const request = this.#deliveryLedger.request(workId, binding.conversationId.slice(8));
+    if (!request) throw new Error("此旧交付未保存原始打开内容，无法安全重新打开；确认未接手后可取消并重新交接。");
+    const adapter = this.#executors.get(binding.adapter);
+    if (!adapter.deliver) throw new Error("该执行者尚不支持接收工作。");
+    this.#handoffs.add(workId);
+    try {
+      await adapter.inspect();
+      if (this.#requireWork(workId).activeBinding?.id !== binding.id ||
+        this.#requireWork(workId).activeBinding?.conversationId !== binding.conversationId)
+        throw new Error("交接状态已改变，未重新打开。");
+      const receipt = await adapter.deliver(request);
+      const latest = this.#requireWork(workId);
+      if (receipt.conversationId && latest.activeBinding?.conversationId === binding.conversationId)
+        this.#core.bindConversation(workId, adapter.id, binding.conversationId, receipt.conversationId);
+      if (!this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")) this.#deliveryLedger.forgetRequest(workId);
+      this.#notice = this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+        ? `已再次请求打开 ${adapter.name} 的同一交付，请检查草稿；可能出现重复草稿，请只发送一次。尚未据此确认发送、绑定或工作包读取。`
+        : "本交付已由来源确认绑定；工作包读取情况见本工作状态。";
+      return this.dashboard(workId);
+    } catch (error) {
+      this.#notice = this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+        ? `重新打开请求失败，原交付保持待确认，可检查目标或取消未确认交接。${String(error)}`
+        : `重新打开请求报错，来源状态已改变，未回滚已确认的来源。${String(error)}`;
+      throw new Error(this.#notice, { cause: error });
     } finally {
       this.#handoffs.delete(workId);
     }
@@ -870,6 +917,7 @@ export class AppService {
       !legacyPending
     )
       throw new Error("交接已确认或已取消，请刷新记录。");
+    this.#deliveryLedger.forgetRequest(workId);
     this.#core.stopCapture(workId);
     const previous = work.bindings.findLast(
       (binding) => !/^(pending|waiting):/.test(binding.conversationId),
@@ -1134,6 +1182,10 @@ export class AppService {
           }
         : {}),
       ...this.#summary(work),
+      ...(work.packageDeliveryId ? {
+        dispatchStatus: work.activeBinding?.conversationId.startsWith("pending:") ? "WAITING" : "BOUND",
+        dispatchReadAt: work.packageReadAt ?? null,
+      } : {}),
       ...(pkg?.stateStatus === "RESOLVED" && state.objective[0] ? {
         title: state.objective[0].text,
         currentStageTask: pkg.continuation?.stages.find(stage => stage.id === pkg.continuation?.currentStageId)?.task.text ?? "",

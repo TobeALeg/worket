@@ -47,7 +47,7 @@ export function createCodexExecutor(options: {
             url.searchParams.set("prompt", request.prompt);
             if (request.cwd) url.searchParams.set("path", request.cwd);
             await options.openUrl!(url.toString());
-            return { status: "DRAFT_PREPARED", guidance: "新聊天已准备好，请在 Codex 确认发送。" };
+            return { status: "OPEN_REQUESTED", guidance: "请检查 Codex 是否出现预填草稿；草稿出现后仍需由你确认发送。打开请求返回不代表草稿已出现。" };
           },
         }
       : {}),

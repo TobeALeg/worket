@@ -135,10 +135,10 @@ function renderDetail(work: WorkDetailView | null): void {
     detail.innerHTML = "";
     return;
   }
-  const actions = work.status === "OPEN"
-    ? '<button data-action="handoff" class="primary">交接</button><button data-action="complete">完成</button><button data-action="distill">沉淀</button>'
-    : `<button data-action="resume" class="primary">${work.status === "COMPLETED" ? "继续工作" : "恢复工作"}</button><button data-action="distill">沉淀</button>`;
   const waiting = work.bindings.some((binding) => binding.status === "ACTIVE" && binding.conversationId.startsWith("pending:")) || (work.reusableDefinitionId && !work.bindings.some((binding) => binding.status === "ACTIVE") && ["STARTING", "WAITING"].includes(work.dispatchStatus ?? ""));
+  const actions = work.status === "OPEN"
+    ? `${waiting ? '<button data-action="reopen-handoff" class="primary">重新打开</button><button data-action="cancel-handoff">取消未确认交接</button>' : '<button data-action="handoff" class="primary">交接</button>'}<button data-action="complete">完成</button><button data-action="distill">沉淀</button>`
+    : `<button data-action="resume" class="primary">${work.status === "COMPLETED" ? "继续工作" : "恢复工作"}</button><button data-action="distill">沉淀</button>`;
   const preparationNotice = work.preparationStatus === "RUNNING" ? "正在更新工作状态…"
     : work.preparationStatus === "QUEUED" ? "工作状态待更新"
     : work.understandingStatus === "RESOLVED" ? "工作状态已更新"
@@ -146,7 +146,8 @@ function renderDetail(work: WorkDetailView | null): void {
     : work.understandingNotice;
   detail.innerHTML = `
     <div class="detail-navigation"><button id="back-to-list" class="back-button">‹ 返回列表</button><span class="eyebrow detail-executor" title="${escapeHtml(work.agentName)}">${escapeHtml(work.agentName)}</span></div>
-    <div class="detail-head"><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" && work.dispatchReadAt ? "已接手" : "等待接手"}</span>` : ""}</p></div>
+    <div class="detail-head"><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.dispatchStatus || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" ? (work.dispatchReadAt ? "已绑定 · 工作包已读取" : "已绑定 · 尚无工作包读取回执") : "等待用户发送与来源确认"}</span>` : ""}</p></div>
+    ${waiting ? '<p class="notice">打开请求返回不代表草稿已出现。请检查目标应用；只发送一次。未出现草稿可重新打开，确认未接手后可取消。</p>' : ""}
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
     ${work.currentStageTask ? `<p class="detail-meta" data-current-stage>${escapeHtml(work.currentStageTask)}</p>` : ""}
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制完整网页工作包</button><button data-action="export-inline">导出完整网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
@@ -260,6 +261,12 @@ async function runAction(workId: string, action: string): Promise<void> {
   const selected = dashboard.selectedWork;
   if (action === "export-inline") { await window.workpet.exportInlinePackage(workId); return; }
   if (action === "copy-inline") { await window.workpet.copyInlinePackage(workId); notice.hidden = false; notice.textContent = "完整网页工作包已复制；文件需另行上传。"; return; }
+  if (action === "reopen-handoff") {
+    if (!confirm("重新打开会复用本次交付，可能出现重复草稿。请只发送一次；此操作不会自动发送或确认接手。")) return;
+    dashboard = await window.workpet.reopenHandoff(workId);
+    render();
+    return;
+  }
   if (action === "cancel-handoff") {
     if (
       !confirm(

@@ -240,7 +240,7 @@ test("WorkBuddy Deep Link 启动后不把未知提交状态误报为待发送草
 
   const result = await service.handoff(workId, "workbuddy");
 
-  assert.match(result.notice ?? "", /已打开 WorkBuddy/u);
+  assert.match(result.notice ?? "", /已请求打开 WorkBuddy/u);
   assert.doesNotMatch(result.notice ?? "", /草稿|按回车/u);
   service.close();
 });
