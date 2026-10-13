@@ -22,6 +22,8 @@ export function setupRecordingSources(
   let loading = false;
   let recording = false;
   let noticeRequired = true;
+  let requestRevision = 0;
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   function showError(element: HTMLElement, error: unknown): void {
     element.hidden = !error;
@@ -115,16 +117,29 @@ export function setupRecordingSources(
   }
 
   async function loadHistory(cursor?: string): Promise<void> {
-    if (loading) return;
+    if (cursor && loading) return;
+    const revision = ++requestRevision;
+    const executorId = executor.value;
+    const query = executorId === "codex" ? search.value.trim() : undefined;
+    const label = document.querySelector("#history-search-label");
+    if (label) label.textContent = executorId === "codex" ? "搜索全部聊天标题" : "搜索已加载聊天";
+    search.placeholder = executorId === "codex" ? "聊天标题（区分大小写）" : "聊天标题或项目";
+    if (!cursor) {
+      threads = [];
+      nextCursor = null;
+      history.textContent = "正在加载聊天…";
+      more.hidden = true;
+    }
     loading = true;
     more.disabled = true;
     executor.disabled = true;
     showError(historyError, null);
     try {
       const [page, notice] = await Promise.all([
-        window.workpet.listConversationHistory(executor.value, cursor),
+        window.workpet.listConversationHistory(executorId, cursor, query),
         window.workpet.distillation("recordingNotice"),
       ]);
+      if (revision !== requestRevision || !dialog.open) return;
       noticeRequired = notice.required;
       threads = [
         ...new Map(
@@ -136,12 +151,15 @@ export function setupRecordingSources(
       ];
       nextCursor = page.nextCursor;
       renderHistory();
+      showError(historyError, page.notice);
     } catch (error) {
-      showError(historyError, error);
+      if (revision === requestRevision && dialog.open) showError(historyError, error);
     } finally {
-      loading = false;
-      more.disabled = false;
-      executor.disabled = false;
+      if (revision === requestRevision) {
+        loading = false;
+        more.disabled = false;
+        executor.disabled = false;
+      }
     }
   }
 
@@ -164,6 +182,7 @@ export function setupRecordingSources(
   }
 
   async function open(executorId?: string): Promise<void> {
+    clearTimeout(searchTimer);
     search.value = "";
     threads = [];
     nextCursor = null;
@@ -190,14 +209,29 @@ export function setupRecordingSources(
   document
     .querySelector("#record-history")!
     .addEventListener("click", () => void open());
-  executor.addEventListener("change", () => void loadHistory());
+  executor.addEventListener("change", () => { clearTimeout(searchTimer); void loadHistory(); });
   document
     .querySelector("#history-close")!
     .addEventListener("click", () => dialog.close());
   document
     .querySelector("#history-retry")!
-    .addEventListener("click", () => void loadHistory());
-  search.addEventListener("input", renderHistory);
+    .addEventListener("click", () => { clearTimeout(searchTimer); void loadHistory(); });
+  search.addEventListener("input", () => {
+    if (executor.value !== "codex") { renderHistory(); return; }
+    // Invalidate in-flight results immediately, before the debounce fires.
+    requestRevision++;
+    clearTimeout(searchTimer);
+    threads = [];
+    nextCursor = null;
+    history.textContent = "正在搜索聊天…";
+    more.hidden = true;
+    searchTimer = setTimeout(() => void loadHistory(), 200);
+  });
+  dialog.addEventListener("close", () => {
+    requestRevision++;
+    clearTimeout(searchTimer);
+    loading = false;
+  });
   more.addEventListener("click", () => {
     if (nextCursor) void loadHistory(nextCursor);
   });

@@ -135,6 +135,7 @@ export interface ConversationView {
 }
 
 export interface ConversationPageView {
+  notice?: string;
   threads: ConversationView[];
   nextCursor: string | null;
 }
@@ -207,6 +208,7 @@ export interface WorkPetApi {
   listConversationHistory(
     executorId: string,
     cursor?: string,
+    searchTerm?: string,
   ): Promise<ConversationPageView>;
   previewConversation(
     executorId: string,

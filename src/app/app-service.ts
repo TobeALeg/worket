@@ -191,9 +191,10 @@ export class AppService {
   async listConversationHistory(
     executorId: string,
     cursor?: string,
+    searchTerm?: string,
   ): Promise<ConversationPageView> {
     const adapter = this.#executors.get(executorId);
-    const page = await conversationPage(adapter, cursor);
+    const page = await conversationPage(adapter, cursor, searchTerm);
     return {
       ...page,
       threads: page.threads.map((thread) =>

@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld("workpet", {
   listExecutors: () => ipcRenderer.invoke("executors:list"),
   listConversations: (executorId) => ipcRenderer.invoke("conversations:list", executorId),
   listRecentConversations: () => ipcRenderer.invoke("conversations:recent"),
-  listConversationHistory: (executorId, cursor) => ipcRenderer.invoke("conversations:history", executorId, cursor),
+  listConversationHistory: (executorId, cursor, searchTerm) => ipcRenderer.invoke("conversations:history", executorId, cursor, searchTerm),
   previewConversation: (executorId, threadId) => ipcRenderer.invoke("conversations:preview", executorId, threadId),
   createWorkFromConversation: (request) => ipcRenderer.invoke("work:create-from-conversation", request),
   listSplitPoints: (workId) => ipcRenderer.invoke("work:split-points", workId),

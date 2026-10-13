@@ -458,8 +458,8 @@ function registerIpc(): void {
   );
   ipcMain.handle(
     "conversations:history",
-    (_event, executorId: string, cursor?: string) =>
-      requireService().listConversationHistory(executorId, cursor),
+    (_event, executorId: string, cursor?: string, searchTerm?: string) =>
+      requireService().listConversationHistory(executorId, cursor, searchTerm),
   );
   ipcMain.handle(
     "conversations:preview",

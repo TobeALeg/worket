@@ -14,9 +14,10 @@ export interface ConversationSummary {
 export interface ConversationPage {
   threads: ConversationSummary[];
   nextCursor: string | null;
+  notice?: string;
 }
 export interface ConversationSource {
-  listThreadPage?(limit?: number, cursor?: string): Promise<ConversationPage>;
+  listThreadPage?(limit?: number, cursor?: string, searchTerm?: string): Promise<ConversationPage>;
   listRecentThreads?(limit?: number): Promise<ConversationSummary[]>;
   readThread(id: string): Promise<NormalizedThread>;
   close(): void;
