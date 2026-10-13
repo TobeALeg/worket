@@ -1,5 +1,19 @@
 # Codex 真实接力追查（2026-10-13）
 
+## 最终结果：本次只读接力通过（14:10 UTC）
+
+用户再次明确批准重试与跟进后，正式接口向同一个既存目标发送只读重试要求，保留原 Work/Delivery。目标通过正常沙箱申请流程执行原命令，退出码 0；未放宽长期权限、改配置或新建任务。
+
+目标真实 stdio MCP 返回 v3 context 与 14 条证据；独立数据库回执 `read_at=2026-10-13T14:10:46.387Z`，`deliveryMatched=true`，匹配原交付 `65377e53-7622-4147-9512-31110394714b`。context 的 `deliveryReceipt.acknowledged=true`。快照 ID `e7b10326-0977-4b17-8db6-098d6cf1e6b5` 是读取时生成的上下文快照，不是替换本次交付的 ID。
+
+目标复述真实来源标记 `WKC2C-20261013-READONLY`、`WKC2C-CONTROL`、只读要求、原下一步和控制消息事件 `ecba750a-ceac-44db-9734-76475c6107c2`。成功回复自动回到同一工作，事件 `7256a7aa-10ee-4a15-847c-952b78a83100`。绑定 `d850abac-adf5-4cd9-97a6-2aef27dac5e8` 与执行片段 `54c723cd-34c9-44d8-9dd2-0c24cdbc7cb3` 未改变。
+
+完整目标命令输出保存在 `task-3/ui-acceptance/target-actual-mcp-output.json`，来源为只读取这个已核验目标的真实可见工具输出；正式 read_thread 输出因 20000 字符限制另存为带截断标记的证据，未将截断文本冒充完整输出。独立回执、回复回流和清理结果见 `real-read-success-outcome.json`；最终数据库备份为 `final-success-workpet.sqlite`。
+
+本轮隔离 Electron、其已核验子进程、loopback bridge 和临时桥接凭据文件已清理。日常应用、全局 MCP/Hook、工作数据库及源/接收会话历史保留。
+
+通过范围是一次经批准、使用隔离 MCP 的真实只读接力；初次绑定通过验证真实标记的公开通知恢复，未宣称日常自动 Hook 路由通过。v3 阶段仍为 `UNRESOLVED/PARTIAL`，没有把读取、绑定、回复回流成功冒充语义整理完成或 ZCode/Qwen 真实服务往返通过。
+
 ## 已核验事实
 
 同一测试工作 `f218b1b4-d9e3-4f9b-9765-de072d0a0073`，原交付 `65377e53-7622-4147-9512-31110394714b` 的真实目标为 `01a134cf-7142-7f40-b818-290e6abad975`，标题“读取 Worket 工作包”。10:29 UTC 的实际用户消息包含原交付与工作标记，目标回复“已确认只读”。此前“没有找到接收目标”判断已纠正；不能凭打开函数返回证明历史草稿可见，但也不能把既存、已发送的目标当作未交付。
@@ -24,8 +38,8 @@ MCP stdio 代理的失败请求保留原 string/number/zero ID；无 ID 的合�
 
 本机证据位于 `task-3/ui-acceptance/actual-approved-target-read-result.json`、`actual-target-bound-report.json`、`helper-fast-error-proof.json` 与 `real-read-outcome.json`。目标命令、可见失败回复和 Worket 接收事件分别核验。
 
-## 边界
+## 13:17 时的边界（历史阶段）
 
 绑定：通过。真实目标命令执行：通过。工作包读取：失败。失败回复回流：通过。完整真实接力验收：未通过。没有再次发送、重发原交付或创建第二个目标，没有覆盖日常 App、改全局 MCP/Hook、push/merge/deploy 或操作被禁止的 Codex 原生 UI。
 
-若继续，目标须通过正常审批重新执行同一只读命令。一次补发授权已使用；本轮不再消息触发它，也不由诊断进程读取后冒充目标接手。
+若继续，目标须通过正常审批重新执行同一只读命令。当时一次补发授权已使用，没有由诊断进程读取后冒充目标接手。随后获得新的明确重试授权并成功，见文首最终结果。
