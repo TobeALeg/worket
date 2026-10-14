@@ -16,7 +16,7 @@ export class WorkBuddyLocalHistory {
     if (typeof account.uid !== "string" || !account.uid) throw new Error("WorkBuddy 当前账号不可确认，请先登录 WorkBuddy。");
     const uid = account.uid;
     return readDatabase(join(this.root, "workbuddy.db"), db => db.prepare(
-      "SELECT id,title,custom_title,cwd,status,created_at,updated_at FROM sessions WHERE deleted_at IS NULL AND (user_id = ? OR user_id = '') AND (transport = 'local' OR transport IS NULL) ORDER BY updated_at DESC,id DESC",
+      "SELECT id,title,custom_title,cwd,status,created_at,updated_at FROM sessions WHERE deleted_at IS NULL AND user_id = ? AND (transport = 'local' OR transport IS NULL) ORDER BY updated_at DESC,id DESC",
     ).all(uid) as Session[]);
   }
   async inspect(): Promise<void> { await this.#sessions(); }

@@ -34,11 +34,12 @@ test('local history filters accounts/deleted sessions, pages deterministically a
     const path = join(root, 'workbuddy.db'); const db = new DatabaseSync(path);
     db.exec('CREATE TABLE sessions(id TEXT,title TEXT,custom_title TEXT,cwd TEXT,status TEXT,created_at INTEGER,updated_at INTEGER,user_id TEXT,deleted_at INTEGER,transport TEXT)');
     const insert = db.prepare('INSERT INTO sessions VALUES(?,?,NULL,?, ?,1,2,?,?,?)');
-    for (const [id, user, deleted] of [['chat', 'me', null], ['missing', 'me', null], ['other', 'someone', null], ['gone', 'me', 1]] as const)
+    for (const [id, user, deleted] of [['chat', 'me', null], ['missing', 'me', null], ['other', 'someone', null], ['gone', 'me', 1], ['unowned', '', null]] as const)
       insert.run(id, id, '/tmp', 'completed', user, deleted, 'local');
     db.close();
     await writeFile(join(root, 'projects/project/chat.jsonl'), body);
     const before = await readFile(path); const source = new WorkBuddyLocalHistory(root);
+    await writeFile(join(root, 'projects/project/unowned.jsonl'), body.replaceAll('chat', 'unowned'));
     await source.inspect();
     const page = await source.listThreadPage(1);
     assert.deepEqual(page.threads.map(t => t.id), ['chat']); assert.equal(page.nextCursor, null);
@@ -46,6 +47,7 @@ test('local history filters accounts/deleted sessions, pages deterministically a
     assert.equal((await source.listThreadPage(30, undefined, 'no-match')).threads.length, 0);
     assert.equal((await source.readThread('chat')).history, undefined);
     await assert.rejects(source.readThread('other'), /当前账号/);
+    await assert.rejects(source.readThread('unowned'), /当前账号/);
     await assert.rejects(source.readThread('missing'), /本地正文/);
     assert.deepEqual(await readFile(path), before);
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -66,4 +68,14 @@ test('visible user text keeps nested tags and explicit files without leaking ima
   const events = readVisibleTranscript(JSON.stringify(row), 'chat', true);
   assert.equal(events[0]!.content, 'explain <user_query>this</user_query> @"/tmp/input.md"');
   assert.deepEqual(events.filter(e => e.kind === 'artifact.added').map(e => e.content), ['/tmp/input.md', '/tmp/photo.jpg']);
+});
+
+test('internal user records cannot replace the active visible request', () => {
+  for (const flag of ['isMeta', 'isSummary', 'isCompactInternal', 'skipRun']) {
+    const transcript = [message('u', 'user', 'visible'), message('a', 'assistant', 'partial'),
+      message('internal', 'user', 'hidden', { [flag]: true, conversationRequestId: 'internal-request' })]
+      .map(row => JSON.stringify(row)).join('\n');
+    assert.deepEqual(readVisibleTranscript(transcript, 'chat', false).map(e => e.content), ['visible']);
+    assert.deepEqual(readVisibleTranscript(transcript, 'chat', true).map(e => e.content), ['visible', 'partial']);
+  }
 });

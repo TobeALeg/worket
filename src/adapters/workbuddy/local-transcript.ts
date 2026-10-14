@@ -18,13 +18,15 @@ export function readVisibleTranscript(body: string, sessionId: string, settled: 
       throw new Error("WorkBuddy 本地消息格式不兼容。");
     records.set(row.id, row);
   }
-  const rows = [...records.values()];
-  const lastRequest = [...rows].reverse().find(row => row.role === "user" && !object(row.providerData).isMeta);
+  const rows = [...records.values()].filter(row => {
+    const data = object(row.providerData);
+    return !data.isMeta && !data.isSummary && !data.isCompactInternal && !data.skipRun;
+  });
+  const lastRequest = [...rows].reverse().find(row => row.role === "user");
   const activeRequest = object(lastRequest?.providerData).conversationRequestId;
   const events: NormalizedSourceEvent[] = [];
   for (const row of rows) {
     const data = object(row.providerData);
-    if (data.isMeta || data.isSummary || data.isCompactInternal || data.skipRun) continue;
     if (row.role !== "user" && row.role !== "assistant") continue;
     if (!settled && row.role === "assistant" && (!activeRequest || data.conversationRequestId === activeRequest)) continue;
     const time = new Date(row.timestamp as string | number);
