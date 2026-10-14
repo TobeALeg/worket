@@ -76,3 +76,15 @@ test("a stale socket is absent only when WorkBuddy is not running", async () => 
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('history failure does not disable a separately verified WorkBuddy delivery transport', async () => {
+  const client = new WorkBuddyDesktopClient('/nonexistent/worket-buddy.sock', async () => true);
+  const app = new AppService({ databasePath: ':memory:', executors: [createWorkBuddyExecutor({
+    workbuddy: client, launcher: { async inspect() {}, async openNewConversation() { return 'opened'; } },
+  })] });
+  try {
+    const view = (await app.listExecutors())[0]!;
+    assert.equal(view.available, false); assert.equal(view.canDeliver, true);
+    assert.match(view.error!, /接入不可用/); assert.equal(view.deliveryError, undefined);
+  } finally { app.close(); }
+});

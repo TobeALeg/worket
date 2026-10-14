@@ -31,7 +31,7 @@ export async function chooseExecutor(): Promise<string | null> {
       button.type = "button";
       button.className = "secondary";
       button.textContent = executor.name;
-      button.disabled = !executor.available || !executor.canDeliver;
+      button.disabled = !executor.canDeliver;
       button.addEventListener("click", () => {
         selected = executor.id;
         dialog.close();
@@ -42,13 +42,13 @@ export async function chooseExecutor(): Promise<string | null> {
         hint.textContent = "复制工作包 · 手动发送 · 主动导入回流";
         list.append(hint);
       }
-      if (executor.error) {
+      if (executor.deliveryError || executor.error) {
         const error = document.createElement("p");
-        error.textContent = `${executor.name}：${executor.error}`;
+        error.textContent = `${executor.name}：${executor.deliveryError || (executor.canDeliver ? `历史读取暂不可用；仍可交付。${executor.error}` : executor.error)}`;
         list.append(error);
       }
     }
-    if (!executors.some((e) => e.available && e.canDeliver)) {
+    if (!executors.some((e) => e.canDeliver)) {
       message.hidden = false;
       message.textContent = "当前没有可接收工作的执行者。";
     }

@@ -82,6 +82,7 @@ export interface ExecutorView {
   mark: string;
   available: boolean;
   canDeliver: boolean;
+  deliveryError?: string;
   error?: string;
 }
 

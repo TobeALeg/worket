@@ -26,6 +26,10 @@ test('application handoff reaches all default transports with v4 and current del
   }).filter(adapter => ["codex", "workbuddy", "zcode", "antigravity"].includes(adapter.id));
   // This transport test uses synthetic applications, not host-installed executors.
   for (const adapter of adapters) adapter.inspect = async () => { await source.listThreadPage(); };
+  // WorkBuddy delivery must work even when its history channel is down.
+  const buddy = adapters.find(adapter => adapter.id === 'workbuddy')!;
+  buddy.inspect = async () => { throw new Error('history unavailable'); };
+  buddy.inspectDelivery = async () => {};
   const app = new AppService({ databasePath: join(directory, 'work.sqlite'), executors: adapters, foreground: { async detect() { return null; } } });
   try {
     for (const adapter of adapters) {
