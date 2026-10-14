@@ -44,3 +44,5 @@ Kimi 已完成正式 Worket 复制 → 用户点击真实扩展按钮 → Native
 全量测试 346/346 通过；补充正文体积与非文件参考输入的针对性回归通过。按钮验收修复后重新打包，正式安装与构建产物 ASAR SHA-256 同为 `b33debe245dce4a4658548683bbd164c303d67a99ed76ccff9ffee5fcadf3feb`，签名校验通过，运行进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`（验收时 PID 90800）。SQLite `quick_check` 为 `ok`，旧应用保存在 `/Applications/Worket.backup-20261014-180503.app`。未发布公网 Release。
 
 本次富文本修复通过 JavaScript 语法检查、差异空白检查及上述真实按钮正文/附件/模型读取验收；未重复运行前述全量测试。已加载扩展的 transfer.js 与源码 SHA-256 一致（`027921b8c38d7ffed8ec5ef26cf868f59ee7d0e51b0f61ebcf3cf9f2485b7408`），扩展版本保持 0.2.0。
+
+PR 审查补充：准备阶段按 JSON 转义后的正文、标题与文件名总字节数预留 native 消息头和文件元数据空间，拒绝引号或反斜杠膨胀后的超限内容；补充对应回归，避免 Host 因帧过大退出。

@@ -34,6 +34,8 @@ test('web transfer freezes only work attachments, transports bounded chunks and 
     await assert.rejects(transfer.prepare(work, pkg, 'new'), /版本已变化/);
     assert.throws(() => transfer.handle({ action: 'preview', url }), /请先/);
     await assert.rejects(transfer.prepare(work, pkg, '中'.repeat(300_000)), /正文过大/);
+    await assert.rejects(transfer.prepare(work, pkg, '"'.repeat(600_000)), /正文过大/);
+    await assert.rejects(transfer.prepare(work, pkg, '\\'.repeat(600_000)), /正文过大/);
     work.artifactRefs[0].availability = 'MISSING';
     await assert.rejects(transfer.prepare(work, pkg, 'new'), /需补充/);
   } finally { await rm(dir, { recursive: true, force: true }); }

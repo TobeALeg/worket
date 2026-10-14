@@ -29,8 +29,10 @@ export class WebTransfer {
   async prepare(work: WorkSnapshot, pkg: WorkPackage, prompt: string, adapterId?: string): Promise<void> {
     const generation = ++this.#generation;
     this.#current = null;
-    if (Buffer.byteLength(prompt, 'utf8') > 800_000) throw new Error('网页工作包正文过大，请先缩小工作范围。');
     const sources = webFiles(work, pkg);
+    // Budget JSON-escaped strings, leaving room for bounded file metadata and the native frame envelope.
+    if (Buffer.byteLength(JSON.stringify({ prompt, title: work.definition.name, names: sources.map(file => file.name) }), 'utf8') > 800_000)
+      throw new Error('网页工作包正文过大，请先缩小工作范围。');
     if (sources.length > 20) throw new Error('网页交接一次最多携带 20 个附件。');
     const files: { name: string; bytes: Buffer }[] = [];
     let total = 0;
