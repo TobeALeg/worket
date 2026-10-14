@@ -4,14 +4,12 @@ import { workEvidence } from '../core/work-evidence.js';
 import type { WorkSnapshot } from '../core/types.js';
 import type { WorkPackage } from '../definitions/work-package.js';
 
-const escape = (text: string) => text.replace(/[\\`*_{}\[\]<>()#!|]/g, '\\$&');
-
 /** Executor-facing content only. Provenance and read receipts stay in the stored package. */
 export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'local' | 'web' = 'local'): string {
-  const lines = [`# ${escape(pkg.definition?.content.name ?? pkg.state.objective[0]?.text ?? work?.definition.name ?? '工作')}`];
+  const lines = [`# ${pkg.definition?.content.name ?? pkg.state.objective[0]?.text ?? work?.definition.name ?? '工作'}`];
   const section = (title: string, values: string[]) => {
     const unique = [...new Set(values.filter(value => value.trim()))];
-    if (unique.length) lines.push(`\n## ${title}\n${unique.map(value => `- ${escape(value)}`).join('\n')}`);
+    if (unique.length) lines.push(`\n## ${title}\n${unique.map(value => `- ${value}`).join('\n')}`);
   };
   const content = pkg.definition?.content;
   const snapshot = pkg.stateStatus === 'RESOLVED' ? pkg.continuation : undefined;
@@ -52,14 +50,14 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
     section('待澄清', snapshot.uncertainties.map(claim => claim.text));
   } else {
     for (const [label, key] of [
-      ['约束补充', 'constraints'], ['已确认决定', 'decisions'], ['验收标准补充', 'successCriteria'],
+      ['约束线索', 'constraints'], ['决定线索', 'decisions'], ['验收标准线索', 'successCriteria'],
       ['已记录进度', 'completedActions'], ['待办线索', 'pendingActions'],
     ] as const) section(label, pkg.state[key].map(item => item.text));
     // Without a resolved understanding, dropping conversation text would silently lose requirements.
     const messages = work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
     if (messages.length) {
       lines.push('\n## 尚待整理的工作对话\n当前阶段尚未理清；以下原话用于确认有效要求和进度，较早的要求可能已被后文更改。');
-      for (const message of messages) lines.push(`\n### ${message.kind === 'user.prompt' ? '用户' : '执行者'}\n${escape(message.content ?? '')}`);
+      for (const message of messages) lines.push(`\n### ${message.kind === 'user.prompt' ? '用户' : '执行者'}\n${message.content ?? ''}`);
     }
   }
   section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_STATED' || item.origin === 'USER_EDITED').map(item => item.text));

@@ -57,3 +57,15 @@ test('local and web share business rules; web does not pretend local files are a
   assert.match(web, /budget.xlsx（需上传）/);
   assert.match(web, /reference.pdf（需上传）/);
 });
+
+
+test('copied instructions preserve literal code, paths and Markdown links without extra escaping', () => {
+  const { pkg, work } = fixture();
+  const literal = '<script>gtag("event", "contact_click", { value: 1 });</script>\n[资料](https://example.com/a?x=1&y=2)\n```js\nconst ids = [1, 2];\n```';
+  work.sourceArchive[0].content = literal;
+  pkg.state.constraints = [{ text: '事件名必须为 `contact_click`，文件名为 report_v2.md。' }];
+  for (const brief of [executionBrief(pkg, work), inlineWorkPackage(work, pkg)]) {
+    assert.ok(brief.includes(literal), 'the original task snippet remains directly usable');
+    assert.ok(brief.includes(pkg.state.constraints[0].text), 'structured requirements preserve code identifiers too');
+  }
+});
