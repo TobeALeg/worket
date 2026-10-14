@@ -36,4 +36,5 @@ RPA 在 API 受限但界面仍开放时可行。macOS [AXUIElement](https://deve
 
 - 构建通过；全量自动回归 342/342 通过，涵盖读写隔离、交接 transport、身份迁移、账号过滤、未保存半行、混合会话、系统注入与只读数据库不变。
 - 本机真实读取覆盖见上；不把模拟 launcher 的回归当作 WorkBuddy 实际发送/接手验收。
-- 本地安装、运行与界面复核结果待交付阶段补充。
+- 已更新并重启 `/Applications/Worket.app`，旧应用保存在 `output/app-backups/workbuddy-local-20261014-1510/Worket.app`。最终安装包包含随后并行工作的提交，已逐项核对本次核心读取/能力隔离文件；安装与最终构建 ASAR SHA-256 均为 `cc358af6baacd8c6d405f2264e5f67d8815f3a85e2f4ed48175e39d4d3fb451b`，签名校验通过，运行进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。
+- 原生界面“历史聊天 → WorkBuddy”已展示真实聊天列表和“27 个会话没有本地正文”范围说明，不再触发旧 socket 更新提示。保留现有用户数据，数据库只读 `PRAGMA quick_check` 为 `ok`。未向真实 WorkBuddy 会话发送测试任务。
