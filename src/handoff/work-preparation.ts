@@ -8,6 +8,8 @@ import { buildContinuationBasis, continuationBasisMatches, type ContinuationServ
 
 const NOTICE_VERSION = "automatic-work-preparation-v1";
 const BATCH_DELAY_MS = 30_000;
+// Retry previously failed inputs once after changing the request projection.
+const attemptDigest = (basis: ReturnType<typeof buildContinuationBasis>) => hash(["request-order-v2", basis]);
 
 /** Only explicit recording/handoff actions enroll a work. Startup never enrolls history. */
 export class WorkPreparation {
@@ -50,7 +52,7 @@ export class WorkPreparation {
     const pkg = buildWorkPackage(work, this.core.definitions);
     const materials = packageMaterialVersions(pkg);
     const basis = buildContinuationBasis(work, materials);
-    return { work, materials, digest: hash(basis), attempted: row.attempt_digest,
+    return { work, materials, digest: attemptDigest(basis), attempted: row.attempt_digest,
       cached: pkg.continuation?.resolution !== "UNRESOLVED" && pkg.continuation &&
         continuationBasisMatches(work, materials, pkg.continuation.basis) ? pkg.continuation : undefined };
   }
@@ -119,7 +121,7 @@ export class WorkPreparation {
       generate: input => {
         authorize();
         generated = true;
-        attempted(hash(input.basis));
+        attempted(attemptDigest(input.basis));
         return this.client!.continuation!({ schemaVersion: 1, input }, () => {
           const current = authorize();
           if (!continuationBasisMatches(current.work, current.materials, input.basis))
@@ -129,7 +131,7 @@ export class WorkPreparation {
     });
     const current = authorize();
     // Oversize input is also stable: do not retry it on every poll or restart.
-    if (!generated) attempted(hash(result.basis));
+    if (!generated) attempted(attemptDigest(result.basis));
     if (continuationBasisMatches(current.work, current.materials, result.basis))
       this.core.createHandoffPackage(workId, { continuation: result });
     return result;
