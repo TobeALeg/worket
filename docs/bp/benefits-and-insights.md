@@ -238,6 +238,8 @@ Worket 当前依据：[契约流程验收](../acceptance/contract-lifecycle-ui.m
 
 同日修复补充：用户明确要求验证正式接入/本地历史、择路修复、拆分读写检查，并考虑各 Agent 限制接入后的 RPA 兜底。已验证本机 64 份 JSONL 可读、27 个会话无本地正文；正式 API 文档不等价于任意桌面历史且尚无 OAuth 实测。实现本地只读文字/显式附件投影与独立 inspectDelivery，342 项回归通过。当前能力证据与范围见 [接入验证](../acceptance/workbuddy-local-history-2026-10-14.md)。助手提出的价值判断：跨执行者工作连续性应依赖多层、可核验证据通道，不能承诺无条件兼容所有应用。RPA 可作为界面仍开放时的降级路线；自动完整采集、跨版本成功率和节时收益尚未验证，也未实现通用 RPA。用户手动选择/导出是最终保底，不把自动化降级写成数据完整。
 
+同日用户修正：不考虑 RPA，只保留人工接手作为兜底。此前界面自动操作仅为可行性讨论，不进入当前产品实施范围。真实交接验收应分开核对草稿交付、人工发送、目标会话绑定、工作包读取回执和结果回流，不能以历史可读推断整条链路可用。
+
 讨论起因：用户确认本地 Worket 已更新，但 WorkBuddy 接入仍失败，并要求解释升级限制及影响。已核实的本机事实：5.7.7 运行时本地历史接口已返回 ECONNREFUSED；正常退出并重启后，WorkBuddy 自动应用已下载更新，界面与应用包均为 5.8.2，接口仍失败。因此不能断言限制首次出现在 5.8.2，也未取得运行日志中明确拒绝 worket-capture 的错误。
 
 外部实现依据（2026-10-14，本机 `/Applications/WorkBuddy.app/Contents/Resources/app.asar` 的 `main/daemon-bootstrap.js`）：普通 installed 扩展需通过签名与文件完整性验证；用户扩展目录内的 distribution.json 不能自行授予权限；未受信任的默认第三方分发权限为空、server/renderer 为 null；普通 installed 目录不再直接扫描加载。Worket 当前安装器只复制扩展目录，不提供此类签名安装记录，本机无 extensions/lock.json。该机制足以解释当前安装方式不满足 5.8.2 加载条件，但不等于已逐条捕获拒绝日志。官方仍公开支持 MCP、Hook 等插件：[插件文档](https://www.codebuddy.cn/docs/workbuddy/Plugins)；这与本次失效的内部 Extension 服务是不同接入层。[公开更新日志](https://www.codebuddy.cn/docs/workbuddy/Changelog)本轮返回最新条目为 5.7.7，不能作为 5.8.2 变更清单。

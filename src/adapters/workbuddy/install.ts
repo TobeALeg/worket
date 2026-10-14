@@ -87,7 +87,8 @@ export async function installWorkBuddyUserIntegration(
 ): Promise<"installed" | "already-installed"> {
   await mkdir(configDirectory, { recursive: true });
   const settingsPath = join(configDirectory, "settings.json");
-  const mcpPath = join(configDirectory, ".mcp.json");
+  // User-level config is mcp.json; .mcp.json belongs to plugin/project scope.
+  const mcpPath = join(configDirectory, "mcp.json");
   const settings = await readJsonObject(settingsPath);
   const mcp = await readJsonObject(mcpPath);
   const command = hookCommand(appPath);
