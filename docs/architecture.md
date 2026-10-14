@@ -299,7 +299,9 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 `ExecutorAdapter.inspect()` 检查来源读取，新增可选 `inspectDelivery()` 检查交付；未实现独立检查的适配器沿用原检查。WorkBuddy 交付通过 Electron 查询 `workbuddy://` 注册程序，与读取独立。ExecutorView.available 表示读取检查结果，canDeliver 独立决定选择按钮；deliveryError 与来源 error 分开。交接/重新打开检查目标交付能力，仍刷新正在记录的原来源，不能静默用陈旧记录替代失败的源刷新。Deep Link 成功只代表打开请求，实际发送、绑定和工作包读取仍分别等待真实证据。
 
-正式 Open API 的本地助理/云端任务能力与任意桌面会话历史不等价，且需要应用注册/OAuth；本轮未获得授权凭证、未实测正式 API。RPA 分层兜底及本次验证边界见 [接入验证](acceptance/workbuddy-local-history-2026-10-14.md)。
+正式 Open API 的本地助理/云端任务能力与任意桌面会话历史不等价，且需要应用注册/OAuth；本轮未获得授权凭证、未实测正式 API。用户随后明确排除 RPA，保留人工接手；历史方案与本次验证边界见 [接入验证](acceptance/workbuddy-local-history-2026-10-14.md)。
+
+2026-10-14 附件实测：用户附件引用进入 INPUT，助手最终回复的绝对路径 Markdown 链接进入 OUTPUT，经 ArtifactTracker/Resolver 核验本机文件字节数、SHA-256 和可用性；原生界面可见结果与资料链接。CSV → Markdown/CSV 真实闭环通过，未验证其他文件格式；见 [验收](acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。
 
 ### 通用交付
 
