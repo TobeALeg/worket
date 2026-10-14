@@ -11,6 +11,8 @@ const target = new URL("../dist/renderer", import.meta.url);
 await mkdir(target, { recursive: true });
 await cp(source, target, { recursive: true });
 await cp(new URL("../src/preload.cjs", import.meta.url), new URL("../dist/preload.cjs", import.meta.url));
+// The unpacked browser extension uses the same theme as the desktop surfaces.
+await cp(new URL("../src/renderer/theme.css", import.meta.url), new URL("../integrations/browser-extension/theme.css", import.meta.url));
 
 if (process.platform === "darwin") {
   await execFileAsync("xcrun", [
