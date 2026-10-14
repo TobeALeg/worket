@@ -426,7 +426,7 @@ function registerIpc(): void {
   ipcMain.handle("connectors:inbox", event => { selectedSender(event); return selectedInbox.list(); });
   ipcMain.handle("connectors:inbox-read", (event, id: string) => { selectedSender(event); return selectedInbox.read(id); });
   ipcMain.handle("connectors:inbox-remove", (event, id: string) => { selectedSender(event); selectedInbox.remove(id); });
-  ipcMain.handle("connectors:copy-inline", (event, workId: string) => { selectedSender(event); clipboard.writeText(requireService().exportInlinePackage(workId)); });
+  ipcMain.handle("connectors:copy-inline", async (event, workId: string) => { selectedSender(event); clipboard.writeText(await requireService().prepareWebTransfer(workId)); });
   ipcMain.handle("connectors:export-inline", async (event, workId: string) => {
     selectedSender(event);
     const text = requireService().exportInlinePackage(workId);
@@ -595,6 +595,7 @@ app.whenReady().then(async () => {
         prepareContinuation: workId => requireService().prepareContinuation(workId),
       },
     ),
+    onWebTransfer: payload => requireService().webTransfer.handle(payload),
     onSelectedContent: input => ({ stagedId: selectedInbox.stage(input), captured: false }),
     onHook: (executorId, payload) =>
       requireService().syncHook(executorId, payload),

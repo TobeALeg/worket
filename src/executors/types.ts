@@ -30,7 +30,7 @@ export interface ConnectorCapabilities {
   mcp: boolean;
   manualSelection?: boolean;
   sendsAutomatically: boolean;
-  files: "LOCAL_REFERENCES" | "MANUAL_UPLOAD";
+  files: "LOCAL_REFERENCES" | "MANUAL_UPLOAD" | "EXTENSION_UPLOAD";
 }
 export interface DeliveryRequest {
   workId: string;

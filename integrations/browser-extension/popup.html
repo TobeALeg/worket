@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>Worket 选定内容</title><style>body{font:14px system-ui;width:370px;padding:16px;background:#faf8f3;color:#25231f}label{display:block;margin:10px 0}input,textarea,select{width:100%;box-sizing:border-box;padding:7px}button{padding:8px;margin:5px 0}p{line-height:1.5}textarea{height:150px}</style></head><body>
-<h2>导入选定内容</h2><p>先在当前页选中一条可见消息，再点击读取。只读取你的选区，不加载历史，不读取 Cookies 或附件。最终保存需在 Worket 再次确认。</p>
+<h2>接收工作包</h2><p id="transfer-preview">正在检查本机工作包…</p><button id="transfer" disabled>填入工作包和附件</button><p id="transfer-status" role="status"></p><hr><h2>导入选定内容</h2><p>先在当前页选中一条可见消息，再点击读取。只读取你的选区，不加载历史，不读取 Cookies 或附件。最终保存需在 Worket 再次确认。</p>
 <button id="capture">读取当前选区</button><label>来源<select id="site"></select></label>
 <label>实际会话标识<input id="conversation" placeholder="会话 URL 或你确定的稳定标识"></label><label>消息角色<select id="role"><option value="user">用户</option><option value="assistant">助手</option></select></label>
 <label>选定正文（可编辑、脱敏）<textarea id="content"></textarea></label><button id="stage" disabled>发送到 Worket 待确认箱</button><p id="status" role="status"></p><script src="catalog.js"></script><script src="popup.js"></script></body></html>

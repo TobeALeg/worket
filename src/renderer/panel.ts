@@ -265,7 +265,7 @@ async function performAction(workId: string, action: string, button: HTMLButtonE
 async function runAction(workId: string, action: string): Promise<void> {
   const selected = dashboard.selectedWork;
   if (action === "export-inline") { await window.workpet.exportInlinePackage(workId); return; }
-  if (action === "copy-inline") { await window.workpet.copyInlinePackage(workId); notice.hidden = false; notice.textContent = "网页工作包已复制；文件需另行上传。"; return; }
+  if (action === "copy-inline") { await window.workpet.copyInlinePackage(workId); notice.hidden = false; notice.textContent = "工作包已复制，附件已准备。请在目标网页点击 Worket 扩展填入。"; return; }
   if (action === "reopen-handoff") {
     if (!confirm("重新打开会复用本次交付，可能出现重复草稿。请只发送一次；此操作不会自动发送或确认接手。")) return;
     dashboard = await window.workpet.reopenHandoff(workId);

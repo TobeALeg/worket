@@ -29,3 +29,25 @@ $('stage').addEventListener('click', async () => {
   } catch (e) { $('status').textContent = `${e.message ?? e}。如果未安装本机桥接，请先按开发说明完成显式配对。`; }
   finally { $('stage').disabled = false; }
 });
+
+let transferTab = null, transferId = null;
+(async () => {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) throw new Error('请先打开目标聊天网页。');
+    const url = new URL(tab.url);
+    const result = await chrome.runtime.sendNativeMessage('site.dandi.worket.selected', { action: 'transfer', payload: { action: 'preview', url: url.origin + url.pathname } });
+    if (!result?.ok) throw new Error(result?.error ?? '本机 Worket 未连接');
+    transferTab = tab.id; transferId = result.id;
+    $('transfer-preview').textContent = `${result.title} · ${result.files.length} 个附件${result.files.length ? '：' + result.files.map(file => file.name).join('、') : ''}`;
+    $('transfer').disabled = false;
+  } catch (error) { $('transfer-preview').textContent = error.message; }
+})();
+$('transfer').addEventListener('click', async () => {
+  $('transfer').disabled = true; $('transfer-status').textContent = '正在传送，请稍候…';
+  try {
+    const result = await chrome.runtime.sendMessage({ action: 'fill-work', tabId: transferTab, id: transferId });
+    if (!result?.ok) throw new Error(result?.error ?? '传送未完成，请检查网页草稿。');
+    $('transfer-status').textContent = `工作包已填入，${result.count} 个附件已交给网页。请确认附件卡片及上传结果，再点击网页的发送按钮。`;
+  } catch (error) { $('transfer-status').textContent = error.message; }
+});

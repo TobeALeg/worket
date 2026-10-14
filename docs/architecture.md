@@ -671,7 +671,7 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 
 交付由应用层根据 MCP_REFERENCE/INLINE_PACKAGE 生成；内联正文完整包含当前有效证据与接续快照，不隐式读取文件，不截断。`connector_deliveries` 只持久化正文摘要以核验交付回声；完全相同的已知启动包仍保留档案，不递归成为新要求；改过正文仍是业务证据。此独立表可由旧版本忽略，不改变核心工作身份。
 
-网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与 stage 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。
+网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与显式 stage/transfer 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。
 
 2026-10-13：Codex deep link 交付返回 `OPEN_REQUESTED`，不观测原生草稿。`DeliveryLedger` 的原始重开请求保存在独立本地表，按原 prompt hash 核验；pending 状态允许同 delivery 原样再传输，沿用 per-work 并发锁，重新打开不创建工作包/执行片段。取消、初次传输失败及绑定后清理重开请求；旧 digest-only 记录不重建。真实 Hook 绑定若先于传输报错到达，绑定优先，禁止回滚。详见 [恢复验收](acceptance/handoff-recovery.md)。
 
@@ -702,3 +702,9 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。有对话兜底时只补充 USER_EDITED 状态项，自动抽取项由原话承载；无对话时保留线索，防止仅有状态的工作丢失内容。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。
 
 自动状态整理的请求事件按本次请求从 1 连续编号；原始事件 ID、正文顺序及 basis 的来源序号水位保持不变，兼容本地标题记录序号为 0 的历史数据。请求投影升级会让此前失败的已授权工作重试一次，有效缓存仍直接复用。
+
+### 网页附件传输（2026-10-14）
+
+`AppService.prepareWebTransfer` 在网页复制或正式交接时调用 `WebTransfer`，只收集工作包已关联的文件，核对可用性与固定哈希后冻结字节。内存仅保留最近一次准备，限 20 文件/40 MB/10 分钟；并发准备以最后请求为准。`/web/transfer` 沿用 private-token loopback 且拒绝浏览器 Origin。Native Host 在原有选区 stage 之外新增 transfer，仍核对配对 extension origin；浏览器只接触传输 ID、文件索引和分块偏移，不能指定本地路径。
+
+扩展按当前 HTTPS 站点与交接目标核对后，以 256 KiB 分块取回文件，再核对 SHA-256。用户点击扩展 action 提供 activeTab，后台任务在该标签页 MAIN world 执行 `fillWebDraft`，通过网页的原生 file input/change 接收文件并填入正文；豆包异步输入在本地上传菜单边界提供文件。不会自动发送，遇到已有文字草稿、重复传输或网页切换则停止。`dispatched` 仅表示交给网页，不证明服务端上传、模型读取或绑定。其他网页仍为手动附件上传；原选区 stage 与接收附件链路相互独立。
