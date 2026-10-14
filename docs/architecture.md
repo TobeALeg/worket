@@ -293,13 +293,13 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 ### WorkBuddy Adapter
 
-连接返回 ENOENT / ECONNREFUSED 时再用 `pgrep -f` 核对 WorkBuddy.app 的主进程路径（实际可执行文件名是 Electron），排除带扩展脚本参数的子进程；确认未运行才抛 `ExecutorNotRunningError`。`AppService` 在来源发现中将该状态映射为空聊天页，并从执行者列表省略；已有工作读取和主动交接不吞掉该错误。进程检查失败或应用仍运行则保留连接故障；协议和正文读取错误也保持失败语义，不缓存未运行状态。
+2026-10-14 起默认使用 `WorkBuddyLocalHistory`：只读 `~/.workbuddy/workbuddy.db` 的当前账号本地会话索引，匹配 `projects/*/<sessionId>.jsonl`。数据库事务只读；正文读取前后核验文件大小/修改时间，拒绝混合会话、损坏行、越界路径和过大文件。只投影可见用户/助手文字及显式本地附件，剥离 system-reminder、摘要和内部通知，跳过 reasoning/tool 原始载荷；活动请求的助手正文等待结束后导入。正文缺失不返回空的完整历史，列表明确说明本机覆盖范围。
 
-5.5.3 内部扩展安装在 `~/.workbuddy/extensions/worket-capture`，声明 onStartup 与 resident，避免空闲回收后失去读取入口。仅授权 conversations.list/get/requestEntries/requests，通过同用户 0600 Unix socket 提供 list/read/status。历史加载等待 historyReady，分页完整读取并去重；不完整分页失败，不把部分历史当完整导入。
+本地日志是留存证据，不是原应用当前完整历史的权威视图，因此不声明 `history.complete`，不推断删除。事件以原始消息 ID 定位，既有 SDK 事件通过请求 ID、正文与持久别名保持身份。旧 `WorkBuddyDesktopClient` 与扩展协议代码保留作历史兼容测试；安装器不再复制内部扩展，只配置既有用户级 MCP/Hook。
 
-归一化仅接受可见 text、tool 与资料引用，丢弃 reasoning/未知块；回复完成后入库，避免流式首个片段永久占用事件 ID。内部协议不是外部兼容承诺，升级不兼容时应显示接入错误。
+`ExecutorAdapter.inspect()` 检查来源读取，新增可选 `inspectDelivery()` 检查交付；未实现独立检查的适配器沿用原检查。WorkBuddy 交付通过 Electron 查询 `workbuddy://` 注册程序，与读取独立。ExecutorView.available 表示读取检查结果，canDeliver 独立决定选择按钮；deliveryError 与来源 error 分开。交接/重新打开检查目标交付能力，仍刷新正在记录的原来源，不能静默用陈旧记录替代失败的源刷新。Deep Link 成功只代表打开请求，实际发送、绑定和工作包读取仍分别等待真实证据。
 
-用户级 Hook 通知会话身份与变化，Deep Link 创建目标任务。安装逻辑位于各适配器的 install.ts，通用 IntegrationInstaller 分别调用；失败不阻止 Worket 窗口或其他执行者。打包资源通过 asar.unpacked 提供普通文件路径；升级扩展后需要重启 WorkBuddy。
+正式 Open API 的本地助理/云端任务能力与任意桌面会话历史不等价，且需要应用注册/OAuth；本轮未获得授权凭证、未实测正式 API。RPA 分层兜底及本次验证边界见 [接入验证](acceptance/workbuddy-local-history-2026-10-14.md)。
 
 ### 通用交付
 

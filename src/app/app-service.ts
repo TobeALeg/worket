@@ -143,27 +143,21 @@ export class AppService {
   async listExecutors(): Promise<ExecutorView[]> {
     const executors = await Promise.all(
       this.#executors.all().map(async (adapter) => {
-        try {
-          await adapter.inspect();
-          return {
-            id: adapter.id,
-            name: adapter.name,
-            mark: adapter.mark,
-            available: true,
-            canDeliver: !!adapter.deliver,
-            ...(adapter.capabilities ? { capabilities: adapter.capabilities } : {}),
-          };
-        } catch (error) {
-          if (error instanceof ExecutorNotRunningError) return null;
-          return {
-            id: adapter.id,
-            name: adapter.name,
-            mark: adapter.mark,
-            available: false,
-            canDeliver: false,
-            error: error instanceof Error ? error.message : String(error),
-          };
-        }
+        const readingCheck = adapter.inspect();
+        const [reading, delivery] = await Promise.allSettled([
+          readingCheck,
+          adapter.deliver ? (adapter.inspectDelivery ? adapter.inspectDelivery() : readingCheck) : Promise.reject(new Error("该执行者尚不支持接收工作。")),
+        ]);
+        if (reading.status === "rejected" && reading.reason instanceof ExecutorNotRunningError &&
+            delivery.status === "rejected") return null;
+        const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+        return {
+          id: adapter.id, name: adapter.name, mark: adapter.mark,
+          available: reading.status === "fulfilled", canDeliver: delivery.status === "fulfilled",
+          ...(adapter.capabilities ? { capabilities: adapter.capabilities } : {}),
+          ...(reading.status === "rejected" ? { error: message(reading.reason) } : {}),
+          ...(delivery.status === "rejected" ? { deliveryError: message(delivery.reason) } : {}),
+        };
       }),
     );
     return executors.filter((executor): executor is NonNullable<typeof executor> => executor !== null);
@@ -783,7 +777,7 @@ export class AppService {
       throw new Error("上次交付尚未确认，请先检查目标执行者。");
     this.#handoffs.add(workId);
     try {
-      await adapter.inspect();
+      await (adapter.inspectDelivery ? adapter.inspectDelivery() : adapter.inspect());
       if (initial.activeBinding && captureStatus(initial) === "recording")
         await this.refreshWork(workId);
       let current = await this.#artifacts.verify(this.#requireWork(workId));
@@ -886,7 +880,7 @@ export class AppService {
     if (!adapter.deliver) throw new Error("该执行者尚不支持接收工作。");
     this.#handoffs.add(workId);
     try {
-      await adapter.inspect();
+      await (adapter.inspectDelivery ? adapter.inspectDelivery() : adapter.inspect());
       if (this.#requireWork(workId).activeBinding?.id !== binding.id ||
         this.#requireWork(workId).activeBinding?.conversationId !== binding.conversationId)
         throw new Error("交接状态已改变，未重新打开。");
