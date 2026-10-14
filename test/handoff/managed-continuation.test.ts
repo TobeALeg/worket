@@ -122,6 +122,13 @@ test('handoff automatically prepares managed state; UI, package and passive MCP 
     const context = JSON.parse((read!.result as any).content[0].text);
     assert.equal(context.resolution, 'RESOLVED');
     assert.equal(context.firstAction.text, '导出 PDF');
+    const briefRead: any = await handler.handle({ id: 'brief', method: 'tools/call', params: { name: 'get_work_context', arguments: {
+      work_id: f.id, context_version: 4, delivery_id: f.core.getWork(f.id)!.packageDeliveryId,
+    } } });
+    const brief = briefRead.result.content[0].text;
+    assert.match(brief, /交付 PDF/);
+    assert.match(brief, /保留人民币/);
+    assert.doesNotMatch(brief, /交付 CSV|sourceDigest|sourceEventIds|qaProofToken|deliveryReceipt|evidenceIndex/);
     assert.ok(f.core.getWork(f.id)!.packageReadAt);
     assert.equal((await f.app.prepareContinuation(f.id)).resolution, 'RESOLVED', 'read audit must not invalidate the snapshot');
     assert.equal(f.calls(), 1, 'MCP reads never acquire permission to call the model');

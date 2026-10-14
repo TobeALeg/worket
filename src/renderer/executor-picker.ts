@@ -39,7 +39,7 @@ export async function chooseExecutor(): Promise<string | null> {
       list.append(button);
       if (executor.capabilities?.deliveryMode === "INLINE_PACKAGE") {
         const hint = document.createElement("small");
-        hint.textContent = "复制完整工作包 · 手动发送 · 主动导入回流";
+        hint.textContent = "复制工作包 · 手动发送 · 主动导入回流";
         list.append(hint);
       }
       if (executor.error) {

@@ -261,7 +261,7 @@ export class DistillationDesktop {
         const work = core.getWork(input.workId);
         ensure(work, "WORK_NOT_FOUND");
         const json = buildWorkPackage(work, r);
-        return { json, markdown: packageMarkdown(json) };
+        return { json, markdown: packageMarkdown(json, work) };
       }
       case "artifacts": {
         string(input.workId);

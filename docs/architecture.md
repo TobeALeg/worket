@@ -692,3 +692,9 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 限制由共享 REPORT_LIMITS 集中定义：3 张截图、每张 5 MiB、16MP，日志 2 MiB、原始报告 18 MiB、JSON 25 MiB；设备滚动 24 小时 20 份/50 MiB，全局 500 份/500 MiB，与模型额度独立。JPEG/PNG 在主进程重新编码为 PNG，服务器再核对 CRC、像素、hash 和清单；不建立分片附件暂存区。
 
 此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。后台已部署提交 4e40d43，Nginx 上传限制调整为 25m；客户端新构建已安装并正常运行，未发布新的公开版本。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。
+
+## 执行内容与内部记录分离（2026-10-14）
+
+`handoff/execution-brief.ts` 将经过现有资料/来源校验的 WorkPackage 与 WorkSnapshot 投影为面向执行者的 Markdown。复制/导出通过 `packageMarkdown`、网页通过 `inlineWorkPackage`、本地 MCP `get_work_context` 默认及显式 v4 使用同一投影；v1–v3 显式请求保留兼容格式。启动提示默认请求 v4。回执仍在 handler 内记录，不出现在 v4 正文中，检查失败不会确认读取。
+
+投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。

@@ -17,11 +17,28 @@ function setup() {
   const definition = core.definitions.publish({ draftId: draft.id, expectedRevision: 1, materialBindings: {}, commandId: id() });
   const work = core.createWorkFromDefinition({ definitionId: definition.id, inputs: { subject: '合成接力' }, referenceExampleIds: [], commandId: id() });
   const mcp = new WorkPetMcpHandler(core);
-  const read = (deliveryId?: string) => mcp.handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id, ...(deliveryId ? { delivery_id: deliveryId } : {}) } } }) as any;
+  const read = (deliveryId?: string) => mcp.handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { context_version: 1, work_id: work.instance.id, ...(deliveryId ? { delivery_id: deliveryId } : {}) } } }) as any;
   const bind = (deliveryId: string, session: string) => app.syncHook('workbuddy', { hook_event_name: 'UserPromptSubmit', session_id: session, prompt: `[WORKPET:${work.instance.id}]\n[DELIVERY:${deliveryId}]`, turn_id: id() });
   const begin = async () => { await app.handoff(work.instance.id, 'workbuddy'); return core.getWork(work.instance.id)!.packageDeliveryId!; };
-  return { app, core, work, read, bind, begin, open, fail: () => { fail = true; }, status: () => app.dashboard(work.instance.id).selectedWork!.captureStatus };
+  return { app, core, work, mcp, read, bind, begin, open, fail: () => { fail = true; }, status: () => app.dashboard(work.instance.id).selectedWork!.captureStatus };
 }
+test('default brief keeps receipt validation internal and rejects an unrelated delivery', async () => {
+  const f = setup();
+  try {
+    const deliveryId = await f.begin();
+    const read = (delivery?: string) => f.mcp.handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: {
+      work_id: f.work.instance.id, ...(delivery ? { delivery_id: delivery } : {}),
+    } } }) as any;
+    const preview = await read();
+    assert.match(preview.result.content[0].text, /^# /);
+    assert.equal(f.core.getWork(f.work.instance.id)!.packageReadAt, null);
+    assert.match((await read('other-delivery')).error.message, /DELIVERY_MISMATCH/);
+    const response = await read(deliveryId);
+    assert.doesNotMatch(response.result.content[0].text, /deliveryReceipt|qaProofToken|sourceDigest|evidenceIndex|SHA256/);
+    assert.ok(f.core.getWork(f.work.instance.id)!.packageReadAt);
+    assert.ok(f.core.getLatestHandoffPackage(f.work.instance.id)!.workPackage, 'internal package remains available');
+  } finally { f.app.close(); }
+});
 test('each delivery requires its own read; current read before Hook survives binding and restart', async () => {
   const f = setup(); let closed = false;
   try {
@@ -63,7 +80,7 @@ test('pre-upgrade pending delivery restores correlation but never trusts a globa
     try {
       const work = app.core().getWork(f.work.instance.id)!;
       assert.equal(work.packageDeliveryId, deliveryId); assert.equal(work.packageReadAt, null);
-      const response: any = await new WorkPetMcpHandler(app.core()).handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { work_id: work.instance.id, delivery_id: deliveryId } } });
+      const response: any = await new WorkPetMcpHandler(app.core()).handle({ id: id(), method: 'tools/call', params: { name: 'get_work_context', arguments: { context_version: 1, work_id: work.instance.id, delivery_id: deliveryId } } });
       assert.ok(!response.error); assert.ok(app.core().getWork(work.instance.id)!.packageReadAt);
       assert.equal(app.dashboard(work.instance.id).selectedWork!.captureStatus, 'waiting', 'Hook still required');
     } finally { app.close(); }

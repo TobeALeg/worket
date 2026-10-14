@@ -817,14 +817,14 @@ export class AppService {
         const latestUserPrompt = workEvidence(current.sourceArchive).findLast(event => event.kind === "user.prompt" && event.content?.trim());
         const title = currentStage?.task.text ?? latestUserPrompt?.content?.replace(/\s+/gu, " ").slice(0, 96) ?? handoff.currentTask ?? current.definition.name;
         const nextStep = currentStage?.remaining[0]?.text ??
-          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取 v3 接续状态与最新用户消息证据，核对当前阶段。");
+          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取工作说明，确认当前阶段。");
         const prompt = adapter.capabilities?.deliveryMode === "INLINE_PACKAGE"
           ? inlineWorkPackage(current, buildWorkPackage(current, this.#core.definitions, continuation), handoff.id)
           : buildWorkBootstrap({
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
-          contextVersion: 3,
+          contextVersion: 4,
           title,
           currentTask: title,
           nextStep,

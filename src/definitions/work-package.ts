@@ -102,51 +102,5 @@ export function buildWorkPackage(
   }
   return pkg;
 }
-const escapeMarkdown = (value: string) =>
-  value.replace(/[\\`*_{}\[\]<>()#!|]/g, "\\$&");
-export function packageMarkdown(value: WorkPackage): string {
-  const lines = [
-    `# ${escapeMarkdown(value.definition?.content.name ?? value.state.objective[0]?.text ?? "工作")}`,
-    `意图：${value.purpose} · 工作 ID：${value.workId}`,
-    value.fileAccess,
-    value.stateStatus === "RESOLVED" ? "当前状态来自同一份已校验接续快照；完成声明不等于用户验收。" : "当前状态仅为来源线索，尚未完成当前阶段核对；不要把历史待办顺序当作执行顺序。",
-    ...(value.sourceNotice ? [`来源变化：${value.sourceNotice}`] : []),
-  ];
-  const content = value.definition?.content;
-  if (content) {
-    lines.push(`\n## 目的\n${escapeMarkdown(content.purpose.text)}`);
-    for (const [label, items] of [
-      ["交付", content.deliverables],
-      ["约束", content.constraints],
-      ["验收", content.acceptanceCriteria],
-      ["方法", content.methods],
-    ] as const)
-      lines.push(
-        `\n## ${label}\n${items.map((i) => `- ${escapeMarkdown(ruleText(i))}${"obligation" in i ? ` (${i.obligation})` : ""}`).join("\n")}`,
-      );
-  }
-  if (value.ruleSources?.length) lines.push(`\n## 规范来源（版本固定）\n${value.ruleSources.map(s => `- ${escapeMarkdown(s.name)} L${s.startLine}–${s.endLine} · SHA256 ${s.hash}`).join("\n")}`);
-  lines.push(
-    `\n## 本次输入\n${Object.entries(value.inputs)
-      .map(([k, v]) => `- ${escapeMarkdown(k)}: ${escapeMarkdown(String(v))}`)
-      .join("\n")}`,
-  );
-  if (value.inputMaterials?.length) lines.push(`\n输入文件已固定为本次版本，请读取上列副本路径；原始文件后续变化不会更新本次输入。`);
-  if (value.skills?.length) lines.push(`\n## 执行技能\n${value.skills.map(skill => `- ${escapeMarkdown(skill.name)}（${skill.required ? "必需" : "参考"}）\n  入口：${escapeMarkdown(skill.entrypoint)}\n  目录：${escapeMarkdown(skill.directory)} · SHA256 ${skill.hash} · ${skill.files.length} 个文件`).join("\n")}\n先读取技能入口，按该固定目录解析配套文件。同一约定中明确选择的多个技能保留原目录名并置于共同目录，可按兄弟相对路径访问；未选择的依赖不包含在内。这里只验证目录文件完整性；技能依赖的其他插件、工具和运行环境仍需执行者核验，缺少时应明确报告。`);
-  lines.push(
-    `\n## 固定资料\n${value.fixedMaterials.map((m) => `- ${escapeMarkdown(m.role)}: ${escapeMarkdown(m.path)} (SHA256 ${m.hash})`).join("\n")}`,
-  );
-  lines.push(
-    `\n## 当前状态\n${Object.entries(value.state)
-      .map(
-        ([k, items]) =>
-          `### ${k}\n${items.map((i) => `- ${escapeMarkdown(i.text)}`).join("\n")}`,
-      )
-      .join("\n")}`,
-  );
-  if (value.referenceExamples.length)
-    lines.push(
-      `\n## 用户选择的旧参考案例\n${escapeMarkdown(JSON.stringify(value.referenceExamples))}`,
-    );
-  return lines.join("\n");
-}
+// The stored package keeps provenance; execution surfaces share this projection.
+export { executionBrief as packageMarkdown } from '../handoff/execution-brief.js';
