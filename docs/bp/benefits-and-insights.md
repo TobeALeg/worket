@@ -233,6 +233,14 @@ Worket 当前依据：[契约流程验收](../acceptance/contract-lifecycle-ui.m
 
 ## B001 — 工作授权与可替换执行者
 
+### 2026-10-14：来源读取与工作交付需要独立判断可用性
+
+讨论起因：用户确认本地 Worket 已更新，但 WorkBuddy 接入仍失败，并要求解释升级限制及影响。已核实的本机事实：5.7.7 运行时本地历史接口已返回 ECONNREFUSED；正常退出并重启后，WorkBuddy 自动应用已下载更新，界面与应用包均为 5.8.2，接口仍失败。因此不能断言限制首次出现在 5.8.2，也未取得运行日志中明确拒绝 worket-capture 的错误。
+
+外部实现依据（2026-10-14，本机 `/Applications/WorkBuddy.app/Contents/Resources/app.asar` 的 `main/daemon-bootstrap.js`）：普通 installed 扩展需通过签名与文件完整性验证；用户扩展目录内的 distribution.json 不能自行授予权限；未受信任的默认第三方分发权限为空、server/renderer 为 null；普通 installed 目录不再直接扫描加载。Worket 当前安装器只复制扩展目录，不提供此类签名安装记录，本机无 extensions/lock.json。该机制足以解释当前安装方式不满足 5.8.2 加载条件，但不等于已逐条捕获拒绝日志。官方仍公开支持 MCP、Hook 等插件：[插件文档](https://www.codebuddy.cn/docs/workbuddy/Plugins)；这与本次失效的内部 Extension 服务是不同接入层。[公开更新日志](https://www.codebuddy.cn/docs/workbuddy/Changelog)本轮返回最新条目为 5.7.7，不能作为 5.8.2 变更清单。
+
+Worket 当前依据：`src/adapters/workbuddy/install.ts`、`desktop-client.ts`、`executor.ts`；`src/app/app-service.ts` 的 listExecutors、handoff、reopenHandoff 均依赖 adapter.inspect，历史读取不可用会同时使交付不可用。用户价值与助手设计判断：应分别判断历史读取、事件通知、目标打开、实际接手确认，避免一个通道故障让全部能力被判定失效；本地已归档记录与已确认定义独立于外部应用保存，是保留工作成果的架构依据，不是本轮逐条数据完整性验收。可展示场景：历史读取中断时保留已有记录，并在可验证的交付通道恢复后继续同一工作。待验证：签名扩展开放途径、更新后 MCP/Hook/Deep Link 的真实端到端行为、本地完整历史读取及身份/分页/删除语义。只读本地历史是候选路线，当前仅确认 sessions 元数据可读，未实现替换；本条不批准接入重构，也不宣称兼容问题已修复。
+
 ### 2026-09-30：执行环境升级的兼容边界
 
 用户报告 Codex 更新后 Worket 无法加载历史聊天。本机核实：Codex CLI 0.159.0 由旧 `Resources/codex` 迁移至 `Resources/codex-cli/bin/codex`，Worket 的固定发现路径失效；适配器已兼容新旧布局，真实列表、完整历史及打包原生入口通过验证。更新本机应用前后，4 项工作、1,573 条来源事件、1 份定义保留，来源事件逐行摘要一致；证据见 [验收记录](../acceptance/codex-bundle-discovery.md)。这是本机安装事实，无新增竞品结论。
