@@ -179,7 +179,7 @@ try {
     assert.ok(await panel.locator('[data-review-action="exclude"][data-issue^="rule-change-"]').count());
     const versions = await panel.evaluate(key => window.workpet.distillation('versions', { key }), definition.definitionKey);
     assert.equal(versions.length, 1, 'manual edit with stale aliases must not publish');
-    await panel.locator('[data-review-action="close"]').click();
+    await panel.locator('#window-back').click();
     mark('manual upstream edit → dependent review visible; stale acceptance prevents publication');
   }
   // File evolution and invalid dependency through the shipped renderer/IPC routes.

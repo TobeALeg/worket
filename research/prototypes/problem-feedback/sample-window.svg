@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="510" viewBox="0 0 720 510">
+  <rect width="720" height="510" rx="14" fill="#fbfaf7"/>
+  <path d="M0 57h720" stroke="#e8e8e0"/>
+  <rect x="28" y="17" width="27" height="25" rx="10" fill="#dfca8d"/>
+  <g fill="#343d36" font-family="-apple-system, 'PingFang SC', sans-serif"><text x="66" y="36" font-size="20" font-weight="600">Worket</text><text x="30" y="102" font-size="14" fill="#858d80">← 返回列表</text><text x="30" y="153" font-size="24" font-weight="600">整理季度报告</text><text x="30" y="186" font-size="14" fill="#858d80">执行者 · WorkBuddy</text><text x="30" y="243" font-size="15" fill="#858d80">已完成</text><text x="30" y="276" font-size="16">✓ 已整理本季度的关键指标</text><text x="30" y="324" font-size="15" fill="#858d80">下一步</text><text x="30" y="357" font-size="16">→ 核对来源并补充报告结论</text></g>
+  <rect x="30" y="401" width="660" height="65" rx="6" fill="#f0f2eb"/>
+  <circle cx="54" cy="434" r="5" fill="#aa7b39"/>
+  <text x="72" y="440" font-family="-apple-system, 'PingFang SC', sans-serif" font-size="16" fill="#aa7b39">已请求打开 Codex，等待接手确认</text>
+</svg>

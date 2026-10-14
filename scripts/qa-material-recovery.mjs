@@ -52,7 +52,7 @@ try {
   await recover('definition:builder', skill);
   await panel.screenshot({path:join(output,'definition-restored.png')});
   report.checks.definitionAndSkillExactVersion = true;
-  await panel.locator('#definition-dialog [data-close]').click(); await panel.locator('#tab-open').click();
+  await panel.locator('#definition-dialog #window-back').click(); await panel.locator('#tab-open').click();
   if(await panel.locator('#back-to-list').isVisible()) await panel.locator('#back-to-list').click();
   await panel.locator(`[data-work-id="${work.instance.id}"]`).click();
   await panel.locator('summary[aria-label="工作操作"]').click(); await panel.locator('[data-action="repair-materials"]').click();

@@ -4,6 +4,7 @@ import { chooseExecutor } from "./executor-picker.js";
 import {
   setupDistillation,
   renderDefinitions,
+  syncWorkDistillationActions,
   workDefinitionAction,
 } from "./distillation.js";
 import { errorText } from "../distillation/activity.js";
@@ -24,6 +25,8 @@ const detail = required<HTMLElement>("#work-detail");
 const notice = required<HTMLElement>("#notice");
 const splitDialog = required<HTMLDialogElement>("#split-dialog");
 const cancelRecordingDialog = required<HTMLDialogElement>("#cancel-recording-dialog");
+const cancelRecordingConfirmation = required<HTMLInputElement>("#cancel-recording-confirmation");
+const cancelRecordingPrompt = required<HTMLElement>("#cancel-recording-prompt");
 const splitPointSelect = required<HTMLSelectElement>("#split-point");
 let dashboard: DashboardView;
 let recordingNoticeRequired = true;
@@ -182,6 +185,7 @@ function renderDetail(work: WorkDetailView | null): void {
       () => void performAction(work.id, button.dataset.action ?? "", button),
     );
   }
+  syncWorkDistillationActions(work.id);
 }
 
 function progressSection(work: WorkDetailView, field: "completedActions" | "pendingActions"): string {
@@ -254,6 +258,7 @@ async function performAction(workId: string, action: string, button: HTMLButtonE
   } finally {
     button.disabled = false;
     actionPending = false;
+    if (dashboard.selectedWork?.id === workId) syncWorkDistillationActions(workId);
   }
 }
 
@@ -308,7 +313,9 @@ async function runAction(workId: string, action: string): Promise<void> {
   if (selected && (await workDefinitionAction(selected, action))) return;
   if (action === "cancel-recording") {
     pendingCancelRecordingWorkId = workId;
-    required<HTMLInputElement>("#cancel-recording-confirmation").value = "";
+    cancelRecordingConfirmation.value = "";
+    cancelRecordingConfirmation.removeAttribute("aria-invalid");
+    cancelRecordingPrompt.classList.remove("confirmation-invalid");
     required<HTMLElement>("#cancel-recording-error").hidden = true;
     cancelRecordingDialog.showModal();
     return;
@@ -359,6 +366,8 @@ setupDistillation(
   () => [...selectedDistillationIds],
 );
 required("#archive-records").addEventListener("click", () => {
+  feedback.collapse();
+  document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => dialog.close());
   detailOpen = false;
   filter = "ARCHIVED";
   render();
@@ -392,6 +401,10 @@ required<HTMLButtonElement>("#confirm-split").addEventListener(
     } finally { button.disabled = false; }
   },
 );
+cancelRecordingConfirmation.addEventListener("input", () => {
+  cancelRecordingConfirmation.removeAttribute("aria-invalid");
+  cancelRecordingPrompt.classList.remove("confirmation-invalid");
+});
 required<HTMLButtonElement>("#confirm-cancel-recording").addEventListener(
   "click",
   async (event) => {
@@ -399,10 +412,22 @@ required<HTMLButtonElement>("#confirm-cancel-recording").addEventListener(
     if (!pendingCancelRecordingWorkId) return;
     const button = event.currentTarget as HTMLButtonElement;
     if (button.disabled) return;
+    const confirmation = cancelRecordingConfirmation.value;
+    required<HTMLElement>("#cancel-recording-error").hidden = true;
+    if (confirmation !== "取消记录") {
+      cancelRecordingConfirmation.setAttribute("aria-invalid", "true");
+      cancelRecordingPrompt.classList.add("confirmation-invalid");
+      for (const animation of cancelRecordingPrompt.getAnimations()) animation.cancel();
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        cancelRecordingPrompt.animate(
+          [0, -4, 4, -3, 3, 0].map((x) => ({ transform: `translateX(${x}px)` })),
+          { duration: 320, easing: "ease-in-out" },
+        );
+      }
+      cancelRecordingConfirmation.focus();
+      return;
+    }
     button.disabled = true;
-    const confirmation = required<HTMLInputElement>(
-      "#cancel-recording-confirmation",
-    ).value;
     try {
       dashboard = await window.workpet.cancelRecording(
         pendingCancelRecordingWorkId,

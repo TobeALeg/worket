@@ -39,7 +39,7 @@ try {
     assert.ok(await panel.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await panel.screenshot({ path: join(output, `${id}-history.png`) });
   }
-  await panel.locator("#history-close").click();
+  await panel.locator("#window-back").click();
   // Exercise the production picker against the real registry without delivering data.
   await panel.evaluate(() => { void import("./executor-picker.js").then(m => m.chooseExecutor()); });
   for (const name of ["ZCode", "Antigravity"]) {

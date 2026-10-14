@@ -20,7 +20,59 @@ Codex 的现代/旧版 macOS bundle 路径保留，新增 Windows 绝对路径�
 
 `launch-desktop.mjs` / `package-desktop.mjs` 共用构建入口，在本机编译平台助手；发布仍分别使用 `release:mac` 与 `release:win`。打包排除研究、评测、服务端及本地运行数据，集成脚本保持 asar unpack。冻结证据 fixtures 禁止 Git 自动换行转换，保证跨系统 hash 不变；测试使用真实 Node 子进程与本机 IPC，但不依赖未安装的外部应用或 Windows 特权符号链接。业务领域模型、后台接口和数据库结构未变。验证与未验范围见 [验收记录](acceptance/windows-main-2026-10-11.md)。
 
+## 持续集成（2026-10-14）
+
+`.github/workflows/ci.yml` 在分支推送、PR 和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
+
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
+
+## 工作契约界面与生命周期（2026-10-09）
+
+`renderer/distillation.ts` 继续作为现有对话框流程的宿主：`prepare/start → activity/openJob → mountDefinitionReview → publish → openDefinition`。发布回调区分首存、新版与仅记录依据；只有真实 Definition 才交给 `renderer/work-contract.ts`。普通打开不重复成功动效。修订关闭返回原契约，未保存更改继续使用原有离开确认。
+
+`definitions/contract-view.ts` 是只读展示投影：先通过 `effectiveRules`，再把 `constraints`、`acceptanceCriteria` 和 REQUIRED methods 合为约束；保留 collection/key 地址，不修改原数据、检查标准或执行义务。输入/交付完整显示，资料与目的原位展开。审阅沿用原字段地址，问题、来源与规则编辑仍绑定原项。
+
+`renderer/contract/` 提供组件作用域 token、纸纹、页签遮罩与蜡封；`work-contract.css` 控制 A4 目标比例、内容自然增高和 reduced-motion。分类色以 definitionKey 为键存 localStorage，校验六位 HEX 并计算文字对比色；不参与内容 hash 或版本号。
+
+`useDefinition → create → createdWork → chooseExecutor → dispatch` 共用既有 IPC。创建 commandId 在该表单内稳定；重试派发使用同一 workId，底层 pending_dispatches 防重。`renderer/contract-dispatch.ts` 明确区分 NOT_DISPATCHED、FAILED、WAITING/STARTING、BOUND + 已读取，等待界面每两秒检查状态，离开该页面就停止。错误后刷新真实工作状态，不能凭 UI 点击推断接手。
+
+版本、修订、删除、固定资料恢复、来源审查和持续比较继续使用原服务；删除保护及不可变版本规则不变。没有数据库迁移、后台协议修改或新的自动提炼授权。只读原型仍独立保留。[本轮验证边界](acceptance/contract-lifecycle-ui.md) 区分真实渲染/API/SQLite 与模拟模型、执行者。
+
+### 沉淀确认页接入（2026-10-10）
+
+`definition-review.ts` 仍以 `Draft.content / originalContent / issues / resolutions / materials` 驱动页面，四分区只合并展示，不合并数据集合。稳定地址为 section.key；相同 key 的方法与资料独立操作。Reference 文件名和完整路径来自待选绑定或固定副本的 originalPath，不展示内部固定副本路径或示例分类。
+
+确认本地条目时记录当前会话决定，并对关联的真实 Issue 生成 CHOOSE / REWRITE；删除修改实际 content、清理该资料角色的待选绑定并生成既有 DELETE。暂存调用 update(expectedRevision, content, issueResolutions, replaceResolutions, materialBindings)，发布沿用 publish 与 sourceReview；没有 IPC、协议或数据库迁移。会话勾选不伪装为新增后台状态；已有 Resolution 在重开时恢复确认状态，没有 Issue 的条目由最终版本发布统一确认。
+
+删除记录保存编辑后的条目、稳定顺序与实际选择路径，仅用于当前页恢复；重开可从 originalContent 对照恢复原始条目，已删除资料的绑定不伪造。资料恢复走现有 materialBindings 重新固定原件，固定副本被回收后不能当作仍存在。单层撤销包含内容、问题决定、选择路径及会话状态；成功暂存后清除撤销，避免撤销升级已固定资料。
+
+`definition-review-motion.ts` 用 Web Animations 的 finished 串行衔接 320ms 划线与 400ms 抽离，空间收拢延后 120ms；动画期间延后整页重绘，局部状态更新不替换动画节点。撤销、保存、恢复与离开清理旧动画，防止完成回调隐藏已恢复的条目。来源详情的原生展开状态在异步重绘时保留。官方 Tabler SVG 与 MIT 许可位于 renderer/review-icons。
+
+真实 Electron 回归覆盖动效中间帧、确认/删除/恢复、动画中撤销、资料删除暂存与重绑、重启固定版本、规范更新和正式发布；模型响应及原生文件选择为隔离测试夹具，API、SQLite 与材料固定流程使用真实实现。详见 [验收](acceptance/distillation-review-ui.md)。
+
+### 沉淀审阅交互预览（2026-10-10，以下为接入前历史）
+
+对话内预览独立使用候选快照与 `pending / confirmed / deleted` 决策映射；删除保留原条目，只投影为正文隐藏，分区展开状态控制删除记录是否可见。短暂的划线与折叠阶段仅在内存中运行，恢复、撤销与确认保存会取消未完成动效，防止旧计时器隐藏已恢复条目。预览状态版本 8 兼容版本 7 的已有选择，持久化决定、条文编辑与展开状态；完成全部选择或确认时收起删除记录。未调用正式 `update / publish`，没有 IPC、数据库或客户端产物变化。
+
+最新动效以共享配置同步填充和划线（320ms）；删除线的 `transitionend` 驱动抽离阶段（400ms），空间收拢延后 120ms 开始。结束事件不可用时保留延后的计时兜底，取消时清理事件监听及计时器。只有抽离完成才隐藏条目，不用固定早期计时截断划线。
+
+预览宿主同步修复：`openai:set_globals` 回传本地刚保存的选择时，`restore` 比较归一后的决定与条文；相同状态保留进行中的动效，仅实质内容变化取消动效。未携带私有展开状态时不清空现有展开状态。模拟状态回传的逐帧验证覆盖划线、抽离、完成隐藏与动画中撤销，避免以静态时长配置代替实际播放证据。
+
+### 工作契约设计组件（2026-10-08，接入前历史）
+
+独立实现位于 [docs/design/work-contract](design/work-contract/README.md)。`tokens.css` 管理设计变量，`contract.css` 管理竖版布局和响应式，SVG 提供图标与纸纹；`contract.js` 将 `ContractView` 渲染为原生 DOM，并通过 `onReuse` / `onDetails` 回调宿主，配套 `.d.ts` 定义接口。数据文本使用 `textContent`，不依赖整张概念图。
+
+组件仅表现已确认版本：宿主需从真实 Definition 取确认时间，并用现有有效规则逻辑投影条款。`setTabColor` 校验六位 HEX，按相对亮度选择黑白文字，仅更新页签变量。预览页自行持久化颜色；核心组件无存储或 IPC，正式分类配色属于展示偏好，不写不可变定义。本次无客户端、数据库或安装产物变更。
+
+材质 v1.1 使用固定 192px 平铺的 SVG 颗粒/纤维，CSS 独立绘制底板、纸页厚度、阴影、齿线与压印；纹理密度与内容高度解耦。320px 长条款回放无裁切或内部溢出，不使用整张图缩放充当底板。
+
+v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg` 作为独立蜡封装饰；语义仍由“已确认”文本提供。标题样式收紧，数据结构和操作回调保持不变。
+
+2026-10-09 `docs/design/work-contract/prototype/` 独立读取显式提供的本机 JSON，不消费展示摘要。按用户最新信息优先级，`deliverables` 与 `inputs` 始终完整渲染，其余四类使用原生 `details` 默认收起，允许同时展开，目的也仅原位展开。必填映射为 `*`，选填不生成符号；原始 `meta` 与推断状态保留。纸页以 A4 为目标比例，内容超出时自然增高，确认区不覆盖正文。没有 IPC、数据库写入、确认或复用动作；不经过已确认版本的 `contract.js`，不扩展正式领域模型。
+
+可用性修订继续限定在此原型：`disclosureSummary` 统一折叠入口，CSS 通过原生 `[open]` 状态切换操作文字和箭头，不增加另一份展开状态。按后续用户反馈，展示用 `sections` 将 `constraints` 与 `acceptanceCriteria` 条目合并为一个约束列表，原字段由 `data-source-section` 保留；原始 JSON、条目 key、正文和 `meta` 不变。当前有约束、资料与工作目的三个折叠入口；`methods` 从展示映射中排除，计数由映射计算，原始方法数据不删除。按最新批注仅渲染必填星号，来源信息保留在原始数据与 `data-meta` 中，不生成来源标签及对应样式；分区标题与左边界一致，交付物仅用字重强调。标准组件、正式客户端与存储接口不变。
+
+[流程提案](design/work-contract/journey.md) 根据现有 `mountDefinitionReview → publish → onPublished → openDefinition` 与 `useDefinition → create` 路径提出接入建议：发布成功与后续查看共用详情，首次成功反馈由宿主调用场景控制，仅 `publish` 返回的真实版本和确认时间用于正式卡片。当前仅完成源码核对和提案，没有实现该接入或修改任何业务状态。
 
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 
@@ -241,6 +293,8 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 ### WorkBuddy Adapter
 
+连接返回 ENOENT / ECONNREFUSED 时再用 `pgrep -f` 核对 WorkBuddy.app 的主进程路径（实际可执行文件名是 Electron），排除带扩展脚本参数的子进程；确认未运行才抛 `ExecutorNotRunningError`。`AppService` 在来源发现中将该状态映射为空聊天页，并从执行者列表省略；已有工作读取和主动交接不吞掉该错误。进程检查失败或应用仍运行则保留连接故障；协议和正文读取错误也保持失败语义，不缓存未运行状态。
+
 5.5.3 内部扩展安装在 `~/.workbuddy/extensions/worket-capture`，声明 onStartup 与 resident，避免空闲回收后失去读取入口。仅授权 conversations.list/get/requestEntries/requests，通过同用户 0600 Unix socket 提供 list/read/status。历史加载等待 historyReady，分页完整读取并去重；不完整分页失败，不把部分历史当完整导入。
 
 归一化仅接受可见 text、tool 与资料引用，丢弃 reasoning/未知块；回复完成后入库，避免流式首个片段永久占用事件 ID。内部协议不是外部兼容承诺，升级不兼容时应显示接入错误。
@@ -342,6 +396,8 @@ COMPLETED ──继续原工作──> OPEN
 ```
 
 时间间隔、应用关闭、Mac 重启和 Executor 变化都不改变 WorkInstance 状态。取消记录通过 `cancelRecording` / `work:cancel-recording` 撤销记录授权并清理本地副本，需要二次确认，不新增生命周期状态。底层 `deleteWorkPermanently` 仅负责 Worket 本地数据清理；执行者接口不提供原对话删除能力。清理关联证据时按显式主键 `id` 更新，避免 Electron SQLite 的隐式行标识返回差异。
+
+取消记录弹窗在 renderer 校验确认文字，不匹配时不调用 IPC，只将输入提示变红并播放可重复的短暂抖动，输入时清除校验状态；系统开启减少动态效果时保留红字和焦点提示。`AppService.cancelRecording` 继续校验确认文字，保护本地清理入口。
 
 ### ExecutionEpisode
 
@@ -521,6 +577,8 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 状态流：闲置 → 检查 → 用户确认 → 下载校验 → Finder 定位；稍后、无更新或失败返回闲置。用户自行退出、替换和重开应用；不存在 autoUpdater 或原生安装调用。开发模式不检查。`scripts/release-mac.mjs` 负责免费 ad-hoc 签名、打包及解压 QA，不要求 Apple 公证，不自动发布。GitHub token 不进入客户端，数据目录和 bundle ID 保持稳定。
 
+本机固定两个应用位置：正式版为 `/Applications/Worket.app`，开发入口为项目 `release/Worket-darwin-arm64/Worket.app`，通过 `npm run dev` 或 `scripts/run-latest.command` 重建并带 `--dev` 启动。两者沿用 `~/Library/Application Support/WorkPet` 和同一单实例锁，日常切换应先退出正在运行的版本；应用副本清理不删除工作库、设置或凭据。2026-10-08 的路径、签名、系统登记和数据验证见 [清理验收](acceptance/local-app-cleanup.md)。
+
 ### 安装身份与显式服务连接
 
 `AutomaticConnection` 在正式版没有既有配置时使用内置 `https://worket.dandi.site`，生成互不复用的安装秘密和用户恢复码；开发环境仍只接受显式 `WORKET_SERVICE_URL`。`ServiceCredentials` 通过 macOS 系统安全存储保存秘密。后台 `/v1/installations` 只保存两个秘密的 SHA-256：安装秘密定位 `DeviceIdentity`，恢复码定位 `UserIdentity`。RS256 令牌以设备为 `sub`、用户为 `uid`；先检查设备撤销和期限，再以用户作为额度、幂等和上传隔离主体。
@@ -587,11 +645,15 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 主进程已有 DistillationService.tick 负责关闭面板后的收取；轮询在 finally 继续调度。服务端 extractDefinition 上报分批完成数及泛化阶段，service 仅在运行请求的内存 Map 中保存进度并随结束清理；客户端将进度投影到 Job。activity.ts 统一生成面板与桌宠状态，Job.seenStatus 持久保存已查看阶段，新状态可再次提醒。桌宠专用 IPC 校验 sender 后打开面板并定位 jobId；候选不自动抢占其他编辑界面。
 
+2026-10-10：沉淀 activity 查询除主任务状态外，聚合所有运行任务快照的来源 workId。主面板将进度入口放在 Worket 标题行，保留任务跳转与运行/就绪/失败状态；详情 renderer 按活动来源禁用对应沉淀操作，并在任务结束后恢复。任务页加载图标尺寸不变。
+
 workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的 USER_STATED 误标作保守降级为 INFERRED，并添加 blocking UNSUPPORTED_SOURCE；引用与摘录真实性检查仍保持拒绝，已有发布门槛要求处理确认问题。此修复不把工具文本提升为用户指令，不额外调用模型。
 
 ## 紧凑审阅与窗口调宽（2026-09-21）
 
 `renderer/definition-review.ts` 管理一个候选的本地编辑副本、决策、来源展开、固定资料绑定和单次撤销；`definition-review.css` 只限定审阅布局，基础颜色与品牌继承共享 theme。`distillation.ts` 负责进入与退出，服务、准备、定义、复用和验收使用共享 dialog-shell：固定品牌栏 → 可滚动 dialog-card → 固定主要操作栏；历史采用相同容器。编辑态/只读态 → 暂存（revision 校验）→ 显式确认 → 不可变定义；保存期间禁用操作，后台刷新不替换审阅 DOM。
+
+`renderer/window-header.ts` 在主页面和当前打开的全页 dialog 之间移动同一个顶栏 DOM，保留反馈、应用菜单、关闭按钮及其监听器。页面只提供返回回调和可选离开前保存；dialog 关闭后恢复底层页面的顶栏与返回焦点，父页刷新不抢占反馈子页顶栏。右上角关闭仍调用 `panel:close` 收起窗口，不执行页面返回；审阅返回和菜单跳转先通过 revision 校验暂存修改，未完成保存不离开。轻量确认、执行者选择及截图预览保留独立弹层行为。
 
 `definitions/review.ts` 为界面和仓库共用字段定位：支持章节、章节加 key、原始数组位置和唯一裸 key；数组位置始终以 originalContent 解析，跨章节重名不猜测。未能定位的 Issue 保留在独立区域；不生成虚构证据或自动作出语义选择。编辑不改写来源，原始依据始终可核验；保存后的 basis 由仓库按既有规则记录为 USER_AUTHORED。
 
@@ -614,3 +676,19 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 2026-10-13：stdio MCP 代理在 HTTP/config 失败时仍保留 JSON-RPC 请求 ID，使调用端立即收到真实错误而非等待超时；通知保持无响应。客户端网络错误保留 EPERM 等底层码，不扩大网络权限。隔离实例的桥接文件须与执行会话的实际路由一致，日常配置不自动路由到测试实例；见 [真实追查](acceptance/codex-real-handoff.md)。
 
 2026-10-14 网页连接器目录：`catalog.ts` 统一定义 Kimi、豆包、DeepSeek、Gemini、QwenWork、扣子的身份、入口与允许域名；构建时生成扩展 catalog.js。Kimi/豆包继续使用 kimi-work/doubao-work 持久标识但不限制工作模式。DeepSeek 仅匹配 chat.deepseek.com，Gemini 仅匹配 gemini.google.com；统一归一化器保留选定范围、去除查询参数，沿用相同交接与去重流程。
+
+## 问题反馈（2026-10-08）
+
+`src/diagnostics/recorder.ts` 负责主进程白名单运行事件、AsyncLocalStorage trace、按日轮转和故障快照。记录、同步、交接、沉淀、更新、服务请求与界面异常接入；交接依次记录选择、准备、请求打开、等待确认。只记录固定枚举、耗时和 UUID 请求编号，不接收错误原文、堆栈、路径或工作正文。`src/contracts/problem-report.ts` 在采集和接收两端约束事件、图片、授权、大小与报告摘要。
+
+`src/problem-reports/` 分别负责主进程图像解码/规范化、IPC、原子持久化草稿与不可变队列、带身份的报告传输及重试。数据在既有 dataDirectory 下分为 diagnostics 与 problem-reports，目录 0700、文件 0600；没有额外磁盘加密声明。草稿首次打开即冻结最近 10 分钟日志，用户可选保留的最近故障；草稿和未收包 7 天过期，本地总容量 50 MiB。
+
+`src/renderer/problem-feedback.ts` 使用独立 dialog 覆盖原界面，正常页面与其他 dialog 留在 DOM 中。品牌栏图标才触发展开；返回、关闭、Escape、隐藏窗口和重新显示窗口均收起。截图先关闭反馈并等待渲染，再由主进程 capturePage；预览确认仅加入草稿。保存不弹成功提示，失败只在反馈内显示。
+
+发送链：编辑 → 主进程原子写草稿 → 点击发送冻结授权/报告/hash → 原子加入队列并清空草稿 → 能力声明/身份检查 → 完整 JSON 请求 → SQLite 一次提交全部材料 → 匹配报告编号与 hash 的接收回执。收到回执前保持 WAITING/SENDING；网络失败退避重试同一包，最多 10 次；旧服务、身份变化或永久拒绝转 PAUSED。取消先停本地重试，再删除服务器记录；不能核对时明确提示。删除墓碑阻止迟到上传复活。
+
+`server/problem-reports.mjs` 在独立 problem-reports.sqlite 中保存用户材料、日志和处理状态。沿用现有签名身份与撤销检查；/v1/problem-reports 只返回本人报告，/admin/api/problem-reports 沿用 loopback、会话、CSRF 保护。管理员可关联同主体的后台请求元数据，原始错误文本被换成固定代码。内部备注只进管理员响应；客户端仅收到公开说明。完整报告 30 天到期清理，删除墓碑再留 7 天；备份恢复需按运维约定重放删除。
+
+限制由共享 REPORT_LIMITS 集中定义：3 张截图、每张 5 MiB、16MP，日志 2 MiB、原始报告 18 MiB、JSON 25 MiB；设备滚动 24 小时 20 份/50 MiB，全局 500 份/500 MiB，与模型额度独立。JPEG/PNG 在主进程重新编码为 PNG，服务器再核对 CRC、像素、hash 和清单；不建立分片附件暂存区。
+
+此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。后台已部署提交 4e40d43，Nginx 上传限制调整为 25m；客户端新构建已安装并正常运行，未发布新的公开版本。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。

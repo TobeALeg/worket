@@ -1,7 +1,5 @@
 .feedback-entry svg { width:16px;height:16px; }
 .feedback-entry.active {color:var(--accent);background:var(--surface);}
-#feedback-dialog .window-navigation {display:flex;align-items:center;gap:8px;}
-#feedback-dialog .window-bar {height:39px;min-height:39px;padding:0 16px;}
 #feedback-dialog .fb-main {gap:0;}
 .fb-heading,.fb-label,.fb-caption {display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .fb-heading {margin-bottom:12px;}.fb-heading h2 {font-size:18px;}
