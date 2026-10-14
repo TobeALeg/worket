@@ -2,6 +2,10 @@
 
 领域术语以 [CONTEXT.md](CONTEXT.md) 为准；产品与架构现状分别见 [docs/product.md](docs/product.md) 和 [docs/architecture.md](docs/architecture.md)。
 
+## GitHub 交付流程
+
+用户于 2026-10-14 授权：功能完成并通过适用检查后，在基于最新 `origin/main` 的 `codex/*` 分支提交并推送；自动创建 PR，CI 通过后 squash 合入 `main`。跟进 PR 和合并后的 CI 到完成；失败或冲突先修复，HEAD 改变后重新等待检查。Draft PR 暂停自动合并，恢复 ready 后重新运行该分支的 CI。不把旧分支的无关提交一起合入，也不直接推送 main。流程实现见 [CI 工作流](.github/workflows/ci.yml) 和 [PR 交付工作流](.github/workflows/pull-request.yml)。
+
 ## VPS 管理
 
 用户于 2026-09-15 确认原 VPS 已删除，旧部署记录仅作历史验收证据。2026-09-18 已在 `jp-server` 部署新的 Worket 后台，公网入口为 `https://worket.dandi.site`；客户端仍需手动填写服务地址和管理员签发的访问令牌。服务器运行与待配置状态见 [jp-server 运维记录](docs/deployment/jp-server-worket.md)。

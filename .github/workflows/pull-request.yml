@@ -1,0 +1,71 @@
+name: Pull request delivery
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [requested, completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      startsWith(github.event.workflow_run.head_branch, 'codex/')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      RUN_ACTION: ${{ github.event.action }}
+      RUN_RESULT: ${{ github.event.workflow_run.conclusion }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+    steps:
+      # Never check out or execute code from the feature branch with this token.
+      - name: Create PR and merge only the successful current commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${GH_REPO%%/*}"
+          branch_path=$(jq -rn --arg branch "$HEAD_BRANCH" '$branch | @uri')
+          current_sha=$(gh api "repos/$GH_REPO/branches/$branch_path" --jq '.commit.sha')
+          if [[ "$current_sha" != "$HEAD_SHA" ]]; then
+            echo "A newer commit exists; its CI run will handle delivery."
+            exit 0
+          fi
+          prs=$(gh api --method GET "repos/$GH_REPO/pulls" \
+            -f state=open -f base=main -f head="$owner:$HEAD_BRANCH")
+          number=$(jq -r '.[0].number // empty' <<< "$prs")
+          if [[ -z "$number" ]]; then
+            title=$(gh api "repos/$GH_REPO/commits/$HEAD_SHA" --jq '.commit.message | split("\n")[0]')
+            body=$(printf '自动提交分支 `%s` 的修改。\n\nCI：%s\n\nCI 通过后自动 squash 合入 main；转为 Draft 可暂停自动合并。' "$HEAD_BRANCH" "$RUN_URL")
+            number=$(gh api --method POST "repos/$GH_REPO/pulls" \
+              -f base=main -f head="$HEAD_BRANCH" -f title="$title" -f body="$body" --jq '.number')
+          fi
+          echo "PR: https://github.com/$GH_REPO/pull/$number"
+          if [[ "$RUN_ACTION" != completed || "$RUN_RESULT" != success ]]; then
+            exit 0
+          fi
+          pr=$(gh api "repos/$GH_REPO/pulls/$number")
+          if ! jq -e --arg sha "$HEAD_SHA" \
+            '.state == "open" and .draft == false and .base.ref == "main" and .head.sha == $sha' <<< "$pr" > /dev/null; then
+            echo "PR is draft, closed, or changed; leaving it unmerged."
+            exit 0
+          fi
+          # The sha lock rejects a concurrent push; branch protection enforces CI.
+          gh api --method PUT "repos/$GH_REPO/pulls/$number/merge" \
+            -f sha="$HEAD_SHA" -f merge_method=squash
+          # GITHUB_TOKEN merges do not reliably trigger push workflows.
+          gh workflow run ci.yml --ref main
