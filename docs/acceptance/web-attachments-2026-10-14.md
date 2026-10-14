@@ -31,10 +31,16 @@
 
 ## 当前边界
 
-扩展文件和本机 Host 已更新，旧文件保留备份。真实 Chrome 的扩展页面被自动化工具禁止访问，已请用户重新加载扩展。扩展按钮 → 本机 → 网页的完整点击验收仍待重载后执行，不能将上述分层证据写成该完整链路已通过。
+Kimi 已完成正式 Worket 复制 → 用户点击真实扩展按钮 → Native Host → 网页草稿 → 发送 → 模型读取的完整链路。扩展重载与工具栏按钮由用户操作，自动化随后核验草稿和模型回复；其他三站仍为上述生产填入函数的分层验收，不宣称四站都完成按钮闭环。
 
-本轮真实文件格式为 CSV/TXT，正式本机桥接另验证 MD；PDF、图片、Office 文件的各站处理质量未据此验证。豆包仅验证当前账号的工作版。运行证据保存在忽略目录 `output/web-attachments-20261014/`，不将用户浏览器会话数据提交到 Git。
+初次按钮实测发现富文本编辑器吞掉换行：2234 字、44 处换行变成 2190 字、0 处换行。已改为每段最多 256 个 Unicode 字符的纯文本粘贴，避免 Kimi 将大段粘贴自动转为额外 TXT，并在填入后核对正文一致性。修复后实际按钮草稿与原文完全一致，三份关联附件卡片数量及字节数正确，没有额外 TXT。
+
+发送时追加仅做读取验收的指令，询问测试订单 T003 的 item/quantity/unit_price 与 T004 的 item；原工作包未包含答案。模型最终准确回答 `Folder / 2 / 37.80 / Sticker`。会话：https://www.kimi.com/chat/1a139dea-0542-857c-8000-09a9e6180604 。本地证据：`button-fixed-draft.json`、`button-model-result.txt`、`button-result.png`。
+
+本轮真实文件格式为 CSV/TXT，此次按钮链路另验证 MD；PDF、图片、Office 文件的各站处理质量未据此验证。豆包仅验证当前账号的工作版。运行证据保存在忽略目录 `output/web-attachments-20261014/`，不将用户浏览器会话数据提交到 Git。
 
 ## 最终本地交付核对
 
-全量测试 346/346 通过；补充正文体积与非文件参考输入的针对性回归通过。正式安装与构建产物 ASAR SHA-256 同为 `09078d6dca4260ab2d7a6d429576bb1c4f6271ce060aa7e59c30a39d90db6b29`，签名校验通过，运行进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`（验收时 PID 81917）。SQLite `quick_check` 为 `ok`，旧应用保存在 `/Applications/Worket.backup-20261014-172953.app`。未发布公网 Release。
+全量测试 346/346 通过；补充正文体积与非文件参考输入的针对性回归通过。按钮验收修复后重新打包，正式安装与构建产物 ASAR SHA-256 同为 `b33debe245dce4a4658548683bbd164c303d67a99ed76ccff9ffee5fcadf3feb`，签名校验通过，运行进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`（验收时 PID 90800）。SQLite `quick_check` 为 `ok`，旧应用保存在 `/Applications/Worket.backup-20261014-180503.app`。未发布公网 Release。
+
+本次富文本修复通过 JavaScript 语法检查、差异空白检查及上述真实按钮正文/附件/模型读取验收；未重复运行前述全量测试。已加载扩展的 transfer.js 与源码 SHA-256 一致（`027921b8c38d7ffed8ec5ef26cf868f59ee7d0e51b0f61ebcf3cf9f2485b7408`），扩展版本保持 0.2.0。

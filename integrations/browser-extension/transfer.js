@@ -65,7 +65,20 @@ export async function fillWebDraft(payload) {
     editor.dispatchEvent(new Event('input', { bubbles: true }));
   } else {
     editor.focus();
-    if (!document.execCommand('insertText', false, payload.prompt)) throw new Error('附件已交给网页，但正文填入失败，请粘贴已复制的工作包；不要重复上传。');
+    // Short plain-text paste chunks preserve line breaks in rich editors and
+    // avoid Kimi silently converting a large paste into an extra TXT attachment.
+    const characters = Array.from(payload.prompt);
+    for (let start = 0; start < characters.length; start += 256) {
+      const text = characters.slice(start, start + 256).join('');
+      const clipboard = new DataTransfer(); clipboard.setData('text/plain', text);
+      const paste = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: clipboard });
+      if (editor.dispatchEvent(paste) && !document.execCommand('insertText', false, text)) throw new Error('正文填入失败，请检查草稿，不要重复上传。');
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   }
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const actual = editor.value ?? editor.innerText ?? '';
+  const normalize = text => text.replace(/\r\n/g, '\n').trim();
+  if (normalize(actual) !== normalize(payload.prompt)) throw new Error('正文未完整填入，请保留已上传附件并粘贴工作包；不要重复上传。');
   return { dispatched: true, count: payload.files.length };
 }

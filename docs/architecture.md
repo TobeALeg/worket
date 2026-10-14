@@ -704,3 +704,5 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 `AppService.prepareWebTransfer` 在网页复制或正式交接时调用 `WebTransfer`，只收集工作包已关联的文件，核对可用性与固定哈希后冻结字节。内存仅保留最近一次准备，限 20 文件/40 MB/10 分钟；并发准备以最后请求为准。`/web/transfer` 沿用 private-token loopback 且拒绝浏览器 Origin。Native Host 在原有选区 stage 之外新增 transfer，仍核对配对 extension origin；浏览器只接触传输 ID、文件索引和分块偏移，不能指定本地路径。
 
 扩展按当前 HTTPS 站点与交接目标核对后，以 256 KiB 分块取回文件，再核对 SHA-256。用户点击扩展 action 提供 activeTab，后台任务在该标签页 MAIN world 执行 `fillWebDraft`，通过网页的原生 file input/change 接收文件并填入正文；豆包异步输入在本地上传菜单边界提供文件。不会自动发送，遇到已有文字草稿、重复传输或网页切换则停止。`dispatched` 仅表示交给网页，不证明服务端上传、模型读取或绑定。其他网页仍为手动附件上传；原选区 stage 与接收附件链路相互独立。
+
+网页富文本正文通过短段纯文本粘贴保留换行，避免网站把长粘贴转成额外 TXT 附件；填入后核对正文（统一 CRLF，忽略首尾空白），不一致则明确提示保留附件、检查并粘贴工作包，不返回成功。真实 Kimi 按钮闭环见 [附件验收](acceptance/web-attachments-2026-10-14.md)。
