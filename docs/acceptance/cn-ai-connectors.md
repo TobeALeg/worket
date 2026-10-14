@@ -122,3 +122,11 @@ Kimi/豆包普通网页入口、DeepSeek 和 Gemini 已加入共享目录；原 
 以上为真实日常 Chrome → 实际扩展 activeTab → Native Messaging → 正式本机 Worket 待确认箱 → 预览确认入档，不是 route.fulfill 或脚本直接注入。仅使用无私人数据的短测试消息，不代表完整历史同步、真实业务提取质量或四站交接的业务收益。豆包登录后仍是 MentiTrek 企业工作空间，普通聊天页待用户切换后补验。
 
 SQLite 只读复核三条测试 agent.response 的正文、SELECTED_CONTENT 范围及来源 URL 与页面完全一致，quick_check=ok。测试工作 ID 分别为 Gemini `94697bd4-ad02-4ea3-8226-711628eaf370`、Kimi `7c1db13b-968c-441d-87c0-00e4f990da13`、DeepSeek `93133edd-fab6-402a-840a-9fcf14e23423`；三条均通过实际 Worket 界面归档，保留可恢复证据，不占用进行中列表。
+
+### 豆包工作版真实选区验收补充（2026-10-14）
+
+用户确认先使用当前豆包工作版测试。直接访问 https://www.doubao.com/chat 时账号显示 iDD / 飞书个人版，但仍返回豆包工作界面；因此此前将工作界面归因于企业工作空间的推断不足，普通聊天入口仍未验证。
+
+在日常 Chrome 新建会话 https://www.doubao.com/chat/38447240028169730，发送无私人数据的短测试，实际回复 WORKET_DOUBAO_OK。选中该回复后通过工具栏打开实际扩展，读取结果自动识别为豆包网页，正文仅为该测试词；填写实际会话 URL 并选择助手角色，Native Messaging 成功送入待确认箱。正式安装的 /Applications/Worket.app 中依次选择待确认项、预览、确认导入，显示已导入 1 条选定内容，最近回复与测试词完全一致。随后通过 Worket 界面归档测试工作，保留可恢复记录。
+
+本次验证的是豆包工作版的真实选区导入闭环；与已通过的 Kimi、DeepSeek、Gemini 普通网页版合计四站真实选区入档，不代表豆包普通聊天页或完整历史自动同步已验收。未修改客户端代码，无需重新安装。
