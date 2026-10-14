@@ -13,6 +13,7 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
   };
   const content = pkg.definition?.content;
   const snapshot = pkg.stateStatus === 'RESOLVED' ? pkg.continuation : undefined;
+  const messages = !snapshot && work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
   const current = snapshot?.stages.find(stage => stage.id === snapshot.currentStageId);
   section('目标', [content?.purpose.text ?? '', ...pkg.state.objective.map(item => item.text)]);
   if (content) {
@@ -52,16 +53,15 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
     for (const [label, key] of [
       ['约束线索', 'constraints'], ['决定线索', 'decisions'], ['验收标准线索', 'successCriteria'],
       ['已记录进度', 'completedActions'], ['待办线索', 'pendingActions'],
-    ] as const) section(label, pkg.state[key].map(item => item.text));
+    ] as const) section(label, pkg.state[key].filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
     // Without a resolved understanding, dropping conversation text would silently lose requirements.
-    const messages = work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
     if (messages.length) {
-      lines.push('\n## 尚待整理的工作对话\n当前阶段尚未理清；以下原话用于确认有效要求和进度，较早的要求可能已被后文更改。');
+      lines.push('\n## 尚待整理的工作对话\n以下对话按先后排列，请按用户最新有效要求继续。执行者的建议和完成声明不代表用户已确认；已被后文替换的要求不再执行。');
       for (const message of messages) lines.push(`\n### ${message.kind === 'user.prompt' ? '用户' : '执行者'}\n${message.content ?? ''}`);
     }
   }
-  section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_STATED' || item.origin === 'USER_EDITED').map(item => item.text));
-  section('已有成果', pkg.state.artifacts.map(item => item.text));
+  section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_EDITED' || !messages.length && item.origin === 'USER_STATED').map(item => item.text));
+  section('已有成果', pkg.state.artifacts.filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
   const materials = pkg.fixedMaterials.map(item => `${item.role}：${target === 'web' ? `${basename(item.path)}（需上传）` : item.path}`);
   for (const reference of pkg.referenceExamples) {
     if (reference && typeof reference === 'object' && 'path' in reference && typeof reference.path === 'string') {
