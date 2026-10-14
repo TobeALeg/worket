@@ -108,3 +108,17 @@ Kimi/豆包普通网页入口、DeepSeek 和 Gemini 已加入共享目录；原 
 本机交付：正常退出旧应用后备份到 output/app-backups/web-connectors-20261014（含 SQLite 一致性备份），安装 /Applications/Worket.app 并重启，签名 deep/strict 通过。安装与构建 ASAR SHA256 均为 5ff1abf8bb67697254bce6eb78edd038ec6cf910f22e5d3b94a197a811c633b5。实际进程 PID 7477 来自 /Applications/Worket.app/Contents/MacOS/Worket；原数据库 quick_check=ok，原 28 张表均无计数减少。实际导入下拉框已显示 Kimi、豆包、DeepSeek、Gemini。尚未发布 GitHub Release 或部署后台。
 
 用户完成登录后，日常 Chrome 的 Kimi 普通聊天、DeepSeek 和 Gemini 分别真实返回 WORKET_KIMI_OK / WORKET_DEEPSEEK_OK / WORKET_GEMINI_OK。豆包当前落在企业工作空间，普通聊天模式待切换；扩展 ID 及真实选区到 Worket 的完整闭环仍待完成。
+
+### 日常 Chrome 扩展真实验收（2026-10-14）
+
+用户在日常 Chrome 手动加载扩展 0.1.1，提供实际 ID `jijleglgedabifdnfefjnolonbdmfhpc`。本机 Host 注册到 `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/site.dandi.worket.selected.json`，仅允许该扩展 origin；稳定运行目录 `~/Library/Application Support/Worket/browser-native`，连接日常 `.workpet/bridge.json`，未输出或复制访问令牌。
+
+真实浏览器逐站选中模型回复，通过原生工具栏打开扩展、读取选区、核对站点与助手角色、填写对应实际会话 URL、发送后均显示已送入待确认箱。随后在 `/Applications/Worket.app` 的实际界面逐条预览并确认，均显示已导入 1 条选定内容：
+
+- Gemini 普通聊天：WORKET_GEMINI_OK。
+- Kimi 普通聊天：WORKET_KIMI_OK；未导入邻近的思考说明。
+- DeepSeek 普通聊天：WORKET_DEEPSEEK_OK。
+
+以上为真实日常 Chrome → 实际扩展 activeTab → Native Messaging → 正式本机 Worket 待确认箱 → 预览确认入档，不是 route.fulfill 或脚本直接注入。仅使用无私人数据的短测试消息，不代表完整历史同步、真实业务提取质量或四站交接的业务收益。豆包登录后仍是 MentiTrek 企业工作空间，普通聊天页待用户切换后补验。
+
+SQLite 只读复核三条测试 agent.response 的正文、SELECTED_CONTENT 范围及来源 URL 与页面完全一致，quick_check=ok。测试工作 ID 分别为 Gemini `94697bd4-ad02-4ea3-8226-711628eaf370`、Kimi `7c1db13b-968c-441d-87c0-00e4f990da13`、DeepSeek `93133edd-fab6-402a-840a-9fcf14e23423`；三条均通过实际 Worket 界面归档，保留可恢复证据，不占用进行中列表。

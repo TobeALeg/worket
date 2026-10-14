@@ -50,7 +50,7 @@ WORKPET_DATA_DIR="$TASK_DATA_DIR" WORKPET_BRIDGE_CONFIG="$TASK_DATA_DIR/bridge.j
 4. 打开用户批准的会话，选中一条可见消息→点击扩展→核对角色/会话/脱敏正文→提交→Worket 最近活动的“导入选定网页内容”→待确认箱→预览→确认。
 5. 多条消息逐条选择，或导入所选消息的稳定 JSON 格式。不自动翻页，不推断未加载历史完整性，不抓取附件正文。待确认内容可丢弃；停止记录/归档后不允许来自旧会话的增量写入。
 
-未加载扩展/未注册 host 时 native 请求明确失败，不退回无授权 HTTP 或私有接口。真正发送或上传文件仍由用户在目标应用操作。豆包实际打开 `/chat/` 并由用户切换工作模式；官方 `/work` 是下载介绍页，不能用其打开成功证明工作会话能力。网页手动导入支持 Kimi Work、豆包工作、扣子、QwenWork 和通用 HTTPS；产品主页共用域名不证明具体模式，用户必须核对自己选择的是 Work 会话。
+未加载扩展/未注册 host 时 native 请求明确失败，不退回无授权 HTTP 或私有接口。真正发送或上传文件仍由用户在目标应用操作。豆包实际打开 `/chat/`；官方 `/work` 是下载介绍页。2026-10-14 起，网页手动导入支持 Kimi、豆包普通聊天及 Work 会话、DeepSeek、Gemini、扣子、QwenWork 和通用 HTTPS，不要求用户切到 Work 模式。Kimi/豆包持久 ID 保留，显示名称已扩展为普通网页。
 
 ## QwenWork 显式设置（应用已安装，实际 Hook/MCP 尚未激活）
 
@@ -80,3 +80,7 @@ QwenWork 手动回复回流：在“导入选定内容”选择 QwenWork 桌面�
 出现 `WAITING_REAL_EXTENSION_ACTION` 后，只在标题为 `WORKET SYNTHETIC SELECTION TEST` 的测试窗口点击扩展菜单中的“Worket 选定网页内容”。脚本已建立合成文字选区；实际菜单操作才取得 Chrome activeTab。不要改为调用 `chrome.action.openPopup()`、添加 host_permissions 或给站点永久授权：独立实测 openPopup 本身不能授予 activeTab。脚本以单独 CDP 连接识别真实 popup，随后用真实 popup 与 Electron 控件完成采集、暂存、预览、取消、确认、编辑、重启和清理验收。最多等待实际菜单操作 15 分钟，超时明确失败并执行清理。
 
 报告和合成截图位于 `output/playwright/cn-connectors/roundtrip/`。`PASS_SYNTHETIC_BROWSER_ELECTRON_ROUNDTRIP` 不包含线上模型；真实站点下一步只需选一个用户已登录的产品，发送合成任务，再导入其真实回复及带双标记的重新交付。Kimi 登录入口：https://www.kimi.com/ 。新增协议由用户确认；ZCode 和 Qwen 原生 UI 属于独立验收，不是本项依赖。
+
+## 日常 Chrome 加载目录（2026-10-14）
+
+本机扩展复制到 `~/Library/Application Support/Worket/browser-extension`。在 Chrome 扩展管理页开启开发者模式，点击“加载未打包的扩展程序”；macOS 选择器中用 Command+Shift+G 输入完整目录，无需显示隐藏的 Library。加载后取得卡片实际 ID，再由 prepare-browser-native.mjs 生成 exact-origin 本机配对；扩展加载与本机 Host 注册是两个独立步骤。工具禁止访问 chrome:// 管理页时，加载步骤由用户完成，不改写浏览器配置绕过该限制。
