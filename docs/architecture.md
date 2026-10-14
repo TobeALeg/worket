@@ -700,3 +700,5 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 `handoff/execution-brief.ts` 将经过现有资料/来源校验的 WorkPackage 与 WorkSnapshot 投影为面向执行者的 Markdown。复制/导出通过 `packageMarkdown`、网页通过 `inlineWorkPackage`、本地 MCP `get_work_context` 默认及显式 v4 使用同一投影；v1–v3 显式请求保留兼容格式。启动提示默认请求 v4。回执仍在 handler 内记录，不出现在 v4 正文中，检查失败不会确认读取。
 
 投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。有对话兜底时只补充 USER_EDITED 状态项，自动抽取项由原话承载；无对话时保留线索，防止仅有状态的工作丢失内容。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。
+
+自动状态整理的请求事件按本次请求从 1 连续编号；原始事件 ID、正文顺序及 basis 的来源序号水位保持不变，兼容本地标题记录序号为 0 的历史数据。请求投影升级会让此前失败的已授权工作重试一次，有效缓存仍直接复用。

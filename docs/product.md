@@ -526,4 +526,6 @@ v0.1.4 正式版内置 `https://worket.dandi.site`。没有既有配置时生成
 
 同日真实交接复测通过：安装版 Worket 交付测试任务到 WorkBuddy 5.8.2，用户完成首次 workpet MCP 信任后，人工确认发送、真实会话绑定、工作包读取回执与正确文本结果自动回流全部核实。用户级 MCP 使用 mcp.json；首次信任需在 WorkBuddy 自定义连接器中完成。此验收不包含自动发送、附件或 Windows。见 [真实闭环验收](acceptance/workbuddy-roundtrip-2026-10-14.md)。
 
-同日附件复测也通过：本机中文路径 CSV 输入由 WorkBuddy 实际读取，生成 Markdown/CSV 后，Worket 自动回读最终回复和两个可用输出引用。限定同机文件和显式回复链接，不外推所有附件格式；自动工作状态整理仍未通过。见 [附件闭环验收](acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。
+同日附件复测也通过：本机中文路径 CSV 输入由 WorkBuddy 实际读取，生成 Markdown/CSV 后，Worket 自动回读最终回复和两个可用输出引用。限定同机文件和显式回复链接，不外推所有附件格式；自动状态整理当时失败，已在后续修复复测通过。见 [附件闭环验收](acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。
+
+自动工作状态整理兼容从序号 0 开始的来源标题记录；客户端升级后，此前因旧请求格式失败的已授权工作会自动重试，已有有效结果仍复用。真实附件任务的修复复测见 [状态整理验收](acceptance/workbuddy-state-preparation-2026-10-14.md)。
