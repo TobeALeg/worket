@@ -45,7 +45,11 @@ Windows 构建机运行 `npm run package:win`，产物为 `release/Worket-win32-
 
 ## 验证
 
-GitHub Actions 的 [CI](.github/workflows/ci.yml) 在分支推送、PR 和手动触发时运行，使用 Node.js 24 和 `npm ci`：macOS 15 执行完整测试（包含 TypeScript 与原生组件构建）、提取评测工具测试和 ARM64 应用打包；Ubuntu 24.04 独立验证后台构建。同一分支或 PR 的旧运行会被取消。
+GitHub Actions 的 [CI](.github/workflows/ci.yml) 在分支推送和手动触发时运行，使用 Node.js 24 和 `npm ci`：macOS 15 执行完整测试（包含 TypeScript 与原生组件构建）、提取评测工具测试和 ARM64 应用打包；Ubuntu 24.04 独立验证后台构建。同一分支的旧运行会被取消。PR 复用其分支推送产生的检查结果，避免机器人创建 PR 再次触发受限的重复检查。
+
+日常修改从最新 `origin/main` 建立 `codex/*` 分支，完成后提交并推送。[PR 交付工作流](.github/workflows/pull-request.yml) 在 CI 启动时创建 PR，通过后仅合并与该次检查 SHA 一致的最新提交，并再次检查 main。已有 PR 会复用；失败、草稿或冲突不会自动合入。将 PR 转为 Draft 可暂停，恢复 ready 后重跑该分支 CI。其他本仓库分支也运行 CI，但不会自动合并；外部 fork 不进入此自动交付流程。
+
+推送后可在 GitHub 的 **Pull requests** 查看自动创建的 PR，在 **Actions → Pull request delivery** 查看创建与合并记录；合并后的 **CI** 用于确认主分支状态。
 
 CI 不需要业务密钥，不发布 Release、不部署后台。需要已登录 Codex / WorkBuddy、桌面权限或真实模型的验收仍在本机执行；CI 通过不代表这些桌面链路已经验收。
 
