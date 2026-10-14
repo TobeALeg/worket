@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 持续集成（2026-10-14）
+
+`.github/workflows/ci.yml` 在分支推送、PR 和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
+
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
 
 ## 工作契约界面与生命周期（2026-10-09）

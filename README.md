@@ -39,6 +39,10 @@ npm run package:mac
 
 ## 验证
 
+GitHub Actions 的 [CI](.github/workflows/ci.yml) 在分支推送、PR 和手动触发时运行，使用 Node.js 24 和 `npm ci`：macOS 15 执行完整测试（包含 TypeScript 与原生组件构建）、提取评测工具测试和 ARM64 应用打包；Ubuntu 24.04 独立验证后台构建。同一分支或 PR 的旧运行会被取消。
+
+CI 不需要业务密钥，不发布 Release、不部署后台。需要已登录 Codex / WorkBuddy、桌面权限或真实模型的验收仍在本机执行；CI 通过不代表这些桌面链路已经验收。
+
 ```bash
 npm test
 npm run typecheck
