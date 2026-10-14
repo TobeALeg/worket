@@ -66,5 +66,7 @@ export interface ExecutorAdapter {
   ): Promise<ConversationSummary | null>;
   install?(appPath: string): Promise<string>;
   inspect(): Promise<void>;
+  /** Check delivery transport independently of history; legacy adapters share inspect. */
+  inspectDelivery?(): Promise<void>;
   deliver?(request: DeliveryRequest): Promise<DeliveryReceipt>;
 }

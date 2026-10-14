@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { cp, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -86,19 +86,9 @@ export async function installWorkBuddyUserIntegration(
   configDirectory = join(homedir(), ".workbuddy"),
 ): Promise<"installed" | "already-installed"> {
   await mkdir(configDirectory, { recursive: true });
-  const extensionDirectory = join(
-    configDirectory,
-    "extensions",
-    "worket-capture",
-  );
-  await mkdir(extensionDirectory, { recursive: true });
-  await cp(
-    join(appPath, "integrations", "workbuddy-extension"),
-    extensionDirectory,
-    { recursive: true },
-  );
   const settingsPath = join(configDirectory, "settings.json");
-  const mcpPath = join(configDirectory, ".mcp.json");
+  // User-level config is mcp.json; .mcp.json belongs to plugin/project scope.
+  const mcpPath = join(configDirectory, "mcp.json");
   const settings = await readJsonObject(settingsPath);
   const mcp = await readJsonObject(mcpPath);
   const command = hookCommand(appPath);

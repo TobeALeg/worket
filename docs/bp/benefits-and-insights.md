@@ -233,6 +233,21 @@ Worket 当前依据：[契约流程验收](../acceptance/contract-lifecycle-ui.m
 
 ## B001 — 工作授权与可替换执行者
 
+### 2026-10-14：来源读取与工作交付需要独立判断可用性
+
+
+同日修复补充：用户明确要求验证正式接入/本地历史、择路修复、拆分读写检查，并考虑各 Agent 限制接入后的 RPA 兜底。已验证本机 64 份 JSONL 可读、27 个会话无本地正文；正式 API 文档不等价于任意桌面历史且尚无 OAuth 实测。实现本地只读文字/显式附件投影与独立 inspectDelivery，342 项回归通过。当前能力证据与范围见 [接入验证](../acceptance/workbuddy-local-history-2026-10-14.md)。助手提出的价值判断：跨执行者工作连续性应依赖多层、可核验证据通道，不能承诺无条件兼容所有应用。RPA 可作为界面仍开放时的降级路线；自动完整采集、跨版本成功率和节时收益尚未验证，也未实现通用 RPA。用户手动选择/导出是最终保底，不把自动化降级写成数据完整。
+
+同日用户修正：不考虑 RPA，只保留人工接手作为兜底。此前界面自动操作仅为可行性讨论，不进入当前产品实施范围。真实交接验收应分开核对草稿交付、人工发送、目标会话绑定、工作包读取回执和结果回流，不能以历史可读推断整条链路可用。
+
+同日真实验收：通过一个无敏感文本任务核实 Worket → WorkBuddy 的草稿交付、发送、真实绑定、MCP 读取回执和结果自动回流。发现并修复用户级 MCP 路径错误与包装正文造成的漏绑定；首次信任由用户完成。证据见 [真实闭环验收](../acceptance/workbuddy-roundtrip-2026-10-14.md)。这是单机单任务的可运行性证据，不证明跨版本稳定性、附件覆盖或节时收益。 同日追加附件实测：中文路径 CSV 由 WorkBuddy 读取并生成 Markdown/CSV，Worket 自动回读最终回复及两个可用 OUTPUT 引用，文件大小与哈希核实一致。证据见 [附件闭环验收](../acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。证明单机这一类附件的工作连续性，不外推所有格式、跨版本稳定性或节时收益。后续同任务自动状态整理也通过：修复零序号标题被整理请求拒绝的问题，真实生成 RESOLVED 状态并关联两份成果哈希，保留执行者自述与用户验收的区分；见 [修复验收](../acceptance/workbuddy-state-preparation-2026-10-14.md)。
+
+讨论起因：用户确认本地 Worket 已更新，但 WorkBuddy 接入仍失败，并要求解释升级限制及影响。已核实的本机事实：5.7.7 运行时本地历史接口已返回 ECONNREFUSED；正常退出并重启后，WorkBuddy 自动应用已下载更新，界面与应用包均为 5.8.2，接口仍失败。因此不能断言限制首次出现在 5.8.2，也未取得运行日志中明确拒绝 worket-capture 的错误。
+
+外部实现依据（2026-10-14，本机 `/Applications/WorkBuddy.app/Contents/Resources/app.asar` 的 `main/daemon-bootstrap.js`）：普通 installed 扩展需通过签名与文件完整性验证；用户扩展目录内的 distribution.json 不能自行授予权限；未受信任的默认第三方分发权限为空、server/renderer 为 null；普通 installed 目录不再直接扫描加载。Worket 当前安装器只复制扩展目录，不提供此类签名安装记录，本机无 extensions/lock.json。该机制足以解释当前安装方式不满足 5.8.2 加载条件，但不等于已逐条捕获拒绝日志。官方仍公开支持 MCP、Hook 等插件：[插件文档](https://www.codebuddy.cn/docs/workbuddy/Plugins)；这与本次失效的内部 Extension 服务是不同接入层。[公开更新日志](https://www.codebuddy.cn/docs/workbuddy/Changelog)本轮返回最新条目为 5.7.7，不能作为 5.8.2 变更清单。
+
+Worket 当前依据：`src/adapters/workbuddy/install.ts`、`desktop-client.ts`、`executor.ts`；`src/app/app-service.ts` 的 listExecutors、handoff、reopenHandoff 均依赖 adapter.inspect，历史读取不可用会同时使交付不可用。用户价值与助手设计判断：应分别判断历史读取、事件通知、目标打开、实际接手确认，避免一个通道故障让全部能力被判定失效；本地已归档记录与已确认定义独立于外部应用保存，是保留工作成果的架构依据，不是本轮逐条数据完整性验收。可展示场景：历史读取中断时保留已有记录，并在可验证的交付通道恢复后继续同一工作。待验证：签名扩展开放途径、更新后 MCP/Hook/Deep Link 的真实端到端行为、本地完整历史读取及身份/分页/删除语义。只读本地历史是候选路线，当前仅确认 sessions 元数据可读，未实现替换；本条不批准接入重构，也不宣称兼容问题已修复。
+
 ### 2026-09-30：执行环境升级的兼容边界
 
 用户报告 Codex 更新后 Worket 无法加载历史聊天。本机核实：Codex CLI 0.159.0 由旧 `Resources/codex` 迁移至 `Resources/codex-cli/bin/codex`，Worket 的固定发现路径失效；适配器已兼容新旧布局，真实列表、完整历史及打包原生入口通过验证。更新本机应用前后，4 项工作、1,573 条来源事件、1 份定义保留，来源事件逐行摘要一致；证据见 [验收记录](../acceptance/codex-bundle-discovery.md)。这是本机安装事实，无新增竞品结论。

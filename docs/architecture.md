@@ -239,7 +239,7 @@ Pet / Panel → generic IPC → AppService → Work Core → SQLite
                               ▼
                        ExecutorRegistry
                          ├── Codex Adapter → App Server / Hook / native new-chat URL
-                         ├── WorkBuddy Adapter → read-only extension socket / Hook / Deep Link
+                         ├── WorkBuddy Adapter → local read-only history / Hook / Deep Link
                          └── future adapters
 MCP → Work Core work package + read audit
 ```
@@ -293,13 +293,15 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 ### WorkBuddy Adapter
 
-连接返回 ENOENT / ECONNREFUSED 时再用 `pgrep -f` 核对 WorkBuddy.app 的主进程路径（实际可执行文件名是 Electron），排除带扩展脚本参数的子进程；确认未运行才抛 `ExecutorNotRunningError`。`AppService` 在来源发现中将该状态映射为空聊天页，并从执行者列表省略；已有工作读取和主动交接不吞掉该错误。进程检查失败或应用仍运行则保留连接故障；协议和正文读取错误也保持失败语义，不缓存未运行状态。
+2026-10-14 起默认使用 `WorkBuddyLocalHistory`：只读 `~/.workbuddy/workbuddy.db` 的当前账号本地会话索引，匹配 `projects/*/<sessionId>.jsonl`。数据库事务只读；正文读取前后核验文件大小/修改时间，拒绝混合会话、损坏行、越界路径和过大文件。只投影可见用户/助手文字及显式本地附件，剥离 system-reminder、摘要和内部通知，跳过 reasoning/tool 原始载荷；活动请求的助手正文等待结束后导入。正文缺失不返回空的完整历史，列表明确说明本机覆盖范围。
 
-5.5.3 内部扩展安装在 `~/.workbuddy/extensions/worket-capture`，声明 onStartup 与 resident，避免空闲回收后失去读取入口。仅授权 conversations.list/get/requestEntries/requests，通过同用户 0600 Unix socket 提供 list/read/status。历史加载等待 historyReady，分页完整读取并去重；不完整分页失败，不把部分历史当完整导入。
+本地日志是留存证据，不是原应用当前完整历史的权威视图，因此不声明 `history.complete`，不推断删除。事件以原始消息 ID 定位，既有 SDK 事件通过请求 ID、正文与持久别名保持身份。旧 `WorkBuddyDesktopClient` 与扩展协议代码保留作历史兼容测试；安装器不再复制内部扩展，只配置用户级 `~/.workbuddy/mcp.json` 与 settings.json Hook（用户级 MCP 不使用插件级 `.mcp.json`）。Hook 仅通知会话 ID，提交或结束后从本地正文核对 WORKPET/DELIVERY 标记，避免上下文包装和先通知后落盘造成漏绑定；未授权会话不入库。
 
-归一化仅接受可见 text、tool 与资料引用，丢弃 reasoning/未知块；回复完成后入库，避免流式首个片段永久占用事件 ID。内部协议不是外部兼容承诺，升级不兼容时应显示接入错误。
+`ExecutorAdapter.inspect()` 检查来源读取，新增可选 `inspectDelivery()` 检查交付；未实现独立检查的适配器沿用原检查。WorkBuddy 交付通过 Electron 查询 `workbuddy://` 注册程序，与读取独立。ExecutorView.available 表示读取检查结果，canDeliver 独立决定选择按钮；deliveryError 与来源 error 分开。交接/重新打开检查目标交付能力，仍刷新正在记录的原来源，不能静默用陈旧记录替代失败的源刷新。Deep Link 成功只代表打开请求，实际发送、绑定和工作包读取仍分别等待真实证据。
 
-用户级 Hook 通知会话身份与变化，Deep Link 创建目标任务。安装逻辑位于各适配器的 install.ts，通用 IntegrationInstaller 分别调用；失败不阻止 Worket 窗口或其他执行者。打包资源通过 asar.unpacked 提供普通文件路径；升级扩展后需要重启 WorkBuddy。
+正式 Open API 的本地助理/云端任务能力与任意桌面会话历史不等价，且需要应用注册/OAuth；本轮未获得授权凭证、未实测正式 API。用户随后明确排除 RPA，保留人工接手；历史方案与本次验证边界见 [接入验证](acceptance/workbuddy-local-history-2026-10-14.md)。
+
+2026-10-14 附件实测：用户附件引用进入 INPUT，助手最终回复的绝对路径 Markdown 链接进入 OUTPUT，经 ArtifactTracker/Resolver 核验本机文件字节数、SHA-256 和可用性；原生界面可见结果与资料链接。CSV → Markdown/CSV 真实闭环通过，未验证其他文件格式；见 [验收](acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。
 
 ### 通用交付
 
@@ -669,7 +671,7 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 
 交付由应用层根据 MCP_REFERENCE/INLINE_PACKAGE 生成；内联正文完整包含当前有效证据与接续快照，不隐式读取文件，不截断。`connector_deliveries` 只持久化正文摘要以核验交付回声；完全相同的已知启动包仍保留档案，不递归成为新要求；改过正文仍是业务证据。此独立表可由旧版本忽略，不改变核心工作身份。
 
-网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与 stage 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。
+网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与显式 stage/transfer 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。
 
 2026-10-13：Codex deep link 交付返回 `OPEN_REQUESTED`，不观测原生草稿。`DeliveryLedger` 的原始重开请求保存在独立本地表，按原 prompt hash 核验；pending 状态允许同 delivery 原样再传输，沿用 per-work 并发锁，重新打开不创建工作包/执行片段。取消、初次传输失败及绑定后清理重开请求；旧 digest-only 记录不重建。真实 Hook 绑定若先于传输报错到达，绑定优先，禁止回滚。详见 [恢复验收](acceptance/handoff-recovery.md)。
 
@@ -698,6 +700,8 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 `handoff/execution-brief.ts` 将经过现有资料/来源校验的 WorkPackage 与 WorkSnapshot 投影为面向执行者的 Markdown。复制/导出通过 `packageMarkdown`、网页通过 `inlineWorkPackage`、本地 MCP `get_work_context` 默认及显式 v4 使用同一投影；v1–v3 显式请求保留兼容格式。启动提示默认请求 v4。回执仍在 handler 内记录，不出现在 v4 正文中，检查失败不会确认读取。
 
 投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。有对话兜底时只补充 USER_EDITED 状态项，自动抽取项由原话承载；无对话时保留线索，防止仅有状态的工作丢失内容。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。
+
+自动状态整理的请求事件按本次请求从 1 连续编号；原始事件 ID、正文顺序及 basis 的来源序号水位保持不变，兼容本地标题记录序号为 0 的历史数据。请求投影升级会让此前失败的已授权工作重试一次，有效缓存仍直接复用。
 
 ### 网页附件传输（2026-10-14）
 
