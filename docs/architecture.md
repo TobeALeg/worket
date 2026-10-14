@@ -2,7 +2,7 @@
 
 ## 持续集成（2026-10-14）
 
-`.github/workflows/ci.yml` 在分支推送、PR 和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
+`.github/workflows/ci.yml` 在分支推送和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
 
 `pull-request.yml` 在默认分支以 `workflow_run` 监听 CI 的启动和完成，仅处理本仓库 `codex/*` 分支的 push。写权限作业不 checkout、不执行功能分支代码；通过 GitHub API 复用或创建 PR，只有完整 CI 成功、分支 HEAD 与检查 SHA 一致且 PR 非草稿时才请求 squash 合并，合并 API 同时锁定 SHA。main 要求 PR 和两个 CI 检查，管理员同样受约束；自动合并后显式 dispatch main CI，避免 GITHUB_TOKEN 事件不触发下游工作流。GitHub Actions 需开启创建 PR 权限，无需个人访问令牌或业务密钥。
 
