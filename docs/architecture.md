@@ -698,3 +698,9 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 `handoff/execution-brief.ts` 将经过现有资料/来源校验的 WorkPackage 与 WorkSnapshot 投影为面向执行者的 Markdown。复制/导出通过 `packageMarkdown`、网页通过 `inlineWorkPackage`、本地 MCP `get_work_context` 默认及显式 v4 使用同一投影；v1–v3 显式请求保留兼容格式。启动提示默认请求 v4。回执仍在 handler 内记录，不出现在 v4 正文中，检查失败不会确认读取。
 
 投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。有对话兜底时只补充 USER_EDITED 状态项，自动抽取项由原话承载；无对话时保留线索，防止仅有状态的工作丢失内容。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。
+
+### 网页附件传输（2026-10-14）
+
+`AppService.prepareWebTransfer` 在网页复制或正式交接时调用 `WebTransfer`，只收集工作包已关联的文件，核对可用性与固定哈希后冻结字节。内存仅保留最近一次准备，限 20 文件/40 MB/10 分钟；并发准备以最后请求为准。`/web/transfer` 沿用 private-token loopback 且拒绝浏览器 Origin。Native Host 在原有选区 stage 之外新增 transfer，仍核对配对 extension origin；浏览器只接触传输 ID、文件索引和分块偏移，不能指定本地路径。
+
+扩展按当前 HTTPS 站点与交接目标核对后，以 256 KiB 分块取回文件，再核对 SHA-256。用户点击扩展 action 提供 activeTab，后台任务在该标签页 MAIN world 执行 `fillWebDraft`，通过网页的原生 file input/change 接收文件并填入正文；豆包异步输入在本地上传菜单边界提供文件。不会自动发送，遇到已有文字草稿、重复传输或网页切换则停止。`dispatched` 仅表示交给网页，不证明服务端上传、模型读取或绑定。其他网页仍为手动附件上传；原选区 stage 与接收附件链路相互独立。

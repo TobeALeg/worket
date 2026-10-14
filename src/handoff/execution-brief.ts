@@ -25,7 +25,7 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
   const inputNames = new Map(content?.inputs.map(input => [input.key, input.text]) ?? []);
   section('本次输入', Object.entries(pkg.inputs).map(([key, value]) => {
     const material = pkg.inputMaterials?.find(item => item.path === value);
-    return `${inputNames.get(key) ?? key}：${target === 'web' && material ? `${basename(material.path)}（需上传）` : String(value)}`;
+    return `${inputNames.get(key) ?? key}：${target === 'web' && material ? `${basename(material.originalPath || material.path)}（需上传）` : String(value)}`;
   }));
   if (snapshot) {
     section('当前阶段', current ? [current.task.text] : []);
@@ -62,7 +62,7 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
   }
   section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_EDITED' || !messages.length && item.origin === 'USER_STATED').map(item => item.text));
   section('已有成果', pkg.state.artifacts.filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
-  const materials = pkg.fixedMaterials.map(item => `${item.role}：${target === 'web' ? `${basename(item.path)}（需上传）` : item.path}`);
+  const materials = pkg.fixedMaterials.map(item => `${item.role}：${target === 'web' ? `${basename(item.originalPath || item.path)}（需上传）` : item.path}`);
   for (const reference of pkg.referenceExamples) {
     if (reference && typeof reference === 'object' && 'path' in reference && typeof reference.path === 'string') {
       materials.push(`参考：${target === 'web' ? `${basename(reference.path)}（需上传）` : reference.path}`);

@@ -1,3 +1,4 @@
+import { WebTransfer, UPLOAD_CONNECTORS } from "../connectors/web-transfer.js";
 import { deliveryMarkers } from "../executors/delivery-markers.js";
 import { DeliveryLedger } from "../connectors/delivery-ledger.js";
 import { normalizeSelectedContent, type SelectedContent } from "../connectors/selected-content.js";
@@ -93,6 +94,7 @@ export interface AppServiceOptions {
 type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] } | null;
 
 export class AppService {
+  readonly webTransfer = new WebTransfer();
   readonly #sourcePresence = new SourcePresence();
   readonly #deliveryLedger: DeliveryLedger;
   readonly #core: WorkCore;
@@ -594,6 +596,14 @@ export class AppService {
     return inlineWorkPackage(work, buildWorkPackage(work, this.#core.definitions));
   }
 
+  async prepareWebTransfer(workId: string, adapterId?: string, prompt?: string): Promise<string> {
+    const work = this.#requireWork(workId);
+    const pkg = buildWorkPackage(work, this.#core.definitions);
+    const text = prompt ?? inlineWorkPackage(work, pkg);
+    await this.webTransfer.prepare(work, pkg, text, adapterId);
+    return text;
+  }
+
   async syncHook(
     executorId: string,
     payload: Record<string, unknown>,
@@ -840,6 +850,7 @@ export class AppService {
           prompt,
         };
         this.#deliveryLedger.saveRequest(request);
+        if (UPLOAD_CONNECTORS.includes(adapter.id)) await this.prepareWebTransfer(workId, adapter.id, request.prompt);
         const receipt = await adapter.deliver(request);
         const latest = this.#requireWork(workId);
         if (
@@ -890,6 +901,7 @@ export class AppService {
       if (this.#requireWork(workId).activeBinding?.id !== binding.id ||
         this.#requireWork(workId).activeBinding?.conversationId !== binding.conversationId)
         throw new Error("交接状态已改变，未重新打开。");
+      if (UPLOAD_CONNECTORS.includes(adapter.id)) await this.prepareWebTransfer(workId, adapter.id, request.prompt);
       const receipt = await adapter.deliver(request);
       const latest = this.#requireWork(workId);
       if (receipt.conversationId && latest.activeBinding?.conversationId === binding.conversationId)

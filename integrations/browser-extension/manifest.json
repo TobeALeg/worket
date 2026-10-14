@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Worket 选定网页内容",
-  "version": "0.1.1",
-  "description": "仅在你点击后读取当前页面选中的正文，预览后交给本机 Worket 确认。",
+  "name": "Worket 网页交接",
+  "version": "0.2.0",
+  "description": "主动选区导入；将本机已准备的工作包和相关附件填入当前聊天草稿，由你核对发送。",
   "permissions": [
     "activeTab",
     "scripting",
@@ -12,6 +12,7 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   }
 }

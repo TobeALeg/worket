@@ -13,6 +13,7 @@ export interface WorkPetBridgeOptions {
     executorId: string,
     payload: Record<string, unknown>,
   ) => Promise<unknown>;
+  onWebTransfer?: (payload: Record<string, unknown>) => unknown;
   onSelectedContent?: (input: SelectedContent) => unknown;
   port?: number;
 }
@@ -58,6 +59,10 @@ export class WorkPetHttpBridge {
         const payload = await jsonBody(request);
         if (request.url === "/selected/stage" && this.#options.onSelectedContent) {
           const result = await this.#options.onSelectedContent(payload as unknown as SelectedContent);
+          response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result)); return;
+        }
+        if (request.url === "/web/transfer" && this.#options.onWebTransfer) {
+          const result = await this.#options.onWebTransfer(payload);
           response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result)); return;
         }
         if (request.url === "/mcp") {
