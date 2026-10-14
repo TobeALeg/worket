@@ -721,3 +721,5 @@ Worket 当前依据：打包版本已在启动时和每小时检查 GitHub Relea
 2026-10-12 B001 补充（国内连接器，独立分支）：用户要求尽可能接入中国工作 AI，并希望后续只需更新提取流程。助手设计判断是把工作身份、可核验来源和提取策略与执行环境分开；完整内联包可使没有 MCP 的应用也参与主动交接，能力声明保留打开/发送/绑定/读取差异。当前依据：`src/extractor/index.ts`、`src/connectors/selected-content.ts`、`src/connectors/inline-package.ts` 和 `test/connectors/flow.test.ts`，真实隔离 Electron/SQLite/native 子进程通过本地合成验收。此为工程实现与局部测试，不证明国内所有产品已连通、网页历史完整或用户节时；第三方安装、显式配对、实际闭环和提取语义质量仍待验证。官方契约、限制及结果见 [连接器实施范围](../specs/cn-ai-connectors.md) 与 [验收](../acceptance/cn-ai-connectors.md)。
 
 2026-10-13 B001 补充（同类 AI 接续与来源边界）：用户指出，先主动点击记录，再交接选择同样的 Codex，应当可以把同一工作交给新会话。当前代码允许同 executor 类型，新执行片段保留 WorkInstance；真实本地工具创建任务的发现漏检已用官方 stateDB 入口修复，来源发现仍不等于用户授权记录。助手设计判断：工作的持久身份不仅用于换应用，也用于同一 AI 的新会话接续；可靠展示应包括实际点击记录、工作包读取与新会话回流。当前依据：[本地 Codex 发现验收](../acceptance/codex-session-discovery.md)。状态：代码/局部真实来源与合成组件验证通过，完整桌面接力未验收；dot/durable 的独立来源能力仍是待核实设计方向，不宣称已支持。
+
+2026-10-14 B001 补充（普通网页会话）：用户要求接入豆包、Kimi、DeepSeek、Gemini 普通网页版，而不仅是 Work 模式。设计判断：工作身份应与网站的营销模式名称分开，同一选区导入和内联交付可覆盖普通聊天。项目依据：catalog.ts 共享站点目录和 flow.test.ts 的四站点同一工作交接回归；尚不能把选区能力表述成完整历史自动同步，真实站点和安装验收另记。

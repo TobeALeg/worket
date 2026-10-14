@@ -10,6 +10,34 @@ import { currentSourceEvents } from '../../dist/core/source-revisions.js';
 import { createQwenWorkExecutor } from '../../dist/adapters/qwenwork/executor.js';
 import { SelectedContentInbox } from '../../dist/connectors/inbox.js';
 const fixture = () => JSON.parse(readFileSync(new URL('../fixtures/connectors/selected-requirements.json', import.meta.url), 'utf8'));
+test('ordinary web chats preserve one work across Kimi, Doubao, DeepSeek and Gemini handoffs', async () => {
+  const { app, delivered } = setup();
+  try {
+    const id = (await app.importSelectedContent(fixture())).selectedWork!.id;
+    for (const [adapterId, url] of [
+      ['doubao-work', 'https://www.doubao.com/chat/synthetic-ordinary'],
+      ['deepseek-web', 'https://chat.deepseek.com/a/chat/synthetic-ordinary'],
+      ['gemini-web', 'https://gemini.google.com/app/synthetic-ordinary'],
+      ['kimi-work', 'https://www.kimi.com/chat/synthetic-ordinary'],
+    ]) {
+      await app.handoff(id, adapterId);
+      const input = { ...fixture(), adapterId, url: url + '?token=must-not-persist', conversationId: url,
+        messages: [{ role: 'user', content: delivered.at(-1)! }, { role: 'assistant', content: '收到，请用中文完成项目计划。' }] };
+      const inbox = new SelectedContentInbox();
+      const stagedId = inbox.stage(input);
+      assert.match(app.core().getWork(id)!.activeBinding!.conversationId, /^pending:/);
+      const result = await app.importSelectedContent(inbox.read(stagedId));
+      assert.equal(result.selectedWork!.id, id);
+      assert.equal(app.core().getWork(id)!.activeBinding!.adapter, adapterId);
+      const events = app.core().getWork(id)!.sourceArchive;
+      assert.equal(events.at(-1)!.metadata.sourceUrl, url);
+      assert.equal(events.at(-1)!.metadata.historyComplete, false);
+      await app.importSelectedContent(input);
+      assert.equal(app.core().getWork(id)!.sourceArchive.length, events.length);
+      assert.throws(() => inbox.stage({ ...input, url: 'https://example.com/chat' }), /站点/);
+    }
+  } finally { app.close(); }
+});
 function setup(path = join(mkdtempSync(join(tmpdir(), 'worket-connectors-')), 'work.sqlite')) {
   const delivered: string[] = [], extracted: any[] = [];
   const adapters = createWebExecutors({ openUrl: async () => {}, desktop: { async openApplication() {}, writeClipboard(text) { delivered.push(text); } } });

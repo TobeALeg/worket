@@ -98,3 +98,7 @@ QwenWork 的选定回复入口已补齐：允许用户主动选取桌面可见�
 产物在忽略目录 `output/playwright/cn-connectors/roundtrip/`：`report.json`、`01-extension-selected.png`、`02-worket-preview.png`、`03-worket-recorded.png`。测试 URL 虽使用 Kimi 域名，但由 route.fulfill 返回合成页面，**没有访问 Kimi 服务、账号或模型**。这证明浏览器插件与 Worket 的本机闭环，不证明任何产品的真实模型往返、Qwen Hook 激活或 ZCode 接通。
 
 补充直接 Native 子进程→loopback→暂存→确认导入→默认提取独立复测也通过。原 02:05 的 `browser-selection-report.json: NOT_VERIFIED` 是历史失败，已由此完整实际 action 测试补齐；程序打开 popup 不授予 activeTab 的负向观察仍成立。
+
+## 普通网页会话扩展（2026-10-14）
+
+Kimi/豆包普通网页入口、DeepSeek 和 Gemini 已加入共享目录；原 Kimi/豆包持久 ID 保留。完整测试 325/325 通过，新增四站点同一工作交接、暂存不绑定、去重、查询参数脱敏与错站拒绝回归。日常 Chrome 实测 Gemini 普通新会话返回 WORKET_GEMINI_OK；Kimi/豆包/DeepSeek 当前需要用户登录，尚未完成插件到 Worket 的真实四站闭环。浏览器工具禁止访问 chrome://extensions，扩展加载交由用户在管理页操作；已准备稳定目录，待取得实际扩展 ID 后精确配对。桌面安装结果将在交付时补充。

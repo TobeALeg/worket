@@ -612,3 +612,5 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 2026-10-13：Codex deep link 交付返回 `OPEN_REQUESTED`，不观测原生草稿。`DeliveryLedger` 的原始重开请求保存在独立本地表，按原 prompt hash 核验；pending 状态允许同 delivery 原样再传输，沿用 per-work 并发锁，重新打开不创建工作包/执行片段。取消、初次传输失败及绑定后清理重开请求；旧 digest-only 记录不重建。真实 Hook 绑定若先于传输报错到达，绑定优先，禁止回滚。详见 [恢复验收](acceptance/handoff-recovery.md)。
 
 2026-10-13：stdio MCP 代理在 HTTP/config 失败时仍保留 JSON-RPC 请求 ID，使调用端立即收到真实错误而非等待超时；通知保持无响应。客户端网络错误保留 EPERM 等底层码，不扩大网络权限。隔离实例的桥接文件须与执行会话的实际路由一致，日常配置不自动路由到测试实例；见 [真实追查](acceptance/codex-real-handoff.md)。
+
+2026-10-14 网页连接器目录：`catalog.ts` 统一定义 Kimi、豆包、DeepSeek、Gemini、QwenWork、扣子的身份、入口与允许域名；构建时生成扩展 catalog.js。Kimi/豆包继续使用 kimi-work/doubao-work 持久标识但不限制工作模式。DeepSeek 仅匹配 chat.deepseek.com，Gemini 仅匹配 gemini.google.com；统一归一化器保留选定范围、去除查询参数，沿用相同交接与去重流程。
