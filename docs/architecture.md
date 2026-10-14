@@ -239,7 +239,7 @@ Pet / Panel → generic IPC → AppService → Work Core → SQLite
                               ▼
                        ExecutorRegistry
                          ├── Codex Adapter → App Server / Hook / native new-chat URL
-                         ├── WorkBuddy Adapter → read-only extension socket / Hook / Deep Link
+                         ├── WorkBuddy Adapter → local read-only history / Hook / Deep Link
                          └── future adapters
 MCP → Work Core work package + read audit
 ```
@@ -295,7 +295,7 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 2026-10-14 起默认使用 `WorkBuddyLocalHistory`：只读 `~/.workbuddy/workbuddy.db` 的当前账号本地会话索引，匹配 `projects/*/<sessionId>.jsonl`。数据库事务只读；正文读取前后核验文件大小/修改时间，拒绝混合会话、损坏行、越界路径和过大文件。只投影可见用户/助手文字及显式本地附件，剥离 system-reminder、摘要和内部通知，跳过 reasoning/tool 原始载荷；活动请求的助手正文等待结束后导入。正文缺失不返回空的完整历史，列表明确说明本机覆盖范围。
 
-本地日志是留存证据，不是原应用当前完整历史的权威视图，因此不声明 `history.complete`，不推断删除。事件以原始消息 ID 定位，既有 SDK 事件通过请求 ID、正文与持久别名保持身份。旧 `WorkBuddyDesktopClient` 与扩展协议代码保留作历史兼容测试；安装器不再复制内部扩展，只配置既有用户级 MCP/Hook。
+本地日志是留存证据，不是原应用当前完整历史的权威视图，因此不声明 `history.complete`，不推断删除。事件以原始消息 ID 定位，既有 SDK 事件通过请求 ID、正文与持久别名保持身份。旧 `WorkBuddyDesktopClient` 与扩展协议代码保留作历史兼容测试；安装器不再复制内部扩展，只配置用户级 `~/.workbuddy/mcp.json` 与 settings.json Hook（用户级 MCP 不使用插件级 `.mcp.json`）。Hook 仅通知会话 ID，提交或结束后从本地正文核对 WORKPET/DELIVERY 标记，避免上下文包装和先通知后落盘造成漏绑定；未授权会话不入库。
 
 `ExecutorAdapter.inspect()` 检查来源读取，新增可选 `inspectDelivery()` 检查交付；未实现独立检查的适配器沿用原检查。WorkBuddy 交付通过 Electron 查询 `workbuddy://` 注册程序，与读取独立。ExecutorView.available 表示读取检查结果，canDeliver 独立决定选择按钮；deliveryError 与来源 error 分开。交接/重新打开检查目标交付能力，仍刷新正在记录的原来源，不能静默用陈旧记录替代失败的源刷新。Deep Link 成功只代表打开请求，实际发送、绑定和工作包读取仍分别等待真实证据。
 

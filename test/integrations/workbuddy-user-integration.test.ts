@@ -15,7 +15,7 @@ test("WorkBuddy 用户级接入保留现有配置并可幂等安装", async () =
       Stop: [{ hooks: [{ type: "command", command: "node /existing/stop.mjs" }] }]
     }
   }));
-  await writeFile(join(configDirectory, ".mcp.json"), JSON.stringify({
+  await writeFile(join(configDirectory, "mcp.json"), JSON.stringify({
     mcpServers: { existing: { command: "existing-mcp" } }
   }));
 
@@ -23,7 +23,7 @@ test("WorkBuddy 用户级接入保留现有配置并可幂等安装", async () =
   const second = await installWorkBuddyUserIntegration(process.cwd(), configDirectory);
 
   const settings = JSON.parse(await readFile(join(configDirectory, "settings.json"), "utf8")) as Record<string, any>;
-  const mcp = JSON.parse(await readFile(join(configDirectory, ".mcp.json"), "utf8")) as Record<string, any>;
+  const mcp = JSON.parse(await readFile(join(configDirectory, "mcp.json"), "utf8")) as Record<string, any>;
   assert.equal(first, "installed");
   assert.equal(second, "already-installed");
   assert.deepEqual(settings.sandbox, { enabled: true });
