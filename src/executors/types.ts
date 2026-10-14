@@ -14,12 +14,23 @@ export interface ConversationSummary {
 export interface ConversationPage {
   threads: ConversationSummary[];
   nextCursor: string | null;
+  notice?: string;
 }
 export interface ConversationSource {
-  listThreadPage?(limit?: number, cursor?: string): Promise<ConversationPage>;
+  listThreadPage?(limit?: number, cursor?: string, searchTerm?: string): Promise<ConversationPage>;
   listRecentThreads?(limit?: number): Promise<ConversationSummary[]>;
   readThread(id: string): Promise<NormalizedThread>;
   close(): void;
+}
+export type DeliveryMode = "MCP_REFERENCE" | "INLINE_PACKAGE";
+export interface ConnectorCapabilities {
+  deliveryMode: DeliveryMode;
+  transport: "DEEP_LINK" | "CLIPBOARD" | "WEB_CLIPBOARD";
+  source: "HISTORY" | "HOOK_EVENTS" | "SELECTED_CONTENT";
+  mcp: boolean;
+  manualSelection?: boolean;
+  sendsAutomatically: boolean;
+  files: "LOCAL_REFERENCES" | "MANUAL_UPLOAD" | "EXTENSION_UPLOAD";
 }
 export interface DeliveryRequest {
   workId: string;
@@ -31,6 +42,8 @@ export interface DeliveryRequest {
   cwd?: string;
 }
 export interface DeliveryReceipt {
+  /** Observed transport result; never evidence of sending or reading. */
+  status?: "OPEN_REQUESTED" | "OPENED" | "DRAFT_PREPARED";
   conversationId?: string;
   guidance?: string;
 }
@@ -40,7 +53,10 @@ export interface ExecutorAdapter {
   mark: string;
   bundleIds: readonly string[];
   environment: ExecutionEnvironment;
-  source: ConversationSource;
+  source?: ConversationSource;
+  capabilities?: ConnectorCapabilities;
+  installation?: "EXPLICIT";
+  normalizeHook?(payload: Record<string, unknown>): import("../connectors/selected-content.js").SelectedContent | null;
   reconcileHistory?(
     thread: NormalizedThread,
     archive: readonly SourceEvent[],
@@ -50,5 +66,7 @@ export interface ExecutorAdapter {
   ): Promise<ConversationSummary | null>;
   install?(appPath: string): Promise<string>;
   inspect(): Promise<void>;
+  /** Check delivery transport independently of history; legacy adapters share inspect. */
+  inspectDelivery?(): Promise<void>;
   deliver?(request: DeliveryRequest): Promise<DeliveryReceipt>;
 }

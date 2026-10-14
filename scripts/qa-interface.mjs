@@ -63,11 +63,12 @@ await page.addInitScript(() => {
     completeWork: async id => change(id, 'COMPLETED'), resumeWork: async id => change(id, 'OPEN'), archiveWork: async id => change(id, 'ARCHIVED'),
     refreshWork: async () => { throw new Error('连接中断，请重试'); },
     handoff: async id => { selected = works.find(w => w.id === id); selected.captureStatus = 'waiting'; return dashboard(); },
-    cancelRecording: async (id, confirmation) => { if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
+    cancelRecording: async (id, confirmation) => { window.cancelRecordingCalls = (window.cancelRecordingCalls ?? 0) + 1; if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
     copyWorkPackage: async () => {}, exportWorkPackage: async () => '/tmp/fixture.json',
-    consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, closePanel() {},
-    onFeedbackCollapse() { return () => {}; }, feedback: async () => null,
+    consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, onFeedbackCollapse() {}, closePanel() { window.panelCloseCalls = (window.panelCloseCalls ?? 0) + 1; },
+    feedback: async () => null,
     getWorketServiceStatus: async () => ({ automatic: true, url: 'https://worket.example.com' }),
+    feedback: async action => action === 'list' ? [] : action === 'remote' ? { items: [] } : { description: '', screenshots: [], consent: false, scope: 'RECENT', occurredAt: new Date().toISOString(), diagnostics: { from: new Date().toISOString(), to: new Date().toISOString(), events: [] } },
     configureWorketService: async () => {},
     distillation: async action => {
       if (action === 'activity') return null;
@@ -76,7 +77,7 @@ await page.addInitScript(() => {
       if (action === 'setImprovementPreference') { preference = !preference; return {}; }
       if (action === 'definitions') return { items: [] };
       if (action === 'jobs') return [{ id: 'failed', status: 'FAILED', createdAt: new Date().toISOString(), error: '服务连接中断' }];
-      if (action === 'job') return { id: 'failed', status: 'FAILED', snapshotId: 's1', attempt: 1, error: '服务连接中断' };
+      if (action === 'job') { window.jobCalls = (window.jobCalls ?? 0) + 1; return { id: 'failed', status: window.runningJob ? 'RUNNING' : 'FAILED', snapshotId: 's1', attempt: 1, error: '服务连接中断' }; }
       if (action === 'snapshot') return { capturedAt: '2026-09-11 10:00', contentHash: 'fixture' };
       if (action === 'improvementSamples') return [{ id: 'sample1', label: '产品发布记录', state: 'STOPPED', pending: 0, consent: JSON.stringify({ at: '2026-09-11' }) }];
       return {};
@@ -95,6 +96,12 @@ async function shot(name, surface = page) {
 async function menuAction(action) {
   await page.locator('#work-detail summary[aria-label="工作操作"]').click();
   await page.locator(`[data-action="${action}"]`).click();
+}
+async function headerPositions() {
+  return page.locator('.brand-actions > .feedback-entry, .brand-actions > details > summary, .brand-actions > .icon-button:last-child').evaluateAll(elements => elements.map(el => {
+    const { x, y, width, height } = el.getBoundingClientRect();
+    return { x, y, width, height };
+  }));
 }
 try {
   await page.goto(`http://127.0.0.1:${server.address().port}/renderer/panel.html`);
@@ -135,26 +142,73 @@ try {
   await menuAction('split'); await shot('06-split'); await page.keyboard.press('Escape');
   await menuAction('cancel-recording');
   await page.locator('#confirm-cancel-recording').click();
-  await page.locator('#cancel-recording-error').waitFor({ state: 'visible' }); await shot('07-cancel-error');
+  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
+  assert.equal(await page.locator('#cancel-recording-confirmation').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  await shot('07-cancel-confirmation');
+  await page.locator('#cancel-recording-confirmation').fill('取消');
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await page.locator('#confirm-cancel-recording').click();
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  assert.equal(await page.evaluate(() => window.cancelRecordingCalls ?? 0), 0);
+  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
+  await page.keyboard.press('Escape');
+  await menuAction('cancel-recording');
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('#confirm-cancel-recording').click();
+  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().length), 0);
+  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.keyboard.press('Escape');
   await page.locator('[data-action="complete"]').click(); await page.locator('[data-action="resume"]').waitFor(); await shot('08-completed');
   await page.locator('[data-action="resume"]').click(); await menuAction('archive'); await shot('09-archived');
   await page.locator('#back-to-list').click();
   await page.locator('#tab-recent').click(); await shot('10-recent');
+  const mainHeaderPositions = await headerPositions();
+  assert.equal(mainHeaderPositions.length, 3);
   await page.locator('#record-history').click(); await page.locator('#history-sources .source-row').waitFor(); await shot('11-history');
+  assert.equal(await page.locator('#history-dialog .brand-actions > .feedback-entry').count(), 1, 'history must retain all three header icons');
+  assert.deepEqual(await headerPositions(), mainHeaderPositions, 'history header icons must stay in their original positions');
+  await page.locator('#close-panel').click();
+  assert.equal(await page.evaluate(() => window.panelCloseCalls), 1, 'X must request closing the panel');
+  assert.equal(await page.locator('#history-dialog').isVisible(), true, 'X must not act as page back');
+  await page.locator('[data-feedback-open]').click();
+  await page.locator('#feedback-dialog #feedback-description').waitFor();
+  assert.deepEqual(await headerPositions(), mainHeaderPositions, 'nested feedback icons must not move');
+  await page.locator('#feedback-dialog #window-back').click();
+  await page.locator('#feedback-dialog').waitFor({ state: 'hidden' });
+  assert.equal(await page.locator('#history-dialog #window-back').count(), 1, 'feedback back must restore the underlying history header');
   await page.locator('#history-search').fill('没有这个结果'); await shot('12-history-empty');
-  await page.locator('#history-close').click();
-  await page.locator('#tab-definitions').click(); await page.locator('#definitions-panel [data-job]').click(); await shot('13-job-failed'); await page.keyboard.press('Escape');
+  await page.locator('#window-back').click();
+  await page.locator('#tab-definitions').click(); await page.locator('#definitions-panel [data-job]').click(); await shot('13-job-failed');
+  assert.deepEqual(await headerPositions(), mainHeaderPositions, 'job icons must not move');
+  await page.locator('#definition-dialog #window-back').click();
+  await page.evaluate(() => { window.runningJob = true; });
+  await page.locator('#definitions-panel [data-job]').click();
+  const callsBeforeFeedback = await page.evaluate(() => window.jobCalls);
+  await page.locator('[data-feedback-open]').click(); await page.locator('#feedback-description').waitFor();
+  await page.waitForFunction(before => window.jobCalls > before, callsBeforeFeedback);
+  assert.equal(await page.locator('#feedback-dialog .brand-row').count(), 1, 'background job refresh must not take the feedback header');
+  assert.deepEqual(await headerPositions(), mainHeaderPositions);
+  await page.locator('#feedback-dialog #window-back').click();
+  await page.locator('#definition-dialog #window-back').click();
+  await page.evaluate(() => { window.runningJob = false; });
   assert.equal(await page.locator('#app-menu summary svg').count(), 1);
   assert.equal((await page.locator('#app-menu summary').textContent()).trim(), '');
   await page.locator('#app-menu summary').click(); await page.locator('#service-settings').click(); await shot('14-service');
-  assert.equal(await page.locator('#definition-dialog [data-close]').count(), 0);
+  assert.equal(await page.locator('#definition-dialog #window-back').count(), 1);
+  assert.deepEqual(await headerPositions(), mainHeaderPositions, 'service icons must not move');
   await page.getByRole('button', { name: '返回工作面板', exact: true }).click();
   assert.equal(await page.locator('#definition-dialog').isVisible(), false);
   assert.equal(await page.locator('#app-menu summary').evaluate(el => document.activeElement === el), true);
   await page.locator('#app-menu summary').click(); await page.locator('#service-settings').click();
   await page.locator('#check-service').click(); await page.getByText('已连接', { exact: true }).waitFor();
   await page.locator('#improvement-data').click(); await shot('15-improvement');
+  assert.deepEqual(await headerPositions(), mainHeaderPositions, 'improvement icons must not move');
   await page.setViewportSize({ width: 360, height: 480 }); await shot('16-improvement-small');
   await page.getByRole('button', { name: '返回 Worket 服务', exact: true }).click();
   await page.getByRole('heading', { name: 'Worket 服务', exact: true }).waitFor();
@@ -163,6 +217,14 @@ try {
   await page.getByRole('heading', { name: 'Worket 服务', exact: true }).waitFor();
   await page.keyboard.press('Escape');
   await page.locator('#definition-dialog').waitFor({ state: 'hidden' });
+  await page.locator('[data-feedback-open]').click(); await page.locator('#feedback-description').waitFor();
+  await page.locator('[data-fb="logs"]').click();
+  await page.getByRole('button', { name: '返回反馈', exact: true }).first().click();
+  await page.locator('#feedback-description').waitFor();
+  await page.locator('#app-menu summary').click(); await page.locator('#window-menu-extra [data-fb="history"]').click();
+  await page.getByRole('heading', { name: '我的反馈', exact: true }).waitFor();
+  await page.locator('#window-back').click(); await page.locator('#feedback-description').waitFor();
+  await page.locator('#window-back').click(); await page.locator('#feedback-dialog').waitFor({ state: 'hidden' });
   await page.locator('#tab-open').click(); await page.locator('[data-work-id="waiting"]').click(); await shot('17-detail-small');
   await page.locator('#work-detail summary[aria-label="工作操作"]').click();
   await page.waitForFunction(() => { const r = document.querySelector('#work-detail .menu-items').getBoundingClientRect(); return r.y >= 0 && r.bottom <= innerHeight; });
@@ -187,6 +249,7 @@ try {
   await menuAction('cancel-recording'); await page.locator('#cancel-recording-confirmation').fill('取消记录'); await page.locator('#confirm-cancel-recording').click();
   await page.locator('#work-list').waitFor({ state: 'visible' });
   assert.equal(await page.locator('[data-work-id="split"]').count(), 0);
+  assert.equal(await page.evaluate(() => window.cancelRecordingCalls), 1);
 
   const adminPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   adminPage.on('pageerror', e => errors.push(e.message));

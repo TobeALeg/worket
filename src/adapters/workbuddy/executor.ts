@@ -1,5 +1,6 @@
 import { reconcileLegacyEvents } from "./legacy-events.js";
 import { WorkBuddyDesktopClient } from "./desktop-client.js";
+import { WorkBuddyLocalHistory } from "./local-history.js";
 import { buildWorkBuddyDeepLink } from "./deep-link.js";
 import { installWorkBuddyUserIntegration } from "./install.js";
 import { conversationPage } from "../../executors/registry.js";
@@ -13,8 +14,9 @@ export function createWorkBuddyExecutor(options: {
   workbuddy?: ConversationSource;
   launcher: WorkBuddyLauncher;
 }): ExecutorAdapter {
-  const buddy = options.workbuddy ?? new WorkBuddyDesktopClient();
+  const buddy = options.workbuddy ?? new WorkBuddyLocalHistory();
   const adapter: ExecutorAdapter = {
+    capabilities: { deliveryMode: "MCP_REFERENCE", transport: "DEEP_LINK", source: "HISTORY", mcp: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     id: "workbuddy",
     name: "WorkBuddy",
     mark: "W",
@@ -28,7 +30,11 @@ export function createWorkBuddyExecutor(options: {
     reconcileHistory: reconcileLegacyEvents,
     install: installWorkBuddyUserIntegration,
     async inspect() {
-      if (buddy instanceof WorkBuddyDesktopClient) await buddy.inspect();
+      if (buddy instanceof WorkBuddyDesktopClient || buddy instanceof WorkBuddyLocalHistory) await buddy.inspect();
+    },
+    async inspectDelivery() {
+      if (options.launcher.inspect) await options.launcher.inspect();
+      else await adapter.inspect();
     },
     async resolveCurrent(app) {
       if (!app.windowTitle?.trim()) return null;
@@ -42,7 +48,7 @@ export function createWorkBuddyExecutor(options: {
       await options.launcher.openNewConversation(
         buildWorkBuddyDeepLink(request.prompt),
       );
-      return {};
+      return { status: "OPENED", guidance: "已请求启动任务，实际发送及接手仍需目标消息确认。" };
     },
   };
   return adapter;

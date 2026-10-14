@@ -329,8 +329,10 @@ export class ContinuationService {
       events.slice(-10).map(event => event.id));
     const modelInput: ContinuationGeneratorInput = {
       basis,
-      events: events.map(({ id, sequence, kind, timestamp, executorType, content, metadata }) =>
-        ({ id, sequence, kind, timestamp, executorType, content: content ?? "", metadata: {} })),
+      // The service uses one-based request order. Local title events may start at
+      // zero; retain their IDs and the original basis watermark for validation.
+      events: events.map(({ id, kind, timestamp, executorType, content }, index) =>
+        ({ id, sequence: index + 1, kind, timestamp, executorType, content: content ?? "", metadata: {} })),
       state: evidenceState(input.work, events),
       materials: input.materials,
       artifacts: input.work.artifactRefs.map(({ id, filename, sha256, availability, role }) =>

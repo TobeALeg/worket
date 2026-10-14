@@ -1,6 +1,14 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("workpet", {
+  previewSelectedContent: input => ipcRenderer.invoke("connectors:preview", input),
+  importSelectedContent: input => ipcRenderer.invoke("connectors:import", input),
+  listSelectedInbox: () => ipcRenderer.invoke("connectors:inbox"),
+  readSelectedInbox: id => ipcRenderer.invoke("connectors:inbox-read", id),
+  removeSelectedInbox: id => ipcRenderer.invoke("connectors:inbox-remove", id),
+  chooseSelectedImport: () => ipcRenderer.invoke("connectors:choose-import"),
+  exportInlinePackage: workId => ipcRenderer.invoke("connectors:export-inline", workId),
+  copyInlinePackage: workId => ipcRenderer.invoke("connectors:copy-inline", workId),
   feedback: (action, input) => ipcRenderer.invoke("feedback:command", action, input),
   onFeedbackCollapse: (callback) => {const listener = () => callback(); ipcRenderer.on("feedback:collapse", listener); return () => ipcRenderer.removeListener("feedback:collapse", listener);},
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
@@ -32,7 +40,7 @@ contextBridge.exposeInMainWorld("workpet", {
   listExecutors: () => ipcRenderer.invoke("executors:list"),
   listConversations: (executorId) => ipcRenderer.invoke("conversations:list", executorId),
   listRecentConversations: () => ipcRenderer.invoke("conversations:recent"),
-  listConversationHistory: (executorId, cursor) => ipcRenderer.invoke("conversations:history", executorId, cursor),
+  listConversationHistory: (executorId, cursor, searchTerm) => ipcRenderer.invoke("conversations:history", executorId, cursor, searchTerm),
   previewConversation: (executorId, threadId) => ipcRenderer.invoke("conversations:preview", executorId, threadId),
   createWorkFromConversation: (request) => ipcRenderer.invoke("work:create-from-conversation", request),
   listSplitPoints: (workId) => ipcRenderer.invoke("work:split-points", workId),
@@ -42,6 +50,7 @@ contextBridge.exposeInMainWorld("workpet", {
   completeWork: (workId) => ipcRenderer.invoke("work:complete", workId),
   archiveWork: (workId) => ipcRenderer.invoke("work:archive", workId),
   resumeWork: (workId) => ipcRenderer.invoke("work:resume", workId),
+  reopenHandoff: (workId) => ipcRenderer.invoke("work:reopen-handoff", workId),
   cancelHandoff: (workId, confirmation) => ipcRenderer.invoke("work:cancel-handoff", workId, confirmation),
   handoff: (workId, executorId) => ipcRenderer.invoke("work:handoff", workId, executorId),
   cancelRecording: (workId, confirmation) => ipcRenderer.invoke("work:cancel-recording", workId, confirmation),

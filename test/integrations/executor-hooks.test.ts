@@ -18,16 +18,20 @@ test("installed hook executable forwards minimal executor-specific notifications
   const config = join(directory, "bridge.json");
   await writeFile(config, JSON.stringify({ host: "127.0.0.1", port: (server.address() as { port: number }).port, token: "synthetic" }));
   try {
-    for (const executor of ["zcode", "antigravity"]) {
-      const child = spawn(process.execPath, [resolve("integrations/executor-hooks/hook-proxy.mjs"), executor, executor === "zcode" ? "UserPromptSubmit" : "Stop"], { env: { ...process.env, WORKPET_BRIDGE_CONFIG: config } });
+    for (const executor of ["zcode", "antigravity", "workbuddy"]) {
+      const args = executor === "workbuddy"
+        ? [resolve("integrations/workbuddy-marketplace/plugins/workpet/bridge/hook-proxy.mjs")]
+        : [resolve("integrations/executor-hooks/hook-proxy.mjs"), executor, executor === "zcode" ? "UserPromptSubmit" : "Stop"];
+      const child = spawn(process.execPath, args, { env: { ...process.env, WORKPET_BRIDGE_CONFIG: config } });
       let stdout = ""; child.stdout.on("data", chunk => { stdout += chunk; });
       child.stdin.end(JSON.stringify({ session_id: "z-session", conversationId: "a-session", prompt: "synthetic prompt", thinking: "must not forward", transcriptPath: "/private/unrelated" }));
       assert.equal(await new Promise(resolve => child.on("close", resolve)), 0);
-      assert.deepEqual(JSON.parse(stdout), {});
+      assert.deepEqual(JSON.parse(stdout), executor === "workbuddy" ? { continue: true } : {});
     }
     assert.deepEqual(calls, [
       { path: "/hooks/zcode", body: { session_id: "z-session", hook_event_name: "UserPromptSubmit", prompt: "synthetic prompt" } },
       { path: "/hooks/antigravity", body: { session_id: "a-session", hook_event_name: "ConversationUpdated" } },
+      { path: "/hooks/workbuddy", body: { session_id: "z-session", hook_event_name: "ConversationUpdated" } },
     ]);
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); await rm(directory, { recursive: true, force: true }); }
 });

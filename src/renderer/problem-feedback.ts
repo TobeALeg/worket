@@ -1,11 +1,9 @@
 import type { FeedbackDraft, LocalReport } from "../problem-reports/store.js";
 import type { ReportImage, DiagnosticSnapshot } from "../contracts/problem-report.js";
-import { worketBrand } from "./ui.js";
+import { showPageHeader } from "./window-header.js";
 
-const icon='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a7 7 0 0 1-7 7H8l-5 3V6a3 3 0 0 1 3-3h11a3 3 0 0 1 3 3z"/><path d="M11.5 7v4m0 3h.01"/></svg>';
 const imageIcon='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
 const captureIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>';
-export const feedbackEntry=`<button class="icon-button feedback-entry" data-feedback-open aria-label="反馈问题" title="反馈问题">${icon}</button>`;
 const esc=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
 const api=(action:string,input?:unknown)=>window.workpet.feedback(action,input);
 const date=(value:string)=>new Date(value).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
@@ -35,7 +33,7 @@ export function setupProblemFeedback(): {collapse:()=>void} {
     return `<div class="fb-images">${items.map(image=>`<div class="fb-image"><button data-image-id="${image.id}" aria-label="预览截图"><img src="${imageURL(image)}" alt="反馈截图"></button>${edit ? `<button class="fb-remove" data-remove-id="${image.id}" aria-label="移除截图">×</button>` : ''}</div>`).join('')}${edit && items.length<3 ? `<button class="fb-add" data-fb="add">${imageIcon}<span>添加截图</span></button>` : ''}</div>`;
   }
   function render() {
-    const header=`<header class="window-bar"><div class="window-navigation"><button class="icon-button" data-fb="collapse" aria-label="收起反馈">‹</button>${worketBrand}</div><div class="brand-actions"><button class="icon-button feedback-entry active" data-fb="collapse" aria-label="收起反馈">${icon}</button><details class="secondary-menu"><summary aria-label="反馈菜单">☰</summary><div class="menu-items"><button data-fb="history">我的反馈</button><button data-fb="discard">放弃草稿</button></div></details><button class="icon-button" data-fb="collapse" aria-label="关闭反馈">×</button></div></header>`;
+    const header='<div class="window-header-slot"></div>';
     let body="",footer="";
     if(view==="edit" && draft) {
       body=`<div class="fb-heading"><h2>反馈问题</h2><button class="fb-text" data-fb="history">我的反馈</button></div><div class="fb-context">${date(draft.occurredAt)}</div><label class="fb-label" for="feedback-description">发生了什么？</label><textarea id="feedback-description" ${busy ? "disabled" : ""} maxlength="4000" placeholder="刚才做了什么？哪里不符合预期？">${esc(draft.description)}</textarea><div class="fb-caption"><span>也可以直接粘贴截图</span><span data-count>${draft.description.length} / 4000</span></div><section class="fb-section"><div class="fb-label"><span>截图 <small>选填</small></span><button class="fb-text" data-fb="collapse">返回工作补截图 →</button></div>${images(draft.screenshots,true)}<div class="fb-caption"><span>最多 3 张 · 每张 5 MB</span><button class="fb-text" data-fb="capture">${captureIcon} 收起反馈并截取工作页面</button></div></section><section class="fb-diagnostic"><label><input id="feedback-consent" type="checkbox" ${busy ? "disabled" : ""} ${draft.consent ? 'checked' : ''}>附上本次诊断日志</label><button class="fb-text" data-fb="logs">查看内容 ›</button></section><p class="fb-muted">请检查文字和截图中是否有不想分享的内容。</p>`;
@@ -50,10 +48,21 @@ export function setupProblemFeedback(): {collapse:()=>void} {
       footer=`${received ? '<button data-fb="refresh-detail">刷新状态</button>' : ''}${local && ['WAITING','PAUSED'].includes(local.status) ? '<button data-fb="retry">立即重试</button>' : ''}${local?.envelope ? '<button data-fb="export">导出诊断包</button>' : ''}${remote || local && !['EXPIRED','DELETED','CANCELLED'].includes(local.status) ? `<button class="fb-danger" data-fb="delete">${received ? '删除反馈' : '取消发送'}</button>` : ''}<button data-fb="history">我的反馈</button>`;
     } else {body='<h2>反馈问题</h2>';footer='<button data-fb="reload">重新加载</button>';}
     modal.innerHTML=`<div class="dialog-shell">${header}<div class="dialog-card fb-main">${body}<p class="fb-error" data-feedback-error role="alert" ${error ? '' : 'hidden'}>${esc(error)}</p></div><footer class="dialog-actions">${footer}</footer></div>`;
+    if(modal.open) attachHeader();
+  }
+  async function back() {
+    await writes.catch(()=>{});
+    if(view==="edit"){collapse();return;}
+    if(view==="detail"){await historyView();return;}
+    if(poll){clearInterval(poll);poll=null;}
+    draft=await api("draft");view="edit";error="";render();
+  }
+  function attachHeader() {
+    showPageHeader({dialog:modal,label:view==="edit" ? "返回工作页面" : view==="detail" ? "返回我的反馈" : "返回反馈",back,beforeNavigate:()=>writes.then(()=>{}),menu:'<button data-fb="history">我的反馈</button><button data-fb="discard">放弃草稿</button>'});
   }
   async function open() {
     if(modal.open){collapse();return;}
-    const request=++generation;view="edit";error="";render();modal.showModal();
+    const request=++generation;view="edit";error="";render();modal.showModal();attachHeader();
     try {await writes.catch(()=>{});const value=await api("draft");if(request!==generation)return;draft=value;render();} catch(e){if(request===generation){failure(e);}}
   }
   async function historyView() {
@@ -91,7 +100,7 @@ export function setupProblemFeedback(): {collapse:()=>void} {
     preview.querySelector<HTMLButtonElement>('[data-capture-use]')?.addEventListener('click',async event=>{const button=event.currentTarget as HTMLButtonElement;button.disabled=true;try{draft=await api('add-capture',image);preview.close();}catch(e){const message=preview.querySelector<HTMLElement>('[data-preview-error]')!;message.hidden=false;message.textContent=String(e);button.disabled=false;}});
   }
   document.addEventListener('click',event=>{if((event.target as Element).closest('[data-feedback-open]'))void open();});
-  modal.addEventListener('cancel',event=>{event.preventDefault();collapse();});
+  modal.addEventListener('cancel',event=>{event.preventDefault();void back().catch(failure);});
   modal.addEventListener('input',event=>{if((event.target as HTMLElement).id==='feedback-description' && draft){draft.description=(event.target as HTMLTextAreaElement).value;modal.querySelector('[data-count]')!.textContent=`${draft.description.length} / 4000`;modal.querySelector<HTMLButtonElement>('[data-fb="send"]')!.disabled=busy || (!draft.description.trim() && !draft.screenshots.length);void persist();}});
   modal.addEventListener('change',event=>{if((event.target as HTMLElement).id==='feedback-consent' && draft){draft.consent=(event.target as HTMLInputElement).checked;void persist();}});
   modal.addEventListener('click',event=>{

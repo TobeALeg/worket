@@ -1,3 +1,4 @@
+import {openReviewDetails} from './lib/review-controls.mjs';
 // Preregistered synthetic file/chat sources, actual Electron/model/MCP; no business delivery claim.
 import assert from 'node:assert/strict';
 import {randomUUID,createHmac} from 'node:crypto';
@@ -40,6 +41,7 @@ for(const trial of documentCases.filter(c=>!process.env.WORKET_DOCUMENT_CASE||c.
   for(const role of draft.content.materialRoles.filter(role=>role.kind==='SKILL')){
    const skill=join(directory,'qa-video-skill');mkdirSync(skill,{recursive:true});writeFileSync(join(skill,'SKILL.md'),'# QA Video Defaults\n合成绑定夹具：未明确的制作参数按本次脚本处理。未执行视频业务。');
    await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},skill);
+   await openReviewDetails(panel,`materialRoles.${role.key}`);
    await panel.locator(`[data-review-action="material"][data-address="materialRoles.${role.key}"]`).click();
   }
   for(const issue of draft.issues){const button=panel.locator(`[data-review-action="accept"][data-issue="${issue.id}"]`);if(await button.count())await button.click();}

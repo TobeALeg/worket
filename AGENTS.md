@@ -2,6 +2,10 @@
 
 领域术语以 [CONTEXT.md](CONTEXT.md) 为准；产品与架构现状分别见 [docs/product.md](docs/product.md) 和 [docs/architecture.md](docs/architecture.md)。
 
+## 本地更新交付
+
+用户于 2026-10-08 要求每次更新完成后都让本地运行最新版。涉及客户端的改动完成并通过适用检查后，重新构建本地应用，更新 `/Applications/Worket.app` 并正常退出、重启；沿用现有用户数据，替换前保留可恢复的旧应用。交付前核对安装包与构建产物一致、实际运行路径来自最新版；不能只交源码或应用包链接。本地启动不等于获准发布 GitHub Release 或部署公网后台。
+
 ## GitHub 交付流程
 
 用户于 2026-10-14 授权：功能完成并通过适用检查后，在基于最新 `origin/main` 的 `codex/*` 分支提交并推送；自动创建 PR，CI 通过后 squash 合入 `main`。跟进 PR 和合并后的 CI 到完成；失败或冲突先修复，HEAD 改变后重新等待检查。Draft PR 暂停自动合并，恢复 ready 后重新运行该分支的 CI。不把旧分支的无关提交一起合入，也不直接推送 main。流程实现见 [CI 工作流](.github/workflows/ci.yml) 和 [PR 交付工作流](.github/workflows/pull-request.yml)。

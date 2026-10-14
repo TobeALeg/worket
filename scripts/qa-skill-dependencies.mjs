@@ -1,3 +1,4 @@
+import {openReviewDetails} from './lib/review-controls.mjs';
 // Real Electron publication/reuse/MCP/execution/acceptance, using an explicit synthetic skill.
 // The runner executes its own fixture script; this is not an external Agent or business delivery.
 import assert from 'node:assert/strict';
@@ -64,6 +65,7 @@ try {
   }
   // Exercise the real selector route, substituting only the native dialog choice.
   await app.evaluate(({ dialog }, directory) => { dialog.showOpenDialog = async options => { if (!options.properties.includes('openDirectory')) throw new Error('Expected directory chooser'); return { canceled: false, filePaths: [directory] }; }; }, skillDirectory);
+  await openReviewDetails(panel,`materialRoles.${roleKey}`);
   await panel.locator(`[data-review-action="material"][data-address="materialRoles.${roleKey}"]`).click();
   if (!replayRoot) await panel.locator('#edit-all').click(); await panel.screenshot({ path: join(output, 'skill-review.png') });
   await panel.locator('#publish-definition').click(); await panel.locator('#use-definition').waitFor();

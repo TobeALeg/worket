@@ -12,6 +12,9 @@ import { buildWorkPackage } from '../../dist/definitions/work-package.js';
 import { LocalRuleExtractor } from '../../dist/extractor/local-rule-extractor.js';
 import { DistillationService } from '../../dist/distillation/service.js';
 import { FixtureClient } from '../distillation/fixtures.ts';
+import { buildContinuationBasis } from '../../dist/handoff/continuation.js';
+import { packageMaterialVersions } from '../../dist/handoff/material-versions.js';
+import { hash } from '../../dist/definitions/storage.js';
 
 function token() {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
@@ -37,7 +40,7 @@ function candidate(input: any) {
   };
 }
 
-async function fixture() {
+async function fixture(includeTitle = false) {
   let beforeModel: (() => Promise<void>) | undefined;
   let userId = "audit";
   let deliveries = 0;
@@ -67,6 +70,9 @@ async function fixture() {
   const work = core.createWork({ definition: { key: 'audit', name: 'Audit', version: 1 },
     executor: { type: 'AGENT', name: 'fixture' }, environment: adapter.environment, source: { adapter: 'fixture', conversationId: 'audit' } });
   const id = work.instance.id;
+  if (includeTitle) core.appendSourceEvents(id, [{ externalId: 'recorded-title', sequence: 0,
+    kind: 'conversation.title', content: '报告', timestamp: new Date().toISOString(),
+    executorType: 'AGENT', environmentType: 'FIXTURE', metadata: {}, artifactRefs: [] }]);
   const append = (kind: any, content: string) => {
     const sequence = Math.max(0, ...core.getWork(id)!.sourceArchive.map(event => event.sequence)) + 1;
     return core.appendSourceEvents(id, [{ externalId: randomUUID(), sequence, kind, content, timestamp: new Date().toISOString(),
@@ -122,6 +128,13 @@ test('handoff automatically prepares managed state; UI, package and passive MCP 
     const context = JSON.parse((read!.result as any).content[0].text);
     assert.equal(context.resolution, 'RESOLVED');
     assert.equal(context.firstAction.text, '导出 PDF');
+    const briefRead: any = await handler.handle({ id: 'brief', method: 'tools/call', params: { name: 'get_work_context', arguments: {
+      work_id: f.id, context_version: 4, delivery_id: f.core.getWork(f.id)!.packageDeliveryId,
+    } } });
+    const brief = briefRead.result.content[0].text;
+    assert.match(brief, /交付 PDF/);
+    assert.match(brief, /保留人民币/);
+    assert.doesNotMatch(brief, /交付 CSV|sourceDigest|sourceEventIds|qaProofToken|deliveryReceipt|evidenceIndex/);
     assert.ok(f.core.getWork(f.id)!.packageReadAt);
     assert.equal((await f.app.prepareContinuation(f.id)).resolution, 'RESOLVED', 'read audit must not invalidate the snapshot');
     assert.equal(f.calls(), 1, 'MCP reads never acquire permission to call the model');
@@ -165,6 +178,39 @@ async function until(check: () => boolean) {
   }
 }
 const pause = (ms = 120) => new Promise(resolve => setTimeout(resolve, ms));
+
+test('zero-based title evidence reaches the service without changing local IDs or basis', async () => {
+  const f = await fixture(true);
+  try {
+    const before = f.core.getWork(f.id)!;
+    const view = await f.app.handoff(f.id, 'fixture');
+    assert.equal(view.selectedWork!.understandingStatus, 'RESOLVED');
+    assert.equal(f.calls(), 1);
+    assert.deepEqual(f.input().events.map((e: any) => e.sequence), [1, 2, 3, 4]);
+    assert.deepEqual(f.input().events.map((e: any) => e.id), before.sourceArchive.map(e => e.id));
+    assert.equal(f.input().basis.throughSequence, 3, 'basis remains a local source watermark');
+    assert.equal(f.core.getWork(f.id)!.sourceArchive[0]!.sequence, 0);
+  } finally { await f.close(); }
+});
+
+test('an old failed preparation is retried once on upgrade without retrying every poll', async () => {
+  const f = await fixture();
+  try {
+    const request = f.client.request.bind(f.client);
+    f.client.request = async (...args: any[]) => args[0] === '/v1/capabilities' ? {} : request(...args as Parameters<typeof request>);
+    const record = await f.record();
+    await until(() => !!f.app.dashboard(record.id).selectedWork!.understandingNotice);
+    const work = f.core.getWork(record.id)!;
+    const basis = buildContinuationBasis(work, packageMaterialVersions(buildWorkPackage(work, f.core.definitions)));
+    f.core.definitions.db.prepare('UPDATE work_preparation SET attempt_digest=? WHERE work_id=?').run(hash(basis), record.id);
+    f.client.request = request;
+    f.restart();
+    await until(() => f.app.dashboard(record.id).selectedWork!.understandingStatus === 'RESOLVED');
+    for (let n = 0; n < 3; n++) await f.app.syncRecordedWorks();
+    f.restart(); await pause();
+    assert.equal(f.calls(), 1);
+  } finally { await f.close(); }
+});
 
 test('recording returns immediately, batches changes, reuses current state and survives restart', async () => {
   const f = await fixture();

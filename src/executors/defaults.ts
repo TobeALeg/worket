@@ -1,3 +1,5 @@
+import { createWebExecutors } from "../connectors/web-executor.js";
+import { createQwenWorkExecutor } from "../adapters/qwenwork/executor.js";
 import { createCodexExecutor } from "../adapters/codex/executor.js";
 import { createWorkBuddyExecutor } from "../adapters/workbuddy/executor.js";
 import { createZCodeExecutor } from "../adapters/zcode/executor.js";
@@ -14,5 +16,5 @@ export function createDefaultExecutors(options: {
   launcher: WorkBuddyLauncher;
   openUrl?: (url: string) => Promise<void>;
 }): ExecutorAdapter[] {
-  return [createCodexExecutor(options), createWorkBuddyExecutor(options), createZCodeExecutor(options), createAntigravityExecutor(options)];
+  return [createCodexExecutor(options), createWorkBuddyExecutor(options), createZCodeExecutor(options), createAntigravityExecutor(options), createQwenWorkExecutor(options), ...createWebExecutors(options)];
 }

@@ -7,6 +7,7 @@ import { installAntigravityIntegration } from "./install.js";
 export function createAntigravityExecutor(options: { antigravity?: ConversationSource; desktop?: ManualDelivery } = {}): ExecutorAdapter {
   const source = options.antigravity ?? new AntigravitySource();
   return {
+    capabilities: { deliveryMode: "MCP_REFERENCE", transport: "CLIPBOARD", source: "HISTORY", mcp: true, sendsAutomatically: false, files: "LOCAL_REFERENCES" },
     id: "antigravity", name: "Antigravity", mark: "A", bundleIds: ["com.google.antigravity"],
     environment: { type: "ANTIGRAVITY_DESKTOP", name: "Antigravity Desktop" }, source,
     install: installAntigravityIntegration,

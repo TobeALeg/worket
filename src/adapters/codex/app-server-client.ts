@@ -76,6 +76,8 @@ export class CodexAppServerClient {
   readonly #binaryCandidates: string[];
   #process: ChildProcessWithoutNullStreams | null = null;
   #nextRequestId = 1;
+  #stateDiscovery = true;
+  #serverSearch = true;
   #connecting: Promise<void> | null = null;
   #pending = new Map<
     number,
@@ -148,17 +150,57 @@ export class CodexAppServerClient {
   async listThreadPage(
     limit = 30,
     cursor?: string,
-  ): Promise<{ threads: CodexThreadSummary[]; nextCursor: string | null }> {
+    searchTerm?: string,
+  ): Promise<{ threads: CodexThreadSummary[]; nextCursor: string | null; notice?: string }> {
+    if (searchTerm !== undefined && (typeof searchTerm !== "string" || searchTerm.length > 512))
+      throw new Error("Codex 聊天搜索词无效或超过 512 字符。");
+    const query = searchTerm?.trim() ?? "";
     await this.connect();
-    const response = await this.#request<ThreadListResponse>("thread/list", {
-      limit,
-      ...(cursor ? { cursor } : {}),
-      archived: false,
-      sortKey: "updated_at",
-      sortDirection: "desc",
-    });
+    let response: ThreadListResponse;
+    for (;;) {
+      try {
+        // Legacy rollout scanning can omit locally indexed agent_created_thread
+        // sessions. Use the official index path, without loading any history.
+        response = await this.#request<ThreadListResponse>("thread/list", {
+          limit,
+          ...(cursor ? { cursor } : {}),
+          archived: false,
+          sortKey: "updated_at",
+          sortDirection: "desc",
+          ...(this.#stateDiscovery ? { useStateDbOnly: true } : {}),
+          ...(query && this.#serverSearch ? { searchTerm: query } : {}),
+        });
+        break;
+      } catch (error) {
+        const unsupported = (field: string) => error instanceof Error &&
+          "code" in error && error.code === -32602 && error.message.includes(field) &&
+          /unknown|unsupported|unrecognized/iu.test(error.message);
+        if (this.#stateDiscovery && unsupported("useStateDbOnly")) this.#stateDiscovery = false;
+        else if (query && this.#serverSearch && unsupported("searchTerm")) this.#serverSearch = false;
+        else throw error;
+      }
+    }
+    if (!response || !Array.isArray(response.data) ||
+      response.nextCursor != null && (typeof response.nextCursor !== "string" || !response.nextCursor))
+      throw new Error("Codex 历史列表响应无效，未显示部分结果。");
+    if (cursor && response.nextCursor === cursor)
+      throw new Error("Codex 历史列表分页游标重复，请刷新列表。");
+    if (response.data.some(thread => !thread || typeof thread.id !== "string" || !thread.id ||
+      typeof thread.cwd !== "string" || typeof thread.updatedAt !== "number" ||
+      !Number.isFinite(thread.updatedAt) || !Number.isFinite(new Date(thread.updatedAt * 1_000).getTime()) ||
+      thread.name != null && typeof thread.name !== "string"))
+      throw new Error("Codex 历史列表响应无效，未显示部分结果。");
+    const threads = [...new Map(response.data
+      .filter(thread => thread.archived !== true)
+      // Also filter older servers that silently ignore unknown search fields.
+      .filter(thread => !query || thread.name?.includes(query))
+      .map(thread => [thread.id, thread] as const)).values()];
+    const notices = [
+      ...(!this.#stateDiscovery ? ["Codex 版本不支持索引发现，使用兼容历史列表；部分工具创建的聊天可能不可见。"] : []),
+      ...(query && !this.#serverSearch ? ["Codex 版本不支持完整标题搜索，仅搜索已加载页面；可加载更多或升级 Codex。"] : []),
+    ];
     return {
-      threads: response.data.map((thread) => ({
+      threads: threads.map(thread => ({
         id: thread.id,
         title: thread.name?.trim() || null,
         preview: thread.preview ?? "",
@@ -167,6 +209,7 @@ export class CodexAppServerClient {
         status: thread.status,
       })),
       nextCursor: response.nextCursor ?? null,
+      ...(notices.length ? { notice: notices.join("\n") } : {}),
     };
   }
 

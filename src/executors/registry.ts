@@ -3,9 +3,11 @@ import type { ExecutorAdapter, ConversationPage } from "./types.js";
 export async function conversationPage(
   adapter: ExecutorAdapter,
   cursor?: string,
+  searchTerm?: string,
 ): Promise<ConversationPage> {
   const source = adapter.source;
-  if (source.listThreadPage) return source.listThreadPage(30, cursor);
+  if (!source) return { threads: [], nextCursor: null };
+  if (source.listThreadPage) return source.listThreadPage(30, cursor, searchTerm);
   return {
     threads: cursor ? [] : ((await source.listRecentThreads?.(100)) ?? []),
     nextCursor: null,
@@ -37,6 +39,6 @@ export class ExecutorRegistry {
     );
   }
   close(): void {
-    for (const adapter of this.all()) adapter.source.close();
+    for (const adapter of this.all()) adapter.source?.close();
   }
 }

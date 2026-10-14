@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Worket 网页交接",
+  "version": "0.2.0",
+  "description": "主动选区导入；将本机已准备的工作包和相关附件填入当前聊天草稿，由你核对发送。",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "nativeMessaging"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

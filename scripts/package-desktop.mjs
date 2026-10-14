@@ -23,6 +23,7 @@ const options = {
   executableName: "Worket",
   platform,
   arch,
+  ...(argument("electron-zip-dir") ? { electronZipDir: resolve(argument("electron-zip-dir")) } : {}),
   out: "release",
   overwrite: true,
   prune: true,
@@ -38,7 +39,7 @@ const options = {
   ],
   icon: resolve("assets", platform === "darwin" ? "WorkPet.icns" : "WorkPet.ico"),
   ignore: [
-    /^\/(?:experiments|research|test|evals|output|release|server|worket-extraction-loop|worket_extraction_experiments_v1)(?:$|\/)/u,
+    /^\/(?:experiments|research|reports|test|evals|output|release|server|worket-extraction-loop|worket_extraction_experiments_v1)(?:$|\/)/u,
     /^\/Worket_(?:抽取质量实验包_v1\.0|提取审计与优化循环_v3)\.zip$/u,
     /^\/\.env(?:$|\.)/u,
     /^\/\.worket-server(?:$|\/)/u,

@@ -1,3 +1,8 @@
+import { WebTransfer, UPLOAD_CONNECTORS } from "../connectors/web-transfer.js";
+import { deliveryMarkers } from "../executors/delivery-markers.js";
+import { DeliveryLedger } from "../connectors/delivery-ledger.js";
+import { normalizeSelectedContent, type SelectedContent } from "../connectors/selected-content.js";
+import { inlineWorkPackage } from "../connectors/inline-package.js";
 import { packageMaterialVersions } from "../handoff/material-versions.js";
 import { SourcePresence } from "./source-presence.js";
 import { sourceDelta, unavailableSourceRange } from "./source-delta.js";
@@ -23,9 +28,10 @@ import {
   type WorkCore,
   type WorkSnapshot,
 } from "../core/index.js";
-import { LocalRuleExtractor } from "../extractor/local-rule-extractor.js";
+import { createWorkStateExtractor } from "../extractor/index.js";
 import type { WorkStateExtractor } from "../extractor/types.js";
 import { ExecutorRegistry, conversationPage } from "../executors/registry.js";
+import { ExecutorNotRunningError } from "../executors/errors.js";
 import type {
   ExecutorAdapter,
   ConversationSummary,
@@ -65,6 +71,8 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
     return Number(binding.conversationId.split(":")[1]) > Date.now()
       ? "waiting"
       : "stopped";
+  const limited = work.sourceArchive.some(event => event.episodeId === binding.episodeId && ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
+  if (limited) return "selected";
   if (
     work.definition.kind === "REUSABLE" &&
     !work.packageReadAt
@@ -75,6 +83,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
 export interface AppServiceOptions {
   databasePath: string;
   aiClient?: AIClient;
+  extractor?: WorkStateExtractor;
   executors: ExecutorAdapter[];
   foreground?: ForegroundApplicationDetector;
   preparationDelayMs?: number;
@@ -85,7 +94,9 @@ export interface AppServiceOptions {
 type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] } | null;
 
 export class AppService {
+  readonly webTransfer = new WebTransfer();
   readonly #sourcePresence = new SourcePresence();
+  readonly #deliveryLedger: DeliveryLedger;
   readonly #core: WorkCore;
   readonly #executors: ExecutorRegistry;
   readonly #foreground: ForegroundApplicationDetector;
@@ -98,9 +109,11 @@ export class AppService {
   #notice: string | null = null;
   #sourceSelection: string | undefined;
   readonly #handoffs = new Set<string>();
+  #selectedImportQueue: Promise<unknown> = Promise.resolve();
   readonly #syncingWorks = new Map<string, Promise<WorkSyncResult>>();
   constructor(readonly options: AppServiceOptions) {
     this.#core = createWorkCore({ databasePath: options.databasePath });
+    this.#deliveryLedger = new DeliveryLedger(this.#core.definitions.db);
     this.#executors = new ExecutorRegistry(options.executors);
     this.#foreground =
       options.foreground ??
@@ -130,29 +143,26 @@ export class AppService {
     this.#preparation = new WorkPreparation(this.#core, this.#continuations, options.aiClient, options.preparationDelayMs);
   }
   async listExecutors(): Promise<ExecutorView[]> {
-    return Promise.all(
+    const executors = await Promise.all(
       this.#executors.all().map(async (adapter) => {
-        try {
-          await adapter.inspect();
-          return {
-            id: adapter.id,
-            name: adapter.name,
-            mark: adapter.mark,
-            available: true,
-            canDeliver: !!adapter.deliver,
-          };
-        } catch (error) {
-          return {
-            id: adapter.id,
-            name: adapter.name,
-            mark: adapter.mark,
-            available: false,
-            canDeliver: false,
-            error: error instanceof Error ? error.message : String(error),
-          };
-        }
+        const readingCheck = adapter.inspect();
+        const [reading, delivery] = await Promise.allSettled([
+          readingCheck,
+          adapter.deliver ? (adapter.inspectDelivery ? adapter.inspectDelivery() : readingCheck) : Promise.reject(new Error("该执行者尚不支持接收工作。")),
+        ]);
+        if (reading.status === "rejected" && reading.reason instanceof ExecutorNotRunningError &&
+            delivery.status === "rejected") return null;
+        const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+        return {
+          id: adapter.id, name: adapter.name, mark: adapter.mark,
+          available: reading.status === "fulfilled", canDeliver: delivery.status === "fulfilled",
+          ...(adapter.capabilities ? { capabilities: adapter.capabilities } : {}),
+          ...(reading.status === "rejected" ? { error: message(reading.reason) } : {}),
+          ...(delivery.status === "rejected" ? { deliveryError: message(delivery.reason) } : {}),
+        };
       }),
     );
+    return executors.filter((executor): executor is NonNullable<typeof executor> => executor !== null);
   }
   async listConversations(executorId: string): Promise<ConversationView[]> {
     return (await this.listConversationHistory(executorId)).threads;
@@ -180,9 +190,16 @@ export class AppService {
   async listConversationHistory(
     executorId: string,
     cursor?: string,
+    searchTerm?: string,
   ): Promise<ConversationPageView> {
     const adapter = this.#executors.get(executorId);
-    const page = await conversationPage(adapter, cursor);
+    let page;
+    try {
+      page = await conversationPage(adapter, cursor, searchTerm);
+    } catch (error) {
+      if (!(error instanceof ExecutorNotRunningError)) throw error;
+      page = { threads: [], nextCursor: null };
+    }
     return {
       ...page,
       threads: page.threads.map((thread) =>
@@ -282,7 +299,7 @@ export class AppService {
     threadId: string,
   ): Promise<ConversationPreview> {
     const adapter = this.#executors.get(executorId),
-      thread = await adapter.source.readThread(threadId);
+      thread = await this.#historySource(adapter.id).readThread(threadId);
     const userPromptCount = thread.events.filter(
       (e) => e.kind === "user.prompt",
     ).length;
@@ -320,7 +337,7 @@ export class AppService {
       this.#notice = "这个聊天已经属于一份 WorkRecord。";
       return this.dashboard(existing.instance.id);
     }
-    const thread = await adapter.source.readThread(request.threadId);
+    const thread = await this.#historySource(adapter.id).readThread(request.threadId);
     if (thread.threadId !== request.threadId)
       throw new Error("来源会话身份不一致，未开始记录。");
     existing = this.#core.findWorkByBinding(adapter.id, request.threadId);
@@ -363,7 +380,7 @@ export class AppService {
     const binding = work.activeBinding ?? work.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
     if (work.activeBinding && unavailableSourceRange(work)) {
-      const thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId);
+      const thread = await this.#historySource(binding.adapter).readThread(binding.conversationId);
       if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致");
       return thread.events.filter(event => event.kind === 'user.prompt' && event.content.trim()).map(event => ({ externalId: event.externalId, label: event.content.replace(/\s+/gu, ' ').slice(0, 100), timestamp: event.timestamp })).reverse();
     }
@@ -388,7 +405,7 @@ export class AppService {
     const binding = sourceWork.activeBinding ?? sourceWork.bindings.at(-1);
     if (!binding) throw new Error("没有可分割的来源对话");
     const adapter = this.#executors.get(binding.adapter),
-      thread = await adapter.source.readThread(binding.conversationId);
+      thread = await this.#historySource(adapter.id).readThread(binding.conversationId);
     if (thread.threadId !== binding.conversationId) throw new Error("来源会话身份不一致，未创建新记录");
     const selected = currentSourceEvents(sourceWork.sourceArchive).find(event =>
       event.externalId === request.startExternalId && event.episodeId === binding.episodeId && event.kind === "user.prompt");
@@ -456,8 +473,9 @@ export class AppService {
       !binding ||
       /^(pending|waiting):/.test(binding.conversationId)
     ) { this.#sourcePresence.reset(workId); return null; }
+    if (!this.#executors.get(binding.adapter).source) return null;
     let thread: NormalizedThread;
-    try { thread = await this.#executors.get(binding.adapter).source.readThread(binding.conversationId); }
+    try { thread = await this.#historySource(binding.adapter).readThread(binding.conversationId); }
     catch (error) { this.#sourcePresence.reset(workId); throw error; }
     const latest = this.#core.getWork(workId);
     if (
@@ -519,6 +537,67 @@ export class AppService {
     return this.#preparation.noticeRequired();
   }
 
+  previewSelectedContent(input: SelectedContent): { thread: NormalizedThread; notice: string } {
+    const adapter = this.#executors.get(input.adapterId);
+    const desktopSelection = adapter.capabilities?.source === "HOOK_EVENTS" && adapter.capabilities.manualSelection === true && input.scope === "SELECTED_CONTENT";
+    if (!desktopSelection && adapter.capabilities?.source !== input.scope) throw new Error("连接器与采集范围不符。");
+    return { thread: normalizeSelectedContent(input, { desktopSelection, environmentType: adapter.environment.type }), notice: "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
+  }
+
+  /** User confirmation belongs in the UI. This seam only consumes selected, validated data. */
+  importSelectedContent(input: SelectedContent): Promise<DashboardView> {
+    const selected = structuredClone(input);
+    const operation = this.#selectedImportQueue.then(() => this.#importSelectedContent(selected));
+    this.#selectedImportQueue = operation.catch(() => undefined);
+    return operation;
+  }
+
+  async #importSelectedContent(input: SelectedContent): Promise<DashboardView> {
+    if (this.#closed) throw new Error("APP_CLOSED");
+    const { thread } = this.previewSelectedContent(input);
+    const adapter = this.#executors.get(input.adapterId);
+    let work = this.#core.findWorkByBinding(adapter.id, thread.threadId);
+    if (work && (work.instance.status !== "OPEN" || work.activeBinding?.adapter !== adapter.id || work.activeBinding.conversationId !== thread.threadId))
+      throw new Error("该会话属于已停止的执行片段，请主动继续或选择当前目标会话。");
+    if (!work) {
+      const markers = thread.events.filter(event => event.kind === "user.prompt")
+        .map(event => this.#pendingDelivery(adapter.id, event.content))
+        .filter((candidate): candidate is WorkSnapshot => !!candidate);
+      const unique = new Map(markers.map(candidate => [candidate.instance.id, candidate]));
+      if (unique.size > 1) throw new Error("选定内容包含多个待交接工作，请缩小导入范围。");
+      const pending = [...unique.values()][0];
+      if (pending) {
+        work = this.#core.bindConversation(pending.instance.id, adapter.id, pending.activeBinding!.conversationId, thread.threadId);
+        this.#core.definitions.db.prepare("UPDATE pending_dispatches SET status='BOUND' WHERE work_id=?").run(work.instance.id);
+      } else {
+        if (input.scope === "HOOK_EVENTS") throw new Error("未授权此会话的有限事件。");
+        if (thread.events.some(event => event.kind === "user.prompt" && /^\[WORKPET:/u.test(event.content))) throw new Error("交付标记已失效或目标不符，未创建另一份工作。");
+        work = this.#core.createWork({ definition: { key: "general-work", name: "通用工作", version: 1 },
+          executor: { type: "AGENT", name: adapter.name }, environment: adapter.environment,
+          source: { adapter: adapter.id, conversationId: thread.threadId } });
+      }
+    }
+    this.#deliveryLedger.forgetRequest(work.instance.id);
+    thread.events = this.#deliveryLedger.annotate(work.instance.id, thread.events);
+    const result = await this.#ingestDelta(work, thread);
+    await this.#updateRecordedState(result.work);
+    this.#notice = `已导入 ${result.newEvents.length} 条选定内容。未加载历史和附件正文未包含；本地导入不证明目标已读工作包。`;
+    return this.dashboard(work.instance.id);
+  }
+
+  exportInlinePackage(workId: string): string {
+    const work = this.#requireWork(workId);
+    return inlineWorkPackage(work, buildWorkPackage(work, this.#core.definitions));
+  }
+
+  async prepareWebTransfer(workId: string, adapterId?: string, prompt?: string): Promise<string> {
+    const work = this.#requireWork(workId);
+    const pkg = buildWorkPackage(work, this.#core.definitions);
+    const text = prompt ?? inlineWorkPackage(work, pkg);
+    await this.webTransfer.prepare(work, pkg, text, adapterId);
+    return text;
+  }
+
   async syncHook(
     executorId: string,
     payload: Record<string, unknown>,
@@ -531,6 +610,19 @@ export class AppService {
     const id =
       typeof payload.session_id === "string" ? payload.session_id : null;
     if (!id) return { accepted: false, appendedCount: 0 };
+    const adapter = this.#executors.get(executorId);
+    if (adapter.capabilities?.source === "HOOK_EVENTS") {
+      const input = adapter.normalizeHook?.(payload);
+      if (!input || input.adapterId !== adapter.id || input.conversationId !== id) return { accepted: false, appendedCount: 0 };
+      this.previewSelectedContent(input);
+      const work = this.#core.findWorkByBinding(executorId, id) ??
+        input.messages.map(message => message.role === "user" ? this.#pendingDelivery(executorId, message.content) : null).find(candidate => !!candidate);
+      if (work?.instance.status !== "OPEN" || work.activeBinding?.adapter !== executorId ||
+          (work.activeBinding.conversationId !== id && !work.activeBinding.conversationId.startsWith("pending:"))) return { accepted: false, appendedCount: 0 };
+      const before = work.sourceArchive.length;
+      await this.importSelectedContent(input);
+      return { accepted: true, appendedCount: this.#requireWork(work.instance.id).sourceArchive.length - before, workInstanceId: work.instance.id };
+    }
     let work = this.#core.findWorkByBinding(executorId, id);
     // Some executors notify with only a conversation ID. Read only when this
     // executor has an outstanding user-initiated delivery; never persist an
@@ -539,15 +631,11 @@ export class AppService {
       this.#core.listWorks("OPEN").some(candidate =>
         candidate.activeBinding?.adapter === executorId &&
         candidate.activeBinding.conversationId.startsWith("pending:"))) {
-      const thread = await this.#executors.get(executorId).source.readThread(id);
+      const thread = await this.#historySource(executorId).readThread(id);
       if (thread.threadId !== id) throw new Error("来源会话身份不一致，已拒绝确认交接");
       const matches = thread.events.filter(event => {
         if (event.kind !== "user.prompt") return false;
-        const markers = event.content.match(/^\[WORKPET:([a-zA-Z0-9-]+)\]\s*\n\[DELIVERY:([a-zA-Z0-9-]+)\]/u);
-        const candidate = markers?.[1] ? this.#core.getWork(markers[1]) : null;
-        return candidate?.instance.status === "OPEN" &&
-          candidate.activeBinding?.adapter === executorId &&
-          candidate.activeBinding.conversationId === `pending:${markers?.[2]}`;
+        return !!this.#pendingDelivery(executorId, event.content);
       });
       if (matches.length === 1) payload = { ...payload, hook_event_name: "UserPromptSubmit", prompt: matches[0]!.content };
       // Another notification may have completed binding while readThread awaited.
@@ -558,17 +646,9 @@ export class AppService {
       payload.hook_event_name === "UserPromptSubmit" &&
       typeof payload.prompt === "string"
     ) {
-      const marker = payload.prompt.match(/\[WORKPET:([a-zA-Z0-9-]+)\]/u)?.[1];
-      const deliveryId = payload.prompt.match(
-        /\[DELIVERY:([a-zA-Z0-9-]+)\]/u,
-      )?.[1];
-      const candidate = marker ? this.#core.getWork(marker) : null;
+      const candidate = this.#pendingDelivery(executorId, payload.prompt);
       const binding = candidate?.activeBinding;
-      if (
-        candidate?.instance.status === "OPEN" &&
-        binding?.adapter === executorId &&
-        binding.conversationId === `pending:${deliveryId}`
-      ) {
+      if (candidate && binding) {
         work = this.#core.bindConversation(
           candidate.instance.id,
           executorId,
@@ -580,6 +660,7 @@ export class AppService {
             "UPDATE pending_dispatches SET status='BOUND' WHERE work_id=?",
           )
           .run(work.instance.id);
+        this.#notice = "目标会话已由来源确认绑定；工作包读取情况见本工作状态。";
       }
     }
     if (
@@ -589,6 +670,7 @@ export class AppService {
       work.activeBinding.conversationId !== id
     )
       return { accepted: false, appendedCount: 0 };
+    this.#deliveryLedger.forgetRequest(work.instance.id);
     const result = await this.#readBoundWork(work.instance.id);
     return {
       accepted: !!result,
@@ -705,7 +787,7 @@ export class AppService {
       throw new Error("上次交付尚未确认，请先检查目标执行者。");
     this.#handoffs.add(workId);
     try {
-      await adapter.inspect();
+      await (adapter.inspectDelivery ? adapter.inspectDelivery() : adapter.inspect());
       if (initial.activeBinding && captureStatus(initial) === "recording")
         await this.refreshWork(workId);
       let current = await this.#artifacts.verify(this.#requireWork(workId));
@@ -736,28 +818,34 @@ export class AppService {
         const currentStage = continuation.currentStageId
           ? continuation.stages.find(stage => stage.id === continuation.currentStageId)
           : undefined;
-        const latestUserPrompt = current.sourceArchive.findLast(event => event.kind === "user.prompt" && event.content?.trim());
+        const latestUserPrompt = workEvidence(current.sourceArchive).findLast(event => event.kind === "user.prompt" && event.content?.trim());
         const title = currentStage?.task.text ?? latestUserPrompt?.content?.replace(/\s+/gu, " ").slice(0, 96) ?? handoff.currentTask ?? current.definition.name;
         const nextStep = currentStage?.remaining[0]?.text ??
-          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取 v3 接续状态与最新用户消息证据，核对当前阶段。");
-        const prompt = buildWorkBootstrap({
+          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取工作说明，确认当前阶段。");
+        const prompt = adapter.capabilities?.deliveryMode === "INLINE_PACKAGE"
+          ? inlineWorkPackage(current, buildWorkPackage(current, this.#core.definitions, continuation), handoff.id)
+          : buildWorkBootstrap({
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
-          contextVersion: 3,
+          contextVersion: 4,
           title,
           currentTask: title,
           nextStep,
           artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
         });
         this.options.onHandoffStep?.("opening");
-        const receipt = await adapter.deliver({
+        this.#deliveryLedger.record(workId, handoff.id, prompt);
+        const request = {
           workId,
           deliveryId: handoff.id,
           purpose: pkg.purpose,
           title,
           prompt,
-        });
+        };
+        this.#deliveryLedger.saveRequest(request);
+        if (UPLOAD_CONNECTORS.includes(adapter.id)) await this.prepareWebTransfer(workId, adapter.id, request.prompt);
+        const receipt = await adapter.deliver(request);
         const latest = this.#requireWork(workId);
         if (
           receipt.conversationId &&
@@ -769,16 +857,59 @@ export class AppService {
             pending,
             receipt.conversationId,
           );
-        this.#notice = receipt.conversationId
-          ? `已交给 ${adapter.name}，后续继续记录在同一项工作中。`
-          : `已打开 ${adapter.name}，等待确认目标会话。${receipt.guidance ?? ""}`;
+        if (!this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")) this.#deliveryLedger.forgetRequest(workId);
+        this.#notice = !this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+          ? `目标会话已由 ${adapter.name} 来源确认绑定，工作包读取情况见本工作状态。`
+          : `已请求打开 ${adapter.name}，等待用户发送与来源确认。${receipt.guidance ?? ""}`;
       } catch (error) {
-        this.#core.stopCapture(workId);
-        this.#restoreBinding(current);
-        this.#notice = `${adapter.name} 未能启动，${current.activeBinding ? "已恢复原来源记录" : "未保留活动的待确认绑定"}。${String(error)}`;
+        this.#deliveryLedger.forgetRequest(workId);
+        // A genuine source notification can arrive while the open request is pending.
+        // Its binding must win even if the transport subsequently reports failure.
+        if (this.#requireWork(workId).activeBinding?.conversationId === pending) {
+          this.#core.stopCapture(workId);
+          this.#restoreBinding(current);
+          this.#notice = `${adapter.name} 打开请求失败，${current.activeBinding ? "已恢复原来源记录" : "未保留活动的待确认绑定"}。${String(error)}`;
+        } else {
+          this.#notice = `打开请求报错，工作来源状态已改变，未回滚已确认的来源。${String(error)}`;
+        }
         throw error;
       }
       return this.dashboard(workId);
+    } finally {
+      this.#handoffs.delete(workId);
+    }
+  }
+  async reopenHandoff(workId: string): Promise<DashboardView> {
+    if (this.#handoffs.has(workId)) throw new Error("这项工作正在交接，请等待本次结果。");
+    const work = this.#requireWork(workId);
+    const binding = work.activeBinding;
+    if (work.instance.status !== "OPEN" || !binding?.conversationId.startsWith("pending:"))
+      throw new Error("交接已确认或已取消，未重新打开。");
+    const request = this.#deliveryLedger.request(workId, binding.conversationId.slice(8));
+    if (!request) throw new Error("此旧交付未保存原始打开内容，无法安全重新打开；确认未接手后可取消并重新交接。");
+    const adapter = this.#executors.get(binding.adapter);
+    if (!adapter.deliver) throw new Error("该执行者尚不支持接收工作。");
+    this.#handoffs.add(workId);
+    try {
+      await (adapter.inspectDelivery ? adapter.inspectDelivery() : adapter.inspect());
+      if (this.#requireWork(workId).activeBinding?.id !== binding.id ||
+        this.#requireWork(workId).activeBinding?.conversationId !== binding.conversationId)
+        throw new Error("交接状态已改变，未重新打开。");
+      if (UPLOAD_CONNECTORS.includes(adapter.id)) await this.prepareWebTransfer(workId, adapter.id, request.prompt);
+      const receipt = await adapter.deliver(request);
+      const latest = this.#requireWork(workId);
+      if (receipt.conversationId && latest.activeBinding?.conversationId === binding.conversationId)
+        this.#core.bindConversation(workId, adapter.id, binding.conversationId, receipt.conversationId);
+      if (!this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")) this.#deliveryLedger.forgetRequest(workId);
+      this.#notice = this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+        ? `已再次请求打开 ${adapter.name} 的同一交付，请检查草稿；可能出现重复草稿，请只发送一次。尚未据此确认发送、绑定或工作包读取。`
+        : "本交付已由来源确认绑定；工作包读取情况见本工作状态。";
+      return this.dashboard(workId);
+    } catch (error) {
+      this.#notice = this.#requireWork(workId).activeBinding?.conversationId.startsWith("pending:")
+        ? `重新打开请求失败，原交付保持待确认，可检查目标或取消未确认交接。${String(error)}`
+        : `重新打开请求报错，来源状态已改变，未回滚已确认的来源。${String(error)}`;
+      throw new Error(this.#notice, { cause: error });
     } finally {
       this.#handoffs.delete(workId);
     }
@@ -801,6 +932,7 @@ export class AppService {
       !legacyPending
     )
       throw new Error("交接已确认或已取消，请刷新记录。");
+    this.#deliveryLedger.forgetRequest(workId);
     this.#core.stopCapture(workId);
     const previous = work.bindings.findLast(
       (binding) => !/^(pending|waiting):/.test(binding.conversationId),
@@ -865,8 +997,21 @@ export class AppService {
     this.#core.close();
   }
 
+  #pendingDelivery(adapterId: string, prompt: string): WorkSnapshot | null {
+    const markers = deliveryMarkers(prompt);
+    const candidate = markers ? this.#core.getWork(markers.workId) : null;
+    return candidate?.instance.status === "OPEN" && candidate.activeBinding?.adapter === adapterId &&
+      candidate.activeBinding.conversationId === `pending:${markers?.deliveryId}` ? candidate : null;
+  }
+
+  #historySource(id: string) {
+    const source = this.#executors.get(id).source;
+    if (!source) throw new Error("此连接器不支持完整历史，请主动导入选定内容。");
+    return source;
+  }
+
   #extractor(): WorkStateExtractor {
-    return new LocalRuleExtractor();
+    return this.options.extractor ?? createWorkStateExtractor();
   }
 
   #synchronizeObjective(
@@ -1035,7 +1180,8 @@ export class AppService {
     let pkg: ReturnType<typeof buildWorkPackage> | undefined;
     try { pkg = buildWorkPackage(work, this.#core.definitions); } catch { /* Detail must remain available for repairing materials. */ }
     const state = pkg?.state ?? work.state;
-    const sourceNotice = work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
+    const limited = work.sourceArchive.some(event => ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
+    const sourceNotice = limited ? "仅有选定内容或有限事件；完整历史、未加载分支及附件正文未包含。" : work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
     const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
       .prepare("SELECT status,read_at FROM pending_dispatches WHERE work_id=?")
@@ -1051,6 +1197,10 @@ export class AppService {
           }
         : {}),
       ...this.#summary(work),
+      ...(work.packageDeliveryId ? {
+        dispatchStatus: work.activeBinding?.conversationId.startsWith("pending:") ? "WAITING" : "BOUND",
+        dispatchReadAt: work.packageReadAt ?? null,
+      } : {}),
       ...(pkg?.stateStatus === "RESOLVED" && state.objective[0] ? {
         title: state.objective[0].text,
         currentStageTask: pkg.continuation?.stages.find(stage => stage.id === pkg.continuation?.currentStageId)?.task.text ?? "",

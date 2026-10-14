@@ -137,8 +137,17 @@ export class DistillationDesktop {
       case "job":
         string(input.jobId);
         return this.service.get(input.jobId);
-      case "activity":
-        return distillationActivity(r.list<Job>("distillation_jobs"));
+      case "activity": {
+        const jobs = r.list<Job>("distillation_jobs");
+        const activity = distillationActivity(jobs);
+        if (!activity) return null;
+        const activeWorkIds = new Set<string>();
+        for (const job of jobs.filter(job => ["PREPARED", "SUBMITTED", "RUNNING"].includes(job.status))) {
+          const snapshot = r.read<import("./service.js").Snapshot>("source_snapshots", job.snapshotId);
+          for (const source of snapshot.sources) activeWorkIds.add(source.workId);
+        }
+        return { ...activity, activeWorkIds: [...activeWorkIds] };
+      }
       case "seen": {
         string(input.jobId);
         const job = r.read<Job>("distillation_jobs", input.jobId);
@@ -252,7 +261,7 @@ export class DistillationDesktop {
         const work = core.getWork(input.workId);
         ensure(work, "WORK_NOT_FOUND");
         const json = buildWorkPackage(work, r);
-        return { json, markdown: packageMarkdown(json) };
+        return { json, markdown: packageMarkdown(json, work) };
       }
       case "artifacts": {
         string(input.workId);

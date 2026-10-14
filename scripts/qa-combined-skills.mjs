@@ -1,3 +1,4 @@
+import {openReviewDetails} from './lib/review-controls.mjs';
 // Two explicitly selected synthetic skills; real Electron/MCP and cross-directory module execution.
 import assert from 'node:assert/strict';
 import {randomUUID as id} from 'node:crypto';
@@ -29,7 +30,7 @@ async function launch(){
  await app.evaluate(({BrowserWindow})=>{const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().endsWith('/panel.html'));w.setSize(410,700);w.show();});
 }
 const open=()=>panel.evaluate(async id=>(await import('./distillation.js')).openJob(id),job.id);
-async function select(role,path){await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},path);await panel.locator(`[data-review-action="material"][data-address="materialRoles.${role}"]`).click();}
+async function select(role,path){await openReviewDetails(panel,`materialRoles.${role}`);await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},path);await panel.locator(`[data-review-action="material"][data-address="materialRoles.${role}"]`).click();}
 try{
  await launch();await open();await select('builder',skill);await select('template',template);
  const conflict=join(directory,'conflict','report-builder');writeSkillFixture(conflict,'另一个同名技能');await select('template',conflict);
@@ -37,7 +38,7 @@ try{
  const unchanged=await panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);assert.equal(unchanged.materials?.length??0,0,'conflicting selection cannot partially save');
  await select('template',template);report.checks.nameCollisionCannotPartiallySave=true;
  await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();
- await panel.locator('[data-review-action="close"]').click();await open();
+ await panel.locator('#window-back').click();await open();
  assert.equal(await panel.getByRole('button',{name:'更换资料',exact:true}).count(),2,'saved draft must retain both selected materials after reopen');
  report.checks.reopenRetainsSelections=true;
  await app.close();app=undefined;dependency('原件已改写 v2');
@@ -59,8 +60,9 @@ try{
  const checked=await refreshed.json();assert.ok(!checked.error);assert.ok(!checked.result.isError);assert.equal(readFileSync(join(format.directory,'references/format.md'),'utf8'),'依赖格式 v1');report.checks.mcpRebuildsDamagedDerivedEnvironment=true;
  report.checks.restartFrozenVersionPublicationAndMcp=true;report.checks.syntheticSkillExecution=true;
  await panel.locator('#tab-definitions').click();await panel.locator(`[data-definition="${pkg.definition.id}"]`).click();await panel.locator('#revise-definition').click();
- dependency('依赖格式 v2');await select('template',template);await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();await panel.locator('[data-review-action="close"]').click();
+ dependency('依赖格式 v2');await select('template',template);await panel.locator('#save-draft').click();await panel.locator('#dr-status').filter({hasText:'已暂存'}).waitFor();await panel.locator('#window-back').click();
  await panel.locator(`[data-definition="${pkg.definition.id}"]`).click();await panel.locator('#revise-definition').click();
+ await openReviewDetails(panel,'materialRoles.template');
  assert.equal(await panel.locator('[data-review-action="material"][data-address="materialRoles.template"]').innerText(),'更换资料','manual revision must resume its saved selections');
  await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
  const versions=await panel.evaluate(key=>window.workpet.distillation('versions',{key}),pkg.definition.definitionKey);assert.equal(versions[0].version,2);assert.equal(readFileSync(join(dirname(versions[0].materials.find(m=>m.role==='template').path),'references/format.md'),'utf8'),'依赖格式 v2');

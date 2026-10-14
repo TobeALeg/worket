@@ -1,3 +1,4 @@
+import {openReviewDetails} from './lib/review-controls.mjs';
 // Controlled draft, real Electron document adoption/restart/publication/MCP; no provider calls.
 import assert from 'node:assert/strict';
 import {randomUUID as id} from 'node:crypto';
@@ -25,7 +26,7 @@ async function launch(){app=await electron.launch({executablePath:process.env.WO
 const open=()=>panel.evaluate(async id=>(await import('./distillation.js')).openJob(id),job.id);
 const draft=()=>panel.evaluate(id=>window.workpet.distillation('draft',{id}),job.draftId);
 try{
- await launch();await open();await panel.locator('[data-review-action="keep"][data-issue="review-input"]').click();await panel.locator('[data-review-action="keep"][data-issue="review-limit"]').click();
+ await launch();await open();await panel.locator('[data-review-action="confirm"][data-address="inputs.subject"]').click();await panel.locator('[data-review-action="confirm"][data-address="constraints.limit"]').click();await openReviewDetails(panel,'constraints.limit');
  writeFileSync(path,'# 新规范\n## 摘要\n\n每个摘要不超过 30 words。\n');
  await app.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},path);
  await panel.locator('[data-review-action="document-version"][data-address="constraints.limit"]').click();const previous=await draft(),before=count();
@@ -37,7 +38,7 @@ try{
  const clause=changed.content.constraints.find(i=>i.key==='limit');assert.equal(clause.document.startLine,4);assert.equal(clause.text,'每个摘要不超过 30 words。');assert.ok(changed.refs.some(r=>r.snapshotId===clause.document.source.snapshotId&&r.eventId===clause.document.source.eventId));
  report.checks.blankSelectionAndScopedReview=true;
  await app.close();app=undefined;unlinkSync(path);await launch();await open();assert.deepEqual(await draft(),changed);await panel.screenshot({path:join(output,'restored-document.png')});
- await panel.locator('[data-review-action="keep"][data-issue="review-limit"]').click();await panel.locator('[data-review-action="exclude"][data-issue="rule-change-constraints.alias"]').click();await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
+ await panel.locator('[data-review-action="confirm"][data-address="constraints.limit"]').click();await panel.locator('[data-review-action="delete"][data-address="constraints.alias"]').click();await panel.locator('#publish-definition').click();await panel.locator('#use-definition').waitFor();
  await panel.locator('#use-definition').click();await panel.locator('[data-input="subject"]').fill('新的摘要主题');await panel.locator('#create-defined-work').click();await panel.locator('#back-to-list').waitFor();
  const workId=(await panel.evaluate(()=>window.workpet.getDashboard())).selectedWorkId,pkg=(await panel.evaluate(workId=>window.workpet.distillation('package',{workId}),workId)).json;assert.equal(pkg.definition.content.constraints.length,1);assert.equal(pkg.definition.content.constraints[0].text,'每个摘要不超过 30 words。');assert.equal(pkg.ruleSources[0].startLine,4);
  const bridge=JSON.parse(readFileSync(join(directory,'bridge.json'),'utf8'));const response=await fetch(`http://${bridge.host}:${bridge.port}/mcp`,{method:'POST',headers:{'content-type':'application/json','x-workpet-token':bridge.token},body:JSON.stringify({jsonrpc:'2.0',id:id(),method:'tools/call',params:{name:'get_work_context',arguments:{work_id:workId}}})});const value=await response.json();assert.ok(!value.error&&!value.result.isError);assert.equal(JSON.parse(value.result.content[0].text).workPackage.ruleSources[0].startLine,4);

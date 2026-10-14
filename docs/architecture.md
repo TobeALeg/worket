@@ -26,7 +26,59 @@ Codex 的现代/旧版 macOS bundle 路径保留，新增 Windows 绝对路径�
 
 `launch-desktop.mjs` / `package-desktop.mjs` 共用构建入口，在本机编译平台助手；发布仍分别使用 `release:mac` 与 `release:win`。打包排除研究、评测、服务端及本地运行数据，集成脚本保持 asar unpack。冻结证据 fixtures 禁止 Git 自动换行转换，保证跨系统 hash 不变；测试使用真实 Node 子进程与本机 IPC，但不依赖未安装的外部应用或 Windows 特权符号链接。业务领域模型、后台接口和数据库结构未变。验证与未验范围见 [验收记录](acceptance/windows-main-2026-10-11.md)。
 
+## 持续集成（2026-10-14）
+
+`.github/workflows/ci.yml` 在分支推送、PR 和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
+
 v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能力 `analysisSchemaVersions:[1]` 已启用。自动准备路径在发送前检查 `continuationSchemaVersions`，当前生产能力仍为 `[1]`；兼容旧后台时保留缺少能力的明确降级。既有 `requests.operation` 区分整理与沉淀请求，本版无数据库迁移。配套部署与验证见 [发布验收](releases/v0.1.7-verification.md)。
+
+## 工作契约界面与生命周期（2026-10-09）
+
+`renderer/distillation.ts` 继续作为现有对话框流程的宿主：`prepare/start → activity/openJob → mountDefinitionReview → publish → openDefinition`。发布回调区分首存、新版与仅记录依据；只有真实 Definition 才交给 `renderer/work-contract.ts`。普通打开不重复成功动效。修订关闭返回原契约，未保存更改继续使用原有离开确认。
+
+`definitions/contract-view.ts` 是只读展示投影：先通过 `effectiveRules`，再把 `constraints`、`acceptanceCriteria` 和 REQUIRED methods 合为约束；保留 collection/key 地址，不修改原数据、检查标准或执行义务。输入/交付完整显示，资料与目的原位展开。审阅沿用原字段地址，问题、来源与规则编辑仍绑定原项。
+
+`renderer/contract/` 提供组件作用域 token、纸纹、页签遮罩与蜡封；`work-contract.css` 控制 A4 目标比例、内容自然增高和 reduced-motion。分类色以 definitionKey 为键存 localStorage，校验六位 HEX 并计算文字对比色；不参与内容 hash 或版本号。
+
+`useDefinition → create → createdWork → chooseExecutor → dispatch` 共用既有 IPC。创建 commandId 在该表单内稳定；重试派发使用同一 workId，底层 pending_dispatches 防重。`renderer/contract-dispatch.ts` 明确区分 NOT_DISPATCHED、FAILED、WAITING/STARTING、BOUND + 已读取，等待界面每两秒检查状态，离开该页面就停止。错误后刷新真实工作状态，不能凭 UI 点击推断接手。
+
+版本、修订、删除、固定资料恢复、来源审查和持续比较继续使用原服务；删除保护及不可变版本规则不变。没有数据库迁移、后台协议修改或新的自动提炼授权。只读原型仍独立保留。[本轮验证边界](acceptance/contract-lifecycle-ui.md) 区分真实渲染/API/SQLite 与模拟模型、执行者。
+
+### 沉淀确认页接入（2026-10-10）
+
+`definition-review.ts` 仍以 `Draft.content / originalContent / issues / resolutions / materials` 驱动页面，四分区只合并展示，不合并数据集合。稳定地址为 section.key；相同 key 的方法与资料独立操作。Reference 文件名和完整路径来自待选绑定或固定副本的 originalPath，不展示内部固定副本路径或示例分类。
+
+确认本地条目时记录当前会话决定，并对关联的真实 Issue 生成 CHOOSE / REWRITE；删除修改实际 content、清理该资料角色的待选绑定并生成既有 DELETE。暂存调用 update(expectedRevision, content, issueResolutions, replaceResolutions, materialBindings)，发布沿用 publish 与 sourceReview；没有 IPC、协议或数据库迁移。会话勾选不伪装为新增后台状态；已有 Resolution 在重开时恢复确认状态，没有 Issue 的条目由最终版本发布统一确认。
+
+删除记录保存编辑后的条目、稳定顺序与实际选择路径，仅用于当前页恢复；重开可从 originalContent 对照恢复原始条目，已删除资料的绑定不伪造。资料恢复走现有 materialBindings 重新固定原件，固定副本被回收后不能当作仍存在。单层撤销包含内容、问题决定、选择路径及会话状态；成功暂存后清除撤销，避免撤销升级已固定资料。
+
+`definition-review-motion.ts` 用 Web Animations 的 finished 串行衔接 320ms 划线与 400ms 抽离，空间收拢延后 120ms；动画期间延后整页重绘，局部状态更新不替换动画节点。撤销、保存、恢复与离开清理旧动画，防止完成回调隐藏已恢复的条目。来源详情的原生展开状态在异步重绘时保留。官方 Tabler SVG 与 MIT 许可位于 renderer/review-icons。
+
+真实 Electron 回归覆盖动效中间帧、确认/删除/恢复、动画中撤销、资料删除暂存与重绑、重启固定版本、规范更新和正式发布；模型响应及原生文件选择为隔离测试夹具，API、SQLite 与材料固定流程使用真实实现。详见 [验收](acceptance/distillation-review-ui.md)。
+
+### 沉淀审阅交互预览（2026-10-10，以下为接入前历史）
+
+对话内预览独立使用候选快照与 `pending / confirmed / deleted` 决策映射；删除保留原条目，只投影为正文隐藏，分区展开状态控制删除记录是否可见。短暂的划线与折叠阶段仅在内存中运行，恢复、撤销与确认保存会取消未完成动效，防止旧计时器隐藏已恢复条目。预览状态版本 8 兼容版本 7 的已有选择，持久化决定、条文编辑与展开状态；完成全部选择或确认时收起删除记录。未调用正式 `update / publish`，没有 IPC、数据库或客户端产物变化。
+
+最新动效以共享配置同步填充和划线（320ms）；删除线的 `transitionend` 驱动抽离阶段（400ms），空间收拢延后 120ms 开始。结束事件不可用时保留延后的计时兜底，取消时清理事件监听及计时器。只有抽离完成才隐藏条目，不用固定早期计时截断划线。
+
+预览宿主同步修复：`openai:set_globals` 回传本地刚保存的选择时，`restore` 比较归一后的决定与条文；相同状态保留进行中的动效，仅实质内容变化取消动效。未携带私有展开状态时不清空现有展开状态。模拟状态回传的逐帧验证覆盖划线、抽离、完成隐藏与动画中撤销，避免以静态时长配置代替实际播放证据。
+
+### 工作契约设计组件（2026-10-08，接入前历史）
+
+独立实现位于 [docs/design/work-contract](design/work-contract/README.md)。`tokens.css` 管理设计变量，`contract.css` 管理竖版布局和响应式，SVG 提供图标与纸纹；`contract.js` 将 `ContractView` 渲染为原生 DOM，并通过 `onReuse` / `onDetails` 回调宿主，配套 `.d.ts` 定义接口。数据文本使用 `textContent`，不依赖整张概念图。
+
+组件仅表现已确认版本：宿主需从真实 Definition 取确认时间，并用现有有效规则逻辑投影条款。`setTabColor` 校验六位 HEX，按相对亮度选择黑白文字，仅更新页签变量。预览页自行持久化颜色；核心组件无存储或 IPC，正式分类配色属于展示偏好，不写不可变定义。本次无客户端、数据库或安装产物变更。
+
+材质 v1.1 使用固定 192px 平铺的 SVG 颗粒/纤维，CSS 独立绘制底板、纸页厚度、阴影、齿线与压印；纹理密度与内容高度解耦。320px 长条款回放无裁切或内部溢出，不使用整张图缩放充当底板。
+
+v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg` 作为独立蜡封装饰；语义仍由“已确认”文本提供。标题样式收紧，数据结构和操作回调保持不变。
+
+2026-10-09 `docs/design/work-contract/prototype/` 独立读取显式提供的本机 JSON，不消费展示摘要。按用户最新信息优先级，`deliverables` 与 `inputs` 始终完整渲染，其余四类使用原生 `details` 默认收起，允许同时展开，目的也仅原位展开。必填映射为 `*`，选填不生成符号；原始 `meta` 与推断状态保留。纸页以 A4 为目标比例，内容超出时自然增高，确认区不覆盖正文。没有 IPC、数据库写入、确认或复用动作；不经过已确认版本的 `contract.js`，不扩展正式领域模型。
+
+可用性修订继续限定在此原型：`disclosureSummary` 统一折叠入口，CSS 通过原生 `[open]` 状态切换操作文字和箭头，不增加另一份展开状态。按后续用户反馈，展示用 `sections` 将 `constraints` 与 `acceptanceCriteria` 条目合并为一个约束列表，原字段由 `data-source-section` 保留；原始 JSON、条目 key、正文和 `meta` 不变。当前有约束、资料与工作目的三个折叠入口；`methods` 从展示映射中排除，计数由映射计算，原始方法数据不删除。按最新批注仅渲染必填星号，来源信息保留在原始数据与 `data-meta` 中，不生成来源标签及对应样式；分区标题与左边界一致，交付物仅用字重强调。标准组件、正式客户端与存储接口不变。
+
+[流程提案](design/work-contract/journey.md) 根据现有 `mountDefinitionReview → publish → onPublished → openDefinition` 与 `useDefinition → create` 路径提出接入建议：发布成功与后续查看共用详情，首次成功反馈由宿主调用场景控制，仅 `publish` 返回的真实版本和确认时间用于正式卡片。当前仅完成源码核对和提案，没有实现该接入或修改任何业务状态。
 
 ## Contract 分析视图 v2（2026-09-28，已部署 v0.1.7）
 
@@ -193,7 +245,7 @@ Pet / Panel → generic IPC → AppService → Work Core → SQLite
                               ▼
                        ExecutorRegistry
                          ├── Codex Adapter → App Server / Hook / native new-chat URL
-                         ├── WorkBuddy Adapter → read-only extension socket / Hook / Deep Link
+                         ├── WorkBuddy Adapter → local read-only history / Hook / Deep Link
                          └── future adapters
 MCP → Work Core work package + read audit
 ```
@@ -247,11 +299,15 @@ App Server 提供列表与可见历史；history.ts 先核验会话元数据，�
 
 ### WorkBuddy Adapter
 
-5.5.3 内部扩展安装在 `~/.workbuddy/extensions/worket-capture`，声明 onStartup 与 resident，避免空闲回收后失去读取入口。仅授权 conversations.list/get/requestEntries/requests，通过同用户 0600 Unix socket 提供 list/read/status。历史加载等待 historyReady，分页完整读取并去重；不完整分页失败，不把部分历史当完整导入。
+2026-10-14 起默认使用 `WorkBuddyLocalHistory`：只读 `~/.workbuddy/workbuddy.db` 的当前账号本地会话索引，匹配 `projects/*/<sessionId>.jsonl`。数据库事务只读；正文读取前后核验文件大小/修改时间，拒绝混合会话、损坏行、越界路径和过大文件。只投影可见用户/助手文字及显式本地附件，剥离 system-reminder、摘要和内部通知，跳过 reasoning/tool 原始载荷；活动请求的助手正文等待结束后导入。正文缺失不返回空的完整历史，列表明确说明本机覆盖范围。
 
-归一化仅接受可见 text、tool 与资料引用，丢弃 reasoning/未知块；回复完成后入库，避免流式首个片段永久占用事件 ID。内部协议不是外部兼容承诺，升级不兼容时应显示接入错误。
+本地日志是留存证据，不是原应用当前完整历史的权威视图，因此不声明 `history.complete`，不推断删除。事件以原始消息 ID 定位，既有 SDK 事件通过请求 ID、正文与持久别名保持身份。旧 `WorkBuddyDesktopClient` 与扩展协议代码保留作历史兼容测试；安装器不再复制内部扩展，只配置用户级 `~/.workbuddy/mcp.json` 与 settings.json Hook（用户级 MCP 不使用插件级 `.mcp.json`）。Hook 仅通知会话 ID，提交或结束后从本地正文核对 WORKPET/DELIVERY 标记，避免上下文包装和先通知后落盘造成漏绑定；未授权会话不入库。
 
-用户级 Hook 通知会话身份与变化，Deep Link 创建目标任务。安装逻辑位于各适配器的 install.ts，通用 IntegrationInstaller 分别调用；失败不阻止 Worket 窗口或其他执行者。打包资源通过 asar.unpacked 提供普通文件路径；升级扩展后需要重启 WorkBuddy。
+`ExecutorAdapter.inspect()` 检查来源读取，新增可选 `inspectDelivery()` 检查交付；未实现独立检查的适配器沿用原检查。WorkBuddy 交付通过 Electron 查询 `workbuddy://` 注册程序，与读取独立。ExecutorView.available 表示读取检查结果，canDeliver 独立决定选择按钮；deliveryError 与来源 error 分开。交接/重新打开检查目标交付能力，仍刷新正在记录的原来源，不能静默用陈旧记录替代失败的源刷新。Deep Link 成功只代表打开请求，实际发送、绑定和工作包读取仍分别等待真实证据。
+
+正式 Open API 的本地助理/云端任务能力与任意桌面会话历史不等价，且需要应用注册/OAuth；本轮未获得授权凭证、未实测正式 API。用户随后明确排除 RPA，保留人工接手；历史方案与本次验证边界见 [接入验证](acceptance/workbuddy-local-history-2026-10-14.md)。
+
+2026-10-14 附件实测：用户附件引用进入 INPUT，助手最终回复的绝对路径 Markdown 链接进入 OUTPUT，经 ArtifactTracker/Resolver 核验本机文件字节数、SHA-256 和可用性；原生界面可见结果与资料链接。CSV → Markdown/CSV 真实闭环通过，未验证其他文件格式；见 [验收](acceptance/workbuddy-attachment-roundtrip-2026-10-14.md)。
 
 ### 通用交付
 
@@ -348,6 +404,8 @@ COMPLETED ──继续原工作──> OPEN
 ```
 
 时间间隔、应用关闭、Mac 重启和 Executor 变化都不改变 WorkInstance 状态。取消记录通过 `cancelRecording` / `work:cancel-recording` 撤销记录授权并清理本地副本，需要二次确认，不新增生命周期状态。底层 `deleteWorkPermanently` 仅负责 Worket 本地数据清理；执行者接口不提供原对话删除能力。清理关联证据时按显式主键 `id` 更新，避免 Electron SQLite 的隐式行标识返回差异。
+
+取消记录弹窗在 renderer 校验确认文字，不匹配时不调用 IPC，只将输入提示变红并播放可重复的短暂抖动，输入时清除校验状态；系统开启减少动态效果时保留红字和焦点提示。`AppService.cancelRecording` 继续校验确认文字，保护本地清理入口。
 
 ### ExecutionEpisode
 
@@ -527,6 +585,8 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 状态流：闲置 → 检查 → 用户确认 → 下载校验 → Finder 定位；稍后、无更新或失败返回闲置。用户自行退出、替换和重开应用；不存在 autoUpdater 或原生安装调用。开发模式不检查。`scripts/release-mac.mjs` 负责免费 ad-hoc 签名、打包及解压 QA，不要求 Apple 公证，不自动发布。GitHub token 不进入客户端，数据目录和 bundle ID 保持稳定。
 
+本机固定两个应用位置：正式版为 `/Applications/Worket.app`，开发入口为项目 `release/Worket-darwin-arm64/Worket.app`，通过 `npm run dev` 或 `scripts/run-latest.command` 重建并带 `--dev` 启动。两者沿用 `~/Library/Application Support/WorkPet` 和同一单实例锁，日常切换应先退出正在运行的版本；应用副本清理不删除工作库、设置或凭据。2026-10-08 的路径、签名、系统登记和数据验证见 [清理验收](acceptance/local-app-cleanup.md)。
+
 ### 安装身份与显式服务连接
 
 `AutomaticConnection` 在正式版没有既有配置时使用内置 `https://worket.dandi.site`，生成互不复用的安装秘密和用户恢复码；开发环境仍只接受显式 `WORKET_SERVICE_URL`。`ServiceCredentials` 通过 macOS 系统安全存储保存秘密。后台 `/v1/installations` 只保存两个秘密的 SHA-256：安装秘密定位 `DeviceIdentity`，恢复码定位 `UserIdentity`。RS256 令牌以设备为 `sub`、用户为 `uid`；先检查设备撤销和期限，再以用户作为额度、幂等和上传隔离主体。
@@ -593,11 +653,15 @@ work_definitions 现有一行对应一个 key/version 的形式继续作为固�
 
 主进程已有 DistillationService.tick 负责关闭面板后的收取；轮询在 finally 继续调度。服务端 extractDefinition 上报分批完成数及泛化阶段，service 仅在运行请求的内存 Map 中保存进度并随结束清理；客户端将进度投影到 Job。activity.ts 统一生成面板与桌宠状态，Job.seenStatus 持久保存已查看阶段，新状态可再次提醒。桌宠专用 IPC 校验 sender 后打开面板并定位 jobId；候选不自动抢占其他编辑界面。
 
+2026-10-10：沉淀 activity 查询除主任务状态外，聚合所有运行任务快照的来源 workId。主面板将进度入口放在 Worket 标题行，保留任务跳转与运行/就绪/失败状态；详情 renderer 按活动来源禁用对应沉淀操作，并在任务结束后恢复。任务页加载图标尺寸不变。
+
 workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的 USER_STATED 误标作保守降级为 INFERRED，并添加 blocking UNSUPPORTED_SOURCE；引用与摘录真实性检查仍保持拒绝，已有发布门槛要求处理确认问题。此修复不把工具文本提升为用户指令，不额外调用模型。
 
 ## 紧凑审阅与窗口调宽（2026-09-21）
 
 `renderer/definition-review.ts` 管理一个候选的本地编辑副本、决策、来源展开、固定资料绑定和单次撤销；`definition-review.css` 只限定审阅布局，基础颜色与品牌继承共享 theme。`distillation.ts` 负责进入与退出，服务、准备、定义、复用和验收使用共享 dialog-shell：固定品牌栏 → 可滚动 dialog-card → 固定主要操作栏；历史采用相同容器。编辑态/只读态 → 暂存（revision 校验）→ 显式确认 → 不可变定义；保存期间禁用操作，后台刷新不替换审阅 DOM。
+
+`renderer/window-header.ts` 在主页面和当前打开的全页 dialog 之间移动同一个顶栏 DOM，保留反馈、应用菜单、关闭按钮及其监听器。页面只提供返回回调和可选离开前保存；dialog 关闭后恢复底层页面的顶栏与返回焦点，父页刷新不抢占反馈子页顶栏。右上角关闭仍调用 `panel:close` 收起窗口，不执行页面返回；审阅返回和菜单跳转先通过 revision 校验暂存修改，未完成保存不离开。轻量确认、执行者选择及截图预览保留独立弹层行为。
 
 `definitions/review.ts` 为界面和仓库共用字段定位：支持章节、章节加 key、原始数组位置和唯一裸 key；数组位置始终以 originalContent 解析，跨章节重名不猜测。未能定位的 Issue 保留在独立区域；不生成虚构证据或自动作出语义选择。编辑不改写来源，原始依据始终可核验；保存后的 basis 由仓库按既有规则记录为 USER_AUTHORED。
 
@@ -606,3 +670,49 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 调宽经 preload 的 panel:resize-right 发送 start/move/end，主进程核验发送窗口和有限坐标；`desktop/panel-resize.ts` 以起始 bounds 计算宽度，保持 x/y/height，限定 360–1000px 及当前显示器右边界。默认窗口宽度 410px，不增加渲染进程 Node 权限。
 
 工作详情的分类行仅展示已有状态；最近回复和执行片段用原生 details，按工作 ID 保留其展开状态，切换工作时重置。展示固定资料时由 materialRoles 将内部 key 映射为用户文字；路径保留在 title，显示文件名。此轮不改变数据契约、IPC、上传授权或模型流程。
+
+## 国内连接器与提取接口（2026-10-12，独立开发分支）
+
+ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与增量，HOOK_EVENTS/SELECTED_CONTENT 走显式选定入档，不能伪装完整历史或因未加载消息触发来源删除。`normalizeSelectedContent → AppService.importSelectedContent → sourceDelta → SourceArchive → workEvidence → WorkStateExtractor` 共用现有来源修订和序号进度；本地策略通过 `extractor/index.ts` 构造或 AppServiceOptions.extractor 注入，传输代码不解释业务要求。
+
+交付由应用层根据 MCP_REFERENCE/INLINE_PACKAGE 生成；内联正文完整包含当前有效证据与接续快照，不隐式读取文件，不截断。`connector_deliveries` 只持久化正文摘要以核验交付回声；完全相同的已知启动包仍保留档案，不递归成为新要求；改过正文仍是业务证据。此独立表可由旧版本忽略，不改变核心工作身份。
+
+网页扩展没有 host_permissions，读取由用户点击及 activeTab 临时授权；本机 Host 限定 exact origin 与显式 stage/transfer 动作，通过 private-token loopback 接入 SelectedContentInbox，浏览器页面 Origin 被拒绝。Inbox 在内存中限量/过期，确认操作只来自可信 panel IPC；Stage 不调用提取、模型或附件访问。QwenWork 安装策略 EXPLICIT，不由 IntegrationInstaller 自动配置。详细契约与隔离运行见 [开发说明](development/cn-ai-connectors.md)。
+
+2026-10-13：Codex deep link 交付返回 `OPEN_REQUESTED`，不观测原生草稿。`DeliveryLedger` 的原始重开请求保存在独立本地表，按原 prompt hash 核验；pending 状态允许同 delivery 原样再传输，沿用 per-work 并发锁，重新打开不创建工作包/执行片段。取消、初次传输失败及绑定后清理重开请求；旧 digest-only 记录不重建。真实 Hook 绑定若先于传输报错到达，绑定优先，禁止回滚。详见 [恢复验收](acceptance/handoff-recovery.md)。
+
+2026-10-13：stdio MCP 代理在 HTTP/config 失败时仍保留 JSON-RPC 请求 ID，使调用端立即收到真实错误而非等待超时；通知保持无响应。客户端网络错误保留 EPERM 等底层码，不扩大网络权限。隔离实例的桥接文件须与执行会话的实际路由一致，日常配置不自动路由到测试实例；见 [真实追查](acceptance/codex-real-handoff.md)。
+
+2026-10-14 网页连接器目录：`catalog.ts` 统一定义 Kimi、豆包、DeepSeek、Gemini、QwenWork、扣子的身份、入口与允许域名；构建时生成扩展 catalog.js。Kimi/豆包继续使用 kimi-work/doubao-work 持久标识但不限制工作模式。DeepSeek 仅匹配 chat.deepseek.com，Gemini 仅匹配 gemini.google.com；统一归一化器保留选定范围、去除查询参数，沿用相同交接与去重流程。
+
+## 问题反馈（2026-10-08）
+
+`src/diagnostics/recorder.ts` 负责主进程白名单运行事件、AsyncLocalStorage trace、按日轮转和故障快照。记录、同步、交接、沉淀、更新、服务请求与界面异常接入；交接依次记录选择、准备、请求打开、等待确认。只记录固定枚举、耗时和 UUID 请求编号，不接收错误原文、堆栈、路径或工作正文。`src/contracts/problem-report.ts` 在采集和接收两端约束事件、图片、授权、大小与报告摘要。
+
+`src/problem-reports/` 分别负责主进程图像解码/规范化、IPC、原子持久化草稿与不可变队列、带身份的报告传输及重试。数据在既有 dataDirectory 下分为 diagnostics 与 problem-reports，目录 0700、文件 0600；没有额外磁盘加密声明。草稿首次打开即冻结最近 10 分钟日志，用户可选保留的最近故障；草稿和未收包 7 天过期，本地总容量 50 MiB。
+
+`src/renderer/problem-feedback.ts` 使用独立 dialog 覆盖原界面，正常页面与其他 dialog 留在 DOM 中。品牌栏图标才触发展开；返回、关闭、Escape、隐藏窗口和重新显示窗口均收起。截图先关闭反馈并等待渲染，再由主进程 capturePage；预览确认仅加入草稿。保存不弹成功提示，失败只在反馈内显示。
+
+发送链：编辑 → 主进程原子写草稿 → 点击发送冻结授权/报告/hash → 原子加入队列并清空草稿 → 能力声明/身份检查 → 完整 JSON 请求 → SQLite 一次提交全部材料 → 匹配报告编号与 hash 的接收回执。收到回执前保持 WAITING/SENDING；网络失败退避重试同一包，最多 10 次；旧服务、身份变化或永久拒绝转 PAUSED。取消先停本地重试，再删除服务器记录；不能核对时明确提示。删除墓碑阻止迟到上传复活。
+
+`server/problem-reports.mjs` 在独立 problem-reports.sqlite 中保存用户材料、日志和处理状态。沿用现有签名身份与撤销检查；/v1/problem-reports 只返回本人报告，/admin/api/problem-reports 沿用 loopback、会话、CSRF 保护。管理员可关联同主体的后台请求元数据，原始错误文本被换成固定代码。内部备注只进管理员响应；客户端仅收到公开说明。完整报告 30 天到期清理，删除墓碑再留 7 天；备份恢复需按运维约定重放删除。
+
+限制由共享 REPORT_LIMITS 集中定义：3 张截图、每张 5 MiB、16MP，日志 2 MiB、原始报告 18 MiB、JSON 25 MiB；设备滚动 24 小时 20 份/50 MiB，全局 500 份/500 MiB，与模型额度独立。JPEG/PNG 在主进程重新编码为 PNG，服务器再核对 CRC、像素、hash 和清单；不建立分片附件暂存区。
+
+此功能与 WorkDefinition、WorkInstance、Source Archive 和改进样本语义分开；未提交草稿或未勾选日志不得触发诊断上传。后台已部署提交 4e40d43，Nginx 上传限制调整为 25m；客户端新构建已安装并正常运行，未发布新的公开版本。验证与运行边界见 [问题反馈验收](acceptance/problem-reporting.md)。
+
+## 执行内容与内部记录分离（2026-10-14）
+
+`handoff/execution-brief.ts` 将经过现有资料/来源校验的 WorkPackage 与 WorkSnapshot 投影为面向执行者的 Markdown。复制/导出通过 `packageMarkdown`、网页通过 `inlineWorkPackage`、本地 MCP `get_work_context` 默认及显式 v4 使用同一投影；v1–v3 显式请求保留兼容格式。启动提示默认请求 v4。回执仍在 handler 内记录，不出现在 v4 正文中，检查失败不会确认读取。
+
+投影不修改持久 WorkPackage/ContinuationSnapshot，也不再次调用模型。RESOLVED 状态保留阶段、成果、依赖、作用范围、冲突和业务验收；其他状态保留当前有效业务对话正文作为有标注的兜底，不附加事件 JSON 或推理/读取审计。有对话兜底时只补充 USER_EDITED 状态项，自动抽取项由原话承载；无对话时保留线索，防止仅有状态的工作丢失内容。网页说明只给文件名和待上传状态，本地说明保留固定副本及技能入口路径。
+
+自动状态整理的请求事件按本次请求从 1 连续编号；原始事件 ID、正文顺序及 basis 的来源序号水位保持不变，兼容本地标题记录序号为 0 的历史数据。请求投影升级会让此前失败的已授权工作重试一次，有效缓存仍直接复用。
+
+### 网页附件传输（2026-10-14）
+
+`AppService.prepareWebTransfer` 在网页复制或正式交接时调用 `WebTransfer`，只收集工作包已关联的文件，核对可用性与固定哈希后冻结字节。内存仅保留最近一次准备，限 20 文件/40 MB/10 分钟；并发准备以最后请求为准。`/web/transfer` 沿用 private-token loopback 且拒绝浏览器 Origin。Native Host 在原有选区 stage 之外新增 transfer，仍核对配对 extension origin；浏览器只接触传输 ID、文件索引和分块偏移，不能指定本地路径。
+
+扩展按当前 HTTPS 站点与交接目标核对后，以 256 KiB 分块取回文件，再核对 SHA-256。用户点击扩展 action 提供 activeTab，后台任务在该标签页 MAIN world 执行 `fillWebDraft`，通过网页的原生 file input/change 接收文件并填入正文；豆包异步输入在本地上传菜单边界提供文件。不会自动发送，遇到已有文字草稿、重复传输或网页切换则停止。`dispatched` 仅表示交给网页，不证明服务端上传、模型读取或绑定。其他网页仍为手动附件上传；原选区 stage 与接收附件链路相互独立。
+
+网页富文本正文通过短段纯文本粘贴保留换行，避免网站把长粘贴转成额外 TXT 附件；填入后核对正文（统一 CRLF，忽略首尾空白），不一致则明确提示保留附件、检查并粘贴工作包，不返回成功。真实 Kimi 按钮闭环见 [附件验收](acceptance/web-attachments-2026-10-14.md)。

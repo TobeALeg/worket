@@ -1,0 +1,25 @@
+/** Product identities are separate from code agents and model APIs. */
+export const WEB_CONNECTORS = [
+  { id: "qwenwork-web", name: "QwenWork 网页", mark: "Q", url: "https://qwenwork.ai/", hosts: ["qwenwork.ai", "www.qwenwork.ai"] },
+  // Keep persisted IDs so existing Work-mode bindings remain valid for ordinary chats too.
+  { id: "kimi-work", name: "Kimi 网页", mark: "K", url: "https://www.kimi.com/", hosts: ["www.kimi.com", "kimi.com"] },
+  { id: "doubao-work", name: "豆包网页", mark: "豆", url: "https://www.doubao.com/chat/", hosts: ["www.doubao.com", "doubao.com"] },
+  { id: "deepseek-web", name: "DeepSeek 网页", mark: "D", url: "https://chat.deepseek.com/", hosts: ["chat.deepseek.com"] },
+  { id: "gemini-web", name: "Gemini 网页", mark: "G", url: "https://gemini.google.com/app", hosts: ["gemini.google.com"] },
+  { id: "coze-web", name: "扣子网页", mark: "扣", url: "https://www.coze.cn/", hosts: ["www.coze.cn", "coze.cn"] },
+  { id: "web-selected", name: "其他网页（手动复制）", mark: "↗", url: null, hosts: [] },
+] as const;
+/** Desktop visible-text selection is distinct from browser activeTab capture. */
+export const SELECTED_IMPORT_CONNECTORS = [
+  ...WEB_CONNECTORS,
+  { id: "qwenwork", name: "QwenWork 桌面（选定正文）", mark: "Q", url: null, desktop: true },
+] as const;
+export function validateSourceUrl(adapterId: string, value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.username || url.password) throw new Error("来源必须为无凭据的 HTTPS 网页地址。");
+  const connector = WEB_CONNECTORS.find(item => item.id === adapterId);
+  if (!connector || (connector.hosts.length && !(connector.hosts as readonly string[]).includes(url.hostname))) throw new Error("来源站点与连接器不符。");
+  // Query strings may contain credentials. A locator never needs them.
+  url.search = ""; url.hash = "";
+  return url.toString();
+}

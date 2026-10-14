@@ -11,13 +11,20 @@ export async function readBridgeConfig() {
   return parsed;
 }
 
-export async function postToWorkPet(path, body) {
+export async function postToWorkPet(path, body, timeoutMs = 60_000) {
   const config = await readBridgeConfig();
-  const response = await fetch(`http://${config.host}:${config.port}${path}`, {
+  let response;
+  try {
+    response = await fetch(`http://${config.host}:${config.port}${path}`, {
     method: "POST",
+    signal: AbortSignal.timeout(timeoutMs),
     headers: { "Content-Type": "application/json", "X-WorkPet-Token": config.token },
     body: JSON.stringify(body)
-  });
+    });
+  } catch (error) {
+    const code = error?.cause?.code;
+    throw new Error(`Worket bridge 请求失败${code ? `（${code}）` : ""}：${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  }
   if (!response.ok) throw new Error(`Worket bridge 返回 HTTP ${response.status}`);
   if (response.status === 204) return null;
   return response.json();

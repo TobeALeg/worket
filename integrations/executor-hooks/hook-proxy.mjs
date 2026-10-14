@@ -18,7 +18,7 @@ try {
       ? { prompt: input.prompt } : {}),
   };
   await Promise.race([
-    postToWorkPet(`/hooks/${executor}`, payload),
+    postToWorkPet(`/hooks/${executor}`, payload, 2500),
     new Promise((_, reject) => setTimeout(() => reject(new Error("Worket hook timeout")), 3500).unref()),
   ]);
 } catch {

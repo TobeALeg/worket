@@ -1,3 +1,4 @@
+import type { SelectedContent } from "../connectors/selected-content.js";
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server } from "node:http";
@@ -12,6 +13,8 @@ export interface WorkPetBridgeOptions {
     executorId: string,
     payload: Record<string, unknown>,
   ) => Promise<unknown>;
+  onWebTransfer?: (payload: Record<string, unknown>) => unknown;
+  onSelectedContent?: (input: SelectedContent) => unknown;
   port?: number;
 }
 
@@ -52,7 +55,16 @@ export class WorkPetHttpBridge {
           response.writeHead(401).end();
           return;
         }
+        if (request.headers.origin) { response.writeHead(403).end(); return; }
         const payload = await jsonBody(request);
+        if (request.url === "/selected/stage" && this.#options.onSelectedContent) {
+          const result = await this.#options.onSelectedContent(payload as unknown as SelectedContent);
+          response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result)); return;
+        }
+        if (request.url === "/web/transfer" && this.#options.onWebTransfer) {
+          const result = await this.#options.onWebTransfer(payload);
+          response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result)); return;
+        }
         if (request.url === "/mcp") {
           const result = await this.#options.mcp.handle(payload);
           if (!result) response.writeHead(204).end();
