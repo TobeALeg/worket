@@ -63,9 +63,24 @@ test('copied instructions preserve literal code, paths and Markdown links withou
   const { pkg, work } = fixture();
   const literal = '<script>gtag("event", "contact_click", { value: 1 });</script>\n[资料](https://example.com/a?x=1&y=2)\n```js\nconst ids = [1, 2];\n```';
   work.sourceArchive[0].content = literal;
-  pkg.state.constraints = [{ text: '事件名必须为 `contact_click`，文件名为 report_v2.md。' }];
+  pkg.state.constraints = [{ text: '事件名必须为 `contact_click`，文件名为 report_v2.md。', origin: 'USER_EDITED' }];
   for (const brief of [executionBrief(pkg, work), inlineWorkPackage(work, pkg)]) {
     assert.ok(brief.includes(literal), 'the original task snippet remains directly usable');
     assert.ok(brief.includes(pkg.state.constraints[0].text), 'structured requirements preserve code identifiers too');
   }
+});
+
+test('unresolved handoff does not promote stale automatic claims above the conversation', () => {
+  const { pkg, work } = fixture();
+  pkg.state.pendingActions = [{ text: '生成英文 CSV', origin: 'AGENT_STATED' }];
+  pkg.state.completedActions = [{ text: '预算 5000 元，所有阶段完成', origin: 'AGENT_STATED' }];
+  pkg.state.constraints = [{ text: '用户手动补充的必要约束', origin: 'USER_EDITED' }];
+  work.sourceArchive.push({ id: 'e4', externalId: 'e4', sequence: 4, kind: 'user.prompt', content: '取消英文 CSV，改用中文 Markdown；预算未提供，不能猜测。', metadata: {} });
+  for (const brief of [executionBrief(pkg, work), inlineWorkPackage(work, pkg)]) {
+    assert.doesNotMatch(brief, /生成英文 CSV|预算 5000 元|已记录进度|待办线索/);
+    assert.match(brief, /取消英文 CSV，改用中文 Markdown/);
+    assert.match(brief, /用户手动补充的必要约束/);
+    assert.match(brief, /不代表用户已确认/);
+  }
+  assert.match(executionBrief(pkg), /生成英文 CSV/, 'without source dialogue the remaining clues must not disappear');
 });
