@@ -102,3 +102,9 @@ QwenWork 的选定回复入口已补齐：允许用户主动选取桌面可见�
 ## 普通网页会话扩展（2026-10-14）
 
 Kimi/豆包普通网页入口、DeepSeek 和 Gemini 已加入共享目录；原 Kimi/豆包持久 ID 保留。完整测试 325/325 通过，新增四站点同一工作交接、暂存不绑定、去重、查询参数脱敏与错站拒绝回归。日常 Chrome 实测 Gemini 普通新会话返回 WORKET_GEMINI_OK；Kimi/豆包/DeepSeek 当前需要用户登录，尚未完成插件到 Worket 的真实四站闭环。浏览器工具禁止访问 chrome://extensions，扩展加载交由用户在管理页操作；已准备稳定目录，待取得实际扩展 ID 后精确配对。桌面安装结果将在交付时补充。
+
+日常功能整合：已合并 codex/problem-reporting，保留紧凑审阅、全局进度、反馈顶栏及 Windows 修复；完整测试 332/332、提取评测工具测试 34/34、server TypeScript 构建通过。GitHub 下载 Electron 失败后使用本机缓存的同版本 44.1.1 ZIP 打包，scripts/package-desktop.mjs 支持显式 --electron-zip-dir；打包排除无关 reports 目录。
+
+本机交付：正常退出旧应用后备份到 output/app-backups/web-connectors-20261014（含 SQLite 一致性备份），安装 /Applications/Worket.app 并重启，签名 deep/strict 通过。安装与构建 ASAR SHA256 均为 5ff1abf8bb67697254bce6eb78edd038ec6cf910f22e5d3b94a197a811c633b5。实际进程 PID 7477 来自 /Applications/Worket.app/Contents/MacOS/Worket；原数据库 quick_check=ok，原 28 张表均无计数减少。实际导入下拉框已显示 Kimi、豆包、DeepSeek、Gemini。尚未发布 GitHub Release 或部署后台。
+
+用户完成登录后，日常 Chrome 的 Kimi 普通聊天、DeepSeek 和 Gemini 分别真实返回 WORKET_KIMI_OK / WORKET_DEEPSEEK_OK / WORKET_GEMINI_OK。豆包当前落在企业工作空间，普通聊天模式待切换；扩展 ID 及真实选区到 Worket 的完整闭环仍待完成。

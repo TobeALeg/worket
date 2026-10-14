@@ -23,6 +23,7 @@ const options = {
   executableName: "Worket",
   platform,
   arch,
+  ...(argument("electron-zip-dir") ? { electronZipDir: resolve(argument("electron-zip-dir")) } : {}),
   out: "release",
   overwrite: true,
   prune: true,
