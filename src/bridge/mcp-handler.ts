@@ -2,6 +2,7 @@ import { currentSourceEvents } from "../core/source-revisions.js";
 import { buildHandoffContextV2, buildHandoffContextV3, readHandoffEvidence } from "./handoff-context.js";
 import type { WorkCore } from "../core/index.js";
 import type { ContinuationSnapshot } from "../handoff/continuation.js";
+import { executionBrief } from "../handoff/execution-brief.js";
 
 interface JsonRpcRequest {
   jsonrpc?: string;
@@ -51,10 +52,10 @@ export class WorkPetMcpHandler {
               {
                 name: "get_work_context",
                 description:
-                  "读取可直接接力的上下文。context_version=2 返回精简旧版主包；context_version=3 返回有来源与版本校验的阶段接续快照；省略时兼容旧版结构。",
+                  "读取工作目标、要求、进度和必要资料。默认 context_version=4 返回可直接执行的工作说明；1–3 仅供旧客户端兼容。",
                 inputSchema: {
                   type: "object",
-                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "确认接手时必须带启动指令中的 DELIVERY 标识；省略仅查看，不确认读取。" }, context_version: { type: "integer", enum: [1, 2, 3], description: "3 返回整体目标、阶段成果、当前阶段、适用约束、证据和未解析缺口。" } },
+                  properties: { work_id: { type: "string" }, delivery_id: { type: "string", description: "传入启动指令中的 DELIVERY 标识。" }, context_version: { type: "integer", enum: [1, 2, 3, 4], description: "默认 4：工作说明。" } },
                   required: ["work_id"],
                 },
               },
@@ -111,18 +112,20 @@ export class WorkPetMcpHandler {
           const deliveryId = args.delivery_id;
           if (deliveryId !== undefined && (typeof deliveryId !== 'string' ||
               work.instance.status !== 'OPEN' || deliveryId !== work.packageDeliveryId)) throw new Error('DELIVERY_MISMATCH');
-          const version = args.context_version;
-          if (version !== undefined && version !== 1 && version !== 2 && version !== 3) throw new Error("UNSUPPORTED_CONTEXT_VERSION");
+          const version = args.context_version ?? 4;
+          if (version !== 1 && version !== 2 && version !== 3 && version !== 4) throw new Error("UNSUPPORTED_CONTEXT_VERSION");
           // Historical handoffs stay immutable; a current read must also recheck
           // the pinned materials and input files before recording read success.
           if (version === 3 && !this.#prepareContinuation) throw new Error("CONTINUATION_PREPARER_UNAVAILABLE");
-          const continuation = version === 3 ? await this.#prepareContinuation!(workId) : undefined;
+          const continuation = version === 3 || version === 4 ? await this.#prepareContinuation?.(workId) : undefined;
           const currentWork = this.#core.getWork(workId);
           if (!currentWork) throw new Error("WORK_NOT_FOUND");
           const handoff = this.#core.createHandoffPackage(workId, continuation ? { continuation } : {});
           const acknowledged = typeof deliveryId === "string";
           const legacyContext = buildHandoffContextV2(currentWork, handoff);
-          const result = toolResult(version === 3
+          const result = version === 4
+            ? { content: [{ type: "text", text: executionBrief(handoff.workPackage!, currentWork) }] }
+            : toolResult(version === 3
             ? {
                 ...buildHandoffContextV3(currentWork, handoff, legacyContext),
                 deliveryReceipt: { acknowledged },

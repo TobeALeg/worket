@@ -354,11 +354,6 @@ function registerIpc(): void {
     });
     if (target.canceled || !target.filePath) return null;
     writeFileSync(target.filePath, result.markdown, { mode: 0o600 });
-    writeFileSync(
-      target.filePath.replace(/\.md$/i, "") + ".json",
-      JSON.stringify(result.json, null, 2),
-      { mode: 0o600 },
-    );
     return target.filePath;
   });
   ipcMain.handle("panel:toggle", () => togglePanel());
