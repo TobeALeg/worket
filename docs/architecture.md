@@ -108,6 +108,8 @@ v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg
 
 `recording-sources` 的最近活动列表不再请求或展示首次记录说明，历史聊天仍沿用原有说明规则。history 图标保留原按钮事件及可访问名称；工作详情以弹性布局排列返回按钮和执行者，长名称省略并保留悬停全文。准备状态仅在有实际状态或提示时渲染，删除无状态时的说明占位；工作操作继续使用原生 `details/summary`。此次只调整 renderer，不改变记录、交接或后台准备流程。
 
+2026-10-15 更新：上述 history 图标与子页已移除；最近活动页的完整来源列表现在显示首次记录说明，供应商图由注册表中的执行者 ID 映射，本机未运行的执行者沿用注册表过滤。
+
 验证：`npm run build` 通过；隔离 Chromium 的合成 IPC 页面验证历史入口键盘打开、三点菜单执行操作、返回列表、实际准备/失败提示，以及 400px、360px 和长执行者名称的布局。报告与截图见 `output/playwright/panel-cleanup/`。该次验证未更新已安装应用；随后用户确认批次结束，已完成 [打包、安装与重启验收](acceptance/panel-navigation.md)。
 
 服务设置导航补充：`distillation.show` 接收可选返回目标，仅服务设置与改进数据传入。箭头和 Esc 共享同一返回处理，等待改进偏好保存后再导航；改进数据返回服务页，服务页回到原面板并恢复菜单焦点。其他沉淀弹层继续使用原有关闭行为，每次渲染重置取消事件，避免返回处理泄漏到候选审阅。
@@ -444,9 +446,9 @@ INACTIVE ──继续原工作──> ACTIVE
 
 ### 多工作发现与持续记录
 
-`recording-sources.ts → codex:list / codex:history → AppService → CodexAppServerClient.thread/list` 提供轻量来源目录。目录按会话 ID 附带已有 workId；发现来源不创建 WorkInstance。历史接口沿用 App Server nextCursor 分页；最近活动按 updatedAt 排序展示最近五个来源中未记录的聊天，不因长任务超过五分钟而隐藏入口，不依赖独立 App Server 的 notLoaded 状态，也不依赖前台唯一匹配。用户逐项点击后复用 work:create-from-codex，重复选择打开原工作。
+`recording-sources.ts → executors:list / conversations:history → AppService → ExecutorRegistry` 为最近活动页提供各渠道的分页目录。目录按会话 ID 附带已有 workId；发现来源不创建 WorkInstance。界面按渠道最新聊天时间排列分组，组内按 updatedAt 倒序；品牌图直接筛选渠道，全部模式可同时翻取各渠道下一页。Codex 单渠道保留服务端标题搜索，其余模式搜索已加载记录。点击未记录聊天创建工作，点击已有记录打开原工作；历史读取错误在原页提示。可用执行者来自注册表，未知品牌使用其 mark。
 
-主进程在启动后持续调用 syncRecordedCodexWorks，只同步 OPEN 且当前 ACTIVE Binding 为 Codex 的工作，各来源独立失败重试；串行周期避免定时任务重叠。Hook 仍即时补采，事件 externalId 保证幂等。异步读取返回后重查 Binding，完成、删除或交接期间不得把旧来源追加到新执行片段。面板可见时每五秒分别刷新来源和已有记录；来源读取失败不阻止已有记录显示。历史加载和导入错误在原入口显示，可直接重试。
+主进程在启动后持续调用 syncRecordedCodexWorks，只同步 OPEN 且当前 ACTIVE Binding 为 Codex 的工作，各来源独立失败重试；串行周期避免定时任务重叠。Hook 仍即时补采，事件 externalId 保证幂等。异步读取返回后重查 Binding，完成、删除或交接期间不得把旧来源追加到新执行片段。面板可见时刷新已有工作；来源列表最多每 30 秒刷新一次，也可手动刷新。来源读取失败不阻止已有记录显示；历史加载和导入错误在原页显示，可直接重试。
 
 来源目录的 agentName 由 Adapter 在 AppService 中声明，当前 Codex 来源固定为 Codex，不从项目目录或标题猜测。WorkSummaryView 的 agentName 来自活动 ExecutionEpisode，结束后取最后片段。waiting 领域状态保持原义，展示层统一转为“等待发送消息”，面板列表和详情共用 CAPTURE_WAITING_GUIDANCE，桌宠提示发送消息；样式与 recording 区分。
 

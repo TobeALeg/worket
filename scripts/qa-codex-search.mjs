@@ -10,11 +10,11 @@ import { chromium } from 'playwright';
         await page.route('http://worket-fixture.test/**', async (route) => {
             const pathname = new URL(route.request().url()).pathname;
             if (pathname === '/')
-                return route.fulfill({ contentType: 'text/html', body: `<div id="recent-sources"></div><p id="source-error"></p><button id="record-history">History</button><dialog id="history-dialog"><span id="history-search-label"></span><input id="history-search"><select id="history-executor"></select><div id="history-sources"></div><p id="history-error"></p><button id="history-more">More</button><button id="history-close">Close</button><button id="history-retry">Retry</button></dialog><script type="module">import{setupRecordingSources}from'/renderer/recording-sources.js';setupRecordingSources(()=>{});</script>` });
-            const path = resolve('dist', '.' + pathname);
+                return route.fulfill({ contentType: 'text/html', body: `<div id="source-providers"></div><span id="source-search-label"></span><input id="source-search"><p id="source-error"></p><div id="recent-sources"></div><button id="source-more">More</button><button id="source-retry">Retry</button><script type="module">import{setupRecordingSources}from'/renderer/recording-sources.js';const sources=setupRecordingSources(()=>{});sources.refresh();</script>` });
+            const path = resolve('dist', pathname.startsWith('/executor-logos/') ? './renderer' + pathname : '.' + pathname);
             if (!path.startsWith(resolve('dist') + '/'))
                 return route.abort();
-            await route.fulfill({ contentType: 'text/javascript', body: await readFile(path, 'utf8') });
+            await route.fulfill(path.endsWith('.png') ? { contentType: 'image/png', body: await readFile(path) } : { contentType: 'text/javascript', body: await readFile(path, 'utf8') });
         });
         await page.addInitScript(() => {
             const g = window;
@@ -22,9 +22,10 @@ import { chromium } from 'playwright';
             g.records = [];
             g.pending = {};
             const row = (id, title) => ({ id, title, executorId: 'codex', agentName: 'Codex', cwd: '/tmp/synthetic', updatedAt: new Date().toISOString() });
-            g.workpet = { listExecutors: async () => [{ id: 'codex', name: 'Codex' }], distillation: async () => ({ required: false }), listRecentConversations: async () => ({ threads: [], errors: [] }),
+            g.workpet = { listExecutors: async () => [{ id: 'codex', name: 'Codex' }, { id: 'workbuddy', name: 'WorkBuddy' }], distillation: async () => ({ required: false }), listRecentConversations: async () => ({ threads: [], errors: [] }),
                 listConversationHistory: async (executor, cursor, query) => {
                     g.calls.push({ executor, cursor, query });
+                    if (executor === 'workbuddy') return { threads: [{ ...row('buddy', 'Buddy history'), executorId: 'workbuddy', agentName: 'WorkBuddy', updatedAt: '2026-01-01T00:00:00Z' }], nextCursor: null };
                     if (query === 'FIRST' || query === 'OLD_ERROR')
                         return new Promise((resolve, reject) => { g.pending[query] = { resolve, reject }; });
                     if (query === 'SECOND')
@@ -33,26 +34,31 @@ import { chromium } from 'playwright';
                 }, createWorkFromConversation: async (input) => { g.records.push(input); return {}; }, getDashboard: async () => ({}) };
         });
         await page.goto('http://worket-fixture.test/');
-        await page.locator('#record-history').click();
+        await page.locator('[data-provider="workbuddy"]').waitFor();
+        assert.deepEqual(await page.locator('.source-group-title').allTextContents(), ['Codex', 'WorkBuddy']);
+        assert.equal(await page.locator('[data-provider="codex"] img').getAttribute('src'), './executor-logos/codex.png');
+        await page.locator('[data-provider="workbuddy"]').click();
+        assert.equal(await page.locator('[data-thread-id="buddy"]').count(), 1);
+        assert.equal(await page.locator('[data-thread-id="base"]').count(), 0);
+        await page.locator('[data-provider="codex"]').click();
         await page.locator('[data-thread-id="base"]').waitFor();
-        await page.locator('#history-search').fill('FIRST');
+        await page.locator('#source-search').fill('FIRST');
         await page.waitForFunction(() => Boolean(window.pending.FIRST));
-        await page.locator('#history-search').fill('SECOND');
+        await page.locator('#source-search').fill('SECOND');
         await page.locator('[data-thread-id="second"]').waitFor();
         await page.evaluate(() => { window.pending.FIRST.resolve({ threads: [{ id: 'wrong', title: 'FIRST stale' }], nextCursor: 'wrong-cursor' }); });
-        await page.waitForFunction(() => document.querySelector('#history-executor')?.hasAttribute('disabled') === false);
         assert.equal(await page.locator('[data-thread-id="wrong"]').count(), 0);
-        await page.locator('#history-more').click();
+        await page.locator('#source-more').click();
         await page.locator('[data-thread-id="extra"]').waitFor();
         assert.equal(await page.locator('.source-row').count(), 2);
         assert.deepEqual(await page.evaluate(() => window.calls.at(-1)), { executor: 'codex', cursor: 'more-SECOND', query: 'SECOND' });
-        await page.locator('#history-search').fill('OLD_ERROR');
+        await page.locator('#source-search').fill('OLD_ERROR');
         await page.waitForFunction(() => Boolean(window.pending.OLD_ERROR));
-        await page.locator('#history-search').fill('SECOND');
+        await page.locator('#source-search').fill('SECOND');
         await page.locator('[data-thread-id="second"]').waitFor();
         await page.evaluate(() => { window.pending.OLD_ERROR.reject(new Error('stale error')); });
         await page.waitForTimeout(30);
-        assert.equal(await page.locator('#history-error').isVisible(), false);
+        assert.equal(await page.locator('#source-error').isVisible(), false);
         assert.deepEqual(await page.evaluate(() => window.records), []);
         await page.locator('[data-thread-id="second"] button').click();
         assert.deepEqual(await page.evaluate(() => window.records), [{ executorId: 'codex', threadId: 'second' }]);

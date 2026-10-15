@@ -27,19 +27,16 @@ try {
     assert.ok(item?.available && item.canDeliver, `${id} available`);
   }
   await panel.locator("#tab-recent").click();
-  await panel.locator("#record-history").click();
-  await panel.locator("#history-executor option[value='antigravity']").waitFor({ state: "attached" });
+  await panel.locator('[data-provider="antigravity"]').waitFor({ state: "attached" });
   const counts = {};
   for (const id of ["zcode", "antigravity"]) {
-    await panel.locator("#history-executor").selectOption(id);
-    await panel.waitForFunction(() => !document.querySelector("#history-executor").disabled);
-    await panel.locator("#history-sources .source-row").first().waitFor();
-    counts[id] = await panel.locator("#history-sources .source-row").count();
+    await panel.locator(`[data-provider="${id}"]`).click();
+    await panel.locator("#recent-sources .source-row").first().waitFor();
+    counts[id] = await panel.locator("#recent-sources .source-row").count();
     assert.ok(counts[id] > 0);
     assert.ok(await panel.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await panel.screenshot({ path: join(output, `${id}-history.png`) });
   }
-  await panel.locator("#window-back").click();
   // Exercise the production picker against the real registry without delivering data.
   await panel.evaluate(() => { void import("./executor-picker.js").then(m => m.chooseExecutor()); });
   for (const name of ["ZCode", "Antigravity"]) {

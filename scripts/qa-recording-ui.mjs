@@ -18,7 +18,7 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage({ viewport: { width: 304, height: 270 }, deviceScaleFactor: 2 });
 const errors = [];
-page.on('pageerror', e => errors.push(e.message));
+page.on('pageerror', e => errors.push(e.stack ?? e.message));
 await page.addInitScript(() => {
   const thread = { id: 'synthetic', executorId: 'fixture', agentName: 'Fixture', title: '合成测试 · 整理客户周报', cwd: '/tmp/fixture', updatedAt: new Date().toISOString() };
   window.workpet = {
@@ -40,7 +40,7 @@ try {
   await page.locator('#recording-upload-notice').waitFor({ state: 'visible' });
   const box = await page.locator('#context-bubble').boundingBox();
   assert.ok(box && box.y >= 0 && box.x >= 0 && box.x + box.width <= 304);
-  assert.match(await page.locator('#recording-upload-notice').textContent(), /记录即上传/);
+  assert.match(await page.locator('#recording-upload-notice').textContent(), /留存 90 天/);
   await page.screenshot({ path: output + '/pet.png' });
   await page.locator('#paper-action').click();
   await page.locator('#recording-upload-notice').waitFor({ state: 'hidden' });
@@ -61,17 +61,13 @@ try {
   assert.match(await page.locator('#recent-sources .notice').textContent(), /保存 90 天/);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.screenshot({ path: output + '/recent.png' });
-  await page.locator('#record-history').click();
-  await page.locator('#history-sources .source-row').waitFor();
-  assert.match(await page.locator('#history-sources .notice').textContent(), /已有及后续/);
+  assert.match(await page.locator('#recent-sources .notice').textContent(), /已有及后续/);
   await page.screenshot({ path: output + '/history.png' });
-  await page.locator('#history-sources .source-row button').click();
+  await page.locator('#recent-sources .source-row button').click();
   await page.locator('#tab-recent').click();
   await page.waitForFunction(() => document.querySelector('#recent-sources .source-row') && !document.querySelector('#recent-sources .notice'));
   await page.screenshot({ path: output + '/recent-after-recording.png' });
-  await page.locator('#record-history').click();
-  await page.locator('#history-sources .source-row').waitFor();
-  assert.equal(await page.locator('#history-sources .notice').count(), 0);
+  assert.equal(await page.locator('#recent-sources .notice').count(), 0);
   await page.reload();
   await page.locator('#tab-recent').click();
   await page.locator('#recent-sources .source-row').waitFor();

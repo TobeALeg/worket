@@ -125,14 +125,22 @@ dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 .dialog-shell > .dialog-actions { flex-shrink: 0; padding: 11px 17px; border-top: 1px solid var(--line); }
 .dialog-card .notice { margin: 0; }
 .source-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.source-actions { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.source-providers { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.source-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.source-provider { display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; padding: 4px; border-radius: 10px; background: var(--surface); }
+.source-provider[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.source-provider img { display: block; width: 30px; height: 30px; object-fit: contain; }
+.source-provider span { font-size: 10px; }
+.source-search { margin-bottom: 10px; }
+.source-search span { color: var(--muted); font-size: 10px; }
+.source-group-title { padding: 12px 0 2px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 500; }
+.source-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 .source-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .source-row > div { min-width: 0; }
 .source-row h3 { font-size: 12px; overflow-wrap: anywhere; }
 .source-row button { flex-shrink: 0; }
 .source-row p { color: var(--muted); font-size: 10px; margin-top: 4px; }
 .source-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-.history-sources { min-height: 0; }
 .file-choice { display: flex; align-items: start; gap: 6px; font-size: 12px; overflow-wrap: anywhere; }
 .file-choice.unavailable { color: var(--muted); }
 .consent, .policy-details { color: var(--muted); font-size: 11px; line-height: 1.6; }

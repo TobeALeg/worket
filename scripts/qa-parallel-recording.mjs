@@ -159,21 +159,20 @@ try {
     );
   }
   await page.locator("#tab-recent").click();
-  await page.locator("#record-history").click();
-  await page.locator("#history-executor").selectOption("workbuddy");
-  await page.locator("#history-more").click();
-  await page.locator("#history-search").fill("历史");
+  await page.locator('[data-provider="workbuddy"]').click();
+  await page.locator("#source-more").click();
+  await page.locator("#source-search").fill("历史");
   await page.waitForFunction(
     () =>
-      document.querySelectorAll("#history-sources .source-row").length === 1,
+      document.querySelectorAll("#recent-sources .source-row").length === 1,
   );
   assert.equal(
-    await page.locator("#history-sources .agent-label").innerText(),
-    "WorkBuddy",
+    await page.locator('[data-provider="workbuddy"]').getAttribute("aria-pressed"),
+    "true",
   );
   await page.screenshot({ path: join(output, "executors-02-history.png") });
   await page
-    .locator('#history-sources [data-thread-id="workbuddy-1"] button')
+    .locator('#recent-sources [data-thread-id="workbuddy-1"] button')
     .click();
   await page.waitForFunction(
     () => document.querySelectorAll("#work-list .work-row").length === 3,
