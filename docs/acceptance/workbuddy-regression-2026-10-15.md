@@ -37,3 +37,13 @@
 | 结果文件/订单金额.csv | 130 | 0c755dba303f19502d943827bbca1163f99f3effb317e5441b7b06213a360af7 |
 
 本次只覆盖同一 Mac 的合成 CSV → Markdown/CSV。账号过滤已由 #21 自动回归覆盖，此次未切换真实账号。测试通过 Computer Use 操作现有应用，不代表 Worket 产品增加 RPA。只增加验收文档，没有修复上述新发现或修改运行时代码。
+
+## file URI 修复后原现场复验（同日）
+
+用户要求新增 file URI 识别后，#23（main `aa55409e2c7bfb9ffce31bec883669d4b8d50739`）在可见助手回复中使用 Node `fileURLToPath` 转换本机 file URI，并复用现有 ArtifactTracker。编码中文/空格/百分号、去重、localhost、远端/无效 URI 排除及活动回复延迟入档回归覆盖；全量测试 349/349、评测工具 34/34、服务构建、打包应用验收及合并后 CI 均通过。
+
+正式应用更新并正常重启，安装与构建 ASAR SHA-256 均为 `3cd924d92b27e3f7c35525645d0b359e340942e7d288a6938d8210f980ec02e9`；构建提交与 squash 后 main 的完整源码树一致。旧应用备份在 `output/app-backups/file-url-20261015/Worket.app`。实际进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`。
+
+使用本文件同一 work/session，未重发或补充 WorkBuddy 消息，未手工导入或写库。启动后的正常同步自动增加两个 OUTPUT，原 INPUT 保留；三个引用全部 AVAILABLE，文件字节数与 SHA-256 逐一匹配上表，数据库 quick_check=ok。原生 Worket 显示“18 条记录 · 3 份资料 · 2 段执行 · 已绑定 · 工作包已读取”。本机结构化核对记录为 `output/qa-workbuddy-regression-20261015/file-url-fix-verification.json`。
+
+本轮已解决“文件 URI 输出引用缺失”。上文失败现场保留作为修复前证据；自动状态整理失败与约 10 分钟交接等待仍未解决，不据此改为自动状态全链路通过。
