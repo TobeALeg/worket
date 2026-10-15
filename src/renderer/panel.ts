@@ -450,6 +450,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(".filter")) {
     detailOpen = false;
     filter = button.dataset.filter as PanelTab;
     render();
+    if (filter === "RECENT") void recordingSources.refresh();
   });
   button.addEventListener("keydown", (event) => {
     const tabs = [...document.querySelectorAll<HTMLButtonElement>(".filter")];
