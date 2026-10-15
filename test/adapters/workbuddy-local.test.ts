@@ -79,3 +79,24 @@ test('internal user records cannot replace the active visible request', () => {
     assert.deepEqual(readVisibleTranscript(transcript, 'chat', true).map(e => e.content), ['visible', 'partial']);
   }
 });
+
+test('file URI output links decode local paths, dedupe and preserve existing absolute reference IDs', () => {
+  const oldText = '[plain](/tmp/plain.md)';
+  const text = '[report](file:///tmp/%E6%B1%87%E6%80%BB%20%28v1%29.md)\n' + oldText +
+    '\n[same](file://localhost/tmp/plain.md)\n[percent](file:///tmp/100%25.csv)';
+  const project = (content: string, settled = true) => readVisibleTranscript(
+    JSON.stringify(message('a', 'assistant', content)), 'chat', settled).filter(e => e.kind === 'artifact.added');
+  const events = project(text);
+  assert.deepEqual(events.map(e => e.content), ['/tmp/plain.md', '/tmp/汇总 (v1).md', '/tmp/100%.csv']);
+  assert.equal(events[0]!.externalId, project(oldText)[0]!.externalId);
+  assert.ok(events.every(e => e.metadata?.role === 'OUTPUT' && e.metadata?.path === e.content));
+  assert.deepEqual(project(text, false), []);
+});
+
+test('invalid and remote file URI links remain visible without creating local artifacts', () => {
+  const text = '[remote](file://other-host/share/out.md) [bad](file:///tmp/%ZZ.md) ' +
+    '[separator](file:///tmp/a%2Fb.md) [null](file:///tmp/%00.md) [web](https://example.com/a.md)';
+  const events = readVisibleTranscript(JSON.stringify(message('a', 'assistant', text)), 'chat', true);
+  assert.equal(events[0]!.content, text);
+  assert.deepEqual(events.filter(e => e.kind === 'artifact.added'), []);
+});

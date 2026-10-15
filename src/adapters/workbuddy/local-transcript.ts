@@ -1,6 +1,7 @@
 import { object, historyEvent } from "../local-history.js";
 import type { NormalizedSourceEvent } from "../types.js";
 import { isAbsolute } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** Project transcripts are append evidence, not proof of canonical history/deletions. */
 export function readVisibleTranscript(body: string, sessionId: string, settled: boolean): NormalizedSourceEvent[] {
@@ -54,11 +55,25 @@ export function readVisibleTranscript(body: string, sessionId: string, settled: 
         { sessionId, workbuddyLocal: true, ...(typeof data.conversationRequestId === "string" ? { workbuddyRequestId: data.conversationRequestId } : {}) }));
       // Only explicit local references in visible text become artifacts; never inspect tools/thoughts.
       const paths = row.role === "user" ? [...text.matchAll(/@"([^"\n]+)"/g)].map(match => match[1]!)
-        : [...text.matchAll(/\]\((\/[^)\n]+)\)/g)].map(match => match[1]!);
+        : outputPaths(text);
       for (const [ref, path] of [...new Set(paths.filter(isAbsolute))].entries())
         events.push(historyEvent("workbuddy", sessionId, `${row.id}:ref:${index}:${ref}`, events.length + 1,
           "artifact.added", path, time.toISOString(), { path, role: row.role === "user" ? "INPUT" : "OUTPUT", sessionId, workbuddyLocal: true }));
     }
   }
   return events;
+}
+
+/** Keep existing absolute-path reference IDs stable when adding URI references. */
+function outputPaths(text: string): string[] {
+  const paths = [...text.matchAll(/\]\((\/[^)\n]+)\)/g)].map(match => match[1]!);
+  for (const match of text.matchAll(/\]\((file:\/\/[^)\n]+)\)/gi)) {
+    try {
+      const url = new URL(match[1]!);
+      if (url.hostname && url.hostname !== "localhost") continue;
+      const path = fileURLToPath(url);
+      if (isAbsolute(path) && !path.includes("\0")) paths.push(path);
+    } catch { /* An invalid file link does not invalidate the visible reply. */ }
+  }
+  return paths;
 }
