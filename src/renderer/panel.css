@@ -125,11 +125,14 @@ dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 .dialog-shell > .dialog-actions { flex-shrink: 0; padding: 11px 17px; border-top: 1px solid var(--line); }
 .dialog-card .notice { margin: 0; }
 .source-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.source-providers { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.source-providers { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; }
 .source-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-.source-provider { display: grid; place-items: center; width: 40px; height: 40px; min-height: 40px; padding: 4px; border-radius: 10px; background: var(--surface); }
-.source-provider[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.source-provider img { display: block; width: 30px; height: 30px; object-fit: contain; }
+.source-provider { display: grid; place-items: center; width: 38px; height: 38px; min-height: 38px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: #fff; }
+.source-provider[data-provider="workbuddy"] { background: #08bd98; }
+.source-provider[data-provider="zcode"] { background: #101112; }
+.source-provider:hover { opacity: .82; }
+.source-provider[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent); }
+.source-provider img { display: block; width: 38px; height: 38px; border-radius: 50%; object-fit: cover; transform: scale(1.2); }
 .source-provider span { font-size: 10px; }
 .source-search { margin-bottom: 10px; }
 .source-search span { color: var(--muted); font-size: 10px; }

@@ -61,12 +61,12 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
 
   function renderProviders(): void {
     providers.replaceChildren();
-    for (const item of [{ id: "all", name: "全部", mark: "全部" }, ...executors]) {
+    for (const item of executors) {
       const button = document.createElement("button");
       button.className = "source-provider";
       button.dataset.provider = item.id;
       button.type = "button";
-      button.title = item.id === "all" ? "全部聊天" : `${item.name} 聊天`;
+      button.title = selected === item.id ? `取消 ${item.name} 筛选` : `只看 ${item.name} 聊天`;
       button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-pressed", String(selected === item.id));
       if (logos[item.id]) {
@@ -76,11 +76,11 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
         button.append(logo);
       } else {
         const mark = document.createElement("span");
-        mark.textContent = item.id === "all" ? "全部" : item.mark;
+        mark.textContent = item.mark;
         button.append(mark);
       }
       button.addEventListener("click", () => {
-        selected = item.id;
+        selected = selected === item.id ? "all" : item.id;
         search.value = "";
         codexSearch = null;
         searchRevision++;
