@@ -2,7 +2,19 @@ import { SELECTED_IMPORT_CONNECTORS } from "../connectors/catalog.js";
 import type { SelectedContent } from "../connectors/selected-content.js";
 import type { DashboardView } from "../ui-contract.js";
 export function setupSelectedImport(onRecorded: (value: DashboardView) => void): void {
-  const button = document.createElement("button"); button.id = "import-selected"; button.className = "secondary"; button.textContent = "导入选定内容";
+  const button = document.createElement("button");
+  button.id = "import-selected";
+  button.className = "source-import";
+  button.type = "button";
+  button.title = "导入选定内容";
+  button.setAttribute("aria-label", button.title);
+  const icon = document.createElement("span");
+  icon.className = "source-icon";
+  const logo = document.createElement("img");
+  logo.src = "./executor-logos/chrome.png";
+  logo.alt = "";
+  icon.append(logo);
+  button.append(icon);
   document.querySelector(".source-actions")!.append(button);
   button.addEventListener("click", () => void open());
   async function open() {

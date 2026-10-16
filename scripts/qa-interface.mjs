@@ -13,7 +13,7 @@ const server = createServer(async (req, res) => {
   const path = resolve('dist', '.' + new URL(req.url, 'http://local').pathname);
   if (!path.startsWith(resolve('dist') + '/')) { res.writeHead(404).end(); return; }
   try {
-    res.setHeader('Content-Type', { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html' }[extname(path)] ?? 'text/plain');
+    res.setHeader('Content-Type', { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png' }[extname(path)] ?? 'text/plain');
     res.end(await readFile(path));
   } catch { res.writeHead(404).end(); }
 });
@@ -168,6 +168,22 @@ try {
   await page.locator('[data-action="resume"]').click(); await menuAction('archive'); await shot('09-archived');
   await page.locator('#back-to-list').click();
   await page.locator('#tab-recent').click(); await shot('10-recent');
+  const toolbar = await page.locator('.source-toolbar').evaluate(element => {
+    const providers = element.querySelector('.source-providers').getBoundingClientRect();
+    const importButton = element.querySelector('#import-selected').getBoundingClientRect();
+    const icon = element.querySelector('.source-provider .source-icon').getBoundingClientRect();
+    return { providers: { top: providers.top, right: providers.right }, importButton: { top: importButton.top, left: importButton.left, right: importButton.right }, icon: { width: icon.width, height: icon.height }, right: element.getBoundingClientRect().right };
+  });
+  assert.equal(toolbar.icon.width, 19);
+  assert.equal(toolbar.icon.height, 19);
+  assert.equal(toolbar.providers.top, toolbar.importButton.top, 'brand and import icons share one row');
+  assert.ok(toolbar.importButton.left >= toolbar.providers.right, 'import icon stays right of brands');
+  assert.ok(toolbar.right - toolbar.importButton.right < 1, 'import icon stays at right edge');
+  assert.equal(await page.locator('#import-selected img').getAttribute('src'), './executor-logos/chrome.png');
+  assert.equal(await page.locator('#import-selected').getAttribute('aria-label'), '导入选定内容');
+  await page.locator('#import-selected').click();
+  await page.getByRole('dialog').getByRole('heading', { name: '导入选定内容' }).waitFor();
+  await page.getByRole('dialog').getByRole('button', { name: '取消' }).click();
   const mainHeaderPositions = await headerPositions();
   assert.equal(mainHeaderPositions.length, 3);
   await page.locator('[data-provider="codex"]').click(); await page.locator('#recent-sources .source-row').waitFor(); await shot('11-history');
