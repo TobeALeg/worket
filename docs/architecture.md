@@ -446,7 +446,7 @@ INACTIVE ──继续原工作──> ACTIVE
 
 ### 多工作发现与持续记录
 
-`recording-sources.ts → executors:list / conversations:history → AppService → ExecutorRegistry` 为最近活动页提供各渠道的分页目录。目录按会话 ID 附带已有 workId；发现来源不创建 WorkInstance。界面按渠道最新聊天时间排列分组，组内按 updatedAt 倒序；圆形品牌图直接筛选渠道，再点已选中的图标清除筛选。无图标选中时可同时翻取各渠道下一页。Codex 单渠道保留服务端标题搜索，其余模式搜索已加载记录。点击未记录聊天创建工作，点击已有记录打开原工作；历史读取错误在原页提示。可用执行者来自注册表，未知品牌使用其 mark。
+`recording-sources.ts → executors:list / conversations:history → AppService → ExecutorRegistry` 为最近活动页提供各渠道的分页目录。目录按会话 ID 附带已有 workId；发现来源不创建 WorkInstance。界面按渠道最新聊天时间排列分组，组内按 updatedAt 倒序；圆形品牌图直接筛选渠道，再点已选中的图标清除筛选。`source-toolbar` 将 19px 圆形品牌图与最右侧的 Chrome 导入入口放在一行，按钮保留 28px 点击区域；供应商超出可用宽度时仅图标区横向滚动。`selected-import.ts` 继续打开原导入对话框。无图标选中时可同时翻取各渠道下一页。Codex 单渠道保留服务端标题搜索，其余模式搜索已加载记录。点击未记录聊天创建工作，点击已有记录打开原工作；历史读取错误在原页提示。可用执行者来自注册表，未知品牌使用其 mark。
 
 主进程在启动后持续调用 syncRecordedCodexWorks，只同步 OPEN 且当前 ACTIVE Binding 为 Codex 的工作，各来源独立失败重试；串行周期避免定时任务重叠。Hook 仍即时补采，事件 externalId 保证幂等。异步读取返回后重查 Binding，完成、删除或交接期间不得把旧来源追加到新执行片段。面板可见时刷新已有工作；来源列表最多每 30 秒刷新一次，也可手动刷新。来源读取失败不阻止已有记录显示；历史加载和导入错误在原页显示，可直接重试。
 

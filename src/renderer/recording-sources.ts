@@ -69,16 +69,19 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
       button.title = selected === item.id ? `取消 ${item.name} 筛选` : `只看 ${item.name} 聊天`;
       button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-pressed", String(selected === item.id));
+      const icon = document.createElement("span");
+      icon.className = "source-icon";
       if (logos[item.id]) {
         const logo = document.createElement("img");
         logo.src = `./executor-logos/${logos[item.id]}`;
         logo.alt = "";
-        button.append(logo);
+        icon.append(logo);
       } else {
         const mark = document.createElement("span");
         mark.textContent = item.mark;
-        button.append(mark);
+        icon.append(mark);
       }
+      button.append(icon);
       button.addEventListener("click", () => {
         selected = selected === item.id ? "all" : item.id;
         search.value = "";

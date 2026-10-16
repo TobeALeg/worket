@@ -125,15 +125,17 @@ dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 .dialog-shell > .dialog-actions { flex-shrink: 0; padding: 11px 17px; border-top: 1px solid var(--line); }
 .dialog-card .notice { margin: 0; }
 .source-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.source-providers { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; }
-.source-actions { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-.source-provider { display: grid; place-items: center; width: 38px; height: 38px; min-height: 38px; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: #fff; }
-.source-provider[data-provider="workbuddy"] { background: #08bd98; }
-.source-provider[data-provider="zcode"] { background: #101112; }
-.source-provider:hover { opacity: .82; }
-.source-provider[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent); }
-.source-provider img { display: block; width: 38px; height: 38px; border-radius: 50%; object-fit: cover; transform: scale(1.2); }
-.source-provider span { font-size: 10px; }
+.source-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.source-providers { display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; }
+.source-actions { display: flex; flex: none; margin-left: auto; }
+.source-provider, .source-import { display: grid; place-items: center; flex: none; width: 28px; height: 28px; min-height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; }
+.source-provider:hover, .source-import:hover { background: transparent; opacity: .82; }
+.source-icon { display: grid; place-items: center; width: 19px; height: 19px; overflow: hidden; border-radius: 50%; background: #fff; }
+.source-provider[data-provider="workbuddy"] .source-icon { background: #08bd98; }
+.source-provider[data-provider="zcode"] .source-icon { background: #101112; }
+.source-provider[aria-pressed="true"] .source-icon { box-shadow: 0 0 0 2px var(--accent); }
+.source-icon img { display: block; width: 19px; height: 19px; object-fit: cover; transform: scale(1.2); }
+.source-icon span { font-size: 9px; }
 .source-search { margin-bottom: 10px; }
 .source-search span { color: var(--muted); font-size: 10px; }
 .source-group-title { padding: 12px 0 2px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 500; }
