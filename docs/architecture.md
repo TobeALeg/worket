@@ -734,3 +734,7 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 扩展按当前 HTTPS 站点与交接目标核对后，以 256 KiB 分块取回文件，再核对 SHA-256。用户点击扩展 action 提供 activeTab，后台任务在该标签页 MAIN world 执行 `fillWebDraft`，通过网页的原生 file input/change 接收文件并填入正文；豆包异步输入在本地上传菜单边界提供文件。不会自动发送，遇到已有文字草稿、重复传输或网页切换则停止。`dispatched` 仅表示交给网页，不证明服务端上传、模型读取或绑定。其他网页仍为手动附件上传；原选区 stage 与接收附件链路相互独立。
 
 网页富文本正文通过短段纯文本粘贴保留换行，避免网站把长粘贴转成额外 TXT 附件；填入后核对正文（统一 CRLF，忽略首尾空白），不一致则明确提示保留附件、检查并粘贴工作包，不返回成功。真实 Kimi 按钮闭环见 [附件验收](acceptance/web-attachments-2026-10-14.md)。
+
+## 2026-10-19：沉淀列表呈现
+
+DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给 renderer，不修改持久化 Job 或加载对话正文到列表。renderer 按本地日期显示时间、将状态放到右列；契约详情去除重复 heading，并以契约名称设置 dialog 的可访问名称。

@@ -156,7 +156,10 @@ export class DistillationDesktop {
         return;
       }
       case "jobs":
-        return r.list("distillation_jobs");
+        return r.list<Job>("distillation_jobs").map(job => {
+          const snapshot = r.read<import("./service.js").Snapshot>("source_snapshots", job.snapshotId);
+          return { ...job, title: snapshot.sources.map(source => source.title).filter(Boolean).join(" / ") || "未命名对话" };
+        });
       case "snapshot":
         string(input.id);
         return r.read("source_snapshots", input.id);
