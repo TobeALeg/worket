@@ -177,8 +177,8 @@ export async function renderDefinitions(): Promise<void> {
   panel.innerHTML = `${page.items.length ? page.items.map((d: Definition) => `<button class="work-row" data-definition="${esc(d.id)}"><h3>${esc(d.content.name)}</h3><span class="row-meta">v${d.version} · ${esc(new Date(d.confirmedAt).toLocaleDateString())}</span><p>${esc(d.content.purpose.text)}</p></button>`).join("") : '<p class="empty">暂无已沉淀工作</p>'}${jobs.some((j: Job) => j.status !== "SAVED") ? "<h3>沉淀任务</h3>" : ""}${jobs
     .filter((j: Job) => j.status !== "SAVED")
     .map(
-      (j: Job) =>
-        `<button class="work-row" data-job="${esc(j.id)}">${esc(j.createdAt.slice(0, 16).replace("T", " "))} · ${esc(jobLabel(j.status))}${j.error ? `<p>${esc(jobError(j.error))}</p>` : ""}</button>`,
+      (j: Job & { title: string }) =>
+        `<button class="work-row distillation-job" data-job="${esc(j.id)}"><h3>${esc(j.title)}</h3><span class="job-status" data-status="${esc(j.status)}">${esc(jobLabel(j.status))}</span><time datetime="${esc(j.createdAt)}">${esc(new Date(j.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }))}</time>${j.error ? `<p>${esc(jobError(j.error))}</p>` : ""}</button>`,
     )
     .join("")}`;
   panel
@@ -393,6 +393,9 @@ async function openDefinition(id: string, feedback?: ContractFeedback): Promise<
     { label: returnLabel, action: async () => { modal.close(); if (contractOrigin === 'library') changed(); } },
   );
   modal.classList.add('contract-view');
+  modal.querySelector('#definition-title')?.remove();
+  modal.removeAttribute('aria-labelledby');
+  modal.setAttribute('aria-label', d.content.name);
   const sheet = modal.querySelector<HTMLElement>('.contract-sheet')!;
   setContractColor(sheet, d.definitionKey, contractColor(d.definitionKey));
   bind('.wc-tab', async () => {
