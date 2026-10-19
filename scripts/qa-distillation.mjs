@@ -221,6 +221,22 @@ try {
   const firstInput = panel.locator('.dr-item[data-section="inputs"]').first();
   assert.equal(await firstInput.locator('.dr-row [data-text]').count(), 1, 'Edit the original row in place');
   assert.equal(await firstInput.locator('.dr-text-read').count(), 0, 'Edit mode does not duplicate row text');
+  const inputSettings = firstInput.locator('.dr-input-settings');
+  for (const width of [360, 410]) {
+    await app.evaluate(({ BrowserWindow }, width) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(width, 660), width);
+    await panel.waitForFunction(width => innerWidth === width, width);
+    const layout = await inputSettings.evaluate(settings => {
+      const type = settings.querySelector('[data-property="valueType"]').getBoundingClientRect();
+      const defaultValue = settings.querySelector('[data-property="defaultValue"]').getBoundingClientRect();
+      return { sameRow: Math.abs(type.top - defaultValue.top) < 2, overflow: settings.scrollWidth > settings.clientWidth };
+    });
+    assert.equal(layout.sameRow, true, `Input type and default value share a row at ${width}px`);
+    assert.equal(layout.overflow, false, `Input settings fit at ${width}px`);
+    if (width === 410) {
+      await inputSettings.scrollIntoViewIfNeeded();
+      await panel.screenshot({ path: join(output, 'input-settings.png') });
+    }
+  }
   await firstInput.locator('[data-review-action="toggle-property"]').click();
   assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /可选/);
   await firstInput.locator('[data-review-action="toggle-property"]').click();

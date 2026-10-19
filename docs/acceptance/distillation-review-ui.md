@@ -26,3 +26,9 @@
 `npm run build`、`node scripts/qa-distillation.mjs --unpackaged`、`npm run package:mac` 和 `node scripts/qa-distillation.mjs` 均通过。Electron 夹具验证：勾选后条目仍存在，展开后已处理问题原文仍可见，编辑态每行只有一个文字输入且没有重复只读副本，非阻断提示无决定输入框且不阻止发布；打包版完整流程通过，410px 视口没有横向溢出。测试使用合成模型，不代表真实业务候选已由用户验收。
 
 新包经 ad-hoc 签名及深度严格校验；构建与 `/Applications/Worket.app` 的 ASAR SHA-256 均为 `12c51f70f7ca43dd32f2856cbe3f83858e5e45cd54147673e16f664f11315761`。旧应用备份在 `output/app-backups/review-flow-20261019/Worket.app`，其 ASAR 哈希为 `96783690b5cba2df2ff12faf5c367898ef49bff239a2253b23773a4b260d1c83`。已正常退出旧版并重启新版，主进程从 `/Applications/Worket.app/Contents/MacOS/Worket` 运行；未修改现有用户数据目录。
+
+## 2026-10-19 输入设置布局
+
+“输入类型”和“默认值”在同一行，相关设置纵向间距收紧；选项列表和变量标识独立占整行，文件输入不显示默认值。`npm run build`、源码版与签名打包版的 `qa-distillation.mjs` 均通过。Electron 断言覆盖 360px 和 410px：两个控件同排、设置区域无横向溢出；截图见 `output/distillation/input-settings.png`。默认值预填新工作、仍可修改的既有逻辑未改。本次使用合成模型夹具，未代替真实用户可用性验收。
+
+本机旧应用已正常退出并备份至 `output/app-backups/input-settings-20261019/Worket.app`。新包已安装、深度严格签名校验通过；构建与安装 ASAR 的 SHA-256 同为 `bf30206888bc90e4b16c48a1e4c4ddd52ac4413e719217b1999f0467319f499b`。重启后主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`，未改动用户数据目录。
