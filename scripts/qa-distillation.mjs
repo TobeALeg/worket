@@ -237,9 +237,12 @@ try {
       await panel.screenshot({ path: join(output, 'input-settings.png') });
     }
   }
-  await firstInput.locator('[data-review-action="toggle-property"]').click();
-  assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /可选/);
-  await firstInput.locator('[data-review-action="toggle-property"]').click();
+  const requiredToggle = firstInput.getByRole('switch', { name: '必填' });
+  assert.equal(await requiredToggle.getAttribute('aria-checked'), 'true');
+  await requiredToggle.click();
+  assert.equal(await firstInput.getByRole('switch', { name: '必填' }).getAttribute('aria-checked'), 'false');
+  await firstInput.getByRole('switch', { name: '必填' }).click();
+  assert.equal(await firstInput.getByRole('switch', { name: '必填' }).getAttribute('aria-checked'), 'true');
   await firstInput.locator('[data-property="valueType"]').selectOption('CHOICE');
   await firstInput.locator('[data-property="choices"]').fill('客户丙\n客户丁');
   await firstInput.locator('[data-property="choices"]').blur();

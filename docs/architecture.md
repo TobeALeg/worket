@@ -673,6 +673,8 @@ workflow v1.4 将原始事件 kind 索引带入汇总阶段。对有效引用的
 
 输入设置的展示由 `settingsHtml` 与 `.dr-input-settings` 独立控制：类型和默认值在双列栅格中并排，可选值及变量跨两列；文件类型的单个类型控件跨两列。只调整布局，`InputSpec.defaultValue` 的校验、保存和新工作预填逻辑不变。
 
+输入项 `required` 的切换沿用 `toggle-property` 事件，在设置底行显示带 `aria-checked` 状态的开关；`render` 根据当前值重建状态。资料和方法条目的属性按钮仍保留原呈现。
+
 调宽经 preload 的 panel:resize-right 发送 start/move/end，主进程核验发送窗口和有限坐标；`desktop/panel-resize.ts` 以起始 bounds 计算宽度，保持 x/y/height，限定 360–1000px 及当前显示器右边界。默认窗口宽度 410px，不增加渲染进程 Node 权限。
 
 工作详情的分类行仅展示已有状态；最近回复和执行片段用原生 details，按工作 ID 保留其展开状态，切换工作时重置。展示固定资料时由 materialRoles 将内部 key 映射为用户文字；路径保留在 title，显示文件名。此轮不改变数据契约、IPC、上传授权或模型流程。
