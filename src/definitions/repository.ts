@@ -5,6 +5,7 @@ import { updateInstanceFiles, type UpdateInstanceFiles } from './instance-file-u
 import { InstanceFiles, type InstanceInputs } from "./instance-files.js";
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
 import { invalidateRuleDependents } from "./rule-review.js";
+import { inferredCategory, validateCategory } from './category.js';
 import type { EvolutionReview } from './evolution.js';
 import { effectiveRules, acceptanceChecks, ruleSections, ruleText, type InstanceOverride } from "../contracts/rules.js";
 import { randomUUID } from "node:crypto";
@@ -55,6 +56,7 @@ export type Definition = {
   confirmedAt: string;
   contentHash: string;
   materials: Material[];
+  category?: string;
 };
 export type Inputs = Record<string, string | number | boolean>;
 export type CreateFromDefinition = {
@@ -137,7 +139,20 @@ export class DefinitionRepository {
       )
       .get(id);
     ensure(row, "DEFINITION_NOT_FOUND");
-    return JSON.parse(row.payload_json as string) as Definition;
+    return this.withCategory(JSON.parse(row.payload_json as string) as Definition);
+  }
+  private withCategory(definition: Definition): Definition {
+    const row = this.db.prepare('SELECT category FROM definition_categories WHERE definition_key = ?')
+      .get(definition.definitionKey) as { category: string } | undefined;
+    return { ...definition, category: row?.category ?? inferredCategory(definition.content) };
+  }
+  setCategory(input: { definitionKey: string; category: string }): string {
+    string(input.definitionKey);
+    validateCategory(input.category);
+    ensure(this.versions(input.definitionKey).length > 0, 'DEFINITION_NOT_FOUND');
+    this.db.prepare('INSERT INTO definition_categories (definition_key, category) VALUES (?, ?) ON CONFLICT(definition_key) DO UPDATE SET category=excluded.category')
+      .run(input.definitionKey, input.category);
+    return input.category;
   }
   definitions(input: { cursor?: string; limit?: number } = {}): {
     items: Definition[];
@@ -153,7 +168,7 @@ export class DefinitionRepository {
         "SELECT payload_json FROM work_definitions WHERE kind = 'REUSABLE' ORDER BY definition_key, version DESC",
       )
       .all()
-      .map((r) => JSON.parse(r.payload_json as string) as Definition);
+      .map((r) => this.withCategory(JSON.parse(r.payload_json as string) as Definition));
     const latest = all
       .filter(
         (d, i) =>
@@ -173,7 +188,7 @@ export class DefinitionRepository {
         "SELECT payload_json FROM work_definitions WHERE definition_key = ? AND kind = 'REUSABLE' ORDER BY version DESC",
       )
       .all(key)
-      .map((r) => JSON.parse(r.payload_json as string) as Definition);
+      .map((r) => this.withCategory(JSON.parse(r.payload_json as string) as Definition));
   }
   saveDraft(draft: Draft): Draft {
     validateContent(draft.content);
@@ -434,7 +449,7 @@ export class DefinitionRepository {
             const job = this.read<{ id: string; status: string }>('distillation_jobs', current.jobId);
             job.status = 'SAVED'; this.write('distillation_jobs', job);
           }
-          return definition;
+          return this.withCategory(definition);
         };
         if (
           base &&
@@ -772,6 +787,7 @@ export class DefinitionRepository {
             .prepare("DELETE FROM command_results WHERE owner_id=?")
             .run(d.id);
         }
+        this.db.prepare('DELETE FROM definition_categories WHERE definition_key=?').run(input.definitionKey);
         for (const draft of this.list<Draft>("definition_drafts"))
           if (
             versions.some(

@@ -34,6 +34,8 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 ## 工作契约界面与生命周期（2026-10-09）
 
+2026-10-19：`definitions/category.ts` 从名称与目的推断短类别；`definition_categories` 按 `definition_key` 保存用户修改，数据库升至 schema 3 并在迁移前留备份。分类作为图书馆元数据由 repository 在读取时合并，不进入不可变 `Definition.content`、`contentHash` 或版本号。renderer 的页签调用 `setDefinitionCategory`，旧契约无记录时也能显示推断结果。
+
 `renderer/distillation.ts` 继续作为现有对话框流程的宿主：`prepare/start → activity/openJob → mountDefinitionReview → publish → openDefinition`。发布回调区分首存、新版与仅记录依据；只有真实 Definition 才交给 `renderer/work-contract.ts`。普通打开不重复成功动效。修订关闭返回原契约，未保存更改继续使用原有离开确认。
 
 `definitions/contract-view.ts` 是只读展示投影：先通过 `effectiveRules`，再把 `constraints`、`acceptanceCriteria` 和 REQUIRED methods 合为约束；保留 collection/key 地址，不修改原数据、检查标准或执行义务。输入/交付完整显示，资料与目的原位展开。审阅沿用原字段地址，问题、来源与规则编辑仍绑定原项。

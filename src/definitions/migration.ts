@@ -9,11 +9,20 @@ export function migrateDefinitions(
     (db.prepare("PRAGMA user_version").get() as { user_version: number })
       .user_version,
   );
-  if (version > 2)
+  if (version > 3)
     throw new Error(
       "DATABASE_VERSION_UNSUPPORTED：请使用新版 Worket 或恢复迁移前备份",
     );
-  if (version === 2) return;
+  if (version === 3) return;
+  if (version === 2) {
+    if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-category-v3.bak`))
+      db.prepare('VACUUM INTO ?').run(`${databasePath}.before-category-v3.bak`);
+    transaction(db, () => {
+      db.exec(`CREATE TABLE definition_categories (definition_key TEXT PRIMARY KEY, category TEXT NOT NULL) STRICT;
+        PRAGMA user_version = 3;`);
+    });
+    return;
+  }
   if (version === 1) {
     if (
       databasePath !== ":memory:" &&
@@ -25,6 +34,7 @@ export function migrateDefinitions(
         CREATE VIEW capture_bindings AS SELECT '请使用支持沉淀的 Worket；回滚需恢复迁移前备份' AS upgrade_required;
         PRAGMA user_version = 2;`);
     });
+    migrateDefinitions(db, databasePath);
     return;
   }
   if (
@@ -53,4 +63,5 @@ export function migrateDefinitions(
       PRAGMA user_version = 2;
     `);
   });
+  migrateDefinitions(db, databasePath);
 }
