@@ -113,7 +113,7 @@ test('analysis capability and evidence-based extraction work through the authent
     const job = await done(f, submitted.body.requestId);
     assert.equal(job.status, 'SUCCEEDED');
     assert.equal(job.result.coverage.processedEvents, 1);
-    assert.equal(job.result.versions.prompt, 'work-definition-analysis-v1.2');
+    assert.equal(job.result.versions.prompt, 'work-definition-analysis-v1.3');
   } finally { await f.service.close(); }
 });
 

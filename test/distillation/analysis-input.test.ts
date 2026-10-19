@@ -151,7 +151,7 @@ test('selected normative files survive contract filtering and keep their authori
   } finally { service.close(); core.close(); }
 });
 
-test('an unconfirmed duplicate stays independent and blocks review; active scope conflicts still fail', () => {
+test('an unconfirmed duplicate stays independent without blocking; active scope conflicts still fail', () => {
   const active = { key: 'language', text: '默认中文', rule: { scope: 'REUSABLE', status: 'ACTIVE' } };
   const proposed = { key: 'new_candidates', text: '新候选中文，旧候选不翻译', rule: { scope: 'UNCERTAIN',
     status: 'PROPOSED', relation: { kind: 'DUPLICATE', target: 'constraints.language' } } };
@@ -162,10 +162,9 @@ test('an unconfirmed duplicate stays independent and blocks review; active scope
   assert.deepEqual(result.content.constraints, before.content.constraints);
   const candidate = result.content.acceptanceCriteria[0];
   assert.deepEqual(candidate, { ...before.content.acceptanceCriteria[0], rule: { scope: 'UNCERTAIN', status: 'PROPOSED' } });
-  assert.equal(result.issues[0].blocking, true);
-  assert.equal(result.issues[0].field, 'acceptanceCriteria.new_candidates');
+  assert.deepEqual(result.issues, []);
   normalizeUnconfirmedDuplicates(result);
-  assert.equal(result.issues.length, 1);
+  assert.equal(result.issues.length, 0);
   for (const kind of ['DUPLICATE', 'REPLACES']) {
     const invalid = structuredClone(before);
     invalid.content.acceptanceCriteria[0].rule = { scope: 'INSTANCE', status: 'ACTIVE', relation: { kind, target: 'constraints.language' } };

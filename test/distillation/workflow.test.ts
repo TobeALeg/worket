@@ -45,13 +45,24 @@ test("actual provider system contract includes rule relationships and file role 
 test("new coordination is opt-in; legacy clients keep a compatible effective contract", async () => {
   const old = await run("user.prompt");
   assert.ok(old.prompts.every(p => !p.includes('RULE COORDINATION')));
+  assert.ok(old.prompts.some(p => p.includes('surface a confirmation issue')));
   assert.equal(old.value.versions.prompt, 'work-definition-v1.4');
   assert.equal(old.value.content.constraints[0].rule, undefined);
   const modern = await run("user.prompt", () => {}, true);
   assert.ok(modern.prompts.every(p => p.includes('RULE COORDINATION')));
-  assert.equal(modern.value.versions.prompt, 'work-definition-v2.4');
+  assert.ok(modern.prompts.some(p => p.includes('not a second confirmation issue')));
+  assert.equal(modern.value.versions.prompt, 'work-definition-v2.7');
   assert.equal(modern.value.content.constraints[0].rule.scope, 'UNCERTAIN');
-  assert.ok(modern.value.issues.some(i => i.blocking));
+  assert.equal(modern.value.issues.filter(i => i.blocking).length, 0);
+});
+
+test('unadopted candidate stays in its row without a second blocking question', async () => {
+  const { value } = await run('user.prompt', output => {
+    output.content.constraints[0].rule = { scope: 'UNCERTAIN', status: 'PROPOSED' };
+    output.issues.push({ id: 'scope', type: 'UNCERTAIN_GENERALIZATION', field: 'constraints.sources', message: '以后也适用吗？', blocking: true });
+  }, true);
+  assert.equal(value.content.constraints[0].rule.status, 'PROPOSED');
+  assert.equal(value.issues.length, 0);
 });
 
 test('explicit user adoption can cite an Agent proposal as context without treating it as user speech', async () => {

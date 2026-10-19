@@ -27,8 +27,7 @@ for (const entry of manifest.cases.filter(c => c.outcome !== 'SERVICE_FAILURE'))
       semanticCases.find(c => c.id === entry.scenario).verify(merged);
       if (entry.id === 'partial-adoption') for (const item of merged.content.constraints.filter(i => i.rule?.status === 'PROPOSED')) {
         const questions = merged.issues.filter(i => i.field === `constraints.${item.key}` && i.type === 'UNCERTAIN_GENERALIZATION');
-        assert.equal(questions.length, 1, 'one adoption decision must not produce both a generic and a specific question');
-        assert.ok(!questions[0].id.startsWith('evolution-'), 'retain the source-specific explanation');
+        assert.equal(questions.length, 0, 'unadopted proposals stay in their rows without a second question');
       }
     }
   }

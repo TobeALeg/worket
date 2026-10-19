@@ -46,3 +46,11 @@
 `npm run build` 与源码版 `qa-distillation.mjs --unpackaged` 通过；源码版验证待定定位、处理按钮、保存状态与待定入口并存、360px 和 410px 无横向溢出，截图见 `output/distillation/02-pending-revealed.png`、`output/distillation/02a-pending-saved-small.png`。签名打包版首次在测试应用首次启动时 Electron 调试连接超时，未进入审阅；正常退出本机安装版后重试，同一打包版完整流程通过（含重启与来源异常重试）。测试使用合成模型，不代表用户已决定是否采纳本机草稿中的业务条款。
 
 安装前已正常退出旧版，并备份至 `output/app-backups/pending-location-20261019/Worket.app`。新包通过 ad-hoc 签名深度严格校验；构建与安装 ASAR 的 SHA-256 均为 `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`。新版已重启，主进程路径是 `/Applications/Worket.app/Contents/MacOS/Worket`；未修改原有用户数据库。
+
+## 2026-10-19 适用范围与采纳状态同排呈现
+
+根因是后台曾把任何 `UNCERTAIN` 或 `PROPOSED` 规则自动转换成阻断问题；演进提炼和未确认重复关系也会再造同类问题。现在候选条目原行显示“仅本次”“建议·未纳入”或“范围未定”，默认不进入 `effectiveRules`；点对号将非冲突候选明确改为 `REUSABLE/ACTIVE`。旧草稿关联的范围类问题不再计入待定，暂存时记为未纳入；真实冲突、缺少执行信息和失效的规则依赖仍按原机制处理。
+
+验证：`npm run build`、`npm run build:server`、31 项定向提炼/演进测试、源码版及打包版 `qa-distillation.mjs` 完整流程通过。合成桌面夹具确认候选同排标记、不出现重复范围问题、真正阻断问题仍可定位、保存和发布可完成；这是合成模型验证，尚未证明线上模型实际产出质量。全套 `npm test` 首次在受限环境的 WorkBuddy IPC 用例失败并停滞；以本机 IPC 权限重跑后发现一处提示版本断言未更新，修正后全套 350/350 通过。
+
+新应用经 ad-hoc 签名和深度严格校验；构建及 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `57fb6fff561ab9d294609266dc84261a7a59f80b73e74c3442cbbb128deaaca7`。旧应用备份在 `output/app-backups/scope-review-20261019/Worket.app`（ASAR `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`）；已正常退出旧版并重启，新主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。本次未部署公网后台，线上新提炼要待后台更新后才使用新版提示词；已生成草稿的客户端审阅修正可在本机生效。
