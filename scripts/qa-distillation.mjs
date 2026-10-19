@@ -193,6 +193,12 @@ try {
   await panel.locator('#definition-dialog.draft-review').waitFor({ timeout: 20000 });
   await panel.screenshot({ path: join(output, '02-review-draft.png') });
   assert.equal(await panel.locator('[data-text]').count(), 0, 'Read mode hides editor controls');
+  assert.equal(await panel.locator('#dr-pending').count(), 1, 'Pending count must be an actionable control');
+  assert.match(await panel.locator('#dr-pending').textContent(), /查看 \d+ 项待定/);
+  assert.equal(await panel.locator('.dr-item[data-key="excel"] .dr-pending-label').isVisible(), true, 'A collapsed row marks its unresolved blocking issue');
+  await panel.locator('#dr-pending').click();
+  assert.equal(await panel.locator('.dr-issue:visible .dr-choices button').count() > 0, true, 'Pending control reveals a blocking issue');
+  await panel.screenshot({ path: join(output, '02-pending-revealed.png') });
   const bounds = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).getBounds());
   await panel.locator('.dr-resize').focus();
   await panel.keyboard.press('ArrowRight');
@@ -206,7 +212,8 @@ try {
   await panel.locator('[data-review-action="history"][data-group="deliverables"]').click();
   await panel.locator('[data-review-action="confirm"][data-address="deliverables.excel"]').click();
   assert.equal(await panel.locator('.dr-item[data-key="excel"]').count(), 1, 'Confirmed rows remain visible');
-  await panel.locator('[data-review-action="details"][data-address="deliverables.excel"]').click();
+  if (await panel.locator('[data-review-action="details"][data-address="deliverables.excel"]').getAttribute('aria-expanded') !== 'true')
+    await panel.locator('[data-review-action="details"][data-address="deliverables.excel"]').click();
   assert.match(await panel.locator('[data-issue="excel-scope"] p').textContent(), /Excel 是否每次交付/, 'Resolved issue text remains visible');
   await panel.locator('[data-review-action="details"][data-address="methods.outline"]').click();
   await panel.locator('[data-review-action="reference"][data-issue="method-scope"]').click();
@@ -262,6 +269,8 @@ try {
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
+  assert.equal(await panel.locator('#dr-pending').isVisible(), true, 'Saved status must not hide unresolved blocking issues');
+  await checkCompactPage('02a-pending-saved', '#dr-pending');
   assert.equal(await panel.locator('#definition-name').inputValue(), '可复用竞品报告');
   assert.equal(await panel.locator('[data-review-action="reopen"]').count(), 2, 'Unrelated additions preserve decisions');
   const reviewDraft = await panel.evaluate(async () => {
