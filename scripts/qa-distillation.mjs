@@ -67,8 +67,10 @@ const service = createAIService({
       if (forceReferenceFailure) candidate.content.purpose.basis.refs[0].eventId = "missing-event";
       candidate.content.deliverables.push({ key: 'excel', text: 'Excel 数据明细', basis: structuredClone(candidate.content.purpose.basis) });
       candidate.content.methods.push({ key: 'outline', text: '先确认大纲，再撰写全文', obligation: 'REQUIRED', basis: structuredClone(candidate.content.purpose.basis) });
-      candidate.issues.push({ id: 'excel-scope', type: 'UNCERTAIN_GENERALIZATION', field: 'deliverables.excel', message: 'Excel 是否每次交付？', blocking: true });
-      candidate.issues.push({ id: 'method-scope', type: 'UNCERTAIN_GENERALIZATION', field: 'methods.outline', message: '是否必须等待大纲确认？', blocking: true });
+      candidate.content.constraints.push({ key: 'optional_review', text: '必要时增加补充核对。', basis: structuredClone(candidate.content.purpose.basis), rule: { scope: 'UNCERTAIN', status: 'PROPOSED' } });
+      candidate.issues.push({ id: 'optional-review-scope', type: 'UNCERTAIN_GENERALIZATION', field: 'constraints.optional_review', message: '以后也需要吗？', blocking: true });
+      candidate.issues.push({ id: 'excel-scope', type: 'MISSING_INFORMATION', field: 'deliverables.excel', message: 'Excel 是否每次交付？', blocking: true });
+      candidate.issues.push({ id: 'method-scope', type: 'MISSING_INFORMATION', field: 'methods.outline', message: '是否必须等待大纲确认？', blocking: true });
       candidate.issues.push({ id: 'ui-review', type: 'UNCERTAIN_GENERALIZATION', field: 'methods', message: '请确认固定资料的使用范围', blocking: false });
       return { result: candidate, usage: { total_tokens: 1 } };
     },
@@ -196,6 +198,8 @@ try {
   assert.equal(await panel.locator('#dr-pending').count(), 1, 'Pending count must be an actionable control');
   assert.match(await panel.locator('#dr-pending').textContent(), /查看 \d+ 项待定/);
   assert.equal(await panel.locator('.dr-item[data-key="excel"] .dr-pending-label').isVisible(), true, 'A collapsed row marks its unresolved blocking issue');
+  assert.equal(await panel.locator('.dr-item[data-key="optional_review"] .dr-scope-label').textContent(), '建议·未纳入');
+  assert.equal(await panel.locator('[data-issue="optional-review-scope"]').count(), 0, 'Old scope-only question stays on its candidate row');
   await panel.locator('#dr-pending').click();
   assert.equal(await panel.locator('.dr-issue:visible .dr-choices button').count() > 0, true, 'Pending control reveals a blocking issue');
   await panel.screenshot({ path: join(output, '02-pending-revealed.png') });
@@ -269,25 +273,23 @@ try {
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
-  assert.equal(await panel.locator('#dr-pending').isVisible(), true, 'Saved status must not hide unresolved blocking issues');
-  await checkCompactPage('02a-pending-saved', '#dr-pending');
+  assert.equal(await panel.locator('#dr-pending').isVisible(), false, 'Resolved blockers and an unadopted candidate do not leave a pending item');
+  await checkCompactPage('02a-pending-saved', '#save-draft');
   assert.equal(await panel.locator('#definition-name').inputValue(), '可复用竞品报告');
   assert.equal(await panel.locator('[data-review-action="reopen"]').count(), 2, 'Unrelated additions preserve decisions');
   const reviewDraft = await panel.evaluate(async () => {
     const jobs = await window.workpet.distillation('jobs');
     return window.workpet.distillation('draft', { id: jobs.find(j => j.draftId).draftId });
   });
-  assert.equal(reviewDraft.resolutions.length, 2, 'Confirmed row decisions persist; advisory remains optional');
+  assert.equal(reviewDraft.resolutions.length, 2, 'Confirmed decisions persist without a scope-only issue');
   assert.equal(await panel.locator('.dr-path').filter({hasText:"report-format.txt"}).count(), 1);
   await panel.screenshot({ path: join(output, '02a-review-edit.png') });
   await panel.locator('#edit-all').click();
   assert.equal(await panel.locator('.dr-item[data-section="purpose"]').count(), 0);
   assert.equal(await panel.locator('#definition-dialog').evaluate(el => el.scrollWidth <= el.clientWidth), true);
   await panel.screenshot({ path: join(output, '02b-review-ready.png') });
-  // Current rule drafts require explicit adoption in addition to the fixture's custom questions.
-  for (const section of ['deliverables', 'constraints', 'acceptanceCriteria']) {
+  for (const section of ['deliverables', 'acceptanceCriteria'])
     await panel.locator(`.dr-item[data-section="${section}"] [data-review-action="confirm"]`).first().click();
-  }
   assert.equal(await panel.locator('[data-issue="ui-review"] [data-explanation]').count(), 0, 'No decision text field for advisory');
   assert.equal(await panel.locator('#publish-definition').isDisabled(), false, 'Advisory does not require another confirmation');
   await panel.locator('#publish-definition').click();

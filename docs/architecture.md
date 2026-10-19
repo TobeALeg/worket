@@ -50,6 +50,8 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 确认本地条目时记录当前会话决定，并对关联的真实 Issue 生成 CHOOSE / REWRITE；删除修改实际 content、清理该资料角色的待选绑定并生成既有 DELETE。暂存调用 update(expectedRevision, content, issueResolutions, replaceResolutions, materialBindings)，发布沿用 publish 与 sourceReview；没有 IPC、协议或数据库迁移。会话勾选不伪装为新增后台状态；已有 Resolution 在重开时恢复确认状态，没有 Issue 的条目由最终版本发布统一确认。
 
+2026-10-19 范围审阅收敛：`rules-prompt.mjs` 与演进提示要求模型把本次、未采纳、范围待定写进 `item.rule`；`workflow.mjs` 与 `mergeEvolution` 不再为这些状态重复产生阻断问题，真正冲突仍产生 `CONFLICT`。`normalizeUnconfirmedDuplicates` 只拆掉不合法的重复关系。审阅器在原行显示候选状态，旧草稿中的 `UNCERTAIN_GENERALIZATION` 范围问题不计入待定，暂存时以 CHOOSE 记录未纳入；点勾则把非冲突规则变成 REUSABLE/ACTIVE。`effectiveRules` 只投影有效长期规则，原候选证据仍留在定义中。
+
 删除记录保存编辑后的条目、稳定顺序与实际选择路径，仅用于当前页恢复；重开可从 originalContent 对照恢复原始条目，已删除资料的绑定不伪造。资料恢复走现有 materialBindings 重新固定原件，固定副本被回收后不能当作仍存在。单层撤销包含内容、问题决定、选择路径及会话状态；成功暂存后清除撤销，避免撤销升级已固定资料。
 
 `definition-review-motion.ts` 用 Web Animations 的 finished 串行衔接 320ms 划线与 400ms 抽离，空间收拢延后 120ms；动画期间延后整页重绘，局部状态更新不替换动画节点。撤销、保存、恢复与离开清理旧动画，防止完成回调隐藏已恢复的条目。来源详情的原生展开状态在异步重绘时保留。官方 Tabler SVG 与 MIT 许可位于 renderer/review-icons。
@@ -96,7 +98,7 @@ v1.2 追加 `tab-shape.svg` 作为可换色页签的圆角遮罩，`wax-seal.svg
 
 `server/analysis-input.mjs` 按 24,000 字节请求正文预算拆分，保留原事件 key、字符偏移和文档行号。最多两个独立提取批次并发，结果按原顺序汇总；任一批失败后停止调度并收束在途请求。提取响应须覆盖本批事件，并为候选来源返回原文片段；程序校验片段后组装汇总证据，再检查最终引用。普通事件的 hash 保留在固定请求中参加校验，不在每个模型引用片段旁重复发送；规范文件引用仍携带文件 hash、名称与行号，供最终条款固定使用。模型覆盖统计只针对实际输入，不能表达被省略正文已被理解。现有 20 次调用与 96,000 字节汇总预算保持；必要内容仍超预算时明确拒绝，不继续静默裁剪。
 
-分析结果中，UNCERTAIN/INSTANCE 且 PROPOSED 的候选若被模型标作 ACTIVE/REUSABLE 规则的 DUPLICATE，`normalize-unconfirmed-rules.mjs` 仅移除这条合并关系：保留两条正文、来源和各自状态，并增加阻止发布的待确认问题。ACTIVE 规则的跨范围合并、替代、来源或摘录错误仍拒绝。结果版本为 `work-definition-analysis-v1.1`。
+分析结果中，UNCERTAIN/INSTANCE 且 PROPOSED 的候选若被模型标作 ACTIVE/REUSABLE 规则的 DUPLICATE，`normalize-unconfirmed-rules.mjs` 仅移除这条合并关系，保留两条正文、来源和各自状态。适用范围与采纳状态已由条目自身承载，不再追加阻止发布的重复问题；ACTIVE 规则的跨范围合并、替代、来源或摘录错误仍拒绝。当前分析提示版本为 `work-definition-analysis-v1.3`。
 
 输入过大错误可返回固定的限制说明，桌面把重复英文错误码转换为可操作文案。生产和安装状态见 [验证记录](acceptance/distillation-input-filtering.md)。
 

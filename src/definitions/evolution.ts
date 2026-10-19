@@ -57,8 +57,8 @@ export function mergeEvolution(base: Definition, result: ExtractionResult) {
     } else content[change.section].push(item as never);
     const previous = change.target ? contentItems(base.content).find(row => row.address === change.target)?.item : null;
     review.changes.push({ kind: change.kind, address, ...(change.target ? { target: change.target, ...(previous ? { previousText: previous.text } : {}) } : {}) });
-    if (change.kind === 'CONFLICT' || item.rule?.scope === 'UNCERTAIN' || item.rule?.status === 'PROPOSED')
-      issues.push({ id: `evolution-${address}`, type: change.kind === 'CONFLICT' ? 'CONFLICT' : 'UNCERTAIN_GENERALIZATION', field: address, message: '请确认这条变更的适用范围、采纳状态或冲突关系。', blocking: true });
+    if (change.kind === 'CONFLICT')
+      issues.push({ id: `evolution-${address}`, type: 'CONFLICT', field: address, message: '这条变更与已有规则冲突，请选择适用的内容。', blocking: true });
   }
   for (const issue of result.issues) {
     const key = issue.field.replace(/^content\./u, '');
@@ -68,6 +68,9 @@ export function mergeEvolution(base: Definition, result: ExtractionResult) {
     // same decision. Other kinds of concern and nonblocking notes cannot erase it.
     const fallback = issues.findIndex(existing => existing.id === `evolution-${field}` && existing.type === issue.type && issue.blocking);
     if (fallback !== -1) issues.splice(fallback, 1);
+    const candidate = contentItems(content).find(row => row.address === field)?.item;
+    if (issue.type === 'UNCERTAIN_GENERALIZATION' && candidate?.rule &&
+        (candidate.rule.scope !== 'REUSABLE' || candidate.rule.status !== 'ACTIVE')) continue;
     issues.push({ ...issue, field });
   }
   return { content, issues, evolution: review };
