@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { extractDefinition } from '../../server/workflow.mjs';
 import { normalizeEvolutionRelations } from '../../server/normalize-evolution.mjs';
 import { mergeEvolution } from '../../dist/definitions/evolution.js';
+import { ruleItems } from '../../dist/contracts/rules.js';
 import { validateResult } from '../../dist/contracts/definition.js';
 import { hash } from '../../dist/definitions/storage.js';
 import { semanticCases, semanticBaseline } from '../../scripts/lib/repetition-semantic-cases.mjs';
@@ -30,8 +31,9 @@ for(const entry of manifest.cases) test(`repetition actual-response replay: ${en
   if(entry.outcome==='AMBIGUOUS_BASELINE_FAILED_ORIGINAL_EXPECTATION') {
     // Keep the failed original expectation visible. "Contains Chinese" and "Chinese only" differ.
     assert.throws(()=>trial.verify(merged),/instance-only English subtitles cannot become a default/);
-    assert.equal(merged.evolution.changes.length,1);
-    assert.equal(merged.evolution.changes[0]?.kind,'SUPPLEMENTS');
+    assert.equal(merged.evolution.changes.filter(c=>c.kind==='SUPPLEMENTS').length,1);
+    assert.ok(merged.evolution.changes.filter(c=>c.kind!=='SUPPLEMENTS').every(c=>
+      ruleItems(merged.content).find(row=>row.address===c.address)?.item.rule?.scope==='INSTANCE'));
     assert.ok(merged.content.constraints.some(i=>i.text==='长期默认仅提供中文字幕，不改为默认中英双语。'));
   } else trial.verify(merged);
 });

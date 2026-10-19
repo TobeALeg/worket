@@ -6,7 +6,7 @@ import { InstanceFiles, type InstanceInputs } from "./instance-files.js";
 import { pinRuleDocuments, resolveRuleDocuments } from "./document-rules.js";
 import { invalidateRuleDependents } from "./rule-review.js";
 import type { EvolutionReview } from './evolution.js';
-import { effectiveRules, acceptanceChecks, ruleText, type InstanceOverride } from "../contracts/rules.js";
+import { effectiveRules, acceptanceChecks, ruleSections, ruleText, type InstanceOverride } from "../contracts/rules.js";
 import { randomUUID } from "node:crypto";
 import { reviewFieldValue, reviewFingerprint, resolveReviewField } from "./review.js";
 import type { DatabaseSync } from "node:sqlite";
@@ -64,6 +64,14 @@ export type CreateFromDefinition = {
   ruleOverrides?: InstanceOverride[];
   commandId: string;
 };
+function publishableContent(draft: Draft): DefinitionContent {
+  const content = structuredClone(draft.content);
+  if (!draft.evolution) return content;
+  const changed = new Set(draft.evolution.changes.map(change => change.address));
+  for (const section of ruleSections) content[section] = content[section].filter(item =>
+    !changed.has(`${section}.${item.key}`) || !item.rule || item.rule.scope === 'REUSABLE' && item.rule.status === 'ACTIVE') as never;
+  return content;
+}
 export class DefinitionRepository {
   readonly materials: MaterialStore;
   readonly instanceFiles: InstanceFiles;
@@ -342,7 +350,7 @@ export class DefinitionRepository {
       return path ? [role.kind === "SKILL" ? this.materials.copySkill(path, role.key) : this.materials.copy(path, role.key)] : old ? [old] : [];
     });
     skillLayout(materials);
-    materials.push(...pinRuleDocuments(draft.content, inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
+    materials.push(...pinRuleDocuments(publishableContent(draft), inherited, draft.refs, id => this.read("source_snapshots", id), this.materials));
     ensure(
       materials.reduce((n, m) => n + m.size, 0) <= LIMITS.maxMaterialBytes,
       "INPUT_TOO_LARGE",
@@ -361,7 +369,8 @@ export class DefinitionRepository {
         );
         const reviewedSources = sourceReview(this, current);
         ensure(!reviewedSources.changes.length || input.sourceReviewHash === reviewedSources.hash, 'SOURCE_REVIEW_REQUIRED', '候选所用的聊天来源已有变化，请查看对照后确认');
-        validateContent(current.content);
+        const publishedContent = publishableContent(current);
+        validateContent(publishedContent);
         if (current.jobId) {
           const job = this.read<{ status: string }>(
             "distillation_jobs",
@@ -370,8 +379,8 @@ export class DefinitionRepository {
           ensure(job.status === "AWAITING_REVIEW", "JOB_NOT_PUBLISHABLE");
         }
         ensure(
-          effectiveRules(current.content).content.deliverables.length &&
-            acceptanceChecks(current.content).length,
+          effectiveRules(publishedContent).content.deliverables.length &&
+            acceptanceChecks(publishedContent).length,
           "MISSING_INFORMATION",
         );
         ensure(
@@ -386,8 +395,8 @@ export class DefinitionRepository {
             "MATERIAL_MISSING",
           );
         materials.forEach((m) => this.materials.verify(m));
-        resolveRuleDocuments(current.content, materials, this.materials);
-        for (const method of current.content.methods)
+        resolveRuleDocuments(publishedContent, materials, this.materials);
+        for (const method of publishedContent.methods)
           ensure(
             method.obligation !== "REQUIRED" ||
               method.basis.type === "USER_AUTHORED" ||
@@ -431,7 +440,7 @@ export class DefinitionRepository {
           base &&
           hash({
             content: JSON.parse(
-              JSON.stringify(current.content, (k, v) =>
+              JSON.stringify(publishedContent, (k, v) =>
                 k === "basis" ? undefined : v,
               ),
             ),
@@ -456,10 +465,10 @@ export class DefinitionRepository {
           definitionKey: key,
           version,
           kind: "REUSABLE",
-          content: current.content,
+          content: publishedContent,
           refs: current.refs,
           confirmedAt: new Date().toISOString(),
-          contentHash: hash({ content: current.content, materials }),
+          contentHash: hash({ content: publishedContent, materials }),
           materials,
         };
         this.db
