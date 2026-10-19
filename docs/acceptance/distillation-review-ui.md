@@ -53,4 +53,6 @@
 
 验证：`npm run build`、`npm run build:server`、31 项定向提炼/演进测试、源码版及打包版 `qa-distillation.mjs` 完整流程通过。合成桌面夹具确认候选同排标记、不出现重复范围问题、真正阻断问题仍可定位、保存和发布可完成；这是合成模型验证，尚未证明线上模型实际产出质量。全套 `npm test` 首次在受限环境的 WorkBuddy IPC 用例失败并停滞；以本机 IPC 权限重跑后发现一处提示版本断言未更新，修正后全套 350/350 通过。
 
-新应用经 ad-hoc 签名和深度严格校验；构建及 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `57fb6fff561ab9d294609266dc84261a7a59f80b73e74c3442cbbb128deaaca7`。旧应用备份在 `output/app-backups/scope-review-20261019/Worket.app`（ASAR `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`）；已正常退出旧版并重启，新主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。本次未部署公网后台，线上新提炼要待后台更新后才使用新版提示词；已生成草稿的客户端审阅修正可在本机生效。
+新应用经 ad-hoc 签名和深度严格校验；构建及 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `57fb6fff561ab9d294609266dc84261a7a59f80b73e74c3442cbbb128deaaca7`。旧应用备份在 `output/app-backups/scope-review-20261019/Worket.app`（ASAR `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`）；已正常退出旧版并重启，新主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。
+
+用户单独授权后，PR #34 已按目标 HEAD 合入 `main`，合入后 CI 两项成功；后台从该合入提交的干净源码构建并部署。公网 `/health` 返回 `{"ok":true,"configured":true}`，匿名 `/v1/capabilities` 返回 401，公网 `/admin/` 返回 404；运行时四份关键文件哈希与合入构建一致，原 29 条请求保留，元数据库 `quick_check=ok`。仅验证发布和代码一致性，未消耗真实模型调用重跑用户草稿，不能把线上候选质量称为真实验收。备份、旧容器及回滚信息见 [运维记录](../deployment/jp-server-worket.md)。

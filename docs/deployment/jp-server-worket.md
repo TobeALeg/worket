@@ -5,7 +5,7 @@
 ## 当前状态
 
 - v0.1.7 客户端已于 2026-09-28 更新本机，配套后台已同步。沉淀过滤能力 `analysisSchemaVersions:[1]` 与自动准备能力 `continuationSchemaVersions:[1]` 均启用；详见 [发布验收](../releases/v0.1.7-verification.md)。
-- Worket 服务代码来自提交 `4e40d43`（2026-10-08 更新），版本目录为 `/opt/worket/releases/4e40d43`，`/opt/worket/current` 指向当前版本；已启用问题反馈协议 `problemReportSchemaVersions:[1]`。
+- Worket 服务代码来自合入提交 `1fde65b`（2026-10-19 更新），版本目录为 `/opt/worket/releases/1fde65b`，`/opt/worket/current` 指向当前版本；问题反馈协议 `problemReportSchemaVersions:[1]` 继续启用。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -172,3 +172,11 @@ ssh jp-server 'sudo nginx -t'
 Mac 与服务器侧均确认公网 health 200/configured、匿名 capabilities 401、admin 404；认证能力声明报告 schema 1，原有能力保持。完整机器记录见 [生产验证](../releases/problem-reporting-production.json)。本地最新版仍从 /Applications/Worket.app 运行，代码与构建相同；此次仅后台部署，不新建客户端公开 Release。
 
 此次数据备份发生在反馈库创建前，不含反馈正文。后续反馈库备份最长留存 30 天；恢复前需重放备份后的删除，不能证明完整重放时不恢复历史反馈库。当前没有自动化备份与删除重放作业，操作规则见 server/README.md；不承诺即时擦除历史备份。
+
+## 2026-10-19 适用范围审阅提示词部署
+
+用户明确授权更新后台。PR #34 的目标提交 `5cb3671` 经 Linux 与 macOS CI 成功后 squash 合入 `main` 为 `1fde65bdd2ad6eb1859ad4959c9d4a8cf1f9255a`，合入后的两项 CI 也成功。以该合入提交的干净源码编译精简后台包，上传 SHA-256 为 `2b29578d2e0570be0270257df5093297c79e385db16cb6240f06be7d25e5cd40`；在相同 Node Docker 镜像中以无网络、只读文件系统预检模块导入。
+
+切换前服务健康，metadata 中无 `RUNNING` 或 `SUCCEEDED` 等待领取请求。停机后备份持久数据到 `/opt/worket/backups/data-pre-1fde65b-20261019T060924Z.tgz`（0600），旧版本 `/opt/worket/releases/4e40d43` 与旧容器 `worket-before-1fde65b-20261019T060924Z` 保留。原子切换 `/opt/worket/current` 到 `/opt/worket/releases/1fde65b`，用原镜像、1000:1000 用户、host 网络、只读根文件系统、全部 capabilities 删除、`no-new-privileges`、原环境、两个挂载及重启策略重建容器；未更新模型配置、账号或数据库结构。回滚须先核对新版本产生的数据与旧代码兼容，再把 `current` 指回旧目录并恢复保留容器；必要时使用备份恢复数据。
+
+新容器健康检查通过，公网 `https://worket.dandi.site/health` 返回 200 且 `configured=true`，未认证能力接口为 401，公网管理入口为 404。运行时 `server/workflow.mjs`、`server/rules-prompt.mjs`、`server/evolution-prompt.mjs` 和 `dist/definitions/evolution.js` 的 SHA-256 与合入构建逐项一致；原请求总数仍为 29，metadata `quick_check=ok`。部署后只做只读健康与文件核对，没有调用线上模型或对用户草稿作业务决定。
