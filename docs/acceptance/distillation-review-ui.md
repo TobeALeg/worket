@@ -32,3 +32,9 @@
 “输入类型”和“默认值”在同一行，相关设置纵向间距收紧；选项列表和变量标识独立占整行，文件输入不显示默认值。`npm run build`、源码版与签名打包版的 `qa-distillation.mjs` 均通过。Electron 断言覆盖 360px 和 410px：两个控件同排、设置区域无横向溢出；截图见 `output/distillation/input-settings.png`。默认值预填新工作、仍可修改的既有逻辑未改。本次使用合成模型夹具，未代替真实用户可用性验收。
 
 本机旧应用已正常退出并备份至 `output/app-backups/input-settings-20261019/Worket.app`。新包已安装、深度严格签名校验通过；构建与安装 ASAR 的 SHA-256 同为 `bf30206888bc90e4b16c48a1e4c4ddd52ac4413e719217b1999f0467319f499b`。重启后主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`，未改动用户数据目录。
+
+## 2026-10-19 必填开关
+
+输入项“必填”改为有明确开关状态的控件，与变量标识同行。源码版 Electron 回归验证开关可从必填切到可选再切回；360px 与 410px 设置区域无横向溢出，截图见 `output/distillation/input-settings.png`。打包版首次完整回归在 Electron 重启连接处达到 180 秒超时，之前的开关、保存和新工作步骤已通过；清理进程后第二次完整回归通过，包括重启、来源异常和重试。本次没有改动必填字段的数据契约。
+
+新包经 ad-hoc 签名和深度严格校验，构建与安装 ASAR 的 SHA-256 同为 `5b684b014e8f0bf7c85bd48c4e9011295505e5ed9d9c52e5ab4cb902b8d2938c`。旧应用备份至 `output/app-backups/required-toggle-20261019/Worket.app`；新版已重启，主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。
