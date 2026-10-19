@@ -9,10 +9,7 @@ export function contractColor(key: string): string {
 }
 export function setContractColor(host: HTMLElement, key: string, color: string): void {
   if (!/^#[\da-f]{6}$/iu.test(color)) return;
-  const rgb = color.slice(1).match(/../gu)!.map(part => { const v = parseInt(part, 16) / 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
-  const light = rgb[0]! * .2126 + rgb[1]! * .7152 + rgb[2]! * .0722;
   host.style.setProperty('--wc-tab-color', color);
-  host.style.setProperty('--wc-tab-ink', light > .179 ? '#000000' : '#ffffff');
   try { localStorage.setItem(colorKey(key), color); } catch { /* The current view still updates. */ }
 }
 function summary(title: string): string {
