@@ -69,11 +69,37 @@
 .contract-work-result h3 { margin: 0 0 8px; }
 .contract-work-result p { line-height: 1.7; }
 #definition-dialog .dialog-actions .danger { background: #8f4f40; color: white; border-color: #8f4f40; }
-.contract-arrival { animation: contract-arrival 360ms ease-out both; }
-.contract-arrival .wc-seal { animation: contract-seal 420ms ease-out both; }
-@keyframes contract-arrival { from { opacity: .4; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-@keyframes contract-seal { from { opacity: .4; transform: scale(1.12); } to { opacity: 1; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .contract-arrival, .contract-arrival .wc-seal { animation: none; } }
+/* Only the successful publish view receives contract-arrival; reopening is static. */
+.contract-arrival { animation: contract-paper 360ms ease-out both; }
+.contract-arrival .wc-header,
+.contract-arrival .section-inputs,
+.contract-arrival .section-deliverables,
+.contract-arrival .sheet-disclosures,
+.contract-arrival .wc-confirmation { animation: contract-ink 280ms ease-out both; }
+.contract-arrival .wc-header { animation-delay: 160ms; }
+.contract-arrival .section-inputs { animation-delay: 300ms; }
+.contract-arrival .section-deliverables { animation-delay: 420ms; }
+.contract-arrival .sheet-disclosures { animation-delay: 540ms; }
+.contract-arrival .wc-confirmation { animation-delay: 700ms; }
+.contract-arrival .wc-seal { animation: contract-seal 280ms cubic-bezier(.2, .7, .3, 1) 820ms both; }
+@keyframes contract-paper {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes contract-ink {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes contract-seal {
+  0% { opacity: 0; transform: scale(1.35) rotate(-8deg); }
+  65% { opacity: 1; transform: scale(.96) rotate(1deg); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contract-arrival, .contract-arrival .wc-header, .contract-arrival .section-inputs,
+  .contract-arrival .section-deliverables, .contract-arrival .sheet-disclosures,
+  .contract-arrival .wc-confirmation, .contract-arrival .wc-seal { animation: none; }
+}
 @media (max-width: 370px) {
   .contract-view .definition-card { padding-inline: 10px; }
   .contract-sheet .wc-confirmation { padding-inline: 10px; }

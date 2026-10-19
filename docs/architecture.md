@@ -738,3 +738,5 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 ## 2026-10-19：沉淀列表呈现
 
 DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给 renderer，不修改持久化 Job 或加载对话正文到列表。renderer 按本地日期显示时间、将状态放到右列；契约详情去除重复 heading，并以契约名称设置 dialog 的可访问名称。
+
+契约生成动效沿用 `publishedFeedback` → `workContract` 的成功反馈边界，只在 saved / updated 时添加 `contract-arrival`。CSS 分阶段呈现纸页、正文分区和印章，总计 1100ms、单次播放；普通查询不带此类，减少动态效果覆盖所有阶段。无需定时器或新增持久化状态。
