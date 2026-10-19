@@ -63,4 +63,4 @@
 
 全套 `npm test` 352/352 通过，冻结模型的义务与重复场景回放通过；新增两个真实仓库集成用例分别验证“一次性候选可审阅但无新版本”和“采纳后产生有效新版本”。打包版 `qa-distillation.mjs` 的初次沉淀流程通过。旧 `qa:contract:evolution` 桌面脚本在进入增量步骤前等待已不存在的 `.definition-summary` 选择器而超时，不能据此声称增量桌面端到端回放通过；本轮增量显示依据来自实际审阅器代码路径及增量服务集成测试。
 
-新应用签名深度严格验证通过；构建与 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `90f8bc03e03f3dd4664b0e1c4287bfc39ffbb19e49e393cbb45c70dbf2b934fa`。旧应用保存在 `output/app-backups/scope-review-evolution-20261019/Worket.app`，正常退出后更新并重启，主进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`。增量后台代码尚待本补充提交通过 CI 后部署，不能把本机安装视为线上已更新。
+新应用签名深度严格验证通过；构建与 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `90f8bc03e03f3dd4664b0e1c4287bfc39ffbb19e49e393cbb45c70dbf2b934fa`。旧应用保存在 `output/app-backups/scope-review-evolution-20261019/Worket.app`，正常退出后更新并重启，主进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`。PR #36 已合入 `main` 为 `c85b57a3b51f8cb25bc7c8cf26411add4f10d200`，合入后 Linux 与 macOS CI 成功；后台从该提交的干净源码构建并部署。公网健康 200、匿名能力接口 401、管理入口 404，运行时关键文件哈希与构建一致，原 29 条请求保留且 metadata `quick_check=ok`。仅核对发布状态，未调用真实模型验证候选质量；备份与回滚信息见 [运维记录](../deployment/jp-server-worket.md)。

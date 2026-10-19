@@ -5,7 +5,7 @@
 ## 当前状态
 
 - v0.1.7 客户端已于 2026-09-28 更新本机，配套后台已同步。沉淀过滤能力 `analysisSchemaVersions:[1]` 与自动准备能力 `continuationSchemaVersions:[1]` 均启用；详见 [发布验收](../releases/v0.1.7-verification.md)。
-- Worket 服务代码来自合入提交 `1fde65b`（2026-10-19 更新），版本目录为 `/opt/worket/releases/1fde65b`，`/opt/worket/current` 指向当前版本；问题反馈协议 `problemReportSchemaVersions:[1]` 继续启用。
+- Worket 服务代码来自合入提交 `c85b57a`（2026-10-19 更新），版本目录为 `/opt/worket/releases/c85b57a`，`/opt/worket/current` 指向当前版本；问题反馈协议 `problemReportSchemaVersions:[1]` 继续启用。
 - Docker 容器名为 `worket`，以 `1000:1000` 用户运行（与数据目录属主一致），运行官方 `node:24-bookworm-slim`，设置 `restart=unless-stopped`、只读根文件系统、无额外 Linux capabilities、`no-new-privileges`。
 - 服务使用 host network，但 `server/start.mjs` 只监听 `127.0.0.1:18788`；公网不能直接访问该端口。
 - `/opt/worket/current` 只读挂载到容器 `/app`；持久数据保存在 `/opt/worket/data`，挂载到 `/data`。
@@ -180,3 +180,9 @@ Mac 与服务器侧均确认公网 health 200/configured、匿名 capabilities 4
 切换前服务健康，metadata 中无 `RUNNING` 或 `SUCCEEDED` 等待领取请求。停机后备份持久数据到 `/opt/worket/backups/data-pre-1fde65b-20261019T060924Z.tgz`（0600），旧版本 `/opt/worket/releases/4e40d43` 与旧容器 `worket-before-1fde65b-20261019T060924Z` 保留。原子切换 `/opt/worket/current` 到 `/opt/worket/releases/1fde65b`，用原镜像、1000:1000 用户、host 网络、只读根文件系统、全部 capabilities 删除、`no-new-privileges`、原环境、两个挂载及重启策略重建容器；未更新模型配置、账号或数据库结构。回滚须先核对新版本产生的数据与旧代码兼容，再把 `current` 指回旧目录并恢复保留容器；必要时使用备份恢复数据。
 
 新容器健康检查通过，公网 `https://worket.dandi.site/health` 返回 200 且 `configured=true`，未认证能力接口为 401，公网管理入口为 404。运行时 `server/workflow.mjs`、`server/rules-prompt.mjs`、`server/evolution-prompt.mjs` 和 `dist/definitions/evolution.js` 的 SHA-256 与合入构建逐项一致；原请求总数仍为 29，metadata `quick_check=ok`。部署后只做只读健康与文件核对，没有调用线上模型或对用户草稿作业务决定。
+
+## 2026-10-19 增量一次性候选部署
+
+PR #36 经 Linux 与 macOS CI 成功后 squash 合入 `main` 为 `c85b57a3b51f8cb25bc7c8cf26411add4f10d200`，合入后两项 CI 也成功。以该提交的干净源码构建后台包，归档 SHA-256 为 `67f9869bc8c8f7344aee1ffe0b21c169db05b85687cebeecde18554dc582c76d`；构建、离线导入预检通过。部署前版本为 `/opt/worket/releases/1fde65b`，数据备份为 `/opt/worket/backups/data-pre-c85b57a-20261019T063146Z.tgz`，旧容器保留为 `worket-before-c85b57a-20261019T063146Z`。沿用原容器镜像、权限、网络、安全配置、环境和挂载，将 `/opt/worket/current` 切换到 `/opt/worket/releases/c85b57a`；如需回滚，先核对新数据与旧代码兼容，再切回旧目录并恢复旧容器，必要时使用备份。
+
+公网 `/health` 返回 200、`configured=true`，匿名 `/v1/capabilities` 返回 401，`/admin/` 返回 404。运行时 `server/workflow.mjs`、`server/evolution-prompt.mjs`、`dist/definitions/evolution.js` 和 `dist/definitions/repository.js` 的 SHA-256 与合入构建相同。原 29 条请求保留，metadata `quick_check=ok`。此次只读核对发布状态，没有调用真实模型或修改用户草稿；增量桌面端到端脚本仍受过期选择器阻塞，详见 [审阅页验收记录](../acceptance/distillation-review-ui.md)。
