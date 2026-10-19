@@ -190,6 +190,8 @@ export class DistillationDesktop {
       case "definition":
         string(input.id);
         return r.get(input.id);
+      case 'setDefinitionCategory':
+        return r.setCategory(input as Parameters<typeof r.setCategory>[0]);
       case "examples": {
         string(input.definitionId);
         const d = r.get(input.definitionId);

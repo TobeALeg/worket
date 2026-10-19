@@ -134,9 +134,16 @@ try {
     if (await button.count()) await button.click();
   }
   await panel.locator('#publish-definition').click(); await panel.locator('#use-definition').waitFor();
-  const contractText = await panel.locator('.definition-summary').innerText();
+  const contractText = await panel.locator('.contract-sheet').textContent();
   assert.ok(!/48\s*(秒|页|行)/.test(contractText), 'saved contract UI shows effective rules only');
   assert.equal(contractText.split(oldLimit).length - 1, 1);
+  const category = await panel.locator('.wc-tab').innerText();
+  assert.ok(category && !/^v\d+$/u.test(category), 'tab names a work category rather than a version');
+  await panel.locator('.wc-tab').click();
+  await panel.locator('#definition-category').fill('验收分类');
+  await panel.locator('#save-category').click();
+  await panel.waitForFunction(() => document.querySelector('.wc-tab')?.textContent === '验收分类');
+  assert.match(await panel.locator('.contract-sheet').innerText(), /v1/u);
   const defs = await panel.evaluate(() => window.workpet.distillation('definitions'));
   const definition = defs.items[0]; writeFileSync(join(output,'definition.json'), JSON.stringify(definition,null,2));
   mark('draft review → published test definition');
@@ -148,6 +155,8 @@ try {
     else { assert.notEqual(spec.valueType,'FILE','synthetic test expects script as text'); await loc.fill(spec.valueType === 'NUMBER' ? '1' : '全新的脚本：介绍睡眠。'); }
   }
   await panel.locator('#create-defined-work').click();
+  await panel.locator('dialog[aria-labelledby="executor-picker-title"] button[value="cancel"]').click();
+  await panel.locator('#view-created-work').click();
   const dashboard = await panel.evaluate(() => window.workpet.getDashboard());
   const newId = dashboard.selectedWorkId;
   const pkg = await panel.evaluate(workId => window.workpet.distillation('package', {workId}), newId);
@@ -162,6 +171,8 @@ try {
   for(const spec of definition.content.inputs) { const loc=panel.locator(`[data-input="${spec.key}"]`); if(spec.valueType==='BOOLEAN')await loc.selectOption('true'); else if(spec.valueType==='CHOICE')await loc.selectOption(spec.choices[0]); else await loc.fill(spec.valueType==='NUMBER'?'1':'另一期新脚本'); }
   await panel.getByText('仅本次的特殊要求',{exact:true}).click(); await panel.locator(`[data-rule-override="${firstAddress}"]`).fill(`仅本次，上述限制改为不超过 ${overrideLimit}。`);
   await panel.locator('#create-defined-work').click();
+  await panel.locator('dialog[aria-labelledby="executor-picker-title"] button[value="cancel"]').click();
+  await panel.locator('#view-created-work').click();
   const overridden = await panel.evaluate(async () => { const d=await window.workpet.getDashboard(); return window.workpet.distillation('package',{workId:d.selectedWorkId}); });
   assert.ok(overridden.markdown.includes(overrideLimit)); assert.ok(!overridden.markdown.includes(oldLimit));
   const unchanged = await panel.evaluate(workId => window.workpet.distillation('package',{workId}),newId); assert.ok(unchanged.markdown.includes(oldLimit));
@@ -170,22 +181,27 @@ try {
   if (scenario === 'report') {
     // This recorded response has an acceptance alias of the normative limit.
     // A manual edit must enter re-review before publishing, just like a file revision.
-    await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
+    await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('.contract-management > summary').click(); await panel.locator('#revise-definition').click();
     await panel.locator('#edit-all').click();
     await panel.locator(`[data-text][data-address="${firstAddress}"]`).fill(`今后每节摘要不超过 25 ${unit}。`);
-    await panel.locator('#edit-all').click(); await panel.locator('#publish-definition').click();
-    await panel.getByText('修改影响了关联规则，请先处理新增待定事项', { exact: true }).waitFor();
-    assert.equal(await panel.locator('#publish-definition').isDisabled(), true);
-    assert.ok(await panel.locator('[data-review-action="exclude"][data-issue^="rule-change-"]').count());
+    await panel.locator('#edit-all').click();
+    await panel.locator('#publish-definition').click();
+    await panel.getByText('仍有必须处理的问题，请先修改相关要求并选择处理方式。', { exact: true }).waitFor();
     const versions = await panel.evaluate(key => window.workpet.distillation('versions', { key }), definition.definitionKey);
     assert.equal(versions.length, 1, 'manual edit with stale aliases must not publish');
     await panel.locator('#window-back').click();
+    await panel.locator('#return-from-contract').click();
+    // This isolated scenario next checks file revision from the published version.
+    const reset = createWorkCore({ databasePath: join(directory, 'workpet.sqlite') });
+    reset.definitions.db.prepare("DELETE FROM definition_drafts WHERE json_extract(payload_json, '$.baseDefinitionId') = ? AND json_extract(payload_json, '$.publishedId') IS NULL").run(definition.id);
+    reset.close();
     mark('manual upstream edit → dependent review visible; stale acceptance prevents publication');
   }
   // File evolution and invalid dependency through the shipped renderer/IPC routes.
-  await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
+  await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('.contract-management > summary').click(); await panel.locator('#revise-definition').click();
   const renamed = join(directory, 'RENAMED-FRAME.md'); renameSync(path, renamed);
   await app.evaluate(({dialog}, path) => { dialog.showOpenDialog = async () => ({canceled:false,filePaths:[path]}); }, renamed);
+  await panel.locator(`[data-review-action="details"][data-address="${firstAddress}"]`).click();
   await panel.locator(`[data-review-action="document-version"][data-address="${firstAddress}"]`).click();
   await panel.getByText('内容未变化，继续引用当前固定版本',{exact:true}).waitFor();
   mark('renamed source → unchanged fixed version');
@@ -202,6 +218,8 @@ try {
   await panel.locator('#use-definition').click();
   for(const spec of v2.content.inputs) { const loc=panel.locator(`[data-input="${spec.key}"]`); if(spec.valueType==='BOOLEAN')await loc.selectOption('true'); else if(spec.valueType==='CHOICE')await loc.selectOption(spec.choices[0]); else await loc.fill(spec.valueType==='NUMBER'?'1':'新版标准下的新脚本'); }
   await panel.locator('#create-defined-work').click();
+  await panel.locator('dialog[aria-labelledby="executor-picker-title"] button[value="cancel"]').click();
+  await panel.locator('#view-created-work').click();
   const v2Id = (await panel.evaluate(()=>window.workpet.getDashboard())).selectedWorkId;
   const updated=await panel.evaluate(workId=>window.workpet.distillation('package',{workId}),v2Id); assert.ok(updated.markdown.includes(newLimit)); assert.ok(!updated.markdown.includes(oldLimit));
   unlinkSync(renamed);

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { contractSections, publishedFeedback } from '../../dist/definitions/contract-view.js';
 import { workContract } from '../../dist/renderer/work-contract.js';
+import { inferredCategory } from '../../dist/definitions/category.js';
 import { result } from './fixtures.ts';
 function definition() {
   const content = result({ sources: [{ key: 'work', events: [{ key: 'event' }] }] }).content;
@@ -45,6 +46,16 @@ test('receipt distinguishes first save, immutable revision and evidence-only con
   assert.ok(!html.includes('contract-arrival'));
   assert.ok(workContract(d, 'saved').includes('contract-arrival'));
   assert.ok(!workContract(d, 'evidence').includes('contract-arrival'));
+});
+
+test('category label identifies the work domain while the version remains in the confirmation', () => {
+  const d = definition();
+  d.content.name = '网站监控与 SEO 分析配置';
+  d.category = inferredCategory(d.content);
+  assert.equal(d.category, '网站运维');
+  const html = workContract(d);
+  assert.match(html, /class="wc-tab"[^>]*>网站运维<\/button>/u);
+  assert.match(html, /class="wc-version">v1<\/span>/u);
 });
 
 test('dispatch presentation distinguishes NOT_DISPATCHED and failed retries from launch and correlated receipt', async () => {

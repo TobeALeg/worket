@@ -29,7 +29,7 @@ export function workContract(definition: Definition, feedback?: ContractFeedback
   const sections = contractSections(definition);
   const date = new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(definition.confirmedAt)).replaceAll('/', '.');
   return `<article class="contract-sheet wc-contract${feedback && feedback !== 'evidence' ? ' contract-arrival' : ''}" data-definition-id="${escape(definition.id)}">
-    <div class="wc-folio"><div class="wc-tab">v${definition.version}</div><div class="wc-paper"><div class="wc-body">
+    <div class="wc-folio"><button type="button" class="wc-tab" title="编辑工作分类" aria-label="编辑工作分类：${escape(definition.category ?? '其他工作')}">${escape(definition.category ?? '其他工作')}</button><div class="wc-paper"><div class="wc-body">
     <header class="wc-header"><p class="wc-kicker">WORKING CONTRACT</p><h2 class="wc-title">${escape(definition.content.name)}</h2><div class="wc-rule"></div></header>
     ${sections.slice(0, 2).map(section).join('')}<div class="sheet-disclosures">${sections.slice(2).filter(s => s.items.length).map(section).join('')}
     <details class="sheet-section sheet-disclosure sheet-purpose">${summary('<h3>工作目的</h3>')}<p class="source-purpose">${escape(definition.content.purpose.text)}</p></details></div>

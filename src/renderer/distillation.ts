@@ -395,6 +395,18 @@ async function openDefinition(id: string, feedback?: ContractFeedback): Promise<
   modal.classList.add('contract-view');
   const sheet = modal.querySelector<HTMLElement>('.contract-sheet')!;
   setContractColor(sheet, d.definitionKey, contractColor(d.definitionKey));
+  bind('.wc-tab', async () => {
+    const label = d.category ?? '其他工作';
+    show('编辑工作分类', `<label class="field">分类名称<input id="definition-category" maxlength="12" value="${esc(label)}" autocomplete="off"></label><p class="consent">用于识别同一类工作；修改分类不会产生新契约版本。</p>`,
+      '<button id="cancel-category">取消</button><button id="save-category" class="primary">保存分类</button>',
+      { label: '返回契约', action: () => openDefinition(id) });
+    bind('#cancel-category', () => openDefinition(id));
+    bind('#save-category', async () => {
+      const category = value('#definition-category').trim();
+      await api('setDefinitionCategory', { definitionKey: d.definitionKey, category });
+      await openDefinition(id);
+    });
+  });
   modal.querySelector<HTMLInputElement>('#contract-color')!.addEventListener('input', event => {
     setContractColor(sheet, d.definitionKey, (event.target as HTMLInputElement).value);
   });

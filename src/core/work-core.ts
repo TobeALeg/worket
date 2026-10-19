@@ -765,7 +765,7 @@ export class SqliteWorkCore implements WorkCore {
     transaction(this.#database, () => {
       // A retained pre-migration database would otherwise keep deleted source text.
       // Explicit permanent deletion also revokes these tool-managed rollback copies.
-      for (const suffix of [".before-distillation-v1.bak", ".before-storage-v2.bak"]) {
+      for (const suffix of [".before-distillation-v1.bak", ".before-storage-v2.bak", ".before-category-v3.bak"]) {
         const backup = this.#databasePath + suffix;
         if (this.#databasePath !== ":memory:" && existsSync(backup)) unlinkSync(backup);
       }
