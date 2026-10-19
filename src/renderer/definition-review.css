@@ -19,6 +19,7 @@
 .dr-item { min-width:0; }
 .dr-item[hidden] { display:none; }
 .dr-row { display:flex; align-items:flex-start; gap:8px; min-height:27px; }
+.dr-row > .dr-text { flex:1; min-width:0; margin:2px 0; }
 .draft-review .dr-body { flex:1; min-width:0; padding:4px 0; margin:0; border:0; border-radius:0; background:transparent; text-align:left; color:var(--text); font-size:12.5px; line-height:1.55; cursor:pointer; }
 .dr-copy { position:relative; display:block; overflow-wrap:anywhere; }
 .dr-text-read,.dr-strike { display:block; }
@@ -58,15 +59,17 @@
 .dr-issue > p { font-size:11px; color:#8d743f; line-height:1.5; margin:0 0 4px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .dr-choices { display:flex; flex-wrap:wrap; gap:8px; }
 .dr-choices button,.dr-resolved button { font-size:10px; border:0; background:transparent; padding:3px 0; color:var(--accent); }
-.dr-resolved { display:flex; align-items:center; gap:7px; margin:3px 0; font-size:10px; color:var(--accent); }
+.dr-resolved { margin:6px 0; font-size:10px; color:var(--accent); }
+.dr-resolved > p { color:var(--text); }
+.dr-resolved > span { margin-right:8px; }
 .dr-evidence { font-size:10px; color:var(--muted); margin:5px 0; }
 .dr-evidence summary,.dr-rule-settings summary { cursor:pointer; color:var(--muted); font-size:10px; padding:3px 0; }
 .dr-evidence p,.dr-evidence blockquote { margin:4px 0; padding:0; color:var(--text); }
 .dr-evidence pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; color:var(--text); margin:6px 0; }
 .dr-evidence button { font-size:10px; border:0; padding:3px 0; color:var(--accent); background:transparent; }
 .dr-settings { display:grid; gap:8px; margin:6px 0; padding:4px 0; }
-.dr-settings label,.dr-decision-input { display:grid; gap:4px; color:var(--muted); font-size:10px; }
-.dr-settings input,.dr-settings textarea,.dr-settings select,.dr-decision-input input { font-size:11px; width:100%; min-width:0; padding:4px 6px; }
+.dr-settings label { display:grid; gap:4px; color:var(--muted); font-size:10px; }
+.dr-settings input,.dr-settings textarea,.dr-settings select { font-size:11px; width:100%; min-width:0; padding:4px 6px; }
 .dr-material { display:flex; gap:12px; align-items:center; font-size:10px; }
 .dr-unlinked h3 { font-size:11px; margin:10px 0; color:var(--muted); }
 .dr-footer { flex-shrink:0; display:flex; align-items:center; gap:6px; padding:11px 17px; border-top:1px solid var(--line); }

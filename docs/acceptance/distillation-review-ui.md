@@ -18,3 +18,11 @@
 构建与安装 ASAR SHA-256 均为 `d7652e7b84750bbfcc218542530b462b939f670ccfd3d1b8d851cdbc7174ed59`。更新前后 SQLite `quick_check=ok`，工作 6 条、基础定义 1 条、沉淀草稿 6 条均保留。没有发布 GitHub Release 或部署公网后台。
 
 原生 CUA 在绑定安装应用时连续超时，未据此声称完成手工点击验收；页面行为证据来自同一签名打包产物的隔离 Electron 回归及截图，安装与实际运行由签名、hash、进程路径和原数据库核对证明。
+
+## 2026-10-19 审阅页交互修正
+
+已确认条目和关联提示原文继续显示；未关联的非阻断提示在发布时自动记为已知悉，不再重复拦截；自由填写的“你的决定”已移除；“编辑全部”在原条目位置显示唯一可编辑文字和下划线。真正阻断的待定问题仍需处理，删除条目仍走原有隐藏与恢复行为。
+
+`npm run build`、`node scripts/qa-distillation.mjs --unpackaged`、`npm run package:mac` 和 `node scripts/qa-distillation.mjs` 均通过。Electron 夹具验证：勾选后条目仍存在，展开后已处理问题原文仍可见，编辑态每行只有一个文字输入且没有重复只读副本，非阻断提示无决定输入框且不阻止发布；打包版完整流程通过，410px 视口没有横向溢出。测试使用合成模型，不代表真实业务候选已由用户验收。
+
+新包经 ad-hoc 签名及深度严格校验；构建与 `/Applications/Worket.app` 的 ASAR SHA-256 均为 `12c51f70f7ca43dd32f2856cbe3f83858e5e45cd54147673e16f664f11315761`。旧应用备份在 `output/app-backups/review-flow-20261019/Worket.app`，其 ASAR 哈希为 `96783690b5cba2df2ff12faf5c367898ef49bff239a2253b23773a4b260d1c83`。已正常退出旧版并重启新版，主进程从 `/Applications/Worket.app/Contents/MacOS/Worket` 运行；未修改现有用户数据目录。

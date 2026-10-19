@@ -205,6 +205,9 @@ try {
   assert.equal(await panel.locator('.dr-item[data-key="excel"]').count(),0);
   await panel.locator('[data-review-action="history"][data-group="deliverables"]').click();
   await panel.locator('[data-review-action="confirm"][data-address="deliverables.excel"]').click();
+  assert.equal(await panel.locator('.dr-item[data-key="excel"]').count(), 1, 'Confirmed rows remain visible');
+  await panel.locator('[data-review-action="details"][data-address="deliverables.excel"]').click();
+  assert.match(await panel.locator('[data-issue="excel-scope"] p').textContent(), /Excel 是否每次交付/, 'Resolved issue text remains visible');
   await panel.locator('[data-review-action="details"][data-address="methods.outline"]').click();
   await panel.locator('[data-review-action="reference"][data-issue="method-scope"]').click();
   await panel.locator('#edit-all').click();
@@ -216,6 +219,8 @@ try {
   await purpose.locator('[data-review-action="load-evidence"]').click();
   await purpose.locator('.dr-evidence pre').waitFor();
   const firstInput = panel.locator('.dr-item[data-section="inputs"]').first();
+  assert.equal(await firstInput.locator('.dr-row [data-text]').count(), 1, 'Edit the original row in place');
+  assert.equal(await firstInput.locator('.dr-text-read').count(), 0, 'Edit mode does not duplicate row text');
   await firstInput.locator('[data-review-action="toggle-property"]').click();
   assert.match(await firstInput.locator('.dr-meta-toggle').textContent(), /可选/);
   await firstInput.locator('[data-review-action="toggle-property"]').click();
@@ -224,7 +229,6 @@ try {
   await firstInput.locator('[data-property="choices"]').blur();
   await firstInput.locator('[data-property="valueType"]').selectOption('TEXT');
   assert.equal(await firstInput.locator('[data-property="choices"]').count(), 0);
-  await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
   await panel.locator('[data-review-action="add"][data-section="materialRoles"]').click();
   const material = panel.locator('.dr-item[data-section="materialRoles"]').last();
   await material.locator('[data-text]').fill('报告格式');
@@ -235,24 +239,18 @@ try {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, materialPath);
   await material.locator('[data-review-action="material"]').click();
-  await material.locator('.dr-text-read').filter({hasText:"report-format.txt"}).waitFor();
+  await material.locator('.dr-path').filter({hasText:"report-format.txt"}).waitFor();
   await app.evaluate(({ dialog }) => { dialog.showOpenDialog = globalThis.__worketQAOpenDialog; delete globalThis.__worketQAOpenDialog; });
   await panel.locator('#save-draft').click();
   await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
   assert.equal(await panel.locator('#definition-name').inputValue(), '可复用竞品报告');
-  assert.equal(await panel.locator('[data-review-action="reopen"]').count(), 3, 'Unrelated additions preserve decisions');
-  await panel.locator('[data-review-action="reopen"][data-issue="ui-review"]').click();
-  await panel.locator('#save-draft').click();
-  await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
+  assert.equal(await panel.locator('[data-review-action="reopen"]').count(), 2, 'Unrelated additions preserve decisions');
   const reviewDraft = await panel.evaluate(async () => {
     const jobs = await window.workpet.distillation('jobs');
     return window.workpet.distillation('draft', { id: jobs.find(j => j.draftId).draftId });
   });
-  assert.equal(reviewDraft.resolutions.length, 2, 'Revoked decisions stay revoked in storage');
-  await panel.locator('[data-review-action="accept"][data-issue="ui-review"]').click();
-  await panel.locator('#save-draft').click();
-  await panel.waitForFunction(() => document.querySelector('#dr-status')?.textContent === '已暂存');
-  assert.equal(await panel.locator('.dr-text-read').filter({hasText:"report-format.txt"}).count(), 1);
+  assert.equal(reviewDraft.resolutions.length, 2, 'Confirmed row decisions persist; advisory remains optional');
+  assert.equal(await panel.locator('.dr-path').filter({hasText:"report-format.txt"}).count(), 1);
   await panel.screenshot({ path: join(output, '02a-review-edit.png') });
   await panel.locator('#edit-all').click();
   assert.equal(await panel.locator('.dr-item[data-section="purpose"]').count(), 0);
@@ -262,6 +260,8 @@ try {
   for (const section of ['deliverables', 'constraints', 'acceptanceCriteria']) {
     await panel.locator(`.dr-item[data-section="${section}"] [data-review-action="confirm"]`).first().click();
   }
+  assert.equal(await panel.locator('[data-issue="ui-review"] [data-explanation]').count(), 0, 'No decision text field for advisory');
+  assert.equal(await panel.locator('#publish-definition').isDisabled(), false, 'Advisory does not require another confirmation');
   await panel.locator('#publish-definition').click();
   await panel.locator("#use-definition").waitFor();
   await panel.screenshot({ path: join(output, "03-saved-definition.png") });
@@ -424,7 +424,7 @@ try {
   const failurePet = app.windows().find(p => p.url().endsWith('/pet.html'));
   await failurePet.locator('.pet.distilling-failed').waitFor();
   await failurePet.locator('#paper-action').click();
-  await panel.locator('#definition-dialog').getByText('生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。', { exact: true }).waitFor();
+  await panel.locator('#definition-dialog p.notice').getByText('生成内容的引用未通过核验，未保存为候选。可以重试，原始记录仍然保留。', { exact: true }).waitFor();
   forceReferenceFailure = false;
   await panel.locator('#retry-job').click();
   await panel.locator('#definition-dialog').waitFor({ state: 'hidden' });
