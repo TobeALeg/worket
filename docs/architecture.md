@@ -40,7 +40,7 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 `definitions/contract-view.ts` 是只读展示投影：先通过 `effectiveRules`，再把 `constraints`、`acceptanceCriteria` 和 REQUIRED methods 合为约束；保留 collection/key 地址，不修改原数据、检查标准或执行义务。输入/交付完整显示，资料与目的原位展开。审阅沿用原字段地址，问题、来源与规则编辑仍绑定原项。
 
-`renderer/contract/` 提供组件作用域 token、纸纹、页签遮罩与蜡封；`work-contract.css` 控制 A4 目标比例、内容自然增高和 reduced-motion。分类色以 definitionKey 为键存 localStorage，校验六位 HEX 并计算文字对比色；不参与内容 hash 或版本号。
+`renderer/contract/` 提供组件作用域 token、纸纹、页签遮罩与蜡封；`work-contract.css` 控制 A4 目标比例、内容自然增高和 reduced-motion。分类色以 definitionKey 为键存 localStorage，校验六位 HEX；页签文字固定白色衬线体，不随分类色切换；分类色不参与内容 hash 或版本号。
 
 `useDefinition → create → createdWork → chooseExecutor → dispatch` 共用既有 IPC。创建 commandId 在该表单内稳定；重试派发使用同一 workId，底层 pending_dispatches 防重。`renderer/contract-dispatch.ts` 明确区分 NOT_DISPATCHED、FAILED、WAITING/STARTING、BOUND + 已读取，等待界面每两秒检查状态，离开该页面就停止。错误后刷新真实工作状态，不能凭 UI 点击推断接手。
 
