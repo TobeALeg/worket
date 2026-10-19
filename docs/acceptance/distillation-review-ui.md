@@ -38,3 +38,11 @@
 输入项“必填”改为有明确开关状态的控件，与变量标识同行。源码版 Electron 回归验证开关可从必填切到可选再切回；360px 与 410px 设置区域无横向溢出，截图见 `output/distillation/input-settings.png`。打包版首次完整回归在 Electron 重启连接处达到 180 秒超时，之前的开关、保存和新工作步骤已通过；清理进程后第二次完整回归通过，包括重启、来源异常和重试。本次没有改动必填字段的数据契约。
 
 新包经 ad-hoc 签名和深度严格校验，构建与安装 ASAR 的 SHA-256 同为 `5b684b014e8f0bf7c85bd48c4e9011295505e5ed9d9c52e5ab4cb902b8d2938c`。旧应用备份至 `output/app-backups/required-toggle-20261019/Worket.app`；新版已重启，主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。
+
+## 2026-10-19 待定问题定位
+
+只读核对本机草稿确认：阻断保存的是一条关联到折叠约束的未处理规则问题，截图下方两条“保存时自动记录”的内容均为非阻断提示。原界面页脚状态文字会被“已暂存”覆盖，也没有定位入口；Electron 回归先复现 `#dr-pending` 缺失，再验证修复。现在折叠条目显示“待处理”，页脚独立显示“查看 N 项待定”，点击可展开、滚动并聚焦首个问题的处理按钮；纯非阻断区显示“其他提示”。现存条目缺失的关联问题也会在独立区域呈现，不再隐藏在删除历史内。
+
+`npm run build` 与源码版 `qa-distillation.mjs --unpackaged` 通过；源码版验证待定定位、处理按钮、保存状态与待定入口并存、360px 和 410px 无横向溢出，截图见 `output/distillation/02-pending-revealed.png`、`output/distillation/02a-pending-saved-small.png`。签名打包版首次在测试应用首次启动时 Electron 调试连接超时，未进入审阅；正常退出本机安装版后重试，同一打包版完整流程通过（含重启与来源异常重试）。测试使用合成模型，不代表用户已决定是否采纳本机草稿中的业务条款。
+
+安装前已正常退出旧版，并备份至 `output/app-backups/pending-location-20261019/Worket.app`。新包通过 ad-hoc 签名深度严格校验；构建与安装 ASAR 的 SHA-256 均为 `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`。新版已重启，主进程路径是 `/Applications/Worket.app/Contents/MacOS/Worket`；未修改原有用户数据库。

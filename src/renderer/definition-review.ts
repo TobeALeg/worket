@@ -55,6 +55,10 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const t = targets.get(issue.id);
     return t?.section === section && t.key === key;
   });
+  const isUnplaced = (issue: Issue) => {
+    const target = targets.get(issue.id);
+    return !target || !!target.key && !sectionItems(content, target.section).some(item => item.key === target.key);
+  };
   const getResolution = (id: string) => resolutions.find(r => r.issueId === id);
   const fieldChanged = (issue: Issue) => reviewFingerprint(reviewFieldValue(content, draft.originalContent, issue.field)) !== reviewFingerprint(reviewFieldValue(draft.originalContent, draft.originalContent, issue.field));
   function invalidate(address?: ItemAddress) {
@@ -73,7 +77,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     resolutions.push({ issueId: issue.id, action, explanation });
   }
   function issueHtml(issue: Issue): string {
-    const resolution = getResolution(issue.id), target = targets.get(issue.id);
+    const resolution = getResolution(issue.id), target = isUnplaced(issue) ? null : targets.get(issue.id);
     const item = target?.key ? sectionItems(content, target.section).find(i => i.key === target.key) as Item | undefined : undefined;
     if (resolution) return `<div class="dr-issue dr-resolved" data-issue="${escape(issue.id)}"><p>${escape(issue.message)}</p><span title="${escape(resolution.explanation)}">✓ ${escape(resolution.action === "DELETE" ? "已删除" : resolution.action === "REWRITE" ? "已采用修改" : resolution.action === "ACCEPT" ? "已记录提示" : "已确认")}</span><button data-review-action="reopen" data-issue="${escape(issue.id)}" aria-label="重新决定：${escape(issue.message)}">修改</button></div>`;
     const isMethod = item && target?.section === "methods";
@@ -118,6 +122,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
   }
   function rowHtml(item: Item, address: ItemAddress, deleted = false): string {
     const id = idOf(address), related = issuesAt(address.section, address.key);
+    const pending = related.some(issue => issue.blocking && !getResolution(issue.id));
     const material = address.section === "materialRoles", input = address.section === "inputs";
     const path = material ? deleted ? removed.get(id)?.path : materialPath(item) : undefined;
     const text = path ? path.split(/[\\/]/u).at(-1)! : item.text;
@@ -125,7 +130,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const status = deleted ? "deleted" : isConfirmed(address) ? "confirmed" : "pending";
     const textField = `<textarea class="dr-text" rows="1" data-text data-address="${escape(id)}" aria-label="${escape(labels[address.section][1])}条目">${escape(item.text)}</textarea>`;
     const rowText = editMode && !deleted ? textField : `<button class="dr-body" data-review-action="details" data-address="${escape(id)}" aria-expanded="${open}" aria-controls="detail-${escape(id)}"><span class="dr-copy"><span class="dr-text-read">${escape(text)}</span><span class="dr-strike" aria-hidden="true">${escape(text)}</span></span></button>`;
-    return `<div class="dr-item" data-section="${address.section}" data-key="${escape(item.key)}" data-review-status="${status}"><div class="dr-item-inner"><div class="dr-row">${rowText}<div class="dr-actions"><button class="dr-decision" data-review-action="confirm" data-address="${escape(id)}" aria-label="${deleted ? "恢复并确认" : "确认"}：${escape(text)}" aria-pressed="${status === "confirmed"}">${decisionIcon("confirm")}</button>${address.section !== "purpose" ? `<button class="dr-decision" data-review-action="delete" data-address="${escape(id)}" aria-label="删除：${escape(text)}" aria-pressed="${deleted}">${decisionIcon("delete")}</button>` : ""}</div></div>${open ? `<div class="dr-detail" id="detail-${escape(id)}">${path ? `<code class="dr-path">${escape(path)}</code>` : ""}${!deleted ? `${material && path && !editMode ? `<p class="dr-meta">${escape(item.text)}</p>` : ""}${editMode ? "" : textField}${!input && (material || address.section === "methods") ? `<button data-review-action="toggle-property" data-address="${escape(id)}" class="dr-meta-toggle">${material ? item.required ? "必需" : "可选" : item.obligation === "REQUIRED" ? "必须遵循" : "仅供参考"}</button>` : ""}${input ? settingsHtml(item, address) : ""}${ruleHtml(item, address)}${material ? `<div class="dr-material">${editMode ? `<button data-review-action="material-kind" data-address="${escape(id)}">${item.kind === "SKILL" ? "技能目录" : "资料文件"}</button>` : ""}<button data-review-action="material" data-address="${escape(id)}">${path ? "更换资料" : item.kind === "SKILL" ? "选择技能目录" : "选择资料"}</button></div>` : ""}<details class="dr-evidence" data-evidence-id="${escape(id)}" ${evidenceOpen.has(id) ? "open" : ""}><summary>来源依据</summary>${evidenceHtml(item, address)}</details><div data-issues-for="${escape(id)}">${related.map(issueHtml).join("")}</div>` : ""}</div>` : ""}</div></div>`;
+    return `<div class="dr-item" data-section="${address.section}" data-key="${escape(item.key)}" data-review-status="${status}"><div class="dr-item-inner"><div class="dr-row">${rowText}<div class="dr-actions">${pending && !deleted ? '<span class="dr-pending-label">待处理</span>' : ""}<button class="dr-decision" data-review-action="confirm" data-address="${escape(id)}" aria-label="${deleted ? "恢复并确认" : "确认"}：${escape(text)}" aria-pressed="${status === "confirmed"}">${decisionIcon("confirm")}</button>${address.section !== "purpose" ? `<button class="dr-decision" data-review-action="delete" data-address="${escape(id)}" aria-label="删除：${escape(text)}" aria-pressed="${deleted}">${decisionIcon("delete")}</button>` : ""}</div></div>${open ? `<div class="dr-detail" id="detail-${escape(id)}">${path ? `<code class="dr-path">${escape(path)}</code>` : ""}${!deleted ? `${material && path && !editMode ? `<p class="dr-meta">${escape(item.text)}</p>` : ""}${editMode ? "" : textField}${!input && (material || address.section === "methods") ? `<button data-review-action="toggle-property" data-address="${escape(id)}" class="dr-meta-toggle">${material ? item.required ? "必需" : "可选" : item.obligation === "REQUIRED" ? "必须遵循" : "仅供参考"}</button>` : ""}${input ? settingsHtml(item, address) : ""}${ruleHtml(item, address)}${material ? `<div class="dr-material">${editMode ? `<button data-review-action="material-kind" data-address="${escape(id)}">${item.kind === "SKILL" ? "技能目录" : "资料文件"}</button>` : ""}<button data-review-action="material" data-address="${escape(id)}">${path ? "更换资料" : item.kind === "SKILL" ? "选择技能目录" : "选择资料"}</button></div>` : ""}<details class="dr-evidence" data-evidence-id="${escape(id)}" ${evidenceOpen.has(id) ? "open" : ""}><summary>来源依据</summary>${evidenceHtml(item, address)}</details><div data-issues-for="${escape(id)}">${related.map(issueHtml).join("")}</div>` : ""}</div>` : ""}</div></div>`;
   }
   function visibleItems(section: DefinitionSection): DefinedItem[] {
     const items = sectionItems(content, section);
@@ -161,7 +166,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     ];
     if (editMode || [...issuesAt("purpose"), ...issuesAt("purpose", content.purpose.key)].some(issue => !getResolution(issue.id))) groups.push({ key: "purpose", english: "Purpose", label: "工作目的", sections: ["purpose"] });
     const belongs = (section: DefinitionSection, item: Item) => section !== "methods" || editMode || item.obligation === "REQUIRED" || issuesAt(section, item.key).some(issue => !getResolution(issue.id));
-    return groups.map(group => {
+    const sectionsHtml = groups.map(group => {
       const deleted = [...removed].filter(([id, entry]) => group.sections.includes(byAddress(id).address.section) && belongs(byAddress(id).address.section, entry.item));
       const body = group.sections.map(section => {
         const items = visibleItems(section).filter(item => belongs(section, item));
@@ -171,6 +176,8 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
       }).join("");
       return `<section class="dr-group" data-review-group="${group.key}"><div class="dr-group-title"><h3>${group.english}<span>${group.label}</span></h3>${deleted.length ? `<button class="dr-history" data-review-action="history" data-group="${group.key}" aria-label="${historyOpen.has(group.key) ? "收起" : "查看"}${group.label}中已删除的条目" aria-expanded="${historyOpen.has(group.key)}"><i aria-hidden="true"></i></button>` : ""}</div><div class="dr-items">${body}</div></section>`;
     }).join("");
+    const unplaced = draft.issues.filter(isUnplaced);
+    return `${sectionsHtml}${unplaced.length ? `<section class="dr-unlinked"><h3>${unplaced.some(issue => issue.blocking && !getResolution(issue.id)) ? "其他待定" : unplaced.every(issue => !issue.blocking) ? "其他提示" : "其他记录"}</h3><div data-issues-for="unlinked">${unplaced.map(issueHtml).join("")}</div></section>` : ""}`;
   }
   function render(): void {
     if (closed) return;
@@ -184,7 +191,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const focus = active?.dataset.address, property = active?.dataset.property, text = active?.hasAttribute("data-text");
     const selection = text ? [active?.selectionStart, active?.selectionEnd] : null;
     modal.classList.add("draft-review");
-    modal.innerHTML = `<div class="dr-shell"><div class="window-header-slot"></div><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}>${draft.evolution ? `<button data-review-action="show-all">${onlyChanges ? "查看完整约定" : "只看变化"}</button>` : ""}<button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div><div id="definition-error" role="alert" hidden></div><main class="dr-content">${sourceNoticeHtml()}${draft.evolution ? `<p class="dr-meta" id="evolution-summary">${draft.evolution.changes.length} 项新增或变更 · ${draft.evolution.evidence.length} 项重复依据 · ${draft.evolution.ignored.length} 项本次/历史要求${draft.evolution.changes.length ? "" : " · 约定内容保持不变"}</p>${evolutionEvidenceHtml()}` : ""}${documentPreview ? `<section class="dr-settings"><h3>${escape(documentPreview.name)} · 采用新版条款</h3><p>当前条款：${escape(documentPreview.previousText)}</p><pre>${escape(documentPreview.text.split("\n").map((line, i) => `${i + 1}  ${line}`).join("\n"))}</pre><label>起始行<input id="doc-start-line" type="number" min="1" value="${documentPreview.previous.startLine}"></label><label>结束行<input id="doc-end-line" type="number" min="1" value="${documentPreview.previous.endLine}"></label><button data-review-action="adopt-document">采用所选行（保存到草稿）</button><button data-review-action="cancel-document">取消</button></section>` : ""}${reviewGroups()}${draft.issues.some(i => !targets.get(i.id)) ? `<section class="dr-unlinked"><h3>其他待定</h3><div data-issues-for="unlinked">${draft.issues.filter(i => !targets.get(i.id)).map(issueHtml).join("")}</div></section>` : ""}</main><footer class="dr-footer"><span id="dr-status"></span><button class="dr-undo" data-review-action="undo" ${undo ? "" : "hidden"}>撤销</button><div><button id="save-draft" data-review-action="save">暂存</button><button id="publish-definition" data-review-action="publish" class="primary">${draft.evolution && !draft.evolution.changes.length ? "确认记录依据" : "确认保存"}</button></div></footer></fieldset><div class="dr-resize" role="separator" tabindex="0" aria-label="调整浮窗宽度" aria-orientation="vertical" title="拖动右边缘调宽"></div></div>`;
+    modal.innerHTML = `<div class="dr-shell"><div class="window-header-slot"></div><fieldset class="dr-controls" ${busy ? "disabled" : ""}><div class="dr-title"><input id="definition-name" aria-label="工作名称" value="${escape(content.name)}" ${editMode ? "" : "readonly"}>${draft.evolution ? `<button data-review-action="show-all">${onlyChanges ? "查看完整约定" : "只看变化"}</button>` : ""}<button id="edit-all" data-review-action="edit-all" aria-pressed="${editMode}" title="编辑名称、条目、必填和要求">${editMode ? "✓ 完成编辑" : "✎ 编辑全部"}</button></div><div id="definition-error" role="alert" hidden></div><main class="dr-content">${sourceNoticeHtml()}${draft.evolution ? `<p class="dr-meta" id="evolution-summary">${draft.evolution.changes.length} 项新增或变更 · ${draft.evolution.evidence.length} 项重复依据 · ${draft.evolution.ignored.length} 项本次/历史要求${draft.evolution.changes.length ? "" : " · 约定内容保持不变"}</p>${evolutionEvidenceHtml()}` : ""}${documentPreview ? `<section class="dr-settings"><h3>${escape(documentPreview.name)} · 采用新版条款</h3><p>当前条款：${escape(documentPreview.previousText)}</p><pre>${escape(documentPreview.text.split("\n").map((line, i) => `${i + 1}  ${line}`).join("\n"))}</pre><label>起始行<input id="doc-start-line" type="number" min="1" value="${documentPreview.previous.startLine}"></label><label>结束行<input id="doc-end-line" type="number" min="1" value="${documentPreview.previous.endLine}"></label><button data-review-action="adopt-document">采用所选行（保存到草稿）</button><button data-review-action="cancel-document">取消</button></section>` : ""}${reviewGroups()}</main><footer class="dr-footer"><span id="dr-status"></span><button id="dr-pending" data-review-action="show-pending" hidden></button><button class="dr-undo" data-review-action="undo" ${undo ? "" : "hidden"}>撤销</button><div><button id="save-draft" data-review-action="save">暂存</button><button id="publish-definition" data-review-action="publish" class="primary">${draft.evolution && !draft.evolution.changes.length ? "确认记录依据" : "确认保存"}</button></div></footer></fieldset><div class="dr-resize" role="separator" tabindex="0" aria-label="调整浮窗宽度" aria-orientation="vertical" title="拖动右边缘调宽"></div></div>`;
     showPageHeader({ dialog: modal, label: onReturn ? "返回契约" : "返回工作面板", back: close, beforeNavigate: preserveDraft });
     modal.querySelector(".dr-content")!.scrollTop = scroll;
     updateStatus();
@@ -207,7 +214,10 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const button = modal.querySelector<HTMLButtonElement>("#publish-definition");
     if (!button) return;
     button.disabled = busy || editMode || left > 0 || !sources || !!sources.changes.length && confirmedSources !== sources.hash;
-    modal.querySelector("#dr-status")!.textContent = busy ? "保存中…" : message || (left ? `${left} 项待定需处理` : "");
+    modal.querySelector("#dr-status")!.textContent = busy ? "保存中…" : message;
+    const pendingButton = modal.querySelector<HTMLButtonElement>("#dr-pending")!;
+    pendingButton.hidden = left === 0;
+    pendingButton.textContent = left ? `查看 ${left} 项待定` : "";
     modal.querySelector<HTMLButtonElement>('[data-review-action="undo"]')!.hidden = !undo;
     for (const row of modal.querySelectorAll<HTMLElement>(".dr-item")) {
       if (row.dataset.reviewStatus === "deleted") continue;
@@ -217,7 +227,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     }
     for (const host of modal.querySelectorAll<HTMLElement>("[data-issues-for]")) {
       const key = host.dataset.issuesFor!;
-      const matches = key === "unlinked" ? draft.issues.filter(i => !targets.get(i.id)) : draft.issues.filter(i => { const t = targets.get(i.id); return t && (t.key ? idOf(t as ItemAddress) : t.section) === key; });
+      const matches = key === "unlinked" ? draft.issues.filter(isUnplaced) : draft.issues.filter(i => { const t = targets.get(i.id); return !isUnplaced(i) && t && (t.key ? idOf(t as ItemAddress) : t.section) === key; });
       host.innerHTML = matches.map(issueHtml).join("");
     }
   }
@@ -287,6 +297,16 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
   function closeCompletedHistory() {
     if (definitionSections.every(section => sectionItems(content, section).every(item => section === "purpose" || section === "methods" && (item as Item).obligation === "REFERENCE" || isConfirmed({ section, key: item.key })))) historyOpen.clear();
   }
+  function showPendingIssue() {
+    const issue = draft.issues.find(item => item.blocking && !getResolution(item.id));
+    if (!issue) return;
+    const target = isUnplaced(issue) ? null : targets.get(issue.id);
+    if (target?.key) rowOpen.add(idOf(target as ItemAddress));
+    render();
+    const issueElement = modal.querySelector<HTMLElement>(`.dr-issue[data-issue="${CSS.escape(issue.id)}"]`);
+    issueElement?.scrollIntoView({ block: "center", behavior: "smooth" });
+    issueElement?.querySelector<HTMLButtonElement>(".dr-choices button")?.focus({ preventScroll: true });
+  }
   function deleteRow(address: ItemAddress) {
     const id = idOf(address), item = byAddress(id).item;
     if (!item || address.section === "purpose") return;
@@ -310,7 +330,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     });
   }
   function decide(issue: Issue, action: string) {
-    const t = targets.get(issue.id), item = t?.key ? sectionItems(content, t.section).find(i => i.key === t.key) as Item | undefined : undefined;
+    const t = isUnplaced(issue) ? null : targets.get(issue.id), item = t?.key ? sectionItems(content, t.section).find(i => i.key === t.key) as Item | undefined : undefined;
     const address = t?.key ? t as ItemAddress : undefined;
     if (action === "edit-issue") { if (address) rowOpen.add(idOf(address)); editMode = true; render(); const el = address ? modal.querySelector<HTMLTextAreaElement>(`[data-text][data-address="${CSS.escape(idOf(address))}"]`) : null; el?.focus(); return; }
     remember();
@@ -375,6 +395,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const action = button.dataset.reviewAction!, addressId = button.dataset.address;
     void (async () => {
       if (action === 'check-sources') { await checkSources(); render(); return; }
+      if (action === "show-pending") { showPendingIssue(); return; }
       if (action === "history") { const group = button.dataset.group!; historyOpen.has(group) ? historyOpen.delete(group) : historyOpen.add(group); render(); return; }
       if (action === "show-all") { onlyChanges = !onlyChanges; render(); return; }
       if (action === 'evolution-evidence' && draft.evolution) {
