@@ -56,3 +56,11 @@
 新应用经 ad-hoc 签名和深度严格校验；构建及 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `57fb6fff561ab9d294609266dc84261a7a59f80b73e74c3442cbbb128deaaca7`。旧应用备份在 `output/app-backups/scope-review-20261019/Worket.app`（ASAR `5312c1e7674f5a8356f7c429d302253bf94f6704eca0ee8b602fe9fea79052aa`）；已正常退出旧版并重启，新主进程路径为 `/Applications/Worket.app/Contents/MacOS/Worket`。
 
 用户单独授权后，PR #34 已按目标 HEAD 合入 `main`，合入后 CI 两项成功；后台从该合入提交的干净源码构建并部署。公网 `/health` 返回 `{"ok":true,"configured":true}`，匿名 `/v1/capabilities` 返回 401，公网 `/admin/` 返回 404；运行时四份关键文件哈希与合入构建一致，原 29 条请求保留，元数据库 `quick_check=ok`。仅验证发布和代码一致性，未消耗真实模型调用重跑用户草稿，不能把线上候选质量称为真实验收。备份、旧容器及回滚信息见 [运维记录](../deployment/jp-server-worket.md)。
+
+## 2026-10-19 增量比较的一次性候选
+
+复核发现旧增量合并会把 `INSTANCE` 新项直接放入“未纳入要求”来源摘要，不显示为可勾选的审阅条目。现在增量草稿保留该候选行和原始证据；仍为一次性或未采纳时，发布前从新版本内容、规范资料固定和版本比较中排除。仅有一次性候选时复用原定义版本；点勾后改为 REUSABLE/ACTIVE，才发布新版本并进入以后实例。旧式来源记录在条目可见时不重复显示。
+
+全套 `npm test` 352/352 通过，冻结模型的义务与重复场景回放通过；新增两个真实仓库集成用例分别验证“一次性候选可审阅但无新版本”和“采纳后产生有效新版本”。打包版 `qa-distillation.mjs` 的初次沉淀流程通过。旧 `qa:contract:evolution` 桌面脚本在进入增量步骤前等待已不存在的 `.definition-summary` 选择器而超时，不能据此声称增量桌面端到端回放通过；本轮增量显示依据来自实际审阅器代码路径及增量服务集成测试。
+
+新应用签名深度严格验证通过；构建与 `/Applications/Worket.app` 的 ASAR SHA-256 同为 `90f8bc03e03f3dd4664b0e1c4287bfc39ffbb19e49e393cbb45c70dbf2b934fa`。旧应用保存在 `output/app-backups/scope-review-evolution-20261019/Worket.app`，正常退出后更新并重启，主进程来自 `/Applications/Worket.app/Contents/MacOS/Worket`。增量后台代码尚待本补充提交通过 CI 后部署，不能把本机安装视为线上已更新。

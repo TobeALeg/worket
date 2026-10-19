@@ -23,7 +23,9 @@ function original(content) {
 }
 function untouched(draft) {
   original(effectiveRules(draft.content).content);
-  assert.equal(draft.evolution.changes.length,0,'explicit instance-only requests must not create proposed reusable changes');
+  const changed=ruleItems(draft.content).filter(row=>draft.evolution.changes.some(c=>c.address===row.address));
+  assert.equal(changed.length,draft.evolution.changes.length);
+  assert.ok(changed.every(row=>row.item.rule?.scope==='INSTANCE'),'explicit instance-only requests must not create reusable changes');
   assert.ok(draft.evolution.ignored.some(i=>english(i.text ?? i.item?.text ?? '') || i.refs.length),'instance exclusion retains evidence');
   return {expected:'PUBLISH',expectedVersion:1,reason:'repetition cannot turn an explicit instance requirement into a reusable obligation'};
 }

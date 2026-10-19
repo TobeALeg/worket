@@ -80,6 +80,45 @@ test('delta retains untouched inputs/documents, separates instance exceptions, p
   } finally { f.core.close(); }
 });
 
+test('one-time and unadopted evolution candidates stay reviewable without creating a reusable version', async () => {
+  const f = await setup();
+  try {
+    const work = f.create(); f.append(work, '本次在 12 秒切换画面，下一次不固定。片头标志以后是否要加，我还没决定。');
+    const snapshot = f.prepare(work);
+    const out = f.changesFor(snapshot, [{ kind: 'ADD', section: 'constraints', item: {
+      key: 'timestamp', text: '12 秒切换画面', rule: { scope: 'INSTANCE', status: 'ACTIVE' },
+    } }, { kind: 'ADD', section: 'constraints', item: {
+      key: 'opening_logo', text: '片头添加标志', rule: { scope: 'UNCERTAIN', status: 'PROPOSED' },
+    } }]);
+    f.mock(out);
+    const draft = await f.run(snapshot);
+    assert.ok(draft.content.constraints.some(item => item.key === 'timestamp' && item.rule?.scope === 'INSTANCE'));
+    assert.ok(draft.content.constraints.some(item => item.key === 'opening_logo' && item.rule?.status === 'PROPOSED'));
+    assert.ok(draft.evolution.changes.some(change => change.address === 'constraints.timestamp'));
+    assert.ok(draft.evolution.changes.some(change => change.address === 'constraints.opening_logo'));
+    assert.equal(f.publish(draft).id, f.base.id, 'unadopted one-time candidate does not create a reusable version');
+  } finally { f.core.close(); }
+});
+
+test('adopting a one-time evolution candidate creates a reusable version', async () => {
+  const f = await setup();
+  try {
+    const work = f.create(); f.append(work, '本次在 12 秒切换画面，下一次不固定。');
+    const snapshot = f.prepare(work);
+    f.mock(f.changesFor(snapshot, [{ kind: 'ADD', section: 'constraints', item: {
+      key: 'timestamp', text: '12 秒切换画面', rule: { scope: 'INSTANCE', status: 'ACTIVE' },
+    } }]));
+    const draft = await f.run(snapshot);
+    const content = structuredClone(draft.content);
+    content.constraints.find(item => item.key === 'timestamp')!.rule = { scope: 'REUSABLE', status: 'ACTIVE' };
+    const adopted = f.core.definitions.update({ draftId: draft.id, expectedRevision: draft.revision,
+      content, issueResolutions: [] });
+    const published = f.publish(adopted);
+    assert.equal(published.version, 2);
+    assert.ok(effectiveRules(published.content).content.constraints.some(item => item.key === 'timestamp'));
+  } finally { f.core.close(); }
+});
+
 test('duplicate-only confirmation adds traceable evidence, no version; persisted cursor skips only confirmed event hashes', async () => {
   const f = await setup();
   try {

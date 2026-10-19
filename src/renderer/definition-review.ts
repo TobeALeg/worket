@@ -149,7 +149,8 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
   function evolutionEvidenceHtml(): string {
     if (!draft.evolution) return '';
     const entries = [...draft.evolution.evidence.map(entry => ({ ...entry, label: `重复于：${entry.baselineText}` })),
-      ...draft.evolution.ignored.map(entry => ({ ...entry, label: entry.reason === 'RETIRED' ? '已撤销，不修改约定' : '仅本次，不修改约定' }))];
+      ...draft.evolution.ignored.filter(entry => !entry.address || !ruleItems(content).some(row => row.address === entry.address))
+        .map(entry => ({ ...entry, label: entry.reason === 'RETIRED' ? '已撤销，不修改约定' : '仅本次，不修改约定' }))];
     if (!entries.length) return '';
     return `<details class="dr-evidence" id="evolution-provenance"><summary>查看重复与未纳入要求 · ${entries.length}</summary>${entries.map((entry, index) => `<p>${escape(entry.label)}</p>${entry.refs.map((ref, refIndex) => `${ref.role === 'CONTEXT' ? '<span class="dr-meta">背景引用</span>' : ''}${ref.excerpt ? `<blockquote>${escape(ref.excerpt)}</blockquote>` : ''}${ref.deleted ? '<p>来源已删除</p>' : `<button data-review-action="evolution-evidence" data-entry="${index}" data-ref="${refIndex}">查看原文</button>`}`).join('')}`).join('')}</details>`;
   }

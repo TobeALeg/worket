@@ -7,7 +7,7 @@ export type EvolutionReview = {
   baseHash: string;
   changes: { kind: EvolutionChange['kind']; address: string; target?: string; previousText?: string }[];
   evidence: { target: string; baselineText: string; refs: SourceRef[] }[];
-  ignored: { reason: 'INSTANCE' | 'RETIRED'; refs: SourceRef[] }[];
+  ignored: { reason: 'INSTANCE' | 'RETIRED'; refs: SourceRef[]; address?: string }[];
   sourceEvents: { workId: string; eventId: string; hash: string }[];
 };
 
@@ -36,10 +36,11 @@ export function mergeEvolution(base: Definition, result: ExtractionResult) {
   for (const change of result.evolution.changes) {
     const item = structuredClone(change.item), incoming = `${change.section}.${item.key}`;
     const refs = item.basis.type === 'USER_AUTHORED' ? [] : item.basis.refs;
-    if (item.rule?.scope === 'INSTANCE' || item.rule?.status === 'RETIRED') {
+    if (item.rule?.status === 'RETIRED') {
       ensure(change.kind === 'ADD', 'RULE_SCOPE_MISMATCH');
-      review.ignored.push({ reason: item.rule.status === 'RETIRED' ? 'RETIRED' : 'INSTANCE', refs }); continue;
+      review.ignored.push({ reason: 'RETIRED', refs }); continue;
     }
+    if (item.rule?.scope === 'INSTANCE') ensure(change.kind === 'ADD', 'RULE_SCOPE_MISMATCH');
     if (change.kind === 'DUPLICATE') {
       review.evidence.push({ target: change.target!, baselineText: contentItems(base.content).find(row => row.address === change.target)!.item.text, refs }); addresses.set(incoming, change.target!); continue;
     }
@@ -51,6 +52,7 @@ export function mergeEvolution(base: Definition, result: ExtractionResult) {
       if (change.kind !== 'ADD') item.rule!.relation = { kind: change.kind, target: change.target! };
     }
     const address = `${change.section}.${item.key}`; addresses.set(incoming, address);
+    if (item.rule?.scope === 'INSTANCE') review.ignored.push({ reason: 'INSTANCE', refs, address });
     if (change.section === 'purpose') content.purpose = item;
     else if (!isRule && change.kind === 'REPLACES') {
       content[change.section] = content[change.section].map(old => old.key === item.key ? item : old) as never;

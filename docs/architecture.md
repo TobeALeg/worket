@@ -50,7 +50,9 @@ v0.1.7 客户端与生产后台已同步，服务代码为 `64315c4`，分析能
 
 确认本地条目时记录当前会话决定，并对关联的真实 Issue 生成 CHOOSE / REWRITE；删除修改实际 content、清理该资料角色的待选绑定并生成既有 DELETE。暂存调用 update(expectedRevision, content, issueResolutions, replaceResolutions, materialBindings)，发布沿用 publish 与 sourceReview；没有 IPC、协议或数据库迁移。会话勾选不伪装为新增后台状态；已有 Resolution 在重开时恢复确认状态，没有 Issue 的条目由最终版本发布统一确认。
 
-2026-10-19 范围审阅收敛：`rules-prompt.mjs` 与演进提示要求模型把本次、未采纳、范围待定写进 `item.rule`；`workflow.mjs` 与 `mergeEvolution` 不再为这些状态重复产生阻断问题，真正冲突仍产生 `CONFLICT`。`normalizeUnconfirmedDuplicates` 只拆掉不合法的重复关系。审阅器在原行显示候选状态，旧草稿中的 `UNCERTAIN_GENERALIZATION` 范围问题不计入待定，暂存时以 CHOOSE 记录未纳入；点勾则把非冲突规则变成 REUSABLE/ACTIVE。`effectiveRules` 只投影有效长期规则，原候选证据仍留在定义中。
+2026-10-19 范围审阅收敛：`rules-prompt.mjs` 与演进提示要求模型把本次、未采纳、范围待定写进 `item.rule`；`workflow.mjs` 与 `mergeEvolution` 不再为这些状态重复产生阻断问题，真正冲突仍产生 `CONFLICT`。`normalizeUnconfirmedDuplicates` 只拆掉不合法的重复关系。审阅器在原行显示候选状态，旧草稿中的 `UNCERTAIN_GENERALIZATION` 范围问题不计入待定，暂存时以 CHOOSE 记录未纳入；点勾则把非冲突规则变成 REUSABLE/ACTIVE。`effectiveRules` 只投影有效长期规则；未采纳候选的证据保留在草稿或审阅事件中。
+
+增量路径中的 INSTANCE ADD 同时记入 `evolution.changes` 供原行审阅和 `evolution.ignored` 供来源追溯；已在原行出现的旧式“仅本次”来源卡不再重复展示。`publishableContent` 发布时从增量草稿移除仍未激活的变更，再做有效规则、规范资料与版本哈希计算：仅本次候选不产生新版本，点勾升级为 REUSABLE/ACTIVE 后才随新版本发布。草稿与审阅事件保留原候选证据，已发布定义和新实例不继承未采纳内容。
 
 删除记录保存编辑后的条目、稳定顺序与实际选择路径，仅用于当前页恢复；重开可从 originalContent 对照恢复原始条目，已删除资料的绑定不伪造。资料恢复走现有 materialBindings 重新固定原件，固定副本被回收后不能当作仍存在。单层撤销包含内容、问题决定、选择路径及会话状态；成功暂存后清除撤销，避免撤销升级已固定资料。
 
