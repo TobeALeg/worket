@@ -1,5 +1,11 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## UI 规范整理（2026-10-21，仅文档）
+
+[页面规范 v0.1](design/worket-ui/README.md) 记录 `theme.css`、`panel.css` 与契约专用 token 的现状、组件边界及拟议语义映射。运行时仍使用原生 TypeScript/HTML/CSS 和现有业务模块，尚未建立新的 token 生成器、共享组件层或 Figma 同步程序。
+
+后续抽取方向：共享组件只接受展示参数与回调，业务状态和 `window.workpet` 调用保留在宿主；统一 token 数据生成 CSS 并显式同步设计变量。工作流展示层将重新设计，当前 `workflows.css` 等布局不进入规范基线；此决定不改变 WorkflowCore 的领域状态与接口。
+
 ## WorkflowCore 组合层（2026-10-21）
 
 `workflows/core.ts` 集中拥有流程固定版本、运行、依赖准备、实际采用、代次、影响范围和状态迁移；`validation.ts` 校验类型、必填来源与图无环；`outputs.ts` 固定成果、关联已有 ArtifactRef 并经 DefinitionRepository 的逐项验收发布。节点业务仍由 WorkInstance / WorkRecord 表达，执行交接沿用 DistillationDesktop 与 AppService，Adapter 不承担流程规则。`context.ts` 为工作包和流程入口提供同一份归属投影。
