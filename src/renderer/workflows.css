@@ -11,7 +11,7 @@
 .wf-page{padding:28px 36px 40px;flex:1;min-width:0;overflow:auto;background:var(--background)}
 .wf-page>.wf-heading{margin-bottom:28px}
 .wf-page button,#workflow-step-dialog button{min-height:36px;font-size:13px;padding:6px 16px}
-.wf-tabs{display:flex;gap:30px;border-bottom:1px solid #d9dcd0;margin-bottom:28px;align-items:center}
+.wf-tabs{display:flex;flex-wrap:wrap;gap:8px 30px;border-bottom:1px solid #d9dcd0;margin-bottom:28px;align-items:center}
 .wf-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;border-radius:0;padding:10px 0;color:var(--muted)}
 .wf-tabs button.active{border-bottom-color:var(--accent);color:var(--accent)}
 .wf-tabs label{display:flex;gap:12px;align-items:center;margin-left:auto;font-size:12px}
@@ -94,5 +94,6 @@
 .wf-run-row{grid-template-columns:1fr auto}
 .wf-table-head{display:none}
 .wf-tabs{gap:20px}
+.wf-tabs #wf-run-switch{max-width:100%;width:100%;margin-left:0;justify-content:space-between}
 .wf-table{padding:4px}
 .wf-final{padding:16px}}

@@ -19,7 +19,13 @@ let displayedPage: () => boolean = () => false;
 const live = (dialog = false) => { const page = navigation.capture(), modal = dialogSession.capture(); return () => page() && (!dialog || modal() && step.open); };
 let refreshWorkspace: (() => Promise<void>) | undefined;
 function enter(): () => boolean { refreshWorkspace = undefined; dialogSession.invalidate(); step.close(); return navigation.begin(); }
-root.addEventListener('close', () => { if (!root.open && displayedPage()) { navigation.invalidate(); active = undefined; } });
+root.addEventListener('close', () => {
+  if (!root.open && displayedPage()) {
+    navigation.invalidate(); active = undefined;
+    const save = preserveDraft;
+    if (save) void save().then(() => { if (preserveDraft === save) preserveDraft = undefined; }).catch(() => {});
+  }
+});
 step.addEventListener('close', () => { if (!step.open) dialogSession.invalidate(); });
 let preserveDraft: (() => Promise<void>) | undefined;
 const selectedNodes = new Map<string, string>();
@@ -32,11 +38,15 @@ function error(host: HTMLElement, error: unknown): void { const e = host.querySe
 function bind(host: HTMLElement, selector: string, action: () => Promise<void>, group = selector): void {
   const valid = live(host === step), key = `${active?.run.id ?? 'page'}:${selectedNode}:${group}`;
   host.querySelectorAll<HTMLButtonElement>(selector).forEach(b => {
+    b.dataset.workflowBusyKey = key;
     b.disabled = pending.has(key);
     b.onclick = () => {
       if (!valid() || pending.has(key)) return;
       pending.add(key); b.disabled = true;
-      void action().catch(e => { if (valid()) error(host, e); }).finally(() => { pending.delete(key); if (b.isConnected) b.disabled = false; });
+      void action().catch(e => { if (valid()) error(host, e); }).finally(() => {
+        pending.delete(key);
+        document.querySelectorAll<HTMLButtonElement>('[data-workflow-busy-key]').forEach(button => { if (button.dataset.workflowBusyKey === key) button.disabled = false; });
+      });
     };
   });
 }
@@ -52,7 +62,7 @@ function modal(title: string, body: string, actions: string): HTMLDialogElement 
 function page(title: string, body: string, actions = ''): void {
   displayedPage = navigation.capture();
   root.innerHTML = `<div class="dialog-shell"><div class="window-header-slot"></div><div class="wf-shell"><aside class="wf-sidebar"><strong>工作流</strong><button id="wf-library">全部流程</button><button id="wf-workspace">所有运行</button><button id="wf-pending">待验收</button>${definitions.filter((d, i) => definitions.findIndex(x => x.key === d.key) === i).map(d => `<button data-flow="${esc(d.id)}" class="${selectedDefinition?.key === d.key ? 'active' : ''}">${esc(d.name)}</button>`).join('')}</aside><div class="wf-page"><header class="wf-heading"><div><p class="wf-context">${selectedDefinition ? `${esc(selectedDefinition.name)} / 固定流程 v${selectedDefinition.version}` : '工作空间 / 工作流'}</p><h2>${esc(title)}</h2></div><div class="wf-actions">${actions}</div></header><p role="alert" class="notice" hidden></p>${body}</div></div></div>`;
-  if (!root.open) root.showModal(); showPageHeader({ dialog: root, label: '返回流程列表', back: library, beforeNavigate: async () => { await leaveEditor(); enter(); } });
+  if (!root.open) root.showModal(); showPageHeader({ dialog: root, label: '返回流程列表', back: library, beforeNavigate: async () => { await preserveDraft?.(); } });
   bind(root, '#wf-library', library);
   bind(root, '#wf-workspace', () => workspace());
   bind(root, '#wf-pending', () => workspace({ review: true }));
