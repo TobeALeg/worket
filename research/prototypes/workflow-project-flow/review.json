@@ -1,0 +1,38 @@
+{
+  "result": "PASSED",
+  "scope": "IN_MEMORY_UI_PROTOTYPE",
+  "realExecutorUsed": false,
+  "productionChanged": false,
+  "localUnitTestsRun": false,
+  "checks": [
+    "A and B visual layouts",
+    "accepted revision retains old adoption until explicit confirmation",
+    "explicit adoption resets only delivery",
+    "independent checklist and other run unchanged",
+    "rejection creates a new generation and retains note/history",
+    "run switch restores selected node",
+    "three nodes within canvas bounds",
+    "four dependency paths"
+  ],
+  "layoutBounds": {
+    "canvas": {
+      "height": 610,
+      "width": 787
+    },
+    "nodes": [
+      {
+        "inside": true,
+        "name": "node-guide"
+      },
+      {
+        "inside": true,
+        "name": "node-checklist"
+      },
+      {
+        "inside": true,
+        "name": "node-delivery"
+      }
+    ],
+    "paths": 4
+  }
+}

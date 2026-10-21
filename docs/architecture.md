@@ -1,5 +1,7 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+工作流视觉方向稿（2026-10-21）：[关系画布方案](design/workflow-project-flow.md) 与 `research/prototypes/workflow-project-flow/` 用静态页面及内存演示状态比较两种布局，不调用 Worket API、数据库或外部执行者。正式界面后续仍应读取既有 WorkflowRun、节点轮次和成果采用记录，沿用操作目标与会话保护；本轮没有改变运行时模块关系、数据流或状态流。
+
 ## UI 规范与 Figma 页面整理（2026-10-21）
 
 页面稿按 [迁移索引](design/worket-ui/pages.md) 对应到 renderer 模块，49 个主要页面状态复用已有本地组件与变量，节点存于 `pages-manifest.json`。此映射为人工维护的设计索引，不是运行时组件抽取或自动同步。

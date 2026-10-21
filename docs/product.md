@@ -10,6 +10,8 @@
 
 用户明确否定当前工作流 UI，要求后续重新设计；现有工作流的布局、导航和节点卡片不作为设计系统基线。下节记录的工作流业务能力不等于其界面已获用户认可。
 
+同日工作流方向：用户指定 affectUI Project Flow 的轻卡片关系画布作为视觉参考，已形成 [两种工作流工作台方向稿](design/workflow-project-flow.md)，分别比较侧边详情与底部详情。布局与宽工作台入口待评审，未改客户端；该方向不回写为全局基础规范。
+
 ## 工作流组合与独立运行（2026-10-21）
 
 操作文档：[工作流上手指南](guides/workflows/getting-started.md)、[验收返工操作指南](guides/workflows/review-and-rework.md)，配套核对清单见 [工作流操作指南](guides/workflows/README.md)。
