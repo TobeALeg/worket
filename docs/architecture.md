@@ -1,6 +1,8 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
-## UI 规范整理（2026-10-21，仅文档）
+## UI 规范与 Figma 页面整理（2026-10-21）
+
+页面稿按 [迁移索引](design/worket-ui/pages.md) 对应到 renderer 模块，49 个主要页面状态复用已有本地组件与变量，节点存于 `pages-manifest.json`。此映射为人工维护的设计索引，不是运行时组件抽取或自动同步。
 
 同日建立 [Figma 基础组件索引](design/worket-ui/figma.md) 与节点清单；Figma 含 2 个变量集合、8 个文字样式、1 个阴影样式及 10 类基础组件。运行时 token 生成、组件抽取和自动同步仍未实现。新增候选变量名与字体替代在文档中单独记录，不可直接视为当前 CSS/API。
 

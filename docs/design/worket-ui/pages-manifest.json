@@ -1,0 +1,518 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "DctYxpkI7FMqVfhCJGC8qC",
+  "pageId": "0:1",
+  "rootId": "13:69",
+  "sourceCommit": "9fc83b41d171cdc1925b1cb2357589017e356ffc",
+  "date": "2026-10-21",
+  "status": "NORMALIZED_DRAFT_REVIEW_REQUIRED",
+  "styleDirection": "APPROVED_FOR_MIGRATION",
+  "runtimeChanged": false,
+  "excluded": [
+    "workflow pages",
+    "pet",
+    "browser extension",
+    "server admin"
+  ],
+  "groups": [
+    {
+      "id": "14:69",
+      "family": "P01",
+      "name": "最近活动与来源搜索",
+      "y": 80,
+      "height": 799
+    },
+    {
+      "id": "14:256",
+      "family": "P02",
+      "name": "工作列表",
+      "y": 943,
+      "height": 799
+    },
+    {
+      "id": "14:412",
+      "family": "P03",
+      "name": "工作详情与执行记录",
+      "y": 1806,
+      "height": 819
+    },
+    {
+      "id": "14:566",
+      "family": "P04",
+      "name": "选定内容导入",
+      "y": 2689,
+      "height": 993
+    },
+    {
+      "id": "14:715",
+      "family": "P05",
+      "name": "拆分与危险确认",
+      "y": 3746,
+      "height": 806
+    },
+    {
+      "id": "14:814",
+      "family": "P06",
+      "name": "已沉淀与沉淀任务",
+      "y": 4616,
+      "height": 794
+    },
+    {
+      "id": "14:894",
+      "family": "P07",
+      "name": "沉淀范围与进度",
+      "y": 5474,
+      "height": 806
+    },
+    {
+      "id": "14:1006",
+      "family": "P08",
+      "name": "候选定义审阅",
+      "y": 6344,
+      "height": 998
+    },
+    {
+      "id": "14:1229",
+      "family": "P09",
+      "name": "工作契约与版本管理",
+      "y": 7406,
+      "height": 902
+    },
+    {
+      "id": "14:1407",
+      "family": "P10",
+      "name": "从契约发起新工作",
+      "y": 8372,
+      "height": 806
+    },
+    {
+      "id": "14:1529",
+      "family": "P11",
+      "name": "执行者与接手状态",
+      "y": 9242,
+      "height": 806
+    },
+    {
+      "id": "14:1648",
+      "family": "P12",
+      "name": "固定资料与后续比较",
+      "y": 10112,
+      "height": 806
+    },
+    {
+      "id": "14:1751",
+      "family": "P13",
+      "name": "服务与改进数据",
+      "y": 10982,
+      "height": 794
+    },
+    {
+      "id": "14:1863",
+      "family": "P14",
+      "name": "反馈草稿与诊断",
+      "y": 11840,
+      "height": 806
+    },
+    {
+      "id": "14:1975",
+      "family": "P15",
+      "name": "我的反馈与处理进展",
+      "y": 12710,
+      "height": 806
+    }
+  ],
+  "screens": [
+    {
+      "family": "P01",
+      "name": "来源列表",
+      "id": "14:75",
+      "source": "recording-sources.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-75",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P01",
+      "name": "搜索无结果",
+      "id": "14:132",
+      "source": "recording-sources.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-132",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P01",
+      "name": "读取失败",
+      "id": "14:175",
+      "source": "recording-sources.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-175",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P01",
+      "name": "查找中",
+      "id": "14:220",
+      "source": "recording-sources.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-220",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P02",
+      "name": "进行中 · 多选",
+      "id": "14:262",
+      "source": "panel.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-262",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P02",
+      "name": "已完成",
+      "id": "14:312",
+      "source": "panel.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-312",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P02",
+      "name": "归档记录",
+      "id": "14:350",
+      "source": "panel.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-350",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P02",
+      "name": "空列表",
+      "id": "14:383",
+      "source": "panel.ts / panel.html",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-383",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P03",
+      "name": "详情 · 正常",
+      "id": "14:418",
+      "source": "panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-418",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P03",
+      "name": "上下文展开",
+      "id": "14:465",
+      "source": "panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-465",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P03",
+      "name": "刷新失败",
+      "id": "14:522",
+      "source": "panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-522",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P04",
+      "name": "编辑 · 未预览",
+      "id": "14:572",
+      "source": "selected-import.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-572",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P04",
+      "name": "预览完成",
+      "id": "14:640",
+      "source": "selected-import.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-640",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P04",
+      "name": "待确认箱 · 空",
+      "id": "14:676",
+      "source": "selected-import.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-676",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P05",
+      "name": "拆分工作",
+      "id": "14:721",
+      "source": "panel.html / panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-721",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P05",
+      "name": "取消记录 · 待确认",
+      "id": "14:754",
+      "source": "panel.html / panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-754",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P05",
+      "name": "确认文字不符",
+      "id": "14:785",
+      "source": "panel.html / panel.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-785",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P06",
+      "name": "定义与待处理任务",
+      "id": "14:820",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-820",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P06",
+      "name": "无已沉淀工作",
+      "id": "14:866",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-866",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P07",
+      "name": "附件范围",
+      "id": "14:900",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-900",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P07",
+      "name": "处理中",
+      "id": "14:944",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-944",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P07",
+      "name": "失败重试",
+      "id": "14:975",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-975",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P08",
+      "name": "逐项审阅",
+      "id": "14:1012",
+      "source": "definition-review.ts / definition-review.css",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1012",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P08",
+      "name": "展开编辑与依据",
+      "id": "14:1098",
+      "source": "definition-review.ts / definition-review.css",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1098",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P08",
+      "name": "来源变化 · 保存阻断",
+      "id": "14:1171",
+      "source": "definition-review.ts / definition-review.css",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1171",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P09",
+      "name": "已确认契约",
+      "id": "14:1235",
+      "source": "work-contract.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1235",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P09",
+      "name": "版本与管理",
+      "id": "14:1297",
+      "source": "work-contract.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1297",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P09",
+      "name": "编辑工作分类",
+      "id": "14:1346",
+      "source": "work-contract.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1346",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P09",
+      "name": "删除契约",
+      "id": "14:1377",
+      "source": "work-contract.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1377",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P10",
+      "name": "本次输入",
+      "id": "14:1413",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1413",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P10",
+      "name": "必填缺失",
+      "id": "14:1464",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1464",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P10",
+      "name": "工作已创建",
+      "id": "14:1501",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1501",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P11",
+      "name": "选择执行者",
+      "id": "14:1535",
+      "source": "executor-picker.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1535",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P11",
+      "name": "等待接手",
+      "id": "14:1564",
+      "source": "executor-picker.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1564",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P11",
+      "name": "交付失败",
+      "id": "14:1594",
+      "source": "executor-picker.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1594",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P11",
+      "name": "已接手",
+      "id": "14:1623",
+      "source": "executor-picker.ts / distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1623",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P12",
+      "name": "资料缺失",
+      "id": "14:1654",
+      "source": "distillation.ts / definition-review.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1654",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P12",
+      "name": "持续比较 · 未开启",
+      "id": "14:1688",
+      "source": "distillation.ts / definition-review.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1688",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P12",
+      "name": "选择后续工作",
+      "id": "14:1721",
+      "source": "distillation.ts / definition-review.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1721",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P13",
+      "name": "服务设置",
+      "id": "14:1757",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1757",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P13",
+      "name": "高级连接 · 失败",
+      "id": "14:1794",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1794",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P13",
+      "name": "改进数据",
+      "id": "14:1827",
+      "source": "distillation.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1827",
+      "verification": "GROUP_SCREENSHOT_REVIEWED"
+    },
+    {
+      "family": "P14",
+      "name": "反馈编辑",
+      "id": "14:1869",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1869",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P14",
+      "name": "诊断内容",
+      "id": "14:1917",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1917",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P14",
+      "name": "放弃草稿确认",
+      "id": "14:1950",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1950",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P15",
+      "name": "反馈列表",
+      "id": "14:1981",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-1981",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P15",
+      "name": "反馈已收到",
+      "id": "14:2015",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-2015",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P15",
+      "name": "离线等待",
+      "id": "14:2058",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-2058",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    },
+    {
+      "family": "P15",
+      "name": "空反馈列表",
+      "id": "14:2090",
+      "source": "problem-feedback.ts",
+      "url": "https://www.figma.com/design/DctYxpkI7FMqVfhCJGC8qC?node-id=14-2090",
+      "verification": "CREATION_CONFIRMED_SCREENSHOT_EXPORT_BLOCKED"
+    }
+  ]
+}
