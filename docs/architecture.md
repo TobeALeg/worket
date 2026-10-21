@@ -2,6 +2,12 @@
 
 ## WorkflowCore 组合层（2026-10-21）
 
+工作流交互增强：`renderer/workflow-session.ts` 使页面与弹窗请求失效，业务命令在点击时固定 runId/nodeId/generation/revision/commandId；重复提交按目标及动作互斥，失败重试复用操作 ID。后台沿用运行修订号、代次和幂等检查，AppService 在等待准备后再次确认节点仍可交付。
+
+数据库 v5 迁移前保留 `.before-workflow-drafts-v5.bak`，新增独立 `workflow_drafts` 表及运行查询索引。`workflows/drafts.ts` 负责草稿乐观锁与正式保存事务，`renderer/workflow-draft.ts` 合并 500ms 输入并串行写入 SQLite，收到确认后才显示已保存；草稿修订与正式版本身份分离。`desktop/workflow-draft-flush.ts` 在隐藏、关闭及正常退出前请求 renderer 保存，限定窗口发送者和请求 ID，数据库随后才关闭；异常终止仍可能丢失未确认输入。
+
+`workflows/queries.ts` 按流程系列、状态、名称和游标分页返回轻量运行摘要，从节点数组的最后一轮派生待验收；不维护第二份可变待办状态，不读取每项工作的详情。`renderer/workflow-workspace.ts` 负责筛选与分页，仅更新列表区域；详情切换记住各运行选中节点。可见页沿用 2.5s 刷新，过期查询结果不能覆盖新筛选。
+
 `workflows/core.ts` 集中拥有流程固定版本、运行、依赖准备、实际采用、代次、影响范围和状态迁移；`validation.ts` 校验类型、必填来源与图无环；`outputs.ts` 固定成果、关联已有 ArtifactRef 并经 DefinitionRepository 的逐项验收发布。节点业务仍由 WorkInstance / WorkRecord 表达，执行交接沿用 DistillationDesktop 与 AppService，Adapter 不承担流程规则。`context.ts` 为工作包和流程入口提供同一份归属投影。
 
 数据流：工作流页面 → 限定面板发送者的 `workflow:command` → WorkflowDesktop → WorkflowCore → 已有 DefinitionRepository / WorkCore。执行者提交经认证的本机 MCP → 以 workId 反查运行、节点和代次 → 同一成果提交路径。MCP 只能提交当前轮，不能批准验收。文件预览/打开以已登记输出反查固定路径并校验 hash，不接受任意路径打开命令。

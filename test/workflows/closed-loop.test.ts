@@ -109,8 +109,8 @@ test('changed fixed files cannot be adopted or approved, and failed preparation 
 test('v3 local databases are backed up once before workflow migration; empty schema upgrades and restart retain data', t => {
   const directory = mkdtempSync(join(tmpdir(), 'worket-workflow-migrate-')), databasePath = join(directory, 'work.sqlite');
   let core = createWorkCore({ databasePath });
-  core.definitions.db.exec('DROP TABLE workflow_node_works; DROP TABLE workflow_runs; DROP TABLE workflow_contract_refs; DROP TABLE workflow_definitions; PRAGMA user_version=3'); core.close();
+  core.definitions.db.exec('DROP TABLE workflow_drafts; DROP TABLE workflow_node_works; DROP TABLE workflow_runs; DROP TABLE workflow_contract_refs; DROP TABLE workflow_definitions; PRAGMA user_version=3'); core.close();
   const backup = `${databasePath}.before-workflows-v4.bak`; rmSync(backup, { force: true });
-  core = createWorkCore({ databasePath }); assert.equal(core.definitions.db.prepare('PRAGMA user_version').get()!.user_version, 4); assert.ok(existsSync(backup));
+  core = createWorkCore({ databasePath }); assert.equal(core.definitions.db.prepare('PRAGMA user_version').get()!.user_version, 5); assert.ok(existsSync(backup));
   const firstBackup = readFileSync(backup); core.close(); core = createWorkCore({ databasePath }); assert.deepEqual(readFileSync(backup), firstBackup); core.close(); rmSync(directory, { recursive: true, force: true });
 });

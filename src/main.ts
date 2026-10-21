@@ -12,6 +12,7 @@ import { writeFileSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { DistillationDesktop } from "./distillation/desktop.js";
 import { WorkflowDesktop } from './workflows/desktop.js';
+import { WorkflowDraftFlush } from './desktop/workflow-draft-flush.js';
 import { WorketAIClient } from "./ai-service/client.js";
 import { ServiceCredentials } from "./ai-service/credentials.js";
 import { AutomaticConnection, PRODUCTION_WORKET_SERVICE_URL } from "./ai-service/connection.js";
@@ -54,6 +55,8 @@ const petPositionPath = () =>
   );
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
+const workflowDraftFlush = new WorkflowDraftFlush(() => panelWindow);
+let workflowDraftsFlushed = false, workflowQuitPending = false;
 let tray: Tray | null = null;
 let service: AppService | null = null;
 let bridge: WorkPetHttpBridge | null = null;
@@ -198,9 +201,17 @@ function createWindows(): void {
   });
   panelWindow.webContents.on("render-process-gone", () => diagnostics?.event("renderer", "failed", { code: "RENDERER_EXIT" }));
   panelWindow.webContents.on("unresponsive", () => diagnostics?.event("renderer", "failed", { code: "RENDERER_UNRESPONSIVE" }));
-  panelWindow.on("hide", () => panelWindow?.webContents.send("feedback:collapse"));
+  panelWindow.on("hide", () => {
+    panelWindow?.webContents.send("feedback:collapse");
+    if (!quitting) void workflowDraftFlush.flush().catch(error => { panelWindow?.show(); dialog.showErrorBox('草稿尚未保存', String(error)); });
+  });
   panelWindow.on("closed", () => {
     panelWindow = null;
+  });
+  panelWindow.on('close', event => {
+    if (quitting) return;
+    event.preventDefault();
+    void workflowDraftFlush.flush().then(() => panelWindow?.hide()).catch(error => dialog.showErrorBox('草稿尚未保存', String(error)));
   });
   panelWindow.setAlwaysOnTop(true, "floating");
   panelWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -413,7 +424,7 @@ function registerIpc(): void {
       panelWindow.setBounds(resizePanelRight(panelResize.bounds, panelResize.area, cursorX - panelResize.cursorX));
     }
   });
-  ipcMain.handle("panel:close", () => panelWindow?.hide());
+  ipcMain.handle("panel:close", async () => { await workflowDraftFlush.flush(); panelWindow?.hide(); });
   ipcMain.handle("dashboard:get", (_event, workId?: string) =>
     requireService().dashboardWithContext(workId),
   );
@@ -624,7 +635,17 @@ app.whenReady().then(async () => {
 
 app.on("activate", () => revealApp());
 
-app.on("before-quit", () => {
+app.on("before-quit", event => {
+  if (!workflowDraftsFlushed && panelWindow && !panelWindow.isDestroyed()) {
+    event.preventDefault();
+    if (!workflowQuitPending) {
+      workflowQuitPending = true;
+      void workflowDraftFlush.flush().then(() => { workflowDraftsFlushed = true; app.quit(); }).catch(error => {
+        workflowQuitPending = false; panelWindow?.show(); dialog.showErrorBox('草稿尚未保存', String(error));
+      });
+    }
+    return;
+  }
   quitting = true;
   updates?.stop();
   reports?.close();

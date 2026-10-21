@@ -170,6 +170,7 @@ export interface CreateWorkFromMessageRequest {
 
 export interface WorkPetApi {
   workflow(action: string, input?: unknown): Promise<any>;
+  onWorkflowDraftFlush(callback: () => Promise<void>): () => void;
   previewSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<{ thread: import("./adapters/types.js").NormalizedThread; notice: string }>;
   importSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<DashboardView>;
   listSelectedInbox(): Promise<{ id: string; title: string; adapterId: string; expiresAt: number }[]>;
