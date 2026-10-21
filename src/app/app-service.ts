@@ -801,6 +801,7 @@ export class AppService {
       const continuation = await this.#preparation.ensure(workId);
       this.options.onHandoffStep?.("prepared");
       current = await this.#artifacts.verify(this.#requireWork(workId));
+      this.#core.workflows.assertActive(workId);
       if (
         current.instance.status !== "OPEN" ||
         current.activeBinding?.id !== initial.activeBinding?.id

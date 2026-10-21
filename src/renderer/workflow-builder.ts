@@ -3,15 +3,17 @@ import type { Binding, WorkflowContent, WorkflowDefinition, WorkflowNode } from 
 import { outputPorts } from '../workflows/types.js';
 import { api, esc, cid, graph, bindingLabel, control, readValues } from './workflow-ui.js';
 
-export type BuilderHost = { page: (title: string, body: string, actions: string) => void; modal: (title: string, body: string, actions: string) => HTMLDialogElement; bind: (host: HTMLElement, selector: string, action: () => Promise<void>) => void; root: HTMLElement; closeModal: () => void };
+export type BuilderHost = { capture: () => () => boolean; page: (title: string, body: string, actions: string) => void; modal: (title: string, body: string, actions: string) => HTMLDialogElement; bind: (host: HTMLElement, selector: string, action: () => Promise<void>) => void; root: HTMLElement; closeModal: () => void };
 export async function buildWorkflow(host: BuilderHost, done: (d: WorkflowDefinition) => Promise<void>, base?: WorkflowDefinition): Promise<void> {
-  const catalog: { contracts: Definition[] } = await api('catalog');
+  const valid = host.capture(), catalog: { contracts: Definition[] } = await api('catalog'); if (!valid()) return;
   const data: WorkflowContent = base ? structuredClone(base) : { name: '', inputs: [], nodes: [], outputs: [] };
   const contracts: Record<string, Definition> = {};
   for (const n of data.nodes) contracts[n.id] = await window.workpet.distillation('definition', { id: n.contractId });
+  if (!valid()) return;
   let selected = data.nodes[0]?.id ?? '';
   const draw = (): void => {
     const n = data.nodes.find(n => n.id === selected), c = n ? contracts[n.id]! : undefined;
+    if (!valid()) return;
     host.page('连接工作约定', `<label class="field">流程名称<input id="wf-name" maxlength="160" value="${esc(data.name)}"></label><div class="wf-inline"><select id="wf-contract"><option value="">选择已确认的 Contract</option>${catalog.contracts.map(c => `<option value="${esc(c.id)}">${esc(c.content.name)} · v${c.version}</option>`).join('')}</select><button id="wf-add-node">加入流程</button></div>${data.nodes.length ? `<div class="wf-run-layout">${graph(data, contracts, {}, selected)}<section class="wf-inspector"><h3>${esc(n?.name ?? '')}</h3>${n && c ? `<label class="field">节点名称<input id="wf-node-name" value="${esc(n.name)}" maxlength="160"></label><p>${esc(c.content.name)} · v${c.version}</p><h4>输入来源</h4>${c.content.inputs.map(p => `<button class="wf-binding" data-bind-input="${esc(p.key)}"><strong>${esc(p.text)} <small>${esc(p.valueType)}${p.required ? ' · 必填' : ''}</small></strong><span>${esc(bindingLabel(n.bindings[p.key], data, contracts))}</span></button>`).join('') || '<p>无须提供输入</p>'}<details><summary>仅控制顺序的前置工作</summary>${data.nodes.filter(x => x.id !== n.id).map(x => `<label class="wf-check"><input type="checkbox" data-after="${esc(x.id)}" ${n.after.includes(x.id) ? 'checked' : ''}>${esc(x.name)}</label>`).join('')}</details><button id="wf-output-types">确认输出类型</button><button id="wf-remove-node" class="destructive">移除此节点</button>` : ''}</section></div><section class="wf-final"><h3>最终交付</h3>${data.nodes.map(n => outputPorts(contracts[n.id]!).map(p => `<label class="wf-check"><input type="checkbox" data-final-node="${esc(n.id)}" data-final-key="${esc(p.key)}" ${data.outputs.some(o => o.nodeId === n.id && o.outputKey === p.key) ? 'checked' : ''}>${esc(n.name)} / ${esc(p.text)}</label>`).join('')).join('')}</section>` : ''}`, '<button id="wf-save" class="primary">保存流程版本</button>');
     host.root.querySelector<HTMLInputElement>('#wf-name')!.oninput = e => { data.name = (e.target as HTMLInputElement).value; };
     host.root.querySelectorAll<HTMLButtonElement>('[data-node]').forEach(b => b.onclick = () => { selected = b.dataset.node!; draw(); });
@@ -30,10 +32,11 @@ export async function buildWorkflow(host: BuilderHost, done: (d: WorkflowDefinit
     host.root.querySelectorAll<HTMLInputElement>('[data-final-node]').forEach(e => e.onchange = () => { data.outputs = [...host.root.querySelectorAll<HTMLInputElement>('[data-final-node]:checked')].map((e, i) => ({ key: `final_${i + 1}`, nodeId: e.dataset.finalNode!, outputKey: e.dataset.finalKey! })); });
     host.bind(host.root, '#wf-save', async () => {
       const used = new Set(data.nodes.flatMap(n => Object.values(n.bindings).flatMap(b => b.type === 'INPUT' ? [b.key] : [])));
-      const d = await api('save', { content: { name: data.name, inputs: data.inputs.filter(p => used.has(p.key)), nodes: data.nodes, outputs: data.outputs }, ...(base ? { baseId: base.id } : {}), commandId: cid() }); await done(d);
+      const d = await api('save', { content: { name: data.name, inputs: data.inputs.filter(p => used.has(p.key)), nodes: data.nodes, outputs: data.outputs }, ...(base ? { baseId: base.id } : {}), commandId: cid() }); if (valid()) await done(d);
     });
   };
   function addNode(c: Definition): void {
+    if (!valid()) return;
     const id = `n_${cid().replaceAll('-', '').slice(0, 12)}`, node: WorkflowNode = { id, name: c.content.name, contractId: c.id, bindings: {}, after: [] };
     for (const p of c.content.inputs) { const key = `${id}_${p.key.slice(0, 60)}`; data.inputs.push({ ...p, key, text: `${c.content.name} / ${p.text}` }); node.bindings[p.key] = { type: 'INPUT', key }; }
     data.nodes.push(node); contracts[id] = c; selected = id;
@@ -41,7 +44,7 @@ export async function buildWorkflow(host: BuilderHost, done: (d: WorkflowDefinit
   }
   async function types(c: Definition, next: (c: Definition) => void): Promise<void> {
     const m = host.modal('确认 Contract 输出类型', `<p>${esc(c.content.name)} · 当前 v${c.version}。确认变更将保存新版本，已有工作保持原版本。</p>${outputPorts(c).map(p => `<label class="field">${esc(p.text)}<select data-output-type="${esc(p.key)}">${['TEXT', 'FILE', 'NUMBER', 'BOOLEAN', ...(p.choices?.length ? ['CHOICE'] : [])].map(t => `<option ${p.valueType === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`).join('')}`, '<button id="wf-confirm-types" class="primary">确认并使用</button>');
-    host.bind(m, '#wf-confirm-types', async () => { const types = Object.fromEntries([...m.querySelectorAll<HTMLSelectElement>('[data-output-type]')].map(e => [e.dataset.outputType!, e.value])); const d: Definition = await api('confirmPorts', { definitionId: c.id, expectedHash: c.contentHash, types, commandId: cid() }); catalog.contracts = catalog.contracts.filter(x => x.definitionKey !== c.definitionKey); catalog.contracts.push(d); host.closeModal(); next(d); });
+    host.bind(m, '#wf-confirm-types', async () => { const types = Object.fromEntries([...m.querySelectorAll<HTMLSelectElement>('[data-output-type]')].map(e => [e.dataset.outputType!, e.value])); const d: Definition = await api('confirmPorts', { definitionId: c.id, expectedHash: c.contentHash, types, commandId: cid() }); if (!valid() || !m.open) return; catalog.contracts = catalog.contracts.filter(x => x.definitionKey !== c.definitionKey); catalog.contracts.push(d); host.closeModal(); next(d); });
   }
   function binding(n: WorkflowNode, key: string): void {
     const p = contracts[n.id]!.content.inputs.find(p => p.key === key)!, options: { label: string; binding: Binding; type: string }[] = [];

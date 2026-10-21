@@ -18,7 +18,8 @@ export function readValues(host: HTMLElement, ports: Pick<Port, 'key' | 'valueTy
 }
 export function bindFiles(host: HTMLElement, prefix = 'value'): void {
   host.querySelectorAll<HTMLButtonElement>('[data-file]').forEach(b => b.onclick = async () => {
-    b.disabled = true; try { const path = await window.workpet.chooseDefinitionFile(); if (path) host.querySelector<HTMLInputElement>(`[data-${prefix}="${CSS.escape(b.dataset.file!)}"]`)!.value = path; }
+    const field = host.querySelector<HTMLInputElement>(`[data-${prefix}="${CSS.escape(b.dataset.file!)}"]`)!;
+    b.disabled = true; try { const path = await window.workpet.chooseDefinitionFile(); if (path && field.isConnected && b.isConnected) field.value = path; }
     finally { b.disabled = false; }
   });
 }
