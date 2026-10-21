@@ -9,11 +9,22 @@ export function migrateDefinitions(
     (db.prepare("PRAGMA user_version").get() as { user_version: number })
       .user_version,
   );
-  if (version > 4)
+  if (version > 5)
     throw new Error(
       "DATABASE_VERSION_UNSUPPORTED：请使用新版 Worket 或恢复迁移前备份",
     );
-  if (version === 4) return;
+  if (version === 5) return;
+  if (version === 4) {
+    if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflow-drafts-v5.bak`))
+      db.prepare('VACUUM INTO ?').run(`${databasePath}.before-workflow-drafts-v5.bak`);
+    transaction(db, () => {
+      db.exec(`CREATE TABLE workflow_drafts (id TEXT PRIMARY KEY, base_id TEXT REFERENCES workflow_definitions(id), revision INTEGER NOT NULL, content_json TEXT NOT NULL, selected_node TEXT NOT NULL, updated_at TEXT NOT NULL, published_id TEXT REFERENCES workflow_definitions(id)) STRICT;
+        CREATE INDEX workflow_runs_definition ON workflow_runs(workflow_id);
+        CREATE INDEX workflow_runs_updated ON workflow_runs(json_extract(payload_json,'$.updatedAt'),id);
+        PRAGMA user_version = 5;`);
+    });
+    return;
+  }
   if (version === 3) {
     if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflows-v4.bak`))
       db.prepare('VACUUM INTO ?').run(`${databasePath}.before-workflows-v4.bak`);
@@ -24,7 +35,7 @@ export function migrateDefinitions(
         CREATE TABLE workflow_node_works (work_id TEXT PRIMARY KEY REFERENCES work_instances(id) ON DELETE RESTRICT, run_id TEXT NOT NULL REFERENCES workflow_runs(id), node_id TEXT NOT NULL, generation INTEGER NOT NULL, UNIQUE(run_id,node_id,generation)) STRICT;
         PRAGMA user_version = 4;`);
     });
-    return;
+    return migrateDefinitions(db, databasePath);
   }
   if (version === 2) {
     if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-category-v3.bak`))

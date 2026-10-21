@@ -3,6 +3,8 @@ import { confirmOutputTypes } from '../definitions/output-ports.js';
 import type { DistillationDesktop } from '../distillation/desktop.js';
 import type { AppService } from '../app/app-service.js';
 import { MaterialStore } from '../definitions/storage.js';
+import { WorkflowDrafts } from './drafts.js';
+import { queryRuns, type RunQuery } from './queries.js';
 
 /** Renderer commands enter the same domain module used by executor submission and tests. */
 export class WorkflowDesktop {
@@ -10,6 +12,12 @@ export class WorkflowDesktop {
   async call(action: string, input: unknown = {}): Promise<unknown> {
     string(action); object(input); const w = this.app.core().workflows;
     switch (action) {
+      case 'queryRuns': return queryRuns(w, input as RunQuery);
+      case 'drafts': return new WorkflowDrafts(w).list();
+      case 'draft': string(input.id); return new WorkflowDrafts(w).get(input.id);
+      case 'saveDraft': return new WorkflowDrafts(w).save(input as Parameters<WorkflowDrafts['save']>[0]);
+      case 'publishDraft': return new WorkflowDrafts(w).publish(input as Parameters<WorkflowDrafts['publish']>[0]);
+      case 'removeDraft': return new WorkflowDrafts(w).remove(input as Parameters<WorkflowDrafts['remove']>[0]);
       case 'openOutput': {
         string(input.runId); string(input.nodeId); string(input.key);
         const run = w.run(input.runId), node = run.nodes[input.nodeId]?.find(n => n.generation === input.generation);

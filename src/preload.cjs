@@ -1,4 +1,9 @@
 const { contextBridge, ipcRenderer } = require("electron");
+let flushWorkflowDraft = async () => {};
+ipcRenderer.on('workflow:flushDraft', async (_event, id) => {
+  try { await flushWorkflowDraft(); ipcRenderer.send('workflow:draftFlushed', { id }); }
+  catch (error) { ipcRenderer.send('workflow:draftFlushed', { id, error: String(error) }); }
+});
 
 contextBridge.exposeInMainWorld("workpet", {
   previewSelectedContent: input => ipcRenderer.invoke("connectors:preview", input),
@@ -14,6 +19,7 @@ contextBridge.exposeInMainWorld("workpet", {
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
   distillation: (action, input) => ipcRenderer.invoke("distillation:command", action, input),
   workflow: (action, input) => ipcRenderer.invoke('workflow:command', action, input),
+  onWorkflowDraftFlush: callback => { flushWorkflowDraft = callback; return () => { if (flushWorkflowDraft === callback) flushWorkflowDraft = async () => {}; }; },
   chooseDefinitionFile: (kind) => ipcRenderer.invoke("distillation:choose-file", kind),
   exportWorkPackage: (workId) => ipcRenderer.invoke("distillation:export", workId),
   copyWorkPackage: (workId) => ipcRenderer.invoke("distillation:copy", workId),
