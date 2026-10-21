@@ -28,6 +28,8 @@ SQLite schema v4 增加流程定义、Contract 引用、运行和节点工作归
 
 状态流：节点 `WAITING → READY → PREPARED → SUBMITTED → ACCEPTED`；真实交付/接手状态由既有工作绑定和读取回执投影，失败交付显示可重试状态。退回/重做将旧轮标为 `SUPERSEDED` 并创建新轮，已开始的无关节点不被自动重置。采用新版通过依赖图计算后续闭包，确认后再创建受影响新轮；全部当前必需节点通过后，运行变为 COMPLETED。运行 PAUSED/CANCELLED 保留外部执行事实。详见 [方案与范围](specs/workflow-composition-v1.md)、[验证记录](acceptance/workflows-2026-10-21.md)。
 
+真实运行核对：用已安装客户端开展两份文档任务，真实 WorkBuddy 通过 MCP 读取各自工作上下文并提交文件，界面逐项验收。比对运行 payload、当前及历史工作 ID、成果 ID、采用代次、文件 SHA-256、真实会话绑定和读取回执；采用新版前保留旧索引，确认后只增加依赖索引轮次，独立清单及另一运行 payload 保持一致。现场观察：WorkBuddy 深链接预填草稿仍需单独发送；返工携带原输入与修改意见，旧稿尚未自动列为本轮显式输入。详见 [真实任务记录](acceptance/workflow-real-jobs-2026-10-21.md)。
+
 ## 持续集成（2026-10-14）
 
 `.github/workflows/ci.yml` 在分支推送和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。
