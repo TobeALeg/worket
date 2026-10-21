@@ -1,4 +1,5 @@
 import { setupSelectedImport } from "./selected-import.js";
+import { setupWorkflows, renderWorkflows, openWorkflowRun } from './workflows.js';
 import { setupProblemFeedback } from "./problem-feedback.js";
 import { chooseExecutor } from "./executor-picker.js";
 import {
@@ -30,7 +31,7 @@ const cancelRecordingPrompt = required<HTMLElement>("#cancel-recording-prompt");
 const splitPointSelect = required<HTMLSelectElement>("#split-point");
 let dashboard: DashboardView;
 let recordingNoticeRequired = true;
-type PanelTab = WorkStatus | "RECENT" | "DEFINITIONS";
+type PanelTab = WorkStatus | "RECENT" | "DEFINITIONS" | 'WORKFLOWS';
 let filter: PanelTab = "OPEN";
 const selectedDistillationIds = new Set<string>();
 let pendingCancelRecordingWorkId: string | null = null;
@@ -69,14 +70,16 @@ function render(): void {
     button.classList.toggle("active", selected);
     button.setAttribute("aria-selected", String(selected));
     button.tabIndex = selected ? 0 : -1;
-    if (selected && filter !== "RECENT" && filter !== "DEFINITIONS")
+    if (selected && filter !== "RECENT" && filter !== "DEFINITIONS" && filter !== 'WORKFLOWS')
       required("#works-panel").setAttribute("aria-labelledby", button.id);
   });
   if (filter === "ARCHIVED") required<HTMLElement>("#tab-open").tabIndex = 0;
   required<HTMLElement>("#sources-panel").hidden = filter !== "RECENT";
   required<HTMLElement>("#works-panel").hidden =
-    filter === "RECENT" || filter === "DEFINITIONS";
+    filter === "RECENT" || filter === "DEFINITIONS" || filter === 'WORKFLOWS';
   required<HTMLElement>("#definitions-panel").hidden = filter !== "DEFINITIONS";
+  required<HTMLElement>('#workflows-panel').hidden = filter !== 'WORKFLOWS';
+  if (filter === 'WORKFLOWS') { void renderWorkflows().catch(showError); return; }
   if (filter === "DEFINITIONS") {
     void renderDefinitions().catch(showError);
     return;
@@ -186,6 +189,12 @@ function renderDetail(work: WorkDetailView | null): void {
     );
   }
   syncWorkDistillationActions(work.id);
+  if (work.workflowRunId) {
+    const b = document.createElement('button'); b.textContent = '返回所属流程'; b.className = 'primary';
+    b.onclick = () => { void openWorkflowRun(work.workflowRunId!).catch(showError); };
+    detail.querySelector('.detail-actions')?.prepend(b);
+    detail.querySelector<HTMLButtonElement>('[data-action="complete"]')?.remove();
+  }
 }
 
 function progressSection(work: WorkDetailView, field: "completedActions" | "pendingActions"): string {
@@ -479,6 +488,7 @@ const recordingSources = setupRecordingSources((result) => {
   void renderWithRecordingNotice();
 });
 setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = result.selectedWork?.status ?? "OPEN"; void renderWithRecordingNotice(); });
+setupWorkflows(result => { dashboard = result; detailOpen = true; filter = result.selectedWork?.status ?? 'OPEN'; void renderWithRecordingNotice(); });
 let refreshing = false;
 async function refreshPanel(): Promise<void> {
   if (refreshing || actionPending || document.querySelector("dialog[open], .secondary-menu[open]") || document.activeElement?.matches("input, textarea, select")) return;

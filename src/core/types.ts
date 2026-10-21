@@ -1,4 +1,5 @@
 import type { DefinitionRepository, CreateFromDefinition } from '../definitions/repository.js';
+import type { WorkflowCore } from '../workflows/core.js';
 import type { WorkPackage } from '../definitions/work-package.js';
 import type { ContinuationSnapshot } from '../handoff/continuation.js';
 export const WORK_STATE_FIELDS = [
@@ -211,6 +212,7 @@ export interface WorkCoreOptions {
 
 export interface WorkCore {
   readonly definitions: DefinitionRepository;
+  readonly workflows: WorkflowCore;
   createWorkFromDefinition(input: CreateFromDefinition): WorkSnapshot;
   createWork(input: CreateWorkInput): WorkSnapshot;
   getWork(workInstanceId: string): WorkSnapshot | null;

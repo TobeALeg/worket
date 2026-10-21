@@ -11,6 +11,7 @@ import { createDefaultExecutors } from "./executors/defaults.js";
 import { writeFileSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { DistillationDesktop } from "./distillation/desktop.js";
+import { WorkflowDesktop } from './workflows/desktop.js';
 import { WorketAIClient } from "./ai-service/client.js";
 import { ServiceCredentials } from "./ai-service/credentials.js";
 import { AutomaticConnection, PRODUCTION_WORKET_SERVICE_URL } from "./ai-service/connection.js";
@@ -293,6 +294,10 @@ function revealApp(): void {
 }
 
 function registerIpc(): void {
+  ipcMain.handle('workflow:command', (event, action, input) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error('INVALID_SENDER');
+    return new WorkflowDesktop(requireService(), distillation, path => shell.openPath(path)).call(action, input);
+  });
   registerProblemReports(ipcMain, () => panelWindow, reports);
   ipcMain.handle("distillation:command", (event, action, input) => {
     if (event.sender !== panelWindow?.webContents)

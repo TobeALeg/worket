@@ -12,6 +12,7 @@ export type UpdateInstanceFiles = {
 };
 /** Explicit user selection changes this instance only; old package files remain available. */
 export function updateInstanceFiles(repository: DefinitionRepository, input: UpdateInstanceFiles): void {
+  ensure(!repository.db.prepare('SELECT work_id FROM workflow_node_works WHERE work_id=?').get(input.workId), 'WORKFLOW_INPUTS_FIXED', '流程输入已固定；请在所属流程中明确重做并采用新输入');
   object(input.files); array(input.removeReferenceIds); string(input.expectedHash);
   repository.command(input.commandId, { op: 'updateInstanceFiles', ...input }, input.workId, () => {
     const db = repository.db;

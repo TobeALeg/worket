@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("workpet", {
   onFeedbackCollapse: (callback) => {const listener = () => callback(); ipcRenderer.on("feedback:collapse", listener); return () => ipcRenderer.removeListener("feedback:collapse", listener);},
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
   distillation: (action, input) => ipcRenderer.invoke("distillation:command", action, input),
+  workflow: (action, input) => ipcRenderer.invoke('workflow:command', action, input),
   chooseDefinitionFile: (kind) => ipcRenderer.invoke("distillation:choose-file", kind),
   exportWorkPackage: (workId) => ipcRenderer.invoke("distillation:export", workId),
   copyWorkPackage: (workId) => ipcRenderer.invoke("distillation:copy", workId),

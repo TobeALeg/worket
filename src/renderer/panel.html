@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="problem-feedback.css" />
     <link rel="stylesheet" href="definition-review.css" />
     <link rel="stylesheet" href="work-contract.css" />
+    <link rel="stylesheet" href="workflows.css" />
   </head>
   <body>
     <header class="topbar">
@@ -20,6 +21,7 @@
           <button id="tab-open" class="filter active" role="tab" aria-selected="true" aria-controls="works-panel" data-filter="OPEN">进行中</button>
           <button id="tab-completed" class="filter" role="tab" aria-selected="false" aria-controls="works-panel" tabindex="-1" data-filter="COMPLETED">已完成</button>
           <button id="tab-definitions" class="filter" role="tab" aria-selected="false" aria-controls="definitions-panel" tabindex="-1" data-filter="DEFINITIONS">已沉淀</button>
+          <button id="tab-workflows" class="filter" role="tab" aria-selected="false" aria-controls="workflows-panel" tabindex="-1" data-filter="WORKFLOWS">工作流</button>
         </div>
       </section>
     </header>
@@ -27,6 +29,7 @@
     <main>
       <div id="notice" class="notice" role="status" hidden></div>
       <section id="definitions-panel" role="tabpanel" aria-labelledby="tab-definitions" hidden></section>
+      <section id="workflows-panel" role="tabpanel" aria-labelledby="tab-workflows" hidden></section>
       <section id="sources-panel" class="recording-sources" role="tabpanel" aria-labelledby="tab-recent" hidden>
         <div class="source-toolbar">
           <div id="source-providers" class="source-providers" role="group" aria-label="按执行者筛选聊天"></div>

@@ -17,7 +17,7 @@ function summary(title: string): string {
 }
 function section(data: ContractSection): string {
   const heading = `<h3><span>${data.label}</span><small>${data.items.length} 项</small></h3>`;
-  const list = `<ol class="sheet-items">${data.items.map(item => `<li data-contract-address="${escape(item.address)}"><span class="source-text">${escape(item.text)}</span>${item.required ? '<span class="item-required" aria-label="必填" title="必填">*</span>' : ''}</li>`).join('')}</ol>`;
+  const list = `<ol class="sheet-items">${data.items.map(item => `<li data-contract-address="${escape(item.address)}"><span class="source-text">${escape(item.text)}${item.valueType ? ` <small>${escape(item.valueType)}</small>` : ''}</span>${item.required ? '<span class="item-required" aria-label="必填" title="必填">*</span>' : ''}</li>`).join('')}</ol>`;
   const folded = !['inputs', 'deliverables'].includes(data.key);
   return folded ? `<details class="sheet-section sheet-disclosure section-${data.key}">${summary(heading)}${list}</details>`
     : `<section class="sheet-section section-${data.key}">${heading}${data.items.length ? list : '<p class="contract-empty">无须提供输入</p>'}</section>`;

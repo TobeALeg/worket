@@ -9,11 +9,23 @@ export function migrateDefinitions(
     (db.prepare("PRAGMA user_version").get() as { user_version: number })
       .user_version,
   );
-  if (version > 3)
+  if (version > 4)
     throw new Error(
       "DATABASE_VERSION_UNSUPPORTED：请使用新版 Worket 或恢复迁移前备份",
     );
-  if (version === 3) return;
+  if (version === 4) return;
+  if (version === 3) {
+    if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflows-v4.bak`))
+      db.prepare('VACUUM INTO ?').run(`${databasePath}.before-workflows-v4.bak`);
+    transaction(db, () => {
+      db.exec(`CREATE TABLE workflow_definitions (id TEXT PRIMARY KEY, definition_key TEXT NOT NULL, version INTEGER NOT NULL, payload_json TEXT NOT NULL, UNIQUE(definition_key,version)) STRICT;
+        CREATE TABLE workflow_contract_refs (workflow_id TEXT NOT NULL REFERENCES workflow_definitions(id), contract_id TEXT NOT NULL REFERENCES work_definitions(id) ON DELETE RESTRICT, PRIMARY KEY(workflow_id,contract_id)) STRICT;
+        CREATE TABLE workflow_runs (id TEXT PRIMARY KEY, workflow_id TEXT NOT NULL REFERENCES workflow_definitions(id), payload_json TEXT NOT NULL) STRICT;
+        CREATE TABLE workflow_node_works (work_id TEXT PRIMARY KEY REFERENCES work_instances(id) ON DELETE RESTRICT, run_id TEXT NOT NULL REFERENCES workflow_runs(id), node_id TEXT NOT NULL, generation INTEGER NOT NULL, UNIQUE(run_id,node_id,generation)) STRICT;
+        PRAGMA user_version = 4;`);
+    });
+    return;
+  }
   if (version === 2) {
     if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-category-v3.bak`))
       db.prepare('VACUUM INTO ?').run(`${databasePath}.before-category-v3.bak`);
@@ -21,6 +33,7 @@ export function migrateDefinitions(
       db.exec(`CREATE TABLE definition_categories (definition_key TEXT PRIMARY KEY, category TEXT NOT NULL) STRICT;
         PRAGMA user_version = 3;`);
     });
+    migrateDefinitions(db, databasePath);
     return;
   }
   if (version === 1) {
