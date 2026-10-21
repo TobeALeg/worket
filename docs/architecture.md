@@ -2,6 +2,8 @@
 
 ## UI 规范整理（2026-10-21，仅文档）
 
+同日建立 [Figma 基础组件索引](design/worket-ui/figma.md) 与节点清单；Figma 含 2 个变量集合、8 个文字样式、1 个阴影样式及 10 类基础组件。运行时 token 生成、组件抽取和自动同步仍未实现。新增候选变量名与字体替代在文档中单独记录，不可直接视为当前 CSS/API。
+
 [页面规范 v0.1](design/worket-ui/README.md) 记录 `theme.css`、`panel.css` 与契约专用 token 的现状、组件边界及拟议语义映射。运行时仍使用原生 TypeScript/HTML/CSS 和现有业务模块，尚未建立新的 token 生成器、共享组件层或 Figma 同步程序。
 
 后续抽取方向：共享组件只接受展示参数与回调，业务状态和 `window.workpet` 调用保留在宿主；统一 token 数据生成 CSS 并显式同步设计变量。工作流展示层将重新设计，当前 `workflows.css` 等布局不进入规范基线；此决定不改变 WorkflowCore 的领域状态与接口。

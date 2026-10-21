@@ -1,0 +1,377 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "DctYxpkI7FMqVfhCJGC8qC",
+  "pageId": "0:1",
+  "status": "REVIEW_REQUIRED",
+  "collections": [
+    {
+      "id": "VariableCollectionId:2:2",
+      "name": "Worket / Primitives",
+      "modes": [
+        {
+          "name": "Light",
+          "modeId": "2:0"
+        }
+      ]
+    },
+    {
+      "id": "VariableCollectionId:2:3",
+      "name": "Worket / Semantic",
+      "modes": [
+        {
+          "name": "Light",
+          "modeId": "2:1"
+        }
+      ]
+    }
+  ],
+  "boards": [
+    {
+      "id": "4:11",
+      "name": "Foundations"
+    },
+    {
+      "id": "4:72",
+      "name": "Components"
+    },
+    {
+      "id": "4:234",
+      "name": "Visual samples"
+    }
+  ],
+  "components": [
+    {
+      "id": "3:105",
+      "name": "EmptyState",
+      "type": "COMPONENT",
+      "variants": []
+    },
+    {
+      "id": "4:2",
+      "name": "Button",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:3",
+          "name": "Kind=Primary, State=Default"
+        },
+        {
+          "id": "3:5",
+          "name": "Kind=Primary, State=Hover"
+        },
+        {
+          "id": "3:7",
+          "name": "Kind=Primary, State=Focus"
+        },
+        {
+          "id": "3:9",
+          "name": "Kind=Primary, State=Disabled"
+        },
+        {
+          "id": "3:11",
+          "name": "Kind=Primary, State=Busy"
+        },
+        {
+          "id": "3:13",
+          "name": "Kind=Default, State=Default"
+        },
+        {
+          "id": "3:15",
+          "name": "Kind=Default, State=Hover"
+        },
+        {
+          "id": "3:17",
+          "name": "Kind=Default, State=Focus"
+        },
+        {
+          "id": "3:19",
+          "name": "Kind=Default, State=Disabled"
+        },
+        {
+          "id": "3:21",
+          "name": "Kind=Default, State=Busy"
+        },
+        {
+          "id": "3:23",
+          "name": "Kind=Quiet, State=Default"
+        },
+        {
+          "id": "3:25",
+          "name": "Kind=Quiet, State=Hover"
+        },
+        {
+          "id": "3:27",
+          "name": "Kind=Quiet, State=Focus"
+        },
+        {
+          "id": "3:29",
+          "name": "Kind=Quiet, State=Disabled"
+        },
+        {
+          "id": "3:31",
+          "name": "Kind=Quiet, State=Busy"
+        },
+        {
+          "id": "3:33",
+          "name": "Kind=Danger, State=Default"
+        },
+        {
+          "id": "3:35",
+          "name": "Kind=Danger, State=Hover"
+        },
+        {
+          "id": "3:37",
+          "name": "Kind=Danger, State=Focus"
+        },
+        {
+          "id": "3:39",
+          "name": "Kind=Danger, State=Disabled"
+        },
+        {
+          "id": "3:41",
+          "name": "Kind=Danger, State=Busy"
+        }
+      ]
+    },
+    {
+      "id": "4:3",
+      "name": "TextInput",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:43",
+          "name": "State=Default"
+        },
+        {
+          "id": "3:45",
+          "name": "State=Focus"
+        },
+        {
+          "id": "3:47",
+          "name": "State=Error"
+        },
+        {
+          "id": "3:49",
+          "name": "State=Disabled"
+        }
+      ]
+    },
+    {
+      "id": "4:4",
+      "name": "Textarea",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:51",
+          "name": "State=Default"
+        },
+        {
+          "id": "3:53",
+          "name": "State=Error"
+        }
+      ]
+    },
+    {
+      "id": "4:5",
+      "name": "Select",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:55",
+          "name": "State=Default"
+        },
+        {
+          "id": "3:59",
+          "name": "State=Disabled"
+        }
+      ]
+    },
+    {
+      "id": "4:6",
+      "name": "Checkbox",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:63",
+          "name": "State=Unchecked"
+        },
+        {
+          "id": "3:66",
+          "name": "State=Checked"
+        },
+        {
+          "id": "3:71",
+          "name": "State=Disabled"
+        }
+      ]
+    },
+    {
+      "id": "4:7",
+      "name": "Tab",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:74",
+          "name": "State=Default"
+        },
+        {
+          "id": "3:76",
+          "name": "State=Selected"
+        }
+      ]
+    },
+    {
+      "id": "4:8",
+      "name": "ListRow",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:78",
+          "name": "State=Default"
+        },
+        {
+          "id": "3:82",
+          "name": "State=Hover"
+        }
+      ]
+    },
+    {
+      "id": "4:9",
+      "name": "InlineMessage",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:86",
+          "name": "Tone=Info"
+        },
+        {
+          "id": "3:88",
+          "name": "Tone=Error"
+        },
+        {
+          "id": "3:90",
+          "name": "Tone=Success"
+        }
+      ]
+    },
+    {
+      "id": "4:10",
+      "name": "ReviewItem",
+      "type": "COMPONENT_SET",
+      "variants": [
+        {
+          "id": "3:92",
+          "name": "State=Pending"
+        },
+        {
+          "id": "3:97",
+          "name": "State=Confirmed"
+        },
+        {
+          "id": "3:101",
+          "name": "State=Deleted"
+        }
+      ]
+    }
+  ],
+  "tokenIds": {
+    "color/bg/canvas": "VariableID:2:5",
+    "color/bg/surface": "VariableID:2:7",
+    "color/text/primary": "VariableID:2:9",
+    "color/text/secondary": "VariableID:2:11",
+    "color/border/subtle": "VariableID:2:13",
+    "color/action/primary": "VariableID:2:15",
+    "color/action/hover": "VariableID:2:17",
+    "color/bg/hover": "VariableID:2:19",
+    "color/status/warning": "VariableID:2:21",
+    "color/status/danger": "VariableID:2:23",
+    "color/text/on-action": "VariableID:2:25",
+    "color/focus": "VariableID:2:27",
+    "color/review/confirmed": "VariableID:2:29",
+    "color/review/deleted": "VariableID:2:31",
+    "color/review/pending": "VariableID:2:33",
+    "contract/paper": "VariableID:2:35",
+    "contract/backing": "VariableID:2:37",
+    "contract/ink": "VariableID:2:39",
+    "contract/text": "VariableID:2:41",
+    "contract/gold": "VariableID:2:43",
+    "contract/tab": "VariableID:2:45",
+    "color/text/secondary-readable": "VariableID:2:47",
+    "space/0": "VariableID:2:49",
+    "space/2": "VariableID:2:51",
+    "space/3": "VariableID:2:53",
+    "space/4": "VariableID:2:55",
+    "space/5": "VariableID:2:57",
+    "space/6": "VariableID:2:59",
+    "space/7": "VariableID:2:61",
+    "space/8": "VariableID:2:63",
+    "space/9": "VariableID:2:65",
+    "space/10": "VariableID:2:67",
+    "space/11": "VariableID:2:69",
+    "space/12": "VariableID:2:71",
+    "space/16": "VariableID:2:73",
+    "space/17": "VariableID:2:75",
+    "space/18": "VariableID:2:77",
+    "space/20": "VariableID:2:79",
+    "space/24": "VariableID:2:81",
+    "space/28": "VariableID:2:83",
+    "space/32": "VariableID:2:85",
+    "radius/control": "VariableID:2:87",
+    "radius/dialog": "VariableID:2:89",
+    "radius/paper": "VariableID:2:91",
+    "size/control": "VariableID:2:93",
+    "size/icon": "VariableID:2:95",
+    "size/header": "VariableID:2:97",
+    "stroke/thin": "VariableID:2:99",
+    "stroke/focus": "VariableID:2:101",
+    "opacity/disabled": "VariableID:2:103",
+    "radius/checkbox": "VariableID:7:69"
+  },
+  "textStyles": [
+    {
+      "id": "S:6ac6935d96afe0af896b992706bf47033a66fcab,",
+      "name": "Worket/Body"
+    },
+    {
+      "id": "S:c03e21ac8f00c9b15fb2aaa25e7f378727b5907f,",
+      "name": "Worket/Control"
+    },
+    {
+      "id": "S:6125b5d427d53acd4bcbfbdccdcb9036444dc55f,",
+      "name": "Worket/Heading"
+    },
+    {
+      "id": "S:bc3b56561c7b872419ad62c6fb669c31dd57f8f6,",
+      "name": "Worket/Section"
+    },
+    {
+      "id": "S:7f3101fe7948188f0034f352c38ae89da3df13fb,",
+      "name": "Worket/Meta"
+    },
+    {
+      "id": "S:b7527bc7cc1b00d8dd66bc518c8dfb79f116cf96,",
+      "name": "Worket/Review"
+    },
+    {
+      "id": "S:c90d7cf24dcb36c5411fdbfaac0333f065152b67,",
+      "name": "Worket/Contract title"
+    },
+    {
+      "id": "S:e36ded3f0ea0dc1d3815a3dbade3bfe1bfffbe14,",
+      "name": "Worket/Spec title"
+    }
+  ],
+  "effectStyles": [
+    {
+      "id": "S:c0d170b6bf5c95f96f2c190e1befc2943fc2e21f,",
+      "name": "Worket/Contract shadow"
+    }
+  ],
+  "validation": {
+    "variableCount": 102,
+    "componentCount": 42,
+    "workflowFramesCreated": 0,
+    "codeConnectPublished": false,
+    "runtimeChanged": false
+  }
+}
