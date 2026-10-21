@@ -46,6 +46,7 @@ export interface WorkSummaryView {
 }
 
 export interface WorkDetailView extends WorkSummaryView {
+  workflowRunId?: string;
   preparationStatus?: "RUNNING" | "QUEUED";
   understandingStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
   understandingNotice?: string;
@@ -168,6 +169,7 @@ export interface CreateWorkFromMessageRequest {
 }
 
 export interface WorkPetApi {
+  workflow(action: string, input?: unknown): Promise<any>;
   previewSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<{ thread: import("./adapters/types.js").NormalizedThread; notice: string }>;
   importSelectedContent(input: import("./connectors/selected-content.js").SelectedContent): Promise<DashboardView>;
   listSelectedInbox(): Promise<{ id: string; title: string; adapterId: string; expiresAt: number }[]>;

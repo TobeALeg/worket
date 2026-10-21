@@ -14,7 +14,8 @@ export type Basis =
   | { type: "SOURCE"; origin: Origin; refs: SourceRef[] }
   | { type: "INFERRED"; refs: SourceRef[]; rationale: string }
   | { type: "USER_AUTHORED"; reviewEventId: string };
-export type DefinedItem = { key: string; text: string; basis: Basis; rule?: RulePolicy; document?: DocumentClause };
+export type PortValueType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'CHOICE' | 'FILE';
+export type DefinedItem = { key: string; text: string; basis: Basis; rule?: RulePolicy; document?: DocumentClause; valueType?: PortValueType; choices?: string[] };
 export type InputSpec = DefinedItem & {
   valueType: "TEXT" | "NUMBER" | "BOOLEAN" | "CHOICE" | "FILE";
   required: boolean;
@@ -246,6 +247,11 @@ export function validateContent(
           (input.choices as string[]).includes(input.defaultValue as string),
         );
     }
+  }
+  for (const output of value.deliverables as DefinedItem[]) {
+    if (output.valueType === undefined) continue;
+    ensure(['TEXT', 'FILE', 'NUMBER', 'BOOLEAN', 'CHOICE'].includes(output.valueType), 'INVALID_INPUT');
+    if (output.valueType === 'CHOICE') { array(output.choices); ensure(output.choices.length > 0, 'INVALID_INPUT'); output.choices.forEach(string); }
   }
   for (const item of value.methods as Record<string, unknown>[])
     ensure(["REFERENCE", "REQUIRED"].includes(String(item.obligation)));

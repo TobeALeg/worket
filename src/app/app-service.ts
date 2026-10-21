@@ -777,6 +777,7 @@ export class AppService {
     return this.dashboard(workId);
   }
   async handoff(workId: string, executorId: string): Promise<DashboardView> {
+    this.#core.workflows.assertActive(workId);
     if (this.#handoffs.has(workId))
       throw new Error("这项工作正在交接，请等待本次结果。");
     const adapter = this.#executors.get(executorId);
@@ -842,6 +843,7 @@ export class AppService {
           purpose: pkg.purpose,
           title,
           prompt,
+          ...(pkg.workflow ? { cwd: pkg.workflow.directory } : {}),
         };
         this.#deliveryLedger.saveRequest(request);
         if (UPLOAD_CONNECTORS.includes(adapter.id)) await this.prepareWebTransfer(workId, adapter.id, request.prompt);
@@ -1190,6 +1192,7 @@ export class AppService {
       ...(work.definition.kind === "REUSABLE"
         ? {
             reusableDefinitionId: work.definition.id,
+            ...(pkg?.workflow ? { workflowRunId: pkg.workflow.runId } : {}),
             hasPinnedMaterials: this.#core.definitions.get(work.definition.id).materials.length > 0 || (this.#core.definitions.inputs(work.instance.id).inputMaterials?.length ?? 0) > 0 || this.#core.definitions.inputs(work.instance.id).referenceExamples.some(reference => !!reference.material),
             hasInstanceFiles: this.#core.definitions.get(work.definition.id).content.inputs.some(spec => spec.valueType === "FILE") || this.#core.definitions.inputs(work.instance.id).referenceExamples.length > 0,
             dispatchStatus: work.activeBinding ? (work.activeBinding.conversationId.startsWith("pending:") ? "WAITING" : "BOUND") : String(dispatch?.status ?? "NOT_DISPATCHED"),

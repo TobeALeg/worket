@@ -32,13 +32,15 @@ export function hash(value: unknown): string {
     .digest("hex");
 }
 export function transaction<T>(db: DatabaseSync, operation: () => T): T {
-  db.exec("BEGIN IMMEDIATE");
+  const savepoint = db.isTransaction ? `nested_${randomUUID().replaceAll('-', '')}` : null;
+  db.exec(savepoint ? `SAVEPOINT ${savepoint}` : 'BEGIN IMMEDIATE');
   try {
     const result = operation();
-    db.exec("COMMIT");
+    db.exec(savepoint ? `RELEASE ${savepoint}` : 'COMMIT');
     return result;
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (savepoint) { db.exec(`ROLLBACK TO ${savepoint}`); db.exec(`RELEASE ${savepoint}`); }
+    else db.exec('ROLLBACK');
     throw error;
   }
 }

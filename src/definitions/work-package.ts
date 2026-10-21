@@ -3,6 +3,7 @@ import { continuationWorkState } from '../handoff/work-state.js';
 import { packageMaterialVersions } from '../handoff/material-versions.js';
 import {skillEnvironment} from './skill-environment.js';
 import { sourceAvailabilityNotice, assertSourcePresenceReady } from "../core/source-revisions.js";
+import { workflowWorkContext } from '../workflows/context.js';
 import { dirname } from 'node:path';
 import { resolveRuleDocuments } from "./document-rules.js";
 import { ruleText, acceptanceChecks, type InstanceOverride } from "../contracts/rules.js";
@@ -10,6 +11,7 @@ import type { WorkSnapshot, WorkState } from "../core/types.js";
 import type { Definition, DefinitionRepository, Inputs } from "./repository.js";
 import type { Material } from "./storage.js";
 export type WorkPackage = {
+  workflow?: ReturnType<typeof workflowWorkContext>;
   packageVersion: 1;
   continuation?: ContinuationSnapshot;
   stateStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
@@ -89,6 +91,9 @@ export function buildWorkPackage(
     fileAccess:
       "规范条款已按固定版本展开，下列要求是本次有效约定。本机二进制资料仍须另行传递。完成须由用户关联本次交付物并逐项验收。",
   };
+  const workflow = workflowWorkContext(repository, work.instance.id);
+  if (workflow) pkg.workflow = workflow;
+
   const candidate = prepared ?? work.handoffPackages.findLast(value => value.continuation)?.continuation;
   const current = candidate && continuationBasisMatches(work, packageMaterialVersions(pkg), candidate.basis);
   pkg.stateStatus = candidate ? (current ? candidate.resolution : "STALE") : "UNRESOLVED";

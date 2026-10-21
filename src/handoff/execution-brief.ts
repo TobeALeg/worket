@@ -12,6 +12,13 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
     if (unique.length) lines.push(`\n## ${title}\n${unique.map(value => `- ${value}`).join('\n')}`);
   };
   const content = pkg.definition?.content;
+  if (pkg.workflow) {
+    section('本次流程工作', [`${pkg.workflow.name} / ${pkg.workflow.nodeId} / 第 ${pkg.workflow.generation} 轮`,
+      `独立工作目录：${pkg.workflow.directory}`, '只在本轮目录生成新成果，不改写已采用的输入文件或其他运行的文件。',
+      ...pkg.workflow.outputs.map(p => `输出标识 ${p.key}（${p.valueType}）：${p.text}`),
+      ...(pkg.workflow.note ? [`本轮返工要求：${pkg.workflow.note}`] : []),
+      '交付后在 Worket 流程中关联输出并等待用户验收。具备 Worket MCP 时，可用 submit_workflow_outputs 提交；提交不代表验收通过。']);
+  }
   const snapshot = pkg.stateStatus === 'RESOLVED' ? pkg.continuation : undefined;
   const messages = !snapshot && work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
   const current = snapshot?.stages.find(stage => stage.id === snapshot.currentStageId);

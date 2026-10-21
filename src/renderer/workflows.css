@@ -1,0 +1,87 @@
+#workflows-panel>.wf-heading{margin-bottom:20px}
+.wf-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.wf-heading h2{font:700 28px/1.5 Georgia,'Songti SC',serif;color:#243e32}
+.wf-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.wf-context{font-size:12px;color:var(--muted);margin-bottom:16px}
+.wf-shell{display:flex;flex:1;min-height:0;overflow:hidden;font-size:14px;line-height:1.65}
+.wf-sidebar{width:184px;flex:none;background:var(--surface);padding:32px 16px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.wf-sidebar>strong{font:700 24px/1.5 Georgia,'Songti SC',serif;color:#243e32;margin-bottom:22px}
+.wf-sidebar button{border:0;text-align:left;background:transparent;font-size:14px;padding:10px 12px}
+.wf-sidebar button.active{background:#e2e8d8;color:var(--accent)}
+.wf-page{padding:28px 36px 40px;flex:1;min-width:0;overflow:auto;background:var(--background)}
+.wf-page>.wf-heading{margin-bottom:28px}
+.wf-page button,#workflow-step-dialog button{min-height:36px;font-size:13px;padding:6px 16px}
+.wf-tabs{display:flex;gap:30px;border-bottom:1px solid #d9dcd0;margin-bottom:28px;align-items:center}
+.wf-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;border-radius:0;padding:10px 0;color:var(--muted)}
+.wf-tabs button.active{border-bottom-color:var(--accent);color:var(--accent)}
+.wf-tabs label{display:flex;gap:12px;align-items:center;margin-left:auto;font-size:12px}
+.wf-tabs select{width:80px}
+.wf-inline{display:flex;gap:12px;margin:20px 0}
+.wf-inline select{flex:1}
+.wf-run-layout{display:grid;grid-template-columns:minmax(0,1fr) 328px;gap:24px;align-items:stretch}
+.wf-graph-scroll{overflow:auto;background:var(--surface);border-radius:10px;min-height:240px}
+.wf-graph{position:relative;min-width:100%;margin:auto}
+.wf-graph>svg{position:absolute;inset:0;fill:none;stroke:var(--accent);stroke-width:2;pointer-events:none}
+.wf-page .wf-node{position:absolute;width:var(--wf-node-width,200px);height:var(--wf-node-height,178px);display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:left;background:#faf8f1;border:1px solid #d9dcd0;border-radius:8px;padding:14px 16px;color:var(--text)}
+.wf-page .wf-node:hover{background:#f8f6ed;border-color:var(--accent)}
+.wf-page .wf-node.selected{outline:2px solid #38634b66;outline-offset:1px}
+.wf-category{display:flex;justify-content:space-between;background:var(--accent);color:white;border-radius:3px;padding:0 4px;font-size:12px;line-height:23px}
+.wf-category>span:first-child{font-family:Georgia,'Songti SC',serif;font-weight:700}
+.wf-node>strong{font:700 21px/34px Georgia,'Songti SC',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-node>small{font-size:12px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.wf-phase{display:block;text-align:center;background:#e2e8d8;color:var(--accent);border-radius:4px;padding:3px 8px;font-size:12px;line-height:20px}
+.wf-phase.review{background:#dfca8d;color:#243e32}
+.wf-inspector{background:white;border:1px solid #d9dcd0;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:18px;min-height:460px;min-width:0}
+.wf-inspector h3{font:700 21px/34px Georgia,'Songti SC',serif;color:#243e32}
+.wf-inspector h4{font-size:14px;font-weight:600;border-top:1px solid var(--line);padding-top:20px;margin:0}
+.wf-inspector>small{color:var(--muted);font-size:12px}
+.wf-inspector .wf-actions{margin-top:auto}
+.wf-binding{display:grid;gap:7px;width:100%;text-align:left;background:var(--background);overflow-wrap:anywhere}
+.wf-binding>span{font-size:12px;color:var(--accent)}
+.wf-final,.wf-update{border:1px solid #d9dcd0;background:white;border-radius:8px;padding:22px;margin-top:30px;display:flex;flex-wrap:wrap;gap:20px 36px}
+.wf-final>div{flex:1;min-width:180px}
+.wf-final h3,.wf-update h3{font-size:14px;color:#243e32}
+.wf-final>h3,.wf-final>ol{width:100%}
+.wf-final p{margin-top:12px}
+.wf-final ol{margin:0;padding-left:20px;font-size:12px;line-height:2;color:var(--muted)}
+.wf-table{border:1px solid #d9dcd0;background:white;border-radius:8px;padding:20px}
+.wf-run-row{display:grid;grid-template-columns:minmax(180px,2fr) 90px minmax(100px,1fr) auto;gap:18px;align-items:center;padding:24px 16px;border-bottom:1px solid var(--line)}
+.wf-run-row small{display:block;font-size:12px;color:var(--muted);margin-top:10px}
+.wf-table-head{font-size:12px;color:var(--muted);padding-top:0}
+.wf-run-row:last-child{border:0}
+.wf-output{min-width:0;display:grid;gap:10px}
+.wf-output strong{font-size:13px}
+.wf-output small{font-size:11px;color:var(--muted)}
+.wf-output pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0;max-height:360px;overflow:auto}
+.wf-output button{overflow-wrap:anywhere;text-align:left}
+.wf-file{display:flex;gap:8px}
+.wf-file button{white-space:nowrap}
+.wf-check{display:flex;align-items:flex-start;gap:12px;margin:14px 0}
+.wf-check input{margin-top:4px}
+.wf-update{background:#f4eddb}
+.wf-history{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.wf-history .wf-output{margin-top:10px}
+#workflow-step-dialog{width:min(880px,calc(100vw - 32px));max-height:calc(100vh - 40px);font-size:14px}
+#workflow-step-dialog>.dialog-card{padding:28px;gap:22px}
+#workflow-step-dialog h2{font:700 28px/1.5 Georgia,'Songti SC',serif}
+#workflow-step-dialog input,#workflow-step-dialog select,#workflow-step-dialog textarea{background:white;min-height:36px;font-size:14px}
+#workflow-step-dialog .field{font-size:14px}
+#workflow-step-dialog .field small{color:var(--muted)}
+.wf-review-layout{display:grid;grid-template-columns:1.15fr 1fr;gap:32px}
+.wf-preview{background:#faf8f1;border:1px solid #d9dcd0;border-radius:6px;padding:22px;min-height:300px;display:grid;gap:20px;align-content:start}
+@media(max-width:1100px){.wf-sidebar{width:140px;padding:24px 12px}
+.wf-page{padding:24px}
+.wf-run-layout{grid-template-columns:minmax(0,1fr)}
+.wf-inspector{min-height:0}
+.wf-run-row{grid-template-columns:minmax(140px,1fr) 64px minmax(100px,1fr) auto}
+.wf-inspector .wf-actions{margin-top:0}}
+@media(max-width:650px){.wf-sidebar{display:none}
+.wf-page{padding:18px}
+.wf-heading{align-items:flex-start;flex-wrap:wrap}
+.wf-heading h2{font-size:24px}
+.wf-review-layout{grid-template-columns:1fr}
+.wf-run-row{grid-template-columns:1fr auto}
+.wf-table-head{display:none}
+.wf-tabs{gap:20px}
+.wf-table{padding:4px}
+.wf-final{padding:16px}}

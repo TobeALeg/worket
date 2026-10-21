@@ -313,6 +313,7 @@ export class DistillationDesktop {
     const core = this.app.core(),
       r = core.definitions,
       work = core.getWork(input.workId);
+    core.workflows.assertActive(input.workId);
     ensure(work?.instance.status === "OPEN", "WORK_NOT_OPEN");
     r.command(
       input.commandId,

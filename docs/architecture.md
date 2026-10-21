@@ -1,5 +1,17 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## WorkflowCore 组合层（2026-10-21）
+
+`workflows/core.ts` 集中拥有流程固定版本、运行、依赖准备、实际采用、代次、影响范围和状态迁移；`validation.ts` 校验类型、必填来源与图无环；`outputs.ts` 固定成果、关联已有 ArtifactRef 并经 DefinitionRepository 的逐项验收发布。节点业务仍由 WorkInstance / WorkRecord 表达，执行交接沿用 DistillationDesktop 与 AppService，Adapter 不承担流程规则。`context.ts` 为工作包和流程入口提供同一份归属投影。
+
+数据流：工作流页面 → 限定面板发送者的 `workflow:command` → WorkflowDesktop → WorkflowCore → 已有 DefinitionRepository / WorkCore。执行者提交经认证的本机 MCP → 以 workId 反查运行、节点和代次 → 同一成果提交路径。MCP 只能提交当前轮，不能批准验收。文件预览/打开以已登记输出反查固定路径并校验 hash，不接受任意路径打开命令。
+
+SQLite schema v4 增加流程定义、Contract 引用、运行和节点工作归属表；迁移前保存 `.before-workflows-v4.bak`，旧版本拒绝直接读取新数据库。引用表以外键保护 Contract 版本及工作证据。流程命令复用 command_results 去重与预期运行 revision；嵌套组合使用 SAVEPOINT，使实例创建、采用与流程写入保持同一 SQL 事务，失败准备移除新建实例文件。备份沿用永久清除来源时的撤销规则，不另保留被明确删除的正文。
+
+文件流：运行输入快照 → 本轮节点的独立输入副本 → 本轮目录生成交付 → 内容寻址的提交快照与清单 → 用户验收 → 下游再次复制固定输入，并核对复制后 hash 与采用版本一致。相同原路径随后变化不会改变已采用内容。每轮输出提交后不覆盖，修订须退回或明确重做；历史代次与验收依据保留。物理副本与目录隔离不等于对外部 Agent 进行 OS 沙箱约束。
+
+状态流：节点 `WAITING → READY → PREPARED → SUBMITTED → ACCEPTED`；真实交付/接手状态由既有工作绑定和读取回执投影，失败交付显示可重试状态。退回/重做将旧轮标为 `SUPERSEDED` 并创建新轮，已开始的无关节点不被自动重置。采用新版通过依赖图计算后续闭包，确认后再创建受影响新轮；全部当前必需节点通过后，运行变为 COMPLETED。运行 PAUSED/CANCELLED 保留外部执行事实。详见 [方案与范围](specs/workflow-composition-v1.md)、[验证记录](acceptance/workflows-2026-10-21.md)。
+
 ## 持续集成（2026-10-14）
 
 `.github/workflows/ci.yml` 在分支推送和手动触发时使用 Node.js 24、锁文件安装依赖。macOS 15 运行 `npm test`（含 TypeScript、静态资源复制与 Objective-C 前台识别组件编译）、`eval:extraction:test` 和 `package:mac`；Ubuntu 24.04 独立运行 `build:server`，跳过 Electron 二进制下载。两个作业均只有仓库读取权限，无业务密钥、发布或部署步骤。真实执行者登录、桌面权限和模型质量继续通过本机验收验证。

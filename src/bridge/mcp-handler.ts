@@ -50,6 +50,11 @@ export class WorkPetMcpHandler {
           result: {
             tools: [
               {
+                name: 'submit_workflow_outputs',
+                description: '为当前工作所属流程提交本轮成果；固定副本后进入待验收，不会自动放行下游。旧代次提交不能覆盖新工作。',
+                inputSchema: { type: 'object', properties: { work_id: { type: 'string' }, command_id: { type: 'string' }, outputs: { type: 'object', additionalProperties: { type: ['string', 'number', 'boolean'] } } }, required: ['work_id', 'command_id', 'outputs'] },
+              },
+              {
                 name: "get_work_context",
                 description:
                   "读取工作目标、要求、进度和必要资料。默认 context_version=4 返回可直接执行的工作说明；1–3 仅供旧客户端兼容。",
@@ -108,6 +113,17 @@ export class WorkPetMcpHandler {
         const workId = typeof args.work_id === "string" ? args.work_id : "";
         const work = this.#core.getWork(workId);
         if (!work) throw new Error("WORK_NOT_FOUND");
+        if (name === 'submit_workflow_outputs') {
+          if (typeof args.command_id !== 'string' || !args.outputs || typeof args.outputs !== 'object' || Array.isArray(args.outputs)) throw new Error('INVALID_INPUT');
+          const result = this.#core.definitions.command(`workflow-mcp:${args.command_id}`, { workId, outputs: args.outputs }, workId, () => {
+            const context = this.#core.workflows.context(workId);
+            if (!context?.current) throw new Error('STALE_GENERATION');
+            const run = this.#core.workflows.run(context.runId);
+            this.#core.workflows.submit({ runId: run.id, nodeId: context.nodeId, generation: context.generation, expectedRevision: run.revision, commandId: `workflow-mcp-submit:${args.command_id}`, outputs: args.outputs as import('../definitions/repository.js').Inputs });
+            return { status: 'SUBMITTED', runId: run.id, nodeId: context.nodeId, generation: context.generation, acceptanceRequired: true };
+          });
+          return { jsonrpc: '2.0', id, result: toolResult(result) };
+        }
         if (name === "get_work_context") {
           const deliveryId = args.delivery_id;
           if (deliveryId !== undefined && (typeof deliveryId !== 'string' ||

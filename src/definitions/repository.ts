@@ -127,7 +127,7 @@ export class DefinitionRepository {
       const result = run();
       this.db
         .prepare("INSERT INTO command_results VALUES (?, ?, ?, ?)")
-        .run(id, digest, owner, JSON.stringify(result));
+        .run(id, digest, owner, JSON.stringify(result ?? null));
       return result;
     });
   }
@@ -674,7 +674,8 @@ export class DefinitionRepository {
     artifactIds: string[];
     criteriaResults: Record<string, "PASS" | "NEEDS_REVISION">;
     commandId: string;
-  }): { completed: boolean } {
+  }, workflowReview = false): { completed: boolean } {
+    ensure(workflowReview || !this.db.prepare('SELECT work_id FROM workflow_node_works WHERE work_id=?').get(input.workId), 'WORKFLOW_REVIEW_REQUIRED', '请在所属流程中验收这项工作');
     array(input.artifactIds);
     object(input.criteriaResults);
     return this.command(
@@ -770,6 +771,7 @@ export class DefinitionRepository {
       input.definitionKey,
       () => {
         const versions = this.versions(input.definitionKey);
+        ensure(!versions.some(d => this.db.prepare('SELECT contract_id FROM workflow_contract_refs WHERE contract_id=?').get(d.id)), 'DEFINITION_IN_USE', '此 Contract 已被已保存流程引用');
         ensure(
           !versions.some((d) =>
             this.db

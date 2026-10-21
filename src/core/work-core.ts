@@ -5,6 +5,7 @@ import { existsSync, unlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { migrateDefinitions } from '../definitions/migration.js';
 import { DefinitionRepository, type CreateFromDefinition } from '../definitions/repository.js';
+import { WorkflowCore } from '../workflows/core.js';
 import { transaction } from '../definitions/storage.js';
 import { buildWorkPackage } from '../definitions/work-package.js';
 import { randomUUID } from "node:crypto";
@@ -74,6 +75,7 @@ export class SqliteWorkCore implements WorkCore {
   readonly #databasePath: string;
   readonly #packageReceipts: PackageReceipts;
   readonly definitions: DefinitionRepository;
+  readonly workflows: WorkflowCore;
   readonly #now: () => string;
   readonly #id: () => string;
 
@@ -89,6 +91,7 @@ export class SqliteWorkCore implements WorkCore {
     migrateStateProgress(this.#database);
     this.#packageReceipts = new PackageReceipts(this.#database);
     this.definitions = new DefinitionRepository(this.#database, join(dirname(options.databasePath), "definition-materials"));
+    this.workflows = new WorkflowCore(this, this.definitions);
   }
 
   createWorkFromDefinition(input: CreateFromDefinition): WorkSnapshot {
@@ -524,6 +527,7 @@ export class SqliteWorkCore implements WorkCore {
   }
 
   archiveWork(workInstanceId: string): WorkSnapshot {
+    if (this.workflows.context(workInstanceId)) throw new Error('WORKFLOW_OWNED_WORK：请在所属流程管理这次工作');
     const work = this.#requireWork(workInstanceId);
     if (work.instance.status === "ARCHIVED") throw new Error("WORK_ALREADY_ARCHIVED");
     const endedAt = this.#now();
@@ -561,6 +565,7 @@ export class SqliteWorkCore implements WorkCore {
   }
 
   resumeWork(workInstanceId: string, input: ResumeWorkInput): WorkSnapshot {
+    if (this.workflows.context(workInstanceId)) throw new Error('WORKFLOW_OWNED_WORK：请在所属流程重做这项工作');
     const work = this.#requireWork(workInstanceId);
     if (work.instance.status !== "COMPLETED" && work.instance.status !== "ARCHIVED") {
       throw new Error("WORK_NOT_RESUMABLE");
@@ -605,6 +610,7 @@ export class SqliteWorkCore implements WorkCore {
     workInstanceId: string,
     input: StartExecutionEpisodeInput,
   ): WorkSnapshot {
+    this.workflows.assertActive(workInstanceId);
     const work = this.#requireWork(workInstanceId);
     if (work.instance.status !== "OPEN") throw new Error("WORK_NOT_OPEN");
     const episodeId = this.#id();
@@ -757,6 +763,7 @@ export class SqliteWorkCore implements WorkCore {
     workInstanceId: string,
     input: { confirmation: string },
   ): void {
+    if (this.workflows.context(workInstanceId)) throw new Error('WORKFLOW_OWNED_WORK：流程仍引用此工作，不能清除其验收与采用证据');
     this.#requireWork(workInstanceId);
     if (input.confirmation !== workInstanceId) {
       throw new Error("PERMANENT_DELETE_CONFIRMATION_MISMATCH");
@@ -765,7 +772,7 @@ export class SqliteWorkCore implements WorkCore {
     transaction(this.#database, () => {
       // A retained pre-migration database would otherwise keep deleted source text.
       // Explicit permanent deletion also revokes these tool-managed rollback copies.
-      for (const suffix of [".before-distillation-v1.bak", ".before-storage-v2.bak", ".before-category-v3.bak"]) {
+      for (const suffix of [".before-distillation-v1.bak", ".before-storage-v2.bak", ".before-category-v3.bak", '.before-workflows-v4.bak']) {
         const backup = this.#databasePath + suffix;
         if (this.#databasePath !== ":memory:" && existsSync(backup)) unlinkSync(backup);
       }

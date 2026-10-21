@@ -1,0 +1,21 @@
+import type { InputSpec } from '../contracts/definition.js';
+import type { Definition, Inputs } from '../definitions/repository.js';
+import type { Material } from '../definitions/storage.js';
+import { effectiveRules } from '../contracts/rules.js';
+
+export type ValueType = InputSpec['valueType'];
+export type Port = { key: string; text: string; valueType: ValueType; required: boolean; choices?: string[]; defaultValue?: string | number | boolean };
+export type Binding = { type: 'INPUT'; key: string } | { type: 'VALUE'; value: string | number | boolean } | { type: 'OUTPUT'; nodeId: string; key: string };
+export type WorkflowNode = { id: string; name: string; contractId: string; bindings: Record<string, Binding>; after: string[] };
+export type WorkflowContent = { name: string; inputs: Port[]; nodes: WorkflowNode[]; outputs: { key: string; nodeId: string; outputKey: string }[] };
+export type WorkflowDefinition = WorkflowContent & { id: string; key: string; version: number; confirmedAt: string };
+export type OutputVersion = { id: string; key: string; valueType: ValueType; value: string | number | boolean; material?: Material; artifactId?: string; acceptedAt?: string };
+export type Adoption = { inputKey: string; nodeId: string; generation: number; outputId: string; outputKey: string };
+export type NodeRun = { generation: number; phase: 'WAITING' | 'READY' | 'PREPARED' | 'SUBMITTED' | 'ACCEPTED' | 'SUPERSEDED'; workId?: string; directory?: string; manifestId?: string; adopted: Adoption[]; outputs: OutputVersion[]; note?: string; criteria?: Record<string, 'PASS' | 'NEEDS_REVISION'>; acceptedAt?: string };
+export type WorkflowRun = { id: string; workflowId: string; name: string; status: 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'CANCELLED'; revision: number; createdAt: string; updatedAt: string; directory: string; inputs: Inputs; inputMaterials: Material[]; nodes: Record<string, NodeRun[]>; events: { at: string; type: string; nodeId?: string; detail: string }[] };
+export type RunDetail = { run: WorkflowRun; definition: WorkflowDefinition; contracts: Record<string, Definition>; phases: Record<string, string>; updates: Record<string, string[]> };
+export type RunCommand = { runId: string; expectedRevision: number; commandId: string };
+export type NodeCommand = RunCommand & { nodeId: string; generation: number };
+export const currentNode = (run: WorkflowRun, nodeId: string): NodeRun => run.nodes[nodeId]!.at(-1)!;
+export const outputPorts = (definition: Definition): Port[] => effectiveRules(definition.content).content.deliverables.map(item => ({ ...item, valueType: item.valueType!, required: true }));
+export const dependencies = (node: WorkflowNode): string[] => [...new Set([...node.after, ...Object.values(node.bindings).flatMap(b => b.type === 'OUTPUT' ? [b.nodeId] : [])])];
