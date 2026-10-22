@@ -92,7 +92,6 @@ h1 { font-size: 25px; font-weight: 550; letter-spacing: -.7px; margin-top: 8px; 
 .node-heading h3 { min-width: 0; }
 .node-heading .status { flex-shrink: 0; }
 .flow-node h3 { font-size: 18px; font-weight: 500; letter-spacing: -.5px; line-height: 1.5; }
-.node-description { color: #989e94; font-size: 12px; margin-top: 5px; }
 .executor { display: flex; align-items: center; gap: 10px; margin-top: 20px; color: #9a9f98; font-size: 11px; }
 .executor .app-tile { border: 3px solid #f0f2ed; border-radius: 9px; padding: 3px; background: #fff; width: 33px; height: 33px; box-shadow: 0 8px 5px -4px #9cae8e50; display: flex; align-items: center; }
 .executor img { display: block; width: 21px; height: 21px; border-radius: 5px; }
@@ -199,7 +198,6 @@ textarea { width: 100%; height: 82px; resize: vertical; border: 1px solid #dfe6d
 .variant-b .flow-node[data-kind="delivery"] { top: 661px; left: 50%; transform: translateX(-50%); }
 .variant-b .node-face { padding: 18px; }
 .variant-b .flow-node h3 { font-size: 16px; }
-.variant-b .node-description { font-size: 10px; }
 .variant-b .executor { margin-top: 13px; font-size: 10px; }
 .variant-b .executor .app-tile { height: 28px; width: 28px; }
 .variant-b .executor img { width: 16px; height: 16px; }

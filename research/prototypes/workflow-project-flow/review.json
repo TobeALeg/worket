@@ -33,28 +33,32 @@
         "height": 1060,
         "width": 946
       },
+      "descriptionCount": 0,
       "edges": 4,
       "nodes": [
         {
-          "height": 191,
+          "height": 168,
           "inside": true,
           "name": "node-guide",
+          "titleAndStatusAligned": true,
           "width": 315,
           "x": 75.6796875,
           "y": 429
         },
         {
-          "height": 191,
+          "height": 168,
           "inside": true,
           "name": "node-checklist",
+          "titleAndStatusAligned": true,
           "width": 296,
           "x": 558.1328125,
           "y": 441
         },
         {
-          "height": 224.5,
+          "height": 201.5,
           "inside": true,
           "name": "node-delivery",
+          "titleAndStatusAligned": true,
           "width": 296,
           "x": 558.1328125,
           "y": 745
@@ -66,28 +70,32 @@
         "height": 940,
         "width": 508
       },
+      "descriptionCount": 0,
       "edges": 4,
       "nodes": [
         {
-          "height": 161,
+          "height": 141,
           "inside": true,
           "name": "node-guide",
+          "titleAndStatusAligned": true,
           "width": 212,
           "x": 20.3125,
           "y": 397
         },
         {
-          "height": 161,
+          "height": 141,
           "inside": true,
           "name": "node-checklist",
+          "titleAndStatusAligned": true,
           "width": 212,
           "x": 275.6875,
           "y": 397
         },
         {
-          "height": 194.5,
+          "height": 174.5,
           "inside": true,
           "name": "node-delivery",
+          "titleAndStatusAligned": true,
           "width": 212,
           "x": 148,
           "y": 661
@@ -102,47 +110,8 @@
     "reference scene is loaded only from user local analysis files"
   ],
   "latestVisualAdjustment": {
-    "request": "移除卡面的 CONTRACT · V1，状态与标题同一行",
-    "A": [
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "待验收",
-        "title": "撰写指南"
-      },
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "已验收",
-        "title": "独立核对清单"
-      },
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "已验收",
-        "title": "整理交付索引"
-      }
-    ],
-    "B": [
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "待验收",
-        "title": "撰写指南"
-      },
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "已验收",
-        "title": "独立核对清单"
-      },
-      {
-        "sameRow": true,
-        "separate": true,
-        "status": "已验收",
-        "title": "整理交付索引"
-      }
-    ],
-    "removedCardLabel": true
+    "request": "移除全部节点标题下的解释文字，保持标题与状态同排",
+    "A": true,
+    "B": true
   }
 }
