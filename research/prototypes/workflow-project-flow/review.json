@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-22",
+  "result": "PASSED",
+  "scope": "IN_MEMORY_UI_PROTOTYPE",
+  "realExecutorUsed": false,
+  "productionChanged": false,
+  "figmaChanged": false,
+  "localUnitTestsRun": false,
+  "referenceAssetsCopiedToRepository": false,
+  "checks": {
+    "reviewCriteriaRequired": true,
+    "rejectionNoteRequired": true,
+    "acceptedRevisionRetainsOldAdoption": true,
+    "explicitAdoptionOnlyResetsDelivery": true,
+    "independentChecklistUnchanged": true,
+    "otherRunUnchanged": true,
+    "simulatedDeliveryLoopCompleted": true,
+    "rejectionCreatesNewRoundAndRetainsNote": true,
+    "rejectionRetainsDownstream": true,
+    "runSwitchRestoresSelection": true,
+    "centralReviewTargetsRunNodeAndRound": true,
+    "historyPeekOpensRecordedRound": true,
+    "connectionMappingDialog": true,
+    "lightReferenceVisuallyChecked": true,
+    "darkReferenceImages": {
+      "total": 43,
+      "broken": 0
+    }
+  },
+  "layouts": {
+    "A": {
+      "canvas": {
+        "height": 1060,
+        "width": 946
+      },
+      "descriptionCount": 0,
+      "edges": 4,
+      "nodes": [
+        {
+          "height": 168,
+          "inside": true,
+          "name": "node-guide",
+          "titleAndStatusAligned": true,
+          "width": 315,
+          "x": 75.6796875,
+          "y": 429
+        },
+        {
+          "height": 168,
+          "inside": true,
+          "name": "node-checklist",
+          "titleAndStatusAligned": true,
+          "width": 296,
+          "x": 558.1328125,
+          "y": 441
+        },
+        {
+          "height": 201.5,
+          "inside": true,
+          "name": "node-delivery",
+          "titleAndStatusAligned": true,
+          "width": 296,
+          "x": 558.1328125,
+          "y": 745
+        }
+      ]
+    },
+    "B": {
+      "canvas": {
+        "height": 940,
+        "width": 508
+      },
+      "descriptionCount": 0,
+      "edges": 4,
+      "nodes": [
+        {
+          "height": 141,
+          "inside": true,
+          "name": "node-guide",
+          "titleAndStatusAligned": true,
+          "width": 212,
+          "x": 20.3125,
+          "y": 397
+        },
+        {
+          "height": 141,
+          "inside": true,
+          "name": "node-checklist",
+          "titleAndStatusAligned": true,
+          "width": 212,
+          "x": 275.6875,
+          "y": 397
+        },
+        {
+          "height": 174.5,
+          "inside": true,
+          "name": "node-delivery",
+          "titleAndStatusAligned": true,
+          "width": 212,
+          "x": 148,
+          "y": 661
+        }
+      ]
+    }
+  },
+  "limits": [
+    "980px minimum work surface; narrower windows scroll horizontally",
+    "in-memory fixtures only; executor receipts are explicitly simulated",
+    "no arbitrary connection editing, dragging, zoom or persistence",
+    "reference scene is loaded only from user local analysis files"
+  ],
+  "latestVisualAdjustment": {
+    "request": "移除全部节点标题下的解释文字，保持标题与状态同排",
+    "A": true,
+    "B": true
+  }
+}
