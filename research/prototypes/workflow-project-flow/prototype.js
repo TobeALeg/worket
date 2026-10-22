@@ -27,8 +27,8 @@ function nodeMarkup(key, n) {
  const previous = n.history.at(-1);
  return `<article class="flow-node ${r.selected === key ? 'selected' : ''}" id="node-${key}" data-kind="${key}">
   <div class="node-face"><button class="node-select" data-node="${key}" aria-pressed="${r.selected === key}" aria-label="${nodeNames[key]}，第 ${n.generation} 轮，${label[n.phase]}">
-   <div class="node-top"><span class="contract-label">CONTRACT · V1</span>${status(n.phase)}</div>
-   <h3>${nodeNames[key]}</h3><p class="node-description">${desc}</p>
+   <div class="node-heading"><h3>${nodeNames[key]}</h3>${status(n.phase)}</div>
+   <p class="node-description">${desc}</p>
    <div class="executor"><span class="app-tile"><img src="/workbuddy.png" alt=""></span><span>WorkBuddy</span><span class="round">第 ${n.generation} 轮</span></div>
    <div class="node-file"><span class="file-chip">${fileNames[key]}</span><span>${n.phase === 'READY' ? '待生成' : n.phase === 'ACCEPTED' ? '成果已固定' : n.phase === 'SUBMITTED' ? '等你验收' : '处理中'}</span></div>
    ${adoption ? `<div class="node-adoption">${adoption}</div>` : ''}

@@ -88,8 +88,9 @@ h1 { font-size: 25px; font-weight: 550; letter-spacing: -.7px; margin-top: 8px; 
 .node-select { display: block; text-align: left; width: 100%; padding: 0; }
 .flow-node:hover .node-face { border-color: #c6d8e8; }
 .flow-node.selected .node-face { border-color: #9ec8f5; box-shadow: 0 0 0 4px #82bcff0d, var(--shadow-md); }
-.node-top { display: flex; align-items: center; justify-content: space-between; gap: 9px; margin-bottom: 12px; }
-.contract-label { color: #a4aaa0; font-size: 9px; letter-spacing: .05em; }
+.node-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.node-heading h3 { min-width: 0; }
+.node-heading .status { flex-shrink: 0; }
 .flow-node h3 { font-size: 18px; font-weight: 500; letter-spacing: -.5px; line-height: 1.5; }
 .node-description { color: #989e94; font-size: 12px; margin-top: 5px; }
 .executor { display: flex; align-items: center; gap: 10px; margin-top: 20px; color: #9a9f98; font-size: 11px; }

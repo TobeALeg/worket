@@ -36,7 +36,7 @@
       "edges": 4,
       "nodes": [
         {
-          "height": 218,
+          "height": 191,
           "inside": true,
           "name": "node-guide",
           "width": 315,
@@ -44,7 +44,7 @@
           "y": 429
         },
         {
-          "height": 218,
+          "height": 191,
           "inside": true,
           "name": "node-checklist",
           "width": 296,
@@ -52,15 +52,14 @@
           "y": 441
         },
         {
-          "height": 251.5,
+          "height": 224.5,
           "inside": true,
           "name": "node-delivery",
           "width": 296,
           "x": 558.1328125,
           "y": 745
         }
-      ],
-      "overflow": true
+      ]
     },
     "B": {
       "canvas": {
@@ -70,7 +69,7 @@
       "edges": 4,
       "nodes": [
         {
-          "height": 188,
+          "height": 161,
           "inside": true,
           "name": "node-guide",
           "width": 212,
@@ -78,7 +77,7 @@
           "y": 397
         },
         {
-          "height": 188,
+          "height": 161,
           "inside": true,
           "name": "node-checklist",
           "width": 212,
@@ -86,7 +85,7 @@
           "y": 397
         },
         {
-          "height": 221.5,
+          "height": 194.5,
           "inside": true,
           "name": "node-delivery",
           "width": 212,
@@ -101,5 +100,49 @@
     "in-memory fixtures only; executor receipts are explicitly simulated",
     "no arbitrary connection editing, dragging, zoom or persistence",
     "reference scene is loaded only from user local analysis files"
-  ]
+  ],
+  "latestVisualAdjustment": {
+    "request": "移除卡面的 CONTRACT · V1，状态与标题同一行",
+    "A": [
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "待验收",
+        "title": "撰写指南"
+      },
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "已验收",
+        "title": "独立核对清单"
+      },
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "已验收",
+        "title": "整理交付索引"
+      }
+    ],
+    "B": [
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "待验收",
+        "title": "撰写指南"
+      },
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "已验收",
+        "title": "独立核对清单"
+      },
+      {
+        "sameRow": true,
+        "separate": true,
+        "status": "已验收",
+        "title": "整理交付索引"
+      }
+    ],
+    "removedCardLabel": true
+  }
 }
