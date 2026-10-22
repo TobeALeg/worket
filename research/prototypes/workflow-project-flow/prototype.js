@@ -2,6 +2,7 @@
 const variants = ['A','B'];
 let variant = new URL(location.href).searchParams.get('variant') === 'B' ? 'B' : 'A';
 let currentRun = 'A';
+let inspectorOpen = false;
 const label = {READY:'可开展',PREPARED:'等待接手',EXECUTING:'执行中',SUBMITTED:'待验收',ACCEPTED:'已验收'};
 const nodeNames = {guide:'撰写指南',checklist:'独立核对清单',delivery:'整理交付索引'};
 const fileNames = {guide:'document.md',checklist:'checklist.md',delivery:'index.md'};
@@ -17,26 +18,50 @@ let runs=seed();
 const $=s=>document.querySelector(s);
 const active=()=>runs[currentRun];
 const stale=r=>r.nodes.guide.phase==='ACCEPTED'&&r.nodes.delivery.adoptedGuide&&r.nodes.guide.generation>r.nodes.delivery.adoptedGuide;
-function nodeMarkup(key,n){
- const desc={guide:'操作步骤与常见问题',checklist:'依据同一材料，独立核对',delivery:'正文与清单的固定交付记录'}[key];
- const adoption=key==='delivery'?(n.adoptedGuide?`采用正文 ${n.adoptedGuide} · 清单 ${n.adoptedChecklist}`:'输入已就绪 · 尚未开展'):'';
- return `<button class="flow-node ${active().selected===key?'selected':''}" id="node-${key}" data-node="${key}" aria-pressed="${active().selected===key}"><div class="node-top"><span class="contract-label">CONTRACT · V1</span>${status(n.phase)}</div><h3>${nodeNames[key]}</h3><p class="node-description">${desc}</p><div class="executor"><img src="/workbuddy.png" alt="">WorkBuddy<span>第 ${n.generation} 轮</span></div><div class="node-file"><span>${fileNames[key]}</span><span>${n.phase==='READY'?'待生成':n.phase==='ACCEPTED'?'成果已固定':n.phase==='SUBMITTED'?'等你验收':'执行者处理中'}</span></div>${adoption?`<span class="node-adoption">${adoption}</span>`:''}${n.history.length?'<span class="node-history"></span>':''}</button>`;
+function nodeMarkup(key, n) {
+ const r = active();
+ const desc = {guide:'操作步骤与常见问题', checklist:'依据同一材料，独立核对', delivery:'汇合正文与清单的已验收成果'}[key];
+ const adoption = key === 'delivery' ? (n.adoptedGuide
+  ? `<span>正文 · 第 ${n.adoptedGuide} 轮</span><span>清单 · 第 ${n.adoptedChecklist} 轮</span>`
+  : '<span>输入就绪 · 开展时固定</span>') : '';
+ const previous = n.history.at(-1);
+ return `<article class="flow-node ${r.selected === key ? 'selected' : ''}" id="node-${key}" data-kind="${key}">
+  <div class="node-face"><button class="node-select" data-node="${key}" aria-pressed="${r.selected === key}" aria-label="${nodeNames[key]}，第 ${n.generation} 轮，${label[n.phase]}">
+   <div class="node-top"><span class="contract-label">CONTRACT · V1</span>${status(n.phase)}</div>
+   <h3>${nodeNames[key]}</h3><p class="node-description">${desc}</p>
+   <div class="executor"><span class="app-tile"><img src="/workbuddy.png" alt=""></span><span>WorkBuddy</span><span class="round">第 ${n.generation} 轮</span></div>
+   <div class="node-file"><span class="file-chip">${fileNames[key]}</span><span>${n.phase === 'READY' ? '待生成' : n.phase === 'ACCEPTED' ? '成果已固定' : n.phase === 'SUBMITTED' ? '等你验收' : '处理中'}</span></div>
+   ${adoption ? `<div class="node-adoption">${adoption}</div>` : ''}
+  </button></div>
+  ${previous && key === 'guide' ? `<button class="history-peek" data-history="${key}" aria-label="${nodeNames[key]}的历史交付"><span>第 ${previous.generation} 轮 · ${esc(previous.result)}</span><span>历史交付 ↗</span></button>` : ''}
+ </article>`;
 }
-function render(){
- document.body.classList.toggle('variant-b',variant==='B');
- $('#variant-name').textContent=variant==='A'?'A · 空间画布':'B · 横向工作台';
- const r=active();
- $('#run-title').textContent=r.name;
- const reviews=Object.values(r.nodes).filter(n=>n.phase==='SUBMITTED').length;
- const accepted=Object.values(r.nodes).filter(n=>n.phase==='ACCEPTED').length;
- $('#run-status').innerHTML=reviews?`<span class="status review">${reviews} 项待验收</span>`:accepted===3?'<span class="status done">已完成</span>':'<span class="status working">进行中</span>';
- $('#input-name').textContent=r.brief;
- $('#run-list').innerHTML=Object.entries(runs).map(([id,run])=>{const count=Object.values(run.nodes).filter(n=>n.phase==='ACCEPTED').length;const pending=Object.values(run.nodes).filter(n=>n.phase==='SUBMITTED').length;return `<button class="run-option ${id===currentRun?'active':''}" data-run="${id}" aria-pressed="${id===currentRun}"><strong>${id} · ${run.name}</strong><small>${count===3?'已完成':'进行中'} · ${count}/3 已验收${pending?' · '+pending+' 项待验收':''}</small></button>`;}).join('');
- $('#nodes').innerHTML=Object.entries(r.nodes).map(([key,n])=>nodeMarkup(key,n)).join('');
+function render() {
+ document.body.classList.toggle('variant-b', variant === 'B');
+ document.body.classList.toggle('inspector-open', inspectorOpen);
+ $('#variant-name').textContent = variant === 'A' ? 'A · 关系画布' : 'B · 验收工作台';
+ const r = active();
+ $('#run-id').textContent = currentRun;
+ $('#run-title').textContent = r.name;
+ const reviews = Object.values(r.nodes).filter(n => n.phase === 'SUBMITTED').length;
+ const allReviews = Object.values(runs).flatMap(r => Object.values(r.nodes)).filter(n => n.phase === 'SUBMITTED').length;
+ const accepted = Object.values(r.nodes).filter(n => n.phase === 'ACCEPTED').length;
+ $('#run-status').innerHTML = reviews ? `<span class="status review">${reviews} 项待验收</span>` : accepted === 3 ? '<span class="status done">已完成</span>' : '<span class="status working">进行中</span>';
+ $('#review-count').textContent = allReviews;
+ $('#canvas-review-count').textContent = `${reviews} 项交付`;
+ $('#input-name').textContent = r.brief;
+ $('#run-list').innerHTML = Object.entries(runs).map(([id, run]) => {
+  const count = Object.values(run.nodes).filter(n => n.phase === 'ACCEPTED').length;
+  const pending = Object.values(run.nodes).filter(n => n.phase === 'SUBMITTED').length;
+  return `<button class="run-option ${id === currentRun ? 'active' : ''}" data-run="${id}" aria-pressed="${id === currentRun}" aria-label="${id} · ${run.name}"><span class="run-number">${id}</span><span><strong>${run.name}</strong><small>${count}/3 已验收${pending ? ' · '+pending+' 项待验收' : count === 3 ? ' · 已完成' : ' · 进行中'}</small></span></button>`;
+ }).join('');
+ $('#nodes').innerHTML = Object.entries(r.nodes).map(([key, n]) => nodeMarkup(key, n)).join('');
+ $('#adoption-callout').innerHTML = stale(r) ? `<button class="adoption-hint" data-action="impact"><strong>正文第 ${r.nodes.guide.generation} 轮已验收 ↗</strong><span>索引仍采用第 ${r.nodes.delivery.adoptedGuide} 轮 · 查看影响</span></button>` : '';
  renderInspector();
- $('#state-dump').textContent=JSON.stringify({variant,currentRun,runs},null,2);
- const n=r.nodes[r.selected];$('#advance-demo').disabled=!['PREPARED','EXECUTING'].includes(n.phase);
- $('#advance-demo').textContent=n.phase==='PREPARED'?'模拟执行者接手':n.phase==='EXECUTING'?'模拟提交成果':'推进执行者状态';
+ $('#state-dump').textContent = JSON.stringify({variant, currentRun, runs}, null, 2);
+ const n = r.nodes[r.selected];
+ $('#advance-demo').disabled = !['PREPARED','EXECUTING'].includes(n.phase);
+ $('#advance-demo').textContent = n.phase === 'PREPARED' ? '模拟执行者接手' : n.phase === 'EXECUTING' ? '模拟提交成果' : '推进执行者状态';
  requestAnimationFrame(drawConnections);
 }
 function renderInspector(){
@@ -47,17 +72,41 @@ function renderInspector(){
  if(['ACCEPTED','SUBMITTED'].includes(n.phase))actions+='<button class="subtle-action" data-action="preview">查看本轮成果</button>';
  if(n.phase!=='READY')actions+='<button class="subtle-action" data-action="rework">重做这一步</button>';
  const update=stale(r)?`<div class="new-version"><strong>正文第 ${r.nodes.guide.generation} 轮可采用</strong><p>已开展的索引仍采用正文第 ${r.nodes.delivery.adoptedGuide} 轮。</p><button data-action="impact">查看影响与采用新版 →</button></div>`:'';
- $('#inspector').innerHTML=`<div><div class="inspector-head"><span class="small-label">本轮工作</span>${status(n.phase)}</div><h2>${nodeNames[key]}</h2><p class="contract-name">真实验收 · ${key==='guide'?'撰写产品指南':nodeNames[key]} · v1</p><div class="detail-row"><span>当前轮次</span><strong>第 ${n.generation} 轮</strong></div></div><div class="inspector-body"><section class="inspector-section"><h4>本次交付</h4>${currentFile}${n.note?`<p class="note" style="margin-top:12px">${esc(n.note)}</p>`:''}</section><section class="inspector-section"><h4>${key==='delivery'&&n.adoptedGuide?'实际采用的输入':'输入来源'}</h4>${inputs}</section></div><div class="inspector-bottom">${update}<div class="inspector-actions">${actions}</div><details class="history"><summary>历史交付与验收 · ${n.history.length} 轮</summary>${n.history.map(h=>`<div class="history-item">第 ${h.generation} 轮 · ${esc(h.result)}${h.note?'<br>'+esc(h.note):''}</div>`).join('')||'<p>尚无历史轮次</p>'}</details></div>`;
+ $('#inspector').innerHTML=`<div><div class="inspector-head"><span class="small-label">${currentRun} · ${r.name}</span><button class="quiet" id="inspector-close" data-action="hide-inspector" aria-label="收起节点详情">×</button></div><div style="margin-bottom:9px">${status(n.phase)}</div><h2>${nodeNames[key]}</h2><p class="contract-name">${key==='guide'?'撰写产品指南':nodeNames[key]} · Contract v1</p><div class="detail-row"><span>当前轮次</span><strong>第 ${n.generation} 轮</strong></div></div><div class="inspector-body"><section class="inspector-section"><h4>本次交付</h4>${currentFile}${n.note?`<p class="note" style="margin-top:12px">${esc(n.note)}</p>`:''}</section><section class="inspector-section"><h4>${key==='delivery'&&n.adoptedGuide?'实际采用的输入':'输入来源'}</h4>${inputs}</section></div><div class="inspector-bottom">${update}<div class="inspector-actions">${actions}</div><details class="history"><summary>历史交付与验收 · ${n.history.length} 轮</summary>${n.history.map(h=>`<div class="history-item">第 ${h.generation} 轮 · ${esc(h.result)}${h.note?'<br>'+esc(h.note):''}</div>`).join('')||'<p>尚无历史轮次</p>'}</details></div>`;
 }
-function drawConnections(){
- const area=$('#canvas').getBoundingClientRect(),box=id=>{const b=$(id).getBoundingClientRect();return {x:b.x-area.x,y:b.y-area.y,w:b.width,h:b.height};};
- const p=box('#input-pill'),g=box('#node-guide'),c=box('#node-checklist'),d=box('#node-delivery');
- const svg=$('#edges');svg.setAttribute('viewBox',`0 0 ${area.width} ${area.height}`);
- const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.8"/>`;
- const v=(a,b)=>{const mid=(a.y+b.y)/2;return `<path d="M ${a.x} ${a.y} C ${a.x} ${mid},${b.x} ${mid},${b.x} ${b.y}"/>${dot(a.x,a.y)}${dot(b.x,b.y)}`;};
- const h=(a,b)=>{const mid=(a.x+b.x)/2;return `<path d="M ${a.x} ${a.y} C ${mid} ${a.y},${mid} ${b.y},${b.x} ${b.y}"/>${dot(a.x,a.y)}${dot(b.x,b.y)}`;};
- const bottom=b=>({x:b.x+b.w/2,y:b.y+b.h}),top=b=>({x:b.x+b.w/2,y:b.y}),left=b=>({x:b.x,y:b.y+b.h/2}),right=b=>({x:b.x+b.w,y:b.y+b.h/2});
- svg.innerHTML=variant==='A'?v(bottom(p),top(g))+v(bottom(p),top(c))+v(bottom(g),top(d))+v(bottom(c),top(d)):h(right(p),left(g))+h(right(p),left(c))+h(right(g),left(d))+h(right(c),left(d));
+function drawConnections() {
+ const area = $('#canvas').getBoundingClientRect();
+ const box = id => { const b = $(id).getBoundingClientRect(); return {x:b.x-area.x,y:b.y-area.y,w:b.width,h:b.height}; };
+ const p = box('#input-pill'), g = box('#node-guide .node-face'), c = box('#node-checklist .node-face'), d = box('#node-delivery .node-face'), root = box('#run-pill');
+ const svg = $('#edges');
+ svg.setAttribute('viewBox', `0 0 ${area.width} ${area.height}`);
+ const dot = (x,y) => `<circle cx="${x}" cy="${y}" r="4.1"/>`;
+ const bottom = b => ({x:b.x+b.w/2, y:b.y+b.h});
+ const top = b => ({x:b.x+b.w/2, y:b.y});
+ const left = b => ({x:b.x, y:b.y+b.h/2});
+ const rounded = (a,b,mid) => {
+  if (Math.abs(a.x-b.x)<1) return `M ${a.x} ${a.y} V ${b.y}`;
+  const dir = b.x>a.x ? 1 : -1;
+  const radius = Math.min(20,Math.abs(a.x-b.x)/3,(mid-a.y)/2,(b.y-mid)/2);
+  return `M ${a.x} ${a.y} V ${mid-radius} Q ${a.x} ${mid} ${a.x+dir*radius} ${mid} H ${b.x-dir*radius} Q ${b.x} ${mid} ${b.x} ${mid+radius} V ${b.y}`;
+ };
+ const edge = (from,to,mid,name) => `<g data-edge="${name}"><path d="${rounded(from,to,mid)}"/>${dot(from.x,from.y)}${dot(to.x,to.y)}</g>`;
+ let html = `<path class="inactive context-edge" d="M ${bottom(root).x} ${bottom(root).y} V ${top(p).y}"/>`;
+ const branchY = bottom(p).y + 40;
+ html += edge(bottom(p),top(g),branchY,'input-guide') + edge(bottom(p),top(c),branchY,'input-checklist');
+ if (variant === 'A') {
+  const a = bottom(g), b = left(d), midY = d.y+d.h/2, elbow = 21;
+  html += `<g data-edge="guide-delivery"><path d="M ${a.x} ${a.y} V ${midY-elbow} Q ${a.x} ${midY} ${a.x+elbow} ${midY} H ${b.x}"/>${dot(a.x,a.y)}${dot(b.x,b.y)}</g>`;
+  html += edge(bottom(c),top(d),(bottom(c).y+top(d).y)/2,'checklist-delivery');
+ } else {
+  const target = top(d), y = d.y-30;
+  html += edge(bottom(g),{x:target.x-20,y:target.y},y,'guide-delivery') + edge(bottom(c),{x:target.x+20,y:target.y},y,'checklist-delivery');
+ }
+ const adopted = active().nodes.delivery;
+ const guideVersion = adopted.adoptedGuide ? `正文 · 第 ${adopted.adoptedGuide} 轮` : '正文 · 开展时固定';
+ const checkVersion = adopted.adoptedChecklist ? `清单 · 第 ${adopted.adoptedChecklist} 轮` : '清单 · 开展时固定';
+ if (variant === 'A') html += `<text class="edge-label" x="${g.x+g.w/2+10}" y="${g.y+g.h+87}">${guideVersion}</text><text class="edge-label" x="${c.x+c.w/2+13}" y="${c.y+c.h+42}">${checkVersion}</text>`;
+ svg.innerHTML = html;
 }
 function openDialog(title,body,footer){$('#dialog-content').innerHTML=`<div class="modal-head"><h2>${title}</h2><button class="quiet" data-action="close">关闭</button></div><div class="modal-body">${body}<p class="error" id="dialog-error" aria-live="polite"></p></div><div class="modal-footer">${footer}</div>`;$('#action-dialog').showModal();}
 function closeDialog(){$('#action-dialog').close();}
@@ -65,6 +114,12 @@ function rework(note){const r=active(),n=r.nodes[r.selected];n.history.push({gen
 function handle(action){
  const r=active(),key=r.selected,n=r.nodes[key];
  if(action==='close'){closeDialog();return;}
+ if(action==='hide-inspector'){inspectorOpen=false;render();return;}
+ if(action==='inbox'){
+  const pending=Object.entries(runs).flatMap(([id,run])=>Object.entries(run.nodes).filter(([,item])=>item.phase==='SUBMITTED').map(([node,item])=>`<button class="review-row" data-review-run="${id}" data-review-node="${node}"><span><strong>${nodeNames[node]}</strong><small>${id} · ${run.name} / 第 ${item.generation} 轮</small></span><span>开始验收 →</span></button>`));
+  openDialog('集中待验收',pending.join('')||'<p>当前两次运行没有待验收交付。</p>','<button class="outline" data-action="close">返回画布</button>');return;
+ }
+
  if(action==='review'){
   const excerpt=key==='guide'?'<p>新增：连接一个实际输入</p><ol><li>选择下游节点，打开输入来源。</li><li>选择上游固定成果，保存连接。</li><li>开展、提交并逐项验收。</li></ol>':key==='checklist'?'<p>核对任务标识、固定输入、实际操作、验收放行与新版影响范围；每项包含预期行为与可执行核对方法。</p>':`<p>正文：撰写指南第 ${n.adoptedGuide} 轮。<br>清单：独立核对清单第 ${n.adoptedChecklist} 轮。<br>索引分别记录来源版本、固定路径与 SHA-256。</p>`;
   openDialog('验收交付',`<p>${r.name} / ${nodeNames[key]} / 第 ${n.generation} 轮</p><div class="preview-document"><h3>${fileNames[key]}</h3>${excerpt}</div>${criteria[key].map(t=>`<label class="criterion"><input type="checkbox" data-criterion>${t}</label>`).join('')}<label class="field-label" for="review-note">修改意见</label><textarea id="review-note"></textarea>`,'<button class="danger" data-action="reject">退回修改</button><button class="primary" data-action="approve">通过验收</button>');
@@ -79,7 +134,7 @@ function handle(action){
  }else if(action==='impact'){
   openDialog('采用正文新版',`<p>采用「撰写指南」第 ${r.nodes.guide.generation} 轮的已验收成果。</p><div class="impact-item"><strong>整理交付索引</strong><span>创建新轮次</span></div><div class="preserved">独立核对清单 · 保留第 ${r.nodes.checklist.generation} 轮<br>另一运行 · 保持原样<br>旧索引与验收历史 · 完整保留</div>`,'<button class="outline" data-action="close">暂不采用</button><button class="primary" data-action="adopt">确认重做这 1 步</button>');
  }else if(action==='adopt'){
-  const index=r.nodes.delivery;index.history.push({generation:index.generation,result:'已验收 · 采用旧正文'});index.generation++;index.phase='READY';index.note=`采用正文第 ${r.nodes.guide.generation} 轮，重做交付索引`;delete index.adoptedGuide;delete index.adoptedChecklist;r.selected='delivery';closeDialog();render();
+  const index=r.nodes.delivery;index.history.push({generation:index.generation,result:'已验收 · 采用旧正文'});index.generation++;index.phase='READY';index.note=`采用正文第 ${r.nodes.guide.generation} 轮，重做交付索引`;delete index.adoptedGuide;delete index.adoptedChecklist;r.selected='delivery';inspectorOpen=true;closeDialog();render();
  }else if(action==='start'){
   openDialog('交给执行者',`<p>${r.name} / ${nodeNames[key]} / 第 ${n.generation} 轮</p><div class="file-detail" style="margin-top:18px"><strong><img src="/workbuddy.png" alt="" style="width:18px;height:18px;vertical-align:middle;margin-right:8px">WorkBuddy</strong><small>打开任务后，仍需确认发送和接手。</small></div>`,'<button class="outline" data-action="close">取消</button><button class="primary" data-action="dispatch">交给 WorkBuddy</button>');
  }else if(action==='dispatch'){
@@ -88,12 +143,20 @@ function handle(action){
   openDialog('本轮成果',`<p>${nodeNames[key]} / 第 ${n.generation} 轮 / ${fileNames[key]}</p><div class="preview-document"><h3>${r.name}</h3><p>${key==='delivery'?`实际采用：正文第 ${n.adoptedGuide} 轮；独立清单第 ${n.adoptedChecklist} 轮。`:'本次交付已固定，逐项验收后供下游采用。'}</p></div>`,'<button class="outline" data-action="close">返回画布</button>');
  }
 }
-document.addEventListener('click',e=>{const run=e.target.closest('[data-run]');if(run){currentRun=run.dataset.run;render();return;}const node=e.target.closest('[data-node]');if(node){active().selected=node.dataset.node;render();return;}const a=e.target.closest('[data-action]');if(a)handle(a.dataset.action);});
+document.addEventListener('click',e=>{
+ const review=e.target.closest('[data-review-run]');
+ if(review){currentRun=review.dataset.reviewRun;active().selected=review.dataset.reviewNode;inspectorOpen=true;closeDialog();render();handle('review');return;}
+ const run=e.target.closest('[data-run]');if(run){currentRun=run.dataset.run;render();return;}
+ const node=e.target.closest('[data-node]');if(node){active().selected=node.dataset.node;inspectorOpen=true;render();return;}
+ const history=e.target.closest('[data-history]');if(history){const key=history.dataset.history;const n=active().nodes[key];openDialog(`${nodeNames[key]} · 历史交付`,n.history.map(h=>`<div class="history-item">第 ${h.generation} 轮 · ${esc(h.result)}${h.note?'<br>'+esc(h.note):''}</div>`).join(''),'<button class="outline" data-action="close">返回画布</button>');return;}
+ const a=e.target.closest('[data-action]');if(a)handle(a.dataset.action);
+});
 function switchVariant(delta){variant=variants[(variants.indexOf(variant)+delta+2)%2];const u=new URL(location.href);u.searchParams.set('variant',variant);history.replaceState(null,'',u);render();}
 $('#variant-prev').onclick=()=>switchVariant(-1);$('#variant-next').onclick=()=>switchVariant(1);
 document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(e.target.tagName)||e.target.isContentEditable||$('#action-dialog').open)return;if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();switchVariant(e.key==='ArrowLeft'?-1:1);}});
-function reset(){runs=seed();currentRun='A';render();}
+function reset(){runs=seed();currentRun='A';inspectorOpen=false;render();}
 $('#reset-top').onclick=reset;
 $('#advance-demo').onclick=()=>{const n=active().nodes[active().selected];if(n.phase==='PREPARED')n.phase='EXECUTING';else if(n.phase==='EXECUTING')n.phase='SUBMITTED';render();};
-$('#view-structure').onclick=()=>openDialog('固定流程 v1','<p>本次材料分别进入「撰写指南」与「独立核对清单」，两个节点互不依赖。「整理交付索引」采用两者已验收的成果，形成汇合。</p>','<button class="outline" data-action="close">返回画布</button>');
+$('#review-inbox').onclick=()=>handle('inbox');
+$('#view-structure').onclick=()=>openDialog('连接关系 · 流程 v1',`<div class="binding-row"><span>本次材料<br><b>固定输入</b></span><span>→</span><span>撰写指南<br><b>资料输入</b></span></div><div class="binding-row"><span>本次材料<br><b>固定输入</b></span><span>→</span><span>独立核对清单<br><b>资料输入</b></span></div><div class="binding-row"><span>撰写指南<br><b>document.md</b></span><span>→</span><span>整理交付索引<br><b>正文输入</b></span></div><div class="binding-row"><span>独立核对清单<br><b>checklist.md</b></span><span>→</span><span>整理交付索引<br><b>清单输入</b></span></div><p style="margin-top:18px">索引采用验收通过的具体成果轮次。已采用的输入保持固定，使用新版需单独确认影响范围。</p>`,'<button class="outline" data-action="close">返回画布</button>');
 window.addEventListener('resize',drawConnections);render();

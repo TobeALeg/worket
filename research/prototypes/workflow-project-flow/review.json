@@ -1,38 +1,105 @@
 {
+  "date": "2026-10-22",
   "result": "PASSED",
   "scope": "IN_MEMORY_UI_PROTOTYPE",
   "realExecutorUsed": false,
   "productionChanged": false,
+  "figmaChanged": false,
   "localUnitTestsRun": false,
-  "checks": [
-    "A and B visual layouts",
-    "accepted revision retains old adoption until explicit confirmation",
-    "explicit adoption resets only delivery",
-    "independent checklist and other run unchanged",
-    "rejection creates a new generation and retains note/history",
-    "run switch restores selected node",
-    "three nodes within canvas bounds",
-    "four dependency paths"
-  ],
-  "layoutBounds": {
-    "canvas": {
-      "height": 610,
-      "width": 787
+  "referenceAssetsCopiedToRepository": false,
+  "checks": {
+    "reviewCriteriaRequired": true,
+    "rejectionNoteRequired": true,
+    "acceptedRevisionRetainsOldAdoption": true,
+    "explicitAdoptionOnlyResetsDelivery": true,
+    "independentChecklistUnchanged": true,
+    "otherRunUnchanged": true,
+    "simulatedDeliveryLoopCompleted": true,
+    "rejectionCreatesNewRoundAndRetainsNote": true,
+    "rejectionRetainsDownstream": true,
+    "runSwitchRestoresSelection": true,
+    "centralReviewTargetsRunNodeAndRound": true,
+    "historyPeekOpensRecordedRound": true,
+    "connectionMappingDialog": true,
+    "lightReferenceVisuallyChecked": true,
+    "darkReferenceImages": {
+      "total": 43,
+      "broken": 0
+    }
+  },
+  "layouts": {
+    "A": {
+      "canvas": {
+        "height": 1060,
+        "width": 946
+      },
+      "edges": 4,
+      "nodes": [
+        {
+          "height": 218,
+          "inside": true,
+          "name": "node-guide",
+          "width": 315,
+          "x": 75.6796875,
+          "y": 429
+        },
+        {
+          "height": 218,
+          "inside": true,
+          "name": "node-checklist",
+          "width": 296,
+          "x": 558.1328125,
+          "y": 441
+        },
+        {
+          "height": 251.5,
+          "inside": true,
+          "name": "node-delivery",
+          "width": 296,
+          "x": 558.1328125,
+          "y": 745
+        }
+      ],
+      "overflow": true
     },
-    "nodes": [
-      {
-        "inside": true,
-        "name": "node-guide"
+    "B": {
+      "canvas": {
+        "height": 940,
+        "width": 508
       },
-      {
-        "inside": true,
-        "name": "node-checklist"
-      },
-      {
-        "inside": true,
-        "name": "node-delivery"
-      }
-    ],
-    "paths": 4
-  }
+      "edges": 4,
+      "nodes": [
+        {
+          "height": 188,
+          "inside": true,
+          "name": "node-guide",
+          "width": 212,
+          "x": 20.3125,
+          "y": 397
+        },
+        {
+          "height": 188,
+          "inside": true,
+          "name": "node-checklist",
+          "width": 212,
+          "x": 275.6875,
+          "y": 397
+        },
+        {
+          "height": 221.5,
+          "inside": true,
+          "name": "node-delivery",
+          "width": 212,
+          "x": 148,
+          "y": 661
+        }
+      ]
+    }
+  },
+  "limits": [
+    "980px minimum work surface; narrower windows scroll horizontally",
+    "in-memory fixtures only; executor receipts are explicitly simulated",
+    "no arbitrary connection editing, dragging, zoom or persistence",
+    "reference scene is loaded only from user local analysis files"
+  ]
 }

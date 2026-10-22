@@ -1,21 +1,21 @@
 <!doctype html>
-<!-- PROTOTYPE: one visual direction, two workspace layouts (?variant=A|B). In-memory demonstration only. -->
+<!-- PROTOTYPE: Project Flow metrics applied to a Worket canvas and review workspace. -->
 <html lang="zh-CN">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Worket · 工作流画布方向稿</title>
+<title>Worket · Project Flow 工作流原型</title>
 <link rel="stylesheet" href="/prototype.css">
 <body>
 <div id="app">
   <header class="app-header"><a class="brand" href="/?variant=A">Worket<span>工作流</span></a><span class="header-note">个人工作空间</span><button class="quiet" id="reset-top">重置演示</button></header>
-  <div class="flow-header"><div><div class="eyebrow">工作流 / 全部流程</div><h1>Worket 文档交付</h1></div><div class="flow-meta"><span class="version">固定流程 v1</span><button class="outline" id="view-structure">查看结构</button></div></div>
+  <div class="flow-header"><div><div class="eyebrow">工作流 <span>/</span> 文档交付</div><h1>Worket 文档交付</h1></div><div class="flow-meta"><span class="version">流程 v1 · 3 个 Contract</span><button class="outline" id="view-structure">连接关系</button><button class="primary" id="review-inbox">待验收 <span id="review-count">1</span></button></div></div>
   <main class="workspace">
-    <nav class="runs" aria-label="流程运行"><div class="runs-heading">本次运行 <span>2</span></div><div id="run-list"></div><div class="run-footer">2 次运行 · 本机</div></nav>
-    <section class="stage"><div class="canvas-heading"><div><span class="small-label">当前运行</span><h2 id="run-title"></h2></div><span id="run-status"></span></div><div class="canvas" id="canvas"><svg class="edges" id="edges" aria-label="材料分别进入正文与清单，再汇合到交付索引"></svg><div class="input-pill" id="input-pill"><span class="input-dot"></span><div><strong>本次材料</strong><small id="input-name"></small></div><span class="fixed-label">已固定</span></div><span class="branch-caption">独立开展</span><div id="nodes"></div><div class="canvas-tools"><span>3 个工作节点 · 2 条独立分支</span></div><div class="canvas-key"><i></i>成果采用关系</div></div></section>
+    <nav class="runs" aria-label="流程运行"><div class="runs-heading">运行实例 <span>02</span></div><div id="run-list"></div><div class="run-footer">独立输入 · 独立验收</div></nav>
+    <section class="stage"><div class="canvas" id="canvas"><div class="canvas-dots"></div><svg class="edges" id="edges" aria-label="材料分别进入正文与清单，两份已验收成果汇合到交付索引"></svg><div class="run-pill" id="run-pill"><span class="run-monogram" id="run-id">A</span><div><span class="small-label">当前运行</span><h2 id="run-title"></h2></div><span id="run-status"></span></div><div class="input-pill" id="input-pill"><div class="input-title"><span class="material-icon">W</span><strong>本次材料</strong><span class="fixed-label">已固定</span></div><span id="input-name"></span><div class="material-footer"><span>输入快照</span><span>本次运行专属</span></div></div><button class="review-note" data-action="inbox"><span class="review-symbol">✓</span><strong>待验收</strong><span id="canvas-review-count">1 项交付</span><span>↗</span></button><span class="branch-caption">并行开展</span><div id="nodes"></div><div id="adoption-callout"></div><div class="canvas-tools"><span>流程 v1</span><i></i><span>3 个 Contract</span><i></i><span>2 条并行分支</span></div><div class="canvas-key"><i></i>固定成果的采用关系</div></div></section>
     <aside class="inspector" aria-label="当前节点详情" id="inspector"></aside>
   </main>
 </div>
-<div class="prototype-controls"><div class="variant-switch"><button id="variant-prev" aria-label="上一种布局">←</button><strong id="variant-name"></strong><button id="variant-next" aria-label="下一种布局">→</button></div><span class="prototype-mark">方向稿 · 演示数据</span><button id="advance-demo">推进执行者状态</button><details><summary>状态</summary><pre id="state-dump"></pre></details></div>
+<div class="prototype-controls"><span class="prototype-badge">原型</span><div class="variant-switch"><button id="variant-prev" aria-label="上一种布局">←</button><strong id="variant-name"></strong><button id="variant-next" aria-label="下一种布局">→</button></div><span class="prototype-mark">方向稿 · 内存数据</span><a href="/reference" target="_blank">参考原稿 ↗</a><button id="advance-demo">推进执行者状态</button><details><summary>状态</summary><pre id="state-dump"></pre></details></div>
 <dialog id="action-dialog"><div id="dialog-content"></div></dialog>
 <script src="/prototype.js"></script>
 </body>

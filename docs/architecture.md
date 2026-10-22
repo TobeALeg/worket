@@ -1,6 +1,6 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
-工作流视觉方向稿（2026-10-21）：[关系画布方案](design/workflow-project-flow.md) 与 `research/prototypes/workflow-project-flow/` 用静态页面及内存演示状态比较两种布局，不调用 Worket API、数据库或外部执行者。正式界面后续仍应读取既有 WorkflowRun、节点轮次和成果采用记录，沿用操作目标与会话保护；本轮没有改变运行时模块关系、数据流或状态流。
+工作流视觉方向稿（2026-10-22 更新）：[关系画布方案](design/workflow-project-flow.md) 与 `research/prototypes/workflow-project-flow/` 用独立静态页面及内存状态比较关系画布/验收工作台。卡片边界经 DOM 测量后绘制四条依赖，连线与详情读取同一份演示采用记录；集中待验收由两次演示运行的当前节点派生。本机 `/reference` 仅在请求时读取用户提供的外部分析目录，原稿资产不进入 Git、打包或业务页面。该原型不调用 Worket API、数据库或执行者；正式界面仍应读取既有 WorkflowRun、节点轮次和成果采用记录，沿用操作目标与会话保护。本轮未改变客户端运行时的模块关系、数据流或状态流。
 
 ## UI 规范与 Figma 页面整理（2026-10-21）
 
