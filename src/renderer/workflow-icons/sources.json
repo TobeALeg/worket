@@ -1,0 +1,90 @@
+[
+  {
+    "file": "10b5f.svg",
+    "icon": "search",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "613158695b217a457ecd13631039501b389deb5aa7abfa1c9147ef9d0cd22395"
+  },
+  {
+    "file": "1c877.svg",
+    "icon": "target-arrow",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "2aba78995578ad2ab48b84bd817baf3ed12c904ddad7017163e8f8a374c1ab21"
+  },
+  {
+    "file": "2d68e.svg",
+    "icon": "map-pin",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "adc9f0a1b80ee10b9fc3d6b0d3fa397c844b7726a23fed95a57686c102fe0c7b"
+  },
+  {
+    "file": "3372c.svg",
+    "icon": "folder",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "3fcf69586bfdffa0e4dff59e309cbc8cf1d2df7f254e694cca94218b02ab1404"
+  },
+  {
+    "file": "3474f.svg",
+    "icon": "photo",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "2b94133db7348048fe48be433e87ab717728f10bf6f794b079e129e4e95f0e9e"
+  },
+  {
+    "file": "612f5.svg",
+    "icon": "player-play",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "79f0b8c7a180b50135cae3401725731edf64004d8a7f5e820f48919e8a63a7f6"
+  },
+  {
+    "file": "91732.svg",
+    "icon": "file-text",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "4044105cafefd9fe9de0537d5285a9a311dd6ca2c5db374542a636f967810452"
+  },
+  {
+    "file": "aae1d.svg",
+    "icon": "movie",
+    "library": "Tabler Icons 3.35.0 (MIT)",
+    "figmaFileKey": "DctYxpkI7FMqVfhCJGC8qC",
+    "designNodes": [
+      "148:3689",
+      "148:3899"
+    ],
+    "sha256": "e0a8ad24807f02bcf489b8ecdeeaa4610f54141cbf0f3d52a4a72ea0331b37c0"
+  }
+]

@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 工作流地图投影（2026-10-23）
+
+`renderer/workflow-map.ts` 独立承担定义与运行的地图投影、布局、端口测量、缩放与连接绘制；`workflows.ts` 继续拥有导航会话及所有业务命令，`workflow-ui.ts::graph` 保留给未改版的编辑器。`workflow-map.css` 仅作用于两张地图，`workflow-map-motion.css` 使用 Figma 导出的共享关键帧，图标本地化在 `workflow-icons/`，不依赖临时资产地址。
+
+数据流：`WorkflowDefinition + 固定 Contract → 节点与每个输入输出条目 → DAG 分层/线性折返 → 真实 DOM 行中心 → 贝塞尔依赖与端口`。定义和运行使用相同的最大行/标题占位，包围尺寸在换行后重新测量，保持位置对应。单条仅控制顺序的 `after` 以次级虚线表达，与成果绑定区分。
+
+状态流：`RunDetail → 当前 NodeRun / 已采用 Adoption → 文字状态、成果底板、当前位置及活动连接`；只有 `ACCEPTED` 投影为已完成，`SUBMITTED` 保留待验收，执行中来自既有 `phases` 证据。下游已有采用记录时保留旧轮成果可用性；新版提示、返工闭包、修订检查和幂等仍由原组合层处理。地图不创建新的运行状态、数据副本或执行命令。每次离页断开 ResizeObserver，重绘保留各运行的缩放与滚动；详情收起后将焦点还给节点。
+
 ## 架构查阅入口（2026-10-23）
 
 [现状地图](reference/README.md) 按业务对象、模块关系、数据流与状态流介绍当前实现；[接口手册](reference/interfaces.md) 区分模块调用、桌面 IPC、本机 MCP 与云端 HTTP；[字段字典](reference/fields.md) 解释身份、版本、输入输出和存储归属。[代码索引](reference/code-index.md) 从源码生成精确类型、公开方法、IPC/action 与建表语句来源，可用 `node scripts/architecture-reference.mjs --check` 检查是否过期。本轮仅补充文档和只读索引脚本，不改变客户端、数据库或服务行为。

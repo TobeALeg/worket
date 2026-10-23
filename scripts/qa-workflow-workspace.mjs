@@ -103,7 +103,7 @@ try {
   assert.ok((await api('drafts')).some(d => d.name === '另一个页面的修改'));
   report.checks.incompleteDraftConflictCopyAndGracefulQuit = true;
 
-  await open(runA); await app.evaluate(() => { globalThis.workflowQaTiming.preview = true; });
+  await open(runA); await select('a'); await app.evaluate(() => { globalThis.workflowQaTiming.preview = true; });
   await root().locator('#wf-review').click(); await until(() => app.evaluate(() => globalThis.workflowQaTiming.waiting.length > 0), 'Preview was not delayed');
   await select('b'); await release(); await new Promise(r => setTimeout(r, 150));
   assert.equal(await step().isVisible(), false); assert.equal(await root().locator('[data-node].selected').getAttribute('data-node'), 'b');
@@ -126,7 +126,7 @@ try {
   assert.equal((await get(runA)).run.events.filter(e => e.type === 'ACCEPTED' && e.nodeId === 'a').length, 1);
   report.checks.conflictPreservesReviewAndDuplicateClickAcceptsOnce = true;
 
-  await root().locator('#wf-pending').click(); await root().locator(`[data-review-run="${runB}"][data-review-node="a"]`).waitFor();
+  await root().locator('#wf-all-runs').click(); await root().locator('#wf-pending').click(); await root().locator(`[data-review-run="${runB}"][data-review-node="a"]`).waitFor();
   assert.equal(await root().locator(`[data-review-run="${runA}"]`).count(), 0);
   await screenshot('03-concentrated-review');
   await root().locator(`[data-review-run="${runB}"][data-review-node="a"]`).click();
@@ -134,7 +134,7 @@ try {
   assert.ok((await step().innerText()).includes('客户乙')); assert.ok((await step().innerText()).includes('调研甲'));
   for (const check of await step().locator('[data-criterion]').all()) await check.check();
   await step().locator('#wf-approve').click(); await step().waitFor({ state: 'hidden' });
-  await root().locator('#wf-pending').click(); await root().locator(`[data-review-run="${runB}"][data-review-node="b"]`).waitFor();
+  await root().locator('#wf-all-runs').click(); await root().locator('#wf-pending').click(); await root().locator(`[data-review-run="${runB}"][data-review-node="b"]`).waitFor();
   assert.equal(await root().locator(`[data-review-run="${runB}"][data-review-node="a"]`).count(), 0);
   assert.equal((await get(runC)).run.nodes.a.at(-1).phase, 'SUBMITTED'); report.checks.pendingReviewTargetsCurrentGenerationAndRun = true;
 
@@ -151,10 +151,10 @@ try {
   await until(async () => await root().locator('[data-open-run]').count() === 1, 'Old query replaced current filter'); assert.equal(await root().locator(`[data-open-run="${runA}"]`).count(), 0);
   report.checks.filtersPaginationAndStaleQueryIsolation = true;
 
-  await open(ready); await app.evaluate(() => { globalThis.workflowQaTiming.dispatch = true; });
+  await open(ready); await select('a'); await app.evaluate(() => { globalThis.workflowQaTiming.dispatch = true; });
   await root().locator('#wf-start').click(); await panel.locator('.executor-options button').filter({ hasText: /^WorkBuddy$/ }).click();
   await until(() => app.evaluate(() => globalThis.workflowQaTiming.dispatchDone), 'Dispatch did not finish backend');
-  await root().locator('#wf-workspace').click(); await root().locator('#wf-query-results').waitFor(); await release(); await new Promise(r => setTimeout(r, 150));
+  await root().locator('#wf-all-runs').click(); await root().locator('#wf-query-results').waitFor(); await release(); await new Promise(r => setTimeout(r, 150));
   assert.equal(await root().getByRole('heading', { name: '所有运行', exact: true }).count(), 1);
   assert.ok((await get(ready)).run.nodes.a.at(-1).workId); report.checks.completedDispatchDoesNotReopenOldPage = true;
 
