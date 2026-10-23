@@ -54,3 +54,12 @@
 结构检查确认：102 个变量，别名全部可解析，无缺失 WEB 代码语法，无 ALL_SCOPES；42 个主组件，组件文字均关联 Text Style。三张样板截图经实际查看，修正了横向容器高度、焦点描边裁切、禁用透明度及状态文案，并补齐多行输入错误样例。
 
 后续修改先按节点索引读取 Figma 当前状态，保留已有组件 ID 与实例关系，再更新对应节点、文档与索引。评审通过后在本文件明确记录确认范围；确认某个组件不代表所有候选调整都获认可。当前没有自动双向同步或库发布。
+
+## 桌宠应用上下文气泡
+
+2026-10-23 新建 [桌宠应用上下文气泡方向稿](https://www.figma.com/design/SDJ4tek8SJwty9z6R04gfE?node-id=1-8)，归属 Dean's team；用户已授权按当前稿修改客户端。实现仅覆盖气泡，不修改工作流页面或桌宠角色。
+
+- [整体方向稿](https://www.figma.com/design/SDJ4tek8SJwty9z6R04gfE?node-id=1-8) 包含 [Codex 当前聊天](https://www.figma.com/design/SDJ4tek8SJwty9z6R04gfE?node-id=1-11) 与 [WorkBuddy 待选择](https://www.figma.com/design/SDJ4tek8SJwty9z6R04gfE?node-id=1-16) 两种状态。
+- 客户端实现：气泡使用白底、浅边框、柔和阴影和 12px 圆角，移除尾标；宽度随内容伸缩并受窗口宽度约束。Codex 使用无底框云形标志，WorkBuddy 使用[官网标志](https://www.workbuddy.ai/)的原生圆形 SVG，均不增加图标边框。选中态仅显示聊天标题，垂直居中，右侧留白 16px；未选聊天状态显示对应应用标志和三颗错开弹跳的圆点，2 秒循环并尊重减少动态效果偏好。“当前聚焦 · 应用名”行已移除。首次记录的范围说明仍在所需状态保留，避免因版式调整而隐藏数据处理告知。
+- 图标来源核对：[WorkBuddy App Store 页面](https://apps.apple.com/cn/app/workbuddy-%E4%BD%A0%E7%9A%84-ai-%E5%B7%A5%E4%BD%9C%E5%8F%B0/id6761374913)展示的是圆角方形 App 图标；WorkBuddy 官网提供了用于品牌展示的圆形标志，当前稿改用后者。[OpenAI Academy 页面](https://openai.com/academy/building-with-ai/)中的 Codex 圆形图只是页面插图，并非 Codex 桌面应用图标；客户端以 Codex 桌面组件内置的透明云形标志实现，不增加方形底框。
+- 其余前台应用图标使用原有文字标记回退，尚未在 Figma 覆盖；未知/无法识别状态和贴边布局仍待后续评审。

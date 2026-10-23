@@ -10,8 +10,16 @@
   <body>
     <main id="pet-root" class="pet-root">
       <section id="context-bubble" class="context-bubble" aria-live="polite" hidden>
-        <span id="application-mark" class="application-mark"></span>
-        <span class="context-copy"><small id="context-label"></small><strong id="context-title"></strong><span id="recording-upload-notice"></span></span>
+        <span id="application-mark" class="application-mark" aria-hidden="true">
+          <img id="application-icon" class="application-icon" alt="" hidden />
+          <span id="application-symbol" class="application-symbol" hidden></span>
+        </span>
+        <span class="context-copy">
+          <small id="context-label" hidden></small>
+          <strong id="context-title"></strong>
+          <span id="waiting-dots" class="waiting-dots" aria-label="等待选择聊天" hidden><i></i><i></i><i></i></span>
+          <span id="recording-upload-notice"></span>
+        </span>
       </section>
       <div class="pet-anchor"><div id="pet" class="pet sleeping">
         <button id="pet-body" class="pet-body" aria-label="打开 Worket">
