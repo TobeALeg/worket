@@ -11,4 +11,6 @@
 
 视觉参考截图随验收保存在本机 `output/workflow-maps/`；页面样图见 [定义地图](../design/worket-ui/previews/workflow-map-definition.png)、[运行地图](../design/worket-ui/previews/workflow-map-runtime.png)。核对卡片、各输入输出底板及本地 Tabler 图标，不使用整页截图作为界面资产。字体沿用系统中文回退，Figma 的 Noto Sans SC 未引入全局字体依赖；真实任意拓扑由布局算法组织，不声称逐像素复制示例坐标。
 
-源码验证：以上三项 Electron 验收均通过，rendererErrors 为空；地图专项在 `output/workflow-maps/2026-10-23T04-40-24-310Z/`，工作流闭环在 `output/workflows/`，工作空间在 `output/workflow-workspace/2026-10-23T04-38-18-285Z/`。安装与 GitHub 交付结果在完成后补充。上述合成验收不代表真实外部执行者完成业务任务，也不代表用户已验收视觉效果。
+源码验证：以上三项 Electron 验收均通过，rendererErrors 为空；地图专项在 `output/workflow-maps/2026-10-23T04-40-24-310Z/`，工作流闭环在 `output/workflows/`，工作空间在 `output/workflow-workspace/2026-10-23T04-38-18-285Z/`。交付已完成：实现 [PR #51](https://github.com/TobeALeg/worket/pull/51) 合入 `eee7cfaa81bfe722b592acc0bea0983341355c10`，分支与合并后 macOS/Linux CI 均通过。安装包专项与完整工作流闭环再次通过，rendererErrors 为空。已更新并正常启动 `/Applications/Worket.app`，实际主进程路径核对一致，安装版原有三节点文档流程的新版定义地图已在原用户数据下打开核对。
+
+安装包与构建产物的完整内容对比一致（排除 ditto 转为扩展属性的 AppleDouble 元数据旁文件），`app.asar` SHA-256 为 `188e8c354889e86fb76a28eb7766d178041de5d7f88a308dd068fb01ec897fe2`；关键 renderer 文件与本轮已合并源码构建产物逐项一致。旧应用保留于 `/Users/dandi/Library/Application Support/Worket-app-backups/20261023-124329/Worket.app`，原用户数据继续使用。Electron 在线下载 TLS 断开后，使用本机已有的同版本 44.1.1 运行时打包；安装包图标哈希与项目图标一致。未发布 GitHub Release 或部署后台。机器交付记录保存在本机 `output/workflow-maps/delivery.json`。上述合成验收不代表真实外部执行者完成业务任务，也不代表用户已验收视觉效果。
