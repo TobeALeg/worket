@@ -33,5 +33,10 @@
     "file": "icons-outline-chevron-down.svg",
     "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/chevron-down.svg",
     "sha256": "5a2e5c2a155ce06264a3f7299073ed636142dfd0b324b747387d9cfbf9fb5e3e"
+  },
+  {
+    "file": "icons-outline-search.svg",
+    "source": "https://cdn.jsdelivr.net/npm/@tabler/icons@3.35.0/icons/outline/search.svg",
+    "sha256": "c4951b0e905e9f01eceef1f1c52ae37732e5d02e92592c6b410e9bbb074a6ba5"
   }
 ]
