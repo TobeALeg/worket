@@ -29,6 +29,7 @@ function restoreHeader(): void {
   backButton.setAttribute("aria-label", page?.label ?? "返回");
   backButton.title = page?.label ?? "返回";
   if (activePage !== page) {
+    header.dispatchEvent(new Event("header-page-change"));
     menu.innerHTML = page?.menu ?? "";
     header.querySelector(".feedback-entry")?.classList.toggle("active", page?.dialog.id === "feedback-dialog");
     header.querySelector<HTMLDetailsElement>("#app-menu")!.open = false;
