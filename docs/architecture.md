@@ -790,3 +790,5 @@ DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给
 流程命令在同一事务中将 SUPERSEDED 且仍 OPEN 的节点工作归档、结束执行片段并停用采集绑定；退回、主动重做及采用新版统一走 `retireSupersededWorks`。已完成工作不改状态，不删除历史成果及采用关系。数据库 v6 先保存可恢复备份，再以相同规则修复历史遗漏。列表摘要复用工作流归属查询提供运行名、节点名和轮次。
 
 顶栏搜索展开由 `header-search.ts` 管理，来源查询与结果仍由 `recording-sources.ts` 管理。复用原输入 DOM 和 input 事件；阶段切换或页头导航收起并清空查询，原有修订序号继续阻止迟到结果覆盖。
+
+顶栏按钮尺寸统一规则限定在 `.brand-actions`，不改变业务弹出菜单的尺寸。

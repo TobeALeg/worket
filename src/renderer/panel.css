@@ -107,6 +107,9 @@ details > .field { margin-block: 10px; }
 .secondary-menu > summary::-webkit-details-marker { display: none; }
 .secondary-menu > summary:hover, .secondary-menu[open] > summary { background: var(--surface); }
 .secondary-menu[open] > summary { margin: 0; }
+.brand-actions > .secondary-menu > summary { width: 24px; height: 24px; min-width: 24px; min-height: 24px; padding: 0; }
+.brand-actions svg { width: 16px; height: 16px; }
+.header-close-icon { width: 16px; height: 16px; background: currentColor; mask: url("./review-icons/icons-outline-x.svg") center / contain no-repeat; }
 .menu-items { position: absolute; right: 0; top: calc(100% + 5px); z-index: 6; display: grid; width: 160px; max-height: calc(100dvh - 40px); overflow-y: auto; padding: 4px; background: var(--background); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 24px #343d3618; }
 .menu-items button { text-align: left; border: 0; background: transparent; }
 .menu-items button:hover { background: var(--surface); }
