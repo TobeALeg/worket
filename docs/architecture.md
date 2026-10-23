@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 架构查阅入口（2026-10-23）
+
+[现状地图](reference/README.md) 按业务对象、模块关系、数据流与状态流介绍当前实现；[接口手册](reference/interfaces.md) 区分模块调用、桌面 IPC、本机 MCP 与云端 HTTP；[字段字典](reference/fields.md) 解释身份、版本、输入输出和存储归属。[代码索引](reference/code-index.md) 从源码生成精确类型、公开方法、IPC/action 与建表语句来源，可用 `node scripts/architecture-reference.mjs --check` 检查是否过期。本轮仅补充文档和只读索引脚本，不改变客户端、数据库或服务行为。
+
 ## UI 规范与 Figma 页面整理（2026-10-21）
 
 页面稿按 [迁移索引](design/worket-ui/pages.md) 对应到 renderer 模块，49 个主要页面状态复用已有本地组件与变量，节点存于 `pages-manifest.json`。此映射为人工维护的设计索引，不是运行时组件抽取或自动同步。
