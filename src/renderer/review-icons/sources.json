@@ -38,5 +38,10 @@
     "file": "icons-outline-search.svg",
     "source": "https://cdn.jsdelivr.net/npm/@tabler/icons@3.35.0/icons/outline/search.svg",
     "sha256": "c4951b0e905e9f01eceef1f1c52ae37732e5d02e92592c6b410e9bbb074a6ba5"
+  },
+  {
+    "file": "icons-outline-x.svg",
+    "source": "https://cdn.jsdelivr.net/npm/@tabler/icons@3.35.0/icons/outline/x.svg",
+    "sha256": "b71b2c0e17697c41893d00e222a6244a3d3cbb3cd2b40496ce7f58e21db44664"
   }
 ]
