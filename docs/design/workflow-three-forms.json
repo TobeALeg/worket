@@ -285,6 +285,7 @@
     "layout": "data-driven DAG and serpentine linear path; shared coordinates across definition/run",
     "stateSource": "existing RunDetail, current NodeRun and Adoption",
     "validation": "docs/acceptance/workflow-maps-2026-10-23.md",
-    "status": "implemented; delivery verification in progress"
+    "status": "implemented; automated desktop and packaged validation passed",
+    "implementationPR": "https://github.com/TobeALeg/worket/pull/51"
   }
 }
