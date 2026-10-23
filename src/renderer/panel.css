@@ -32,7 +32,7 @@ label { font-size: 12px; }
 .field { display: grid; gap: 5px; }
 .topbar { position: sticky; top: 0; z-index: 4; background: var(--background); -webkit-app-region: drag; }
 .brand-row { height: 38px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; gap: 7px; border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
-.brand-actions { display: flex; gap: 4px; align-items: center; }
+.brand-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
 .window-navigation { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .window-header-slot { height: 38px; flex-shrink: 0; }
 .icon-button[hidden] { display: none; }
@@ -136,9 +136,16 @@ dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 .source-provider[aria-pressed="true"] .source-icon { box-shadow: 0 0 0 2px var(--accent); }
 .source-icon img { display: block; width: 19px; height: 19px; object-fit: cover; transform: scale(1.2); }
 .source-icon span { font-size: 9px; }
-.source-search { position: relative; margin-bottom: 10px; }
-.source-search input[type="search"] { padding-left: 30px; }
-.source-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; background: var(--muted); mask: url("./review-icons/icons-outline-search.svg") center / contain no-repeat; pointer-events: none; }
+/* Keep the button fixed while the input unfolds into the brand space on its left. */
+.header-search { position: relative; display: flex; align-items: center; -webkit-app-region: no-drag; }
+.header-search-icon { width: 16px; height: 16px; background: currentColor; mask: url("./review-icons/icons-outline-search.svg") center / contain no-repeat; }
+.header-search-field { position: absolute; right: 28px; width: min(220px, calc(100vw - 158px)); animation: header-search-reveal 160ms ease-out; }
+.header-search-field input { font-size: 11px; -webkit-app-region: no-drag; }
+.header-search.is-open > button { color: var(--accent); background: var(--surface); }
+.brand-row:has(.header-search.is-open) .window-navigation { visibility: hidden; }
+.window-header-slot .header-search { display: none; }
+@keyframes header-search-reveal { from { clip-path: inset(-4px -4px -4px 100%); opacity: 0; } to { clip-path: inset(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .header-search-field { animation: none; } }
 .source-group-title { padding: 12px 0 2px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 500; }
 .source-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 .source-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }

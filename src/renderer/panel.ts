@@ -1,3 +1,4 @@
+import { setupHeaderSearch } from "./header-search.js";
 import { setupSelectedImport } from "./selected-import.js";
 import { setupWorkflows, renderWorkflows, openWorkflowRun } from './workflows.js';
 import { setupProblemFeedback } from "./problem-feedback.js";
@@ -38,6 +39,7 @@ let pendingCancelRecordingWorkId: string | null = null;
 let pendingSplitWorkId: string | null = null;
 let detailOpen = false;
 let actionPending = false;
+const headerSearch = setupHeaderSearch(() => required<HTMLButtonElement>("#tab-recent").click());
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -65,6 +67,7 @@ function formatDate(value: string): string {
 }
 
 function render(): void {
+  if (filter !== "RECENT") headerSearch.close();
   document.querySelectorAll<HTMLElement>(".filter").forEach((button) => {
     const selected = button.dataset.filter === filter;
     button.classList.toggle("active", selected);
