@@ -792,3 +792,5 @@ DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给
 顶栏搜索展开由 `header-search.ts` 管理，来源查询与结果仍由 `recording-sources.ts` 管理。复用原输入 DOM 和 input 事件；阶段切换或页头导航收起并清空查询，原有修订序号继续阻止迟到结果覆盖。
 
 顶栏按钮尺寸统一规则限定在 `.brand-actions`，不改变业务弹出菜单的尺寸。
+
+来源列表不再生成执行者分组标题 DOM；提供方筛选及搜索数据路径不变。

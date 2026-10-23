@@ -111,12 +111,6 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     let count = 0;
     for (const item of visible) {
       const page = remoteSearch && item.id === "codex" ? codexSearch : pages.get(item.id);
-      if (selected === "all") {
-        const heading = document.createElement("h2");
-        heading.className = "source-group-title";
-        heading.textContent = item.name;
-        sources.append(heading);
-      }
       const matches = (page?.threads ?? []).filter(thread => remoteSearch || `${thread.title ?? ""} ${thread.projectLabel ?? thread.cwd}`.toLocaleLowerCase().includes(query));
       matches.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
       for (const thread of matches) sources.append(sourceRow(thread));

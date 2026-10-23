@@ -149,7 +149,6 @@ dialog::backdrop { background: #343d3626; backdrop-filter: blur(3px); }
 .window-header-slot .header-search { display: none; }
 @keyframes header-search-reveal { from { clip-path: inset(-4px -4px -4px 100%); opacity: 0; } to { clip-path: inset(-4px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .header-search-field { animation: none; } }
-.source-group-title { padding: 12px 0 2px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 500; }
 .source-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; }
 .source-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .source-row > div { min-width: 0; }
