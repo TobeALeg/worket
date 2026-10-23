@@ -8,8 +8,11 @@ const pet = required<HTMLElement>("#pet");
 const petBody = required<HTMLButtonElement>("#pet-body");
 const bubble = required<HTMLElement>("#context-bubble");
 const applicationMark = required<HTMLElement>("#application-mark");
+const applicationIcon = required<HTMLImageElement>("#application-icon");
+const applicationSymbol = required<HTMLElement>("#application-symbol");
 const contextLabel = required<HTMLElement>("#context-label");
 const contextTitle = required<HTMLElement>("#context-title");
+const waitingDots = required<HTMLElement>("#waiting-dots");
 const paperAction = required<HTMLButtonElement>("#paper-action");
 const paperLabel = required<HTMLElement>("#paper-label");
 let currentConversation: CurrentConversationView | null = null;
@@ -18,8 +21,14 @@ let distillationActivity: PetView["distillation"] = null;
 let visualState: PetVisualState = "sleeping";
 let updateState: NonNullable<PetView["updateState"]> = "none";
 const renderVisual = createPetVisual(required<HTMLElement>("#pet-visual"));
+let currentBody: { x: number; y: number } | null = null;
 root.style.setProperty("--pet-width", `${PET_BODY_SIZE.width}px`);
 root.style.setProperty("--pet-height", `${PET_BODY_SIZE.height}px`);
+
+const APPLICATION_ICONS: Record<string, string> = {
+  codex: "./executor-logos/codex-mark.png",
+  workbuddy: "./executor-logos/workbuddy.svg",
+};
 
 function required<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -41,14 +50,45 @@ function renderPlacement(placement: PetPlacement): void {
   };
   root.style.setProperty("--pet-x", `${body.x}px`);
   root.style.setProperty("--pet-y", `${body.y}px`);
-  const bubbleX = Math.max(0, Math.min(body.x + PET_BODY_SIZE.width - 238, innerWidth - 238));
-  root.style.setProperty("--bubble-x", `${bubbleX}px`);
+  currentBody = body;
+  positionBubble(body);
   root.style.setProperty("--bubble-bottom", `${innerHeight - body.y + 18}px`);
   root.style.setProperty("--bubble-top", `${body.y + PET_BODY_SIZE.height + 18}px`);
-  root.style.setProperty("--bubble-arrow-x", `${Math.max(12, Math.min(212, body.x + PET_BODY_SIZE.width / 2 - bubbleX))}px`);
   root.classList.toggle("bubble-below", body.y < 130);
 }
 window.workpet.onPetPlacement?.(renderPlacement);
+
+function positionBubble(body: { x: number; y: number }): void {
+  const width = bubble.hidden ? 204 : bubble.getBoundingClientRect().width;
+  const maxWidth = Math.max(1, innerWidth - 24);
+  const boundedWidth = Math.min(width || 86, maxWidth);
+  const maxX = Math.max(12, innerWidth - boundedWidth - 12);
+  const minX = Math.min(12, maxX);
+  const bubbleX = Math.max(
+    minX,
+    Math.min(body.x + PET_BODY_SIZE.width - boundedWidth, maxX),
+  );
+  root.style.setProperty("--bubble-x", `${bubbleX}px`);
+  root.style.setProperty("--bubble-max-width", `${maxWidth}px`);
+}
+
+function setApplicationMark(adapter: string, fallback: string): void {
+  const icon = APPLICATION_ICONS[adapter];
+  applicationMark.className = `application-mark ${adapter}`;
+  applicationIcon.hidden = !icon;
+  applicationSymbol.hidden = Boolean(icon);
+  if (icon) {
+    if (applicationIcon.getAttribute("src") !== icon) applicationIcon.src = icon;
+    applicationSymbol.textContent = "";
+    return;
+  }
+  applicationIcon.removeAttribute("src");
+  applicationSymbol.textContent = fallback;
+}
+
+window.addEventListener("resize", () => {
+  if (currentBody) positionBubble(currentBody);
+});
 
 function render(state: PetView): void {
   visualState = state.distillation ? `distilling-${state.distillation.state}` : state.petState;
@@ -61,11 +101,19 @@ function render(state: PetView): void {
     const activity = distillationActivity;
     root.classList.add("has-context");
     root.classList.remove("recording-context");
+    root.classList.add("distillation-context");
     bubble.hidden = false;
-    applicationMark.className = "application-mark";
-    applicationMark.textContent = activity.state === "running" ? "···" : activity.state === "ready" ? "✓" : "!";
+    bubble.classList.remove("is-waiting");
+    applicationMark.className = "application-mark activity-mark";
+    applicationIcon.hidden = true;
+    applicationIcon.removeAttribute("src");
+    applicationSymbol.hidden = false;
+    applicationSymbol.textContent = activity.state === "running" ? "···" : activity.state === "ready" ? "✓" : "!";
     contextLabel.textContent = activity.label;
+    contextLabel.hidden = false;
     contextTitle.textContent = activity.detail;
+    contextTitle.hidden = false;
+    waitingDots.hidden = true;
     required<HTMLElement>("#recording-upload-notice").hidden = true;
     paperAction.disabled = false;
     paperLabel.textContent = activity.state === "ready" ? "审阅" : activity.state === "failed" ? "处理" : "进度";
@@ -73,8 +121,10 @@ function render(state: PetView): void {
     paperAction.setAttribute("aria-label", activity.label);
     petBody.title = activity.label;
     petBody.setAttribute("aria-label", activity.label);
+    if (currentBody) positionBubble(currentBody);
     return;
   }
+  root.classList.remove("distillation-context");
   petBody.setAttribute("aria-label", "打开 Worket");
   const hasConversation = Boolean(currentConversation);
   root.classList.toggle("has-context", hasConversation);
@@ -85,38 +135,29 @@ function render(state: PetView): void {
   bubble.hidden = !currentConversation;
   paperAction.disabled = !currentConversation || busy;
   if (!currentConversation) {
+    bubble.classList.remove("is-waiting");
     petBody.title = "打开 Worket";
     paperLabel.textContent = "记录";
     paperAction.removeAttribute("data-action");
     paperAction.setAttribute("aria-label", "当前没有可记录的对话");
     return;
   }
+  setApplicationMark(
+    currentConversation.adapter,
+    currentConversation.mark ?? currentConversation.applicationName.slice(0, 1),
+  );
+  const needsSelection = currentConversation.needsSelection === true;
+  bubble.classList.toggle("is-waiting", needsSelection);
+  contextLabel.hidden = true;
+  contextLabel.textContent = "";
+  contextTitle.hidden = needsSelection;
+  contextTitle.textContent = currentConversation.title;
+  waitingDots.hidden = !needsSelection;
   const hasWork = Boolean(currentConversation.workId);
   const disclosure = required<HTMLElement>("#recording-upload-notice");
   disclosure.hidden = hasWork || state.recordingUploadNoticeRequired === false;
   disclosure.textContent = "记录后将由 Worket 服务自动更新工作状态。参与改进开启时，对话另留存 90 天，可在 Worket 服务关闭或删除。";
-  const contextState =
-    currentConversation.captureStatus === "waiting"
-      ? "等待确认"
-      : currentConversation.isRecording
-        ? "正在记录"
-        : currentConversation.workStatus === "COMPLETED"
-          ? "已完成"
-          : currentConversation.workStatus === "ARCHIVED"
-            ? "已归档"
-            : hasWork
-              ? "已记录"
-              : currentConversation.needsSelection
-                ? "选择聊天"
-                : "当前聚焦";
-  applicationMark.textContent =
-    currentConversation.mark ?? currentConversation.applicationName.slice(0, 1);
-  applicationMark.className = `application-mark ${currentConversation.adapter}`;
-  contextLabel.textContent =
-    currentConversation.captureStatus === "waiting"
-      ? `请检查 ${currentConversation.applicationName}`
-      : `${contextState} · ${currentConversation.applicationName}`;
-  contextTitle.textContent = currentConversation.title;
+  if (currentBody) positionBubble(currentBody);
   paperLabel.textContent = hasWork ? "打开" : "记录";
   paperAction.dataset.action = hasWork ? "open" : "record";
   paperAction.setAttribute(

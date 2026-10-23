@@ -1,5 +1,7 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+2026-10-23 桌宠上下文气泡按现有 `PetView.currentConversation` 展示：`needsSelection` 驱动等待三点，应用 `adapter` 选择标志资源，有聊天时显示标题。呈现状态在 renderer 派生，不增加领域状态、IPC 字段、数据流或状态流。
+
 ## 工作流地图投影（2026-10-23）
 
 `renderer/workflow-map.ts` 独立承担定义与运行的地图投影、布局、端口测量、缩放与连接绘制；`workflows.ts` 继续拥有导航会话及所有业务命令，`workflow-ui.ts::graph` 保留给未改版的编辑器。`workflow-map.css` 仅作用于两张地图，`workflow-map-motion.css` 使用 Figma 导出的共享关键帧，图标本地化在 `workflow-icons/`，不依赖临时资产地址。

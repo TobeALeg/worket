@@ -3,13 +3,23 @@ html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background:
 body { -webkit-app-region: no-drag; user-select: none; }
 button { font: inherit; }
 .pet-root { position: relative; width: 100%; height: 100%; }
-.context-bubble { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 9px; width: 238px; min-height: 52px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--background); color: var(--text); box-shadow: 0 10px 28px #343d3626; backdrop-filter: blur(16px); pointer-events: none; }
+.context-bubble { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; width: max-content; max-width: min(320px, var(--bubble-max-width, calc(100vw - 24px))); min-height: 50px; padding: 12px 16px 12px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--text); box-shadow: 0 4px 14px #343d361a, 0 1px 3px #343d360a; pointer-events: none; }
 .context-bubble[hidden] { display: none; }
-.context-bubble::after { content: ""; position: absolute; right: 27px; bottom: -7px; width: 14px; height: 14px; background: var(--background); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
-.application-mark { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 8px; background: var(--surface); color: var(--accent); font-size: 12px; font-weight: 800; }
-.context-copy { min-width: 0; display: grid; gap: 3px; }
+.application-mark { display: grid; place-items: center; width: 24px; height: 24px; flex: none; color: var(--accent); font-size: 12px; font-weight: 700; }
+.application-icon { display: block; width: 24px; height: 24px; object-fit: contain; }
+.application-symbol { display: grid; place-items: center; width: 100%; height: 100%; }
+.context-bubble .application-icon[hidden], .context-bubble .application-symbol[hidden] { display: none; }
+.context-copy { min-width: 0; display: grid; align-content: center; gap: 3px; }
 .context-copy small { color: var(--muted); font-size: 11px; font-weight: 500; }
-.context-copy strong { overflow: hidden; font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.context-copy strong { display: block; overflow: hidden; font: 500 13px/20px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.waiting-dots { display: flex; width: 24px; height: 20px; align-items: center; justify-content: center; gap: 4px; }
+.waiting-dots[hidden] { display: none; }
+.waiting-dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); animation: context-dot-bounce 2s cubic-bezier(.2,.7,.25,1) infinite; }
+.waiting-dots i:nth-child(2) { animation-delay: .18s; }
+.waiting-dots i:nth-child(3) { animation-delay: .36s; }
+.context-bubble.is-waiting { grid-template-columns: 24px 24px; }
+.context-bubble.is-waiting .context-copy { display: flex; align-items: center; justify-content: center; }
+#recording-upload-notice { max-width: 260px; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .pet, .pet-anchor { width: var(--pet-width, 80.25px); height: var(--pet-height, 77px); }
 .pet { position: relative; }
 .pet-anchor { position: absolute; left: var(--pet-x, 190.875px); top: var(--pet-y, 159.25px); }
@@ -25,10 +35,7 @@ button { font: inherit; }
 button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; }
 
 .context-bubble { position: absolute; left: var(--bubble-x, 32px); bottom: var(--bubble-bottom, 125.5px); }
-.context-bubble::after { right: auto; left: var(--bubble-arrow-x, 199px); }
 .bubble-below .context-bubble { bottom: auto; top: var(--bubble-top); }
-.bubble-below .context-bubble::after { bottom: auto; top: -7px; }
-#recording-upload-notice { font-size: 10px; line-height: 1.4; color: var(--muted); }
 
 /* The measured 32 x 68 right-edge pose rotates around its actual crop origin. */
 .docked .context-bubble, .docked .paper-action { display: none; }
@@ -57,6 +64,7 @@ button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; }
 @keyframes breathe { 50% { transform: translateY(-1.5px); } }
 @keyframes carry { to { transform: translateY(-2.25px) rotate(1.5deg); } }
 @keyframes nudge { 33% { transform: rotate(-3deg); } 66% { transform: rotate(3deg); } }
+@keyframes context-dot-bounce { 0%, 10%, 34%, 100% { transform: translateY(0) scale(1); } 15% { transform: translateY(-4px) scale(1.15); } 21% { transform: translateY(1px) scale(.92,.84); } 27% { transform: translateY(-1px) scale(1.03,1.05); } }
 @keyframes bud-breathe { 50% { opacity: .56; } }
 @keyframes bud-notice { 50% { opacity: .35; } }
 @keyframes note-pulse { 0%, 100% { opacity: .1; } 50% { opacity: .8; } }
@@ -64,5 +72,6 @@ button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; }
 @media (prefers-color-scheme: dark) { .update-wave { stroke: #bac4b6; } }
 @media (prefers-reduced-motion: reduce) {
   .pet-visual, .pet-visual * { animation: none !important; }
+  .waiting-dots i { animation: none; }
   .paper-action, .paper-action strong { transition: none; }
 }
