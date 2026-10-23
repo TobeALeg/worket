@@ -37,7 +37,7 @@ import { chromium } from 'playwright';
         await page.locator('[data-provider="workbuddy"]').waitFor();
         assert.equal(await page.locator('[data-provider="all"]').count(), 0);
         assert.equal(await page.locator('.source-provider[aria-pressed="true"]').count(), 0);
-        assert.deepEqual(await page.locator('.source-group-title').allTextContents(), ['Codex', 'WorkBuddy']);
+        assert.equal(await page.locator('.source-group-title').count(), 0);
         assert.equal(await page.locator('[data-provider="codex"] img').getAttribute('src'), './executor-logos/codex.png');
         await page.locator('[data-provider="workbuddy"]').click();
         assert.equal(await page.locator('[data-thread-id="buddy"]').count(), 1);
