@@ -10,7 +10,7 @@ import { chromium } from 'playwright';
         await page.route('http://worket-fixture.test/**', async (route) => {
             const pathname = new URL(route.request().url()).pathname;
             if (pathname === '/')
-                return route.fulfill({ contentType: 'text/html', body: `<div id="source-providers"></div><span id="source-search-label"></span><input id="source-search"><p id="source-error"></p><div id="recent-sources"></div><button id="source-more">More</button><button id="source-retry">Retry</button><script type="module">import{setupRecordingSources}from'/renderer/recording-sources.js';const sources=setupRecordingSources(()=>{});sources.refresh();</script>` });
+                return route.fulfill({ contentType: 'text/html', body: `<div id="source-providers"></div><input id="source-search"><p id="source-error"></p><div id="recent-sources"></div><button id="source-more">More</button><button id="source-retry">Retry</button><script type="module">import{setupRecordingSources}from'/renderer/recording-sources.js';const sources=setupRecordingSources(()=>{});sources.refresh();</script>` });
             const path = resolve('dist', pathname.startsWith('/executor-logos/') ? './renderer' + pathname : '.' + pathname);
             if (!path.startsWith(resolve('dist') + '/'))
                 return route.abort();

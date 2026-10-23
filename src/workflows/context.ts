@@ -11,5 +11,5 @@ export function workflowWorkContext(repository: DefinitionRepository, workId: st
   const fixed = repository.db.prepare('SELECT payload_json FROM workflow_definitions WHERE id=?').get(run.workflowId)!;
   const definition = JSON.parse(String(fixed.payload_json)) as WorkflowDefinition;
   const contract = repository.get(definition.nodes.find(n => n.id === nodeId)!.contractId);
-  return { runId: run.id, name: run.name, nodeId, generation, directory: node.directory!, outputs: outputPorts(contract), adopted: node.adopted, note: node.note, current: currentNode(run, nodeId).workId === workId, status: run.status };
+  return { runId: run.id, name: run.name, nodeName: definition.nodes.find(n => n.id === nodeId)!.name, nodeId, generation, directory: node.directory!, outputs: outputPorts(contract), adopted: node.adopted, note: node.note, current: currentNode(run, nodeId).workId === workId, status: run.status };
 }

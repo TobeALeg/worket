@@ -1,3 +1,4 @@
+import { retireSupersededWorks } from './retire-superseded.js';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,6 +53,7 @@ export class WorkflowCore {
       const run = this.run(input.runId); ensure(run.revision === input.expectedRevision, 'REVISION_CONFLICT', '流程状态已变化，请刷新后重试');
       const d = this.definition(run.workflowId), result = action(run, d); this.refresh(run, d);
       run.revision++; run.updatedAt = new Date().toISOString();
+      retireSupersededWorks(this.db, run);
       this.db.prepare('UPDATE workflow_runs SET payload_json=? WHERE id=?').run(JSON.stringify(run), run.id); return result;
     });
   }

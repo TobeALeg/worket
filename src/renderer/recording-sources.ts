@@ -11,7 +11,6 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
   const sources = document.querySelector<HTMLElement>("#recent-sources")!;
   const error = document.querySelector<HTMLElement>("#source-error")!;
   const search = document.querySelector<HTMLInputElement>("#source-search")!;
-  const searchLabel = document.querySelector<HTMLElement>("#source-search-label")!;
   const more = document.querySelector<HTMLButtonElement>("#source-more")!;
   const retry = document.querySelector<HTMLButtonElement>("#source-retry")!;
   let executors: ExecutorView[] = [];
@@ -98,7 +97,7 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     renderProviders();
     const query = search.value.trim().toLocaleLowerCase();
     const remoteSearch = selected === "codex" && Boolean(query);
-    searchLabel.textContent = selected === "codex" ? "搜索全部 Codex 聊天标题" : "搜索已加载聊天";
+    search.setAttribute("aria-label", selected === "codex" ? "搜索全部 Codex 聊天标题" : "搜索已加载聊天");
     search.placeholder = selected === "codex" ? "聊天标题（区分大小写）" : "聊天标题或项目";
     sources.replaceChildren();
     if (noticeRequired) {

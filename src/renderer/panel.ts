@@ -101,6 +101,7 @@ function render(): void {
             work,
           ) => `<div class="work-entry"><label class="work-select"><input type="checkbox" data-distill-work value="${escapeHtml(work.id)}" aria-label="选择 ${escapeHtml(work.title)}"></label><button class="work-row" data-work-id="${escapeHtml(work.id)}">
         <h3>${escapeHtml(work.title)}</h3><span class="status ${work.captureStatus === "waiting" ? "status-waiting" : ""}">${work.status === "OPEN" ? CAPTURE_STATUS_LABELS[work.captureStatus] : work.status === "COMPLETED" ? "已完成" : "已归档"}</span>
+        ${work.workflowLabel ? `<span class="row-meta">${escapeHtml(work.workflowLabel)}</span>` : ""}
         <span class="row-meta"><span class="agent-label">${escapeHtml(work.agentName)}</span><span>· ${work.eventCount} 条记录</span><time>· ${formatDate(work.updatedAt)}</time></span>
       </button></div>`,
         )

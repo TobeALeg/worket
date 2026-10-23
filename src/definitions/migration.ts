@@ -1,3 +1,4 @@
+import { retireSupersededWorks } from '../workflows/retire-superseded.js';
 import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { transaction } from "./storage.js";
@@ -9,11 +10,21 @@ export function migrateDefinitions(
     (db.prepare("PRAGMA user_version").get() as { user_version: number })
       .user_version,
   );
-  if (version > 5)
+  if (version > 6)
     throw new Error(
       "DATABASE_VERSION_UNSUPPORTED：请使用新版 Worket 或恢复迁移前备份",
     );
-  if (version === 5) return;
+  if (version === 6) return;
+  if (version === 5) {
+    if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflow-status-v6.bak`))
+      db.prepare('VACUUM INTO ?').run(`${databasePath}.before-workflow-status-v6.bak`);
+    transaction(db, () => {
+      for (const row of db.prepare('SELECT payload_json FROM workflow_runs').all())
+        retireSupersededWorks(db, JSON.parse(String(row.payload_json)));
+      db.exec('PRAGMA user_version = 6');
+    });
+    return;
+  }
   if (version === 4) {
     if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflow-drafts-v5.bak`))
       db.prepare('VACUUM INTO ?').run(`${databasePath}.before-workflow-drafts-v5.bak`);
@@ -23,7 +34,7 @@ export function migrateDefinitions(
         CREATE INDEX workflow_runs_updated ON workflow_runs(json_extract(payload_json,'$.updatedAt'),id);
         PRAGMA user_version = 5;`);
     });
-    return;
+    return migrateDefinitions(db, databasePath);
   }
   if (version === 3) {
     if (databasePath !== ':memory:' && !existsSync(`${databasePath}.before-workflows-v4.bak`))

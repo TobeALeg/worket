@@ -1164,7 +1164,9 @@ export class AppService {
   }
 
   #summary(work: WorkSnapshot): WorkSummaryView {
+    const workflow = this.#core.workflows.context(work.instance.id);
     return {
+      ...(workflow ? { workflowLabel: `${workflow.name} · ${workflow.nodeName} · 第 ${workflow.generation} 轮` } : {}),
       id: work.instance.id,
       agentName:
         (work.activeEpisode ?? work.episodes.at(-1))?.executor.name ??

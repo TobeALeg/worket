@@ -34,6 +34,7 @@ export interface StateItemView {
 export type WorkStateView = Record<WorkStateField, StateItemView[]>;
 
 export interface WorkSummaryView {
+  workflowLabel?: string;
   id: string;
   agentName: string;
   title: string;
