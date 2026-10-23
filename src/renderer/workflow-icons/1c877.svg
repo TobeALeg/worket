@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Workflow v2/Icon/target-arrow" clip-path="url(#clip0_0_324)">
+<g id="Vector">
+</g>
+<path id="Vector_2" d="M11 12C11 12.2652 11.1054 12.5196 11.2929 12.7071C11.4804 12.8946 11.7348 13 12 13C12.2652 13 12.5196 12.8946 12.7071 12.7071C12.8946 12.5196 13 12.2652 13 12C13 11.7348 12.8946 11.4804 12.7071 11.2929C12.5196 11.1054 12.2652 11 12 11C11.7348 11 11.4804 11.1054 11.2929 11.2929C11.1054 11.4804 11 11.7348 11 12Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#8B5CF6"/>
+<path id="Vector_3" d="M12 7C11.0111 7 10.0444 7.29324 9.22215 7.84265C8.3999 8.39206 7.75904 9.17295 7.3806 10.0866C7.00216 11.0002 6.90315 12.0055 7.09607 12.9755C7.289 13.9454 7.7652 14.8363 8.46447 15.5355C9.16373 16.2348 10.0546 16.711 11.0245 16.9039C11.9945 17.0969 12.9998 16.9978 13.9134 16.6194C14.827 16.241 15.6079 15.6001 16.1573 14.7779C16.7068 13.9556 17 12.9889 17 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#8B5CF6"/>
+<path id="Vector_4" d="M13 3.055C11.1461 2.84701 9.27332 3.22028 7.6408 4.12317C6.00828 5.02606 4.69669 6.41395 3.88744 8.09486C3.07819 9.77577 2.81129 11.6666 3.12366 13.5058C3.43603 15.3451 4.31222 17.0418 5.63104 18.3612C6.94986 19.6807 8.64612 20.5578 10.4852 20.8711C12.3243 21.1844 14.2152 20.9184 15.8966 20.11C17.5779 19.3016 18.9664 17.9907 19.8701 16.3587C20.7738 14.7266 21.1481 12.854 20.941 11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#8B5CF6"/>
+<path id="Vector_5" d="M15 6V9H18L21 6H18V3L15 6Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#8B5CF6"/>
+<path id="Vector_6" d="M15 9L12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#8B5CF6"/>
+</g>
+<defs>
+<clipPath id="clip0_0_324">
+<rect width="24" height="24" fill="white"/>
+</clipPath>
+</defs>
+</svg>

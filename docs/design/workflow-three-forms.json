@@ -1,0 +1,290 @@
+{
+  "status": "pending-review",
+  "updatedAt": "2026-10-23",
+  "fileKey": "DctYxpkI7FMqVfhCJGC8qC",
+  "pageId": "0:1",
+  "reviewHeaderId": "55:729",
+  "screens": [
+    {
+      "id": "WF01",
+      "name": "01 工作库",
+      "width": 400,
+      "height": 900,
+      "nodeId": "55:732"
+    },
+    {
+      "id": "WF02",
+      "name": "02 定义地图",
+      "width": 1200,
+      "height": 900,
+      "nodeId": "55:733"
+    },
+    {
+      "id": "WF03",
+      "name": "03 运行地图",
+      "width": 1200,
+      "height": 900,
+      "nodeId": "55:734"
+    }
+  ],
+  "components": {
+    "mastersFrameId": "67:883",
+    "workflowNodeSetId": "67:1011",
+    "states": {
+      "Definition": "67:884",
+      "Accepted": "67:902",
+      "Review": "67:930",
+      "Running": "67:958",
+      "Waiting": "67:986"
+    }
+  },
+  "definitionNodeIds": [
+    "68:1137",
+    "68:1158",
+    "68:1182",
+    "68:1205"
+  ],
+  "runNodeIds": [
+    "68:1290",
+    "68:1321",
+    "68:1355",
+    "68:1388"
+  ],
+  "validation": {
+    "editableLayers": true,
+    "fullUiRaster": false,
+    "screenshotsReviewed": true,
+    "prototypeClickTested": false,
+    "clientImplemented": false,
+    "contextualActionsReviewed": true
+  },
+  "revision": "v3",
+  "previousRevision": {
+    "status": "visual-rejected",
+    "reviewHeaderId": "48:424",
+    "screenNodeIds": [
+      "48:431",
+      "48:434",
+      "48:437"
+    ]
+  },
+  "informationDecisionsNodeId": "68:1442",
+  "replacesRevision": "v2; preserves screen IDs, replaces content",
+  "comparisonVersions": {
+    "v2": {
+      "status": "restored-for-comparison",
+      "reviewHeaderId": "73:878",
+      "screens": [
+        {
+          "name": "工作库",
+          "nodeId": "73:881",
+          "width": 400,
+          "height": 820
+        },
+        {
+          "name": "定义地图",
+          "nodeId": "73:882",
+          "width": 1200,
+          "height": 820
+        },
+        {
+          "name": "运行地图",
+          "nodeId": "73:883",
+          "width": 1200,
+          "height": 820
+        }
+      ],
+      "mastersFrameId": "55:553",
+      "workflowNodeSetId": "55:699",
+      "screenshotsReviewed": true
+    }
+  },
+  "latestStudy": {
+    "revision": "v5",
+    "status": "pending-review",
+    "scope": "separate state templates and composition studies; not replacement pages",
+    "mastersFrameId": "85:1799",
+    "compactWorkSetId": "85:1959",
+    "positionMarkerSetId": "85:2120",
+    "finalDeliverySetId": "85:2105",
+    "statusBadgeSetId": "85:1857",
+    "ioDependencyId": "86:1966",
+    "currentStep3Id": "86:2153",
+    "completedStep10Id": "86:2703",
+    "selectedIOScheme": "A",
+    "portAnchor": "actual row center at card outer frame, independent of inset background",
+    "cardGeometry": {
+      "width": 208,
+      "height": 116,
+      "twoInputHeight": 152,
+      "paddingTop": 12,
+      "paddingBottom": 12,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "rowWidth": 184,
+      "singleLineRowHeight": 28,
+      "rowGap": 8,
+      "singleLineRowCenterSpacing": 36,
+      "heightAppliesTo": "two rows with visible backplates",
+      "withoutBackplate": {
+        "height": 96,
+        "singleLineRowHeight": 18,
+        "rowGap": 8,
+        "singleLineRowCenterSpacing": 26,
+        "rowVerticalPadding": 0
+      },
+      "mixedBackplate": {
+        "width": 208,
+        "height": 106,
+        "inputHeight": 28,
+        "outputHeight": 18,
+        "visibleGap": 8,
+        "paddingBottom": 12
+      }
+    },
+    "validation": {
+      "screenshotsReviewed": true,
+      "motionTracksRetained": true,
+      "motionReexported": false,
+      "clientImplemented": false,
+      "priorVersionsPreserved": true,
+      "insetRefinementScreenshotsReviewed": true
+    },
+    "spacingRule": "8 between visible backplate edges, or 8 between text rows when no backplate",
+    "positionMarkerPlacement": "inside header leading icon slot",
+    "endCurrentIconId": "127:2520",
+    "externalPositionLabelsVisible": false,
+    "mixedBackplateMasterId": "131:2498",
+    "mixedBackplateInstanceIds": [
+      "86:1971",
+      "86:2012",
+      "86:2059",
+      "86:2078",
+      "86:2120"
+    ],
+    "runtimeSpacingValidation": {
+      "cardCount": 20,
+      "allVisibleGaps": 8,
+      "allBottomPadding": 12,
+      "screenshotsReviewed": true,
+      "currentCardHeight": 106,
+      "unreachedFinalHeight": 96,
+      "motionReexported": false
+    }
+  },
+  "previousStudies": {
+    "v4": {
+      "revision": "v4",
+      "status": "pending-review",
+      "scope": "separate state templates and composition studies; not replacement pages",
+      "mastersFrameId": "78:1211",
+      "compactWorkSetId": "78:1290",
+      "positionMarkerSetId": "78:1321",
+      "finalDeliverySetId": "78:1389",
+      "ioAlternativesId": "79:1289",
+      "currentStep3Id": "79:1406",
+      "completedStep10Id": "79:1723",
+      "flowMotionId": "79:2039",
+      "flowStoryboardId": "79:2063",
+      "validation": {
+        "screenshotsReviewed": true,
+        "motionExportedAndFramesReviewed": true,
+        "clientImplemented": false,
+        "priorVersionsPreserved": true
+      }
+    }
+  },
+  "latestComposition": {
+    "revision": "v6",
+    "status": "pending-review",
+    "wrapperId": "142:2524",
+    "definitionId": "142:2525",
+    "runtimeId": "142:2526",
+    "screenSize": [
+      1200,
+      820
+    ],
+    "stepCount": 10,
+    "layout": "shared serpentine 4/4/2",
+    "centerGoalVisible": false,
+    "componentRevision": "v5",
+    "screenshotsReviewed": true,
+    "nativeMotionTracksRetained": true,
+    "prototypeClickTested": false,
+    "clientImplemented": false,
+    "priorVersionsPreserved": true
+  },
+  "branchComposition": {
+    "revision": "v6-branch",
+    "status": "pending-review",
+    "wrapperId": "148:3688",
+    "definitionId": "148:3689",
+    "runtimeId": "148:3899",
+    "extensionMastersId": "148:3561",
+    "screenSize": [
+      1464,
+      880
+    ],
+    "stepCount": 7,
+    "dependencyCount": 8,
+    "centerGoalVisible": false,
+    "componentRevision": "v5 with multi-IO extension",
+    "scenario": "资料准备双输出；调研报告分发脚本与封面；视频与封面汇合到发布准备；最终交付",
+    "runtime": {
+      "completed": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "running": [
+        4
+      ],
+      "unreached": [
+        6,
+        7
+      ],
+      "mergeReadyInputs": [
+        "封面图"
+      ],
+      "mergePendingInputs": [
+        "视频成片"
+      ]
+    },
+    "screenshotsReviewed": true,
+    "nativeMotionTracksRetained": true,
+    "motionReexported": false,
+    "clientImplemented": false,
+    "priorVersionsPreserved": true,
+    "connectorStyle": "smooth cubic Bezier",
+    "flowPathUpdated": true
+  },
+  "runtimeImplementation": {
+    "date": "2026-10-23",
+    "scope": [
+      "definition-map",
+      "runtime-map"
+    ],
+    "excluded": [
+      "library",
+      "builder",
+      "run-workspace"
+    ],
+    "designNodes": [
+      "148:3689",
+      "148:3899",
+      "142:2525",
+      "142:2526"
+    ],
+    "sourceModules": [
+      "src/renderer/workflow-map.ts",
+      "src/renderer/workflow-map.css",
+      "src/renderer/workflow-map-motion.css",
+      "src/renderer/workflows.ts"
+    ],
+    "layout": "data-driven DAG and serpentine linear path; shared coordinates across definition/run",
+    "stateSource": "existing RunDetail, current NodeRun and Adoption",
+    "validation": "docs/acceptance/workflow-maps-2026-10-23.md",
+    "status": "implemented; delivery verification in progress"
+  }
+}
