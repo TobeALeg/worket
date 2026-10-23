@@ -56,6 +56,9 @@ test('two full runs isolate snapshots; user rejection creates a new generation; 
   assert.equal(readFileSync(f.core.definitions.inputs(scriptWork).inputs.report, 'utf8'), '甲调研');
   writeFileSync(f.file, '脚本 v1'); f.submit(a, 'script', { script: f.file, copy: '旧文案' }); const rejected = f.cmd(a, 'script');
   f.core.workflows.review({ ...rejected, decision: 'REVISE', criteria: { complete: 'PASS', correct: 'NEEDS_REVISION' }, note: '开头突出新品' });
+  assert.equal(f.core.getWork(scriptWork)!.instance.status, 'ARCHIVED');
+  assert.equal(f.core.getWork(aWork)!.instance.status, 'COMPLETED');
+  assert.equal(f.core.getWork(bWork)!.instance.status, 'OPEN');
   assert.equal(f.core.workflows.run(b).nodes.research![0]!.workId, bWork);
   assert.throws(() => f.core.workflows.submit({ ...rejected, commandId: cid(), expectedRevision: f.core.workflows.run(a).revision, outputs: { script: f.file, copy: '迟到旧稿' } }), /STALE_GENERATION/);
   const v2work = f.prepare(a, 'script'); assert.notEqual(v2work, scriptWork);
@@ -78,6 +81,7 @@ test('adopting upstream v2 resets only affected descendants, retains old evidenc
   const research = currentNode(f.core.workflows.run(id), 'research').workId;
   const adopt = f.cmd(id, 'script'); f.core.workflows.adopt(adopt); f.core.workflows.adopt(adopt);
   assert.equal(f.core.workflows.run(id).nodes.video!.length, 2); assert.equal(currentNode(f.core.workflows.run(id), 'research').workId, research);
+  assert.equal(f.core.getWork(oldVideo)!.instance.status, 'ARCHIVED');
   assert.throws(() => f.core.workflows.assertActive(oldVideo), /WORKFLOW_NODE_NOT_ACTIVE/);
   const prepare = f.cmd(id, 'video'), first = f.core.workflows.prepare(prepare); assert.equal(f.core.workflows.prepare(prepare), first);
   assert.equal(readFileSync(f.core.definitions.inputs(first).inputs.script, 'utf8'), '修订脚本 v2');
@@ -111,6 +115,41 @@ test('v3 local databases are backed up once before workflow migration; empty sch
   let core = createWorkCore({ databasePath });
   core.definitions.db.exec('DROP TABLE workflow_drafts; DROP TABLE workflow_node_works; DROP TABLE workflow_runs; DROP TABLE workflow_contract_refs; DROP TABLE workflow_definitions; PRAGMA user_version=3'); core.close();
   const backup = `${databasePath}.before-workflows-v4.bak`; rmSync(backup, { force: true });
-  core = createWorkCore({ databasePath }); assert.equal(core.definitions.db.prepare('PRAGMA user_version').get()!.user_version, 5); assert.ok(existsSync(backup));
+  core = createWorkCore({ databasePath }); assert.equal(core.definitions.db.prepare('PRAGMA user_version').get()!.user_version, 6); assert.ok(existsSync(backup));
   const firstBackup = readFileSync(backup); core.close(); core = createWorkCore({ databasePath }); assert.deepEqual(readFileSync(backup), firstBackup); core.close(); rmSync(directory, { recursive: true, force: true });
+});
+
+
+test('rework retires active capture atomically; v5 migration repairs only superseded open work', t => {
+  const f = fixture(t), run = f.create('返工状态'), old = f.prepare(run, 'research');
+  const unrelated = f.prepare(f.create('另一运行'), 'research');
+  f.core.startExecutionEpisode(old, { executor: { type: 'AGENT', name: 'Codex' }, environment: { type: 'CODEX', name: 'Codex' }, source: { adapter: 'codex', conversationId: 'superseded-test' } });
+  const before = f.core.getWork(old)!;
+  const command = { ...f.cmd(run, 'research'), note: '重新开展' };
+  f.core.definitions.db.exec("CREATE TRIGGER fail_retirement BEFORE UPDATE OF status ON capture_bindings_v2 BEGIN SELECT RAISE(ABORT, 'retirement failed'); END");
+  assert.throws(() => f.core.workflows.rework(command), /retirement failed/);
+  assert.equal(f.core.getWork(old)!.instance.status, 'OPEN');
+  assert.equal(currentNode(f.core.workflows.run(run), 'research').phase, 'PREPARED');
+  f.core.definitions.db.exec('DROP TRIGGER fail_retirement');
+  f.core.workflows.rework(command);
+  assert.equal(f.core.getWork(old)!.instance.status, 'ARCHIVED');
+  assert.equal(f.core.getWork(old)!.activeBinding, null);
+  assert.equal(f.core.getWork(old)!.activeEpisode, null);
+  const next = f.prepare(run, 'research');
+  assert.equal(f.core.getWork(next)!.instance.status, 'OPEN');
+  const db = f.core.definitions.db;
+  // Recreate the persisted v5 defect, including a still-active capture.
+  db.prepare("UPDATE work_instances SET status='OPEN' WHERE id=?").run(old);
+  db.prepare("UPDATE capture_bindings_v2 SET status='ACTIVE' WHERE id=?").run(before.activeBinding!.id);
+  db.prepare("UPDATE execution_episodes SET status='ACTIVE',ended_at=NULL WHERE id=?").run(before.activeEpisode!.id);
+  db.exec('PRAGMA user_version=5');
+  f.restart();
+  assert.equal(f.core.getWork(old)!.instance.status, 'ARCHIVED');
+  assert.equal(f.core.getWork(old)!.activeBinding, null);
+  assert.equal(f.core.getWork(old)!.activeEpisode, null);
+  assert.equal(f.core.getWork(next)!.instance.status, 'OPEN');
+  assert.equal(f.core.getWork(unrelated)!.instance.status, 'OPEN');
+  assert.equal(existsSync(join(f.directory, 'work.sqlite.before-workflow-status-v6.bak')), true);
+  f.restart();
+  assert.equal(f.core.getWork(old)!.instance.status, 'ARCHIVED');
 });

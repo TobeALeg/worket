@@ -784,3 +784,7 @@ ExecutorAdapter 增加能力声明，source 可缺省；HISTORY 走原列表与�
 DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给 renderer，不修改持久化 Job 或加载对话正文到列表。renderer 按本地日期显示时间、将状态放到右列；契约详情去除重复 heading，并以契约名称设置 dialog 的可访问名称。
 
 契约生成动效沿用 `publishedFeedback` → `workContract` 的成功反馈边界，只在 saved / updated 时添加 `contract-arrival`。CSS 分阶段呈现纸页、正文分区和印章，总计 1100ms、单次播放；普通查询不带此类，减少动态效果覆盖所有阶段。无需定时器或新增持久化状态。
+
+### 2026-10-23 返工生命周期一致性
+
+流程命令在同一事务中将 SUPERSEDED 且仍 OPEN 的节点工作归档、结束执行片段并停用采集绑定；退回、主动重做及采用新版统一走 `retireSupersededWorks`。已完成工作不改状态，不删除历史成果及采用关系。数据库 v6 先保存可恢复备份，再以相同规则修复历史遗漏。列表摘要复用工作流归属查询提供运行名、节点名和轮次。
