@@ -56,6 +56,7 @@ test('reopen persists exact delivery through restart; rapid clicks and failed re
     assert.equal((await app.syncHook('codex',{hook_event_name:'UserPromptSubmit',session_id:'target',prompt:newer})).accepted,true);
     const detail=app.dashboard(id).selectedWork!;
     assert.equal(detail.dispatchStatus,'BOUND'); assert.equal(detail.dispatchReadAt,null);
+    assert.equal(detail.dispatchInlineDelivered, true, 'verified full text needs no MCP read');
     const deliveryId=app.core().getWork(id)!.packageDeliveryId!;
     const read:any=await new WorkPetMcpHandler(app.core()).handle({id:'read',method:'tools/call',params:{name:'get_work_context',arguments:{work_id:id,delivery_id:deliveryId}}});
     assert.ok(!read.error); assert.ok(app.dashboard(id).selectedWork!.dispatchReadAt);
@@ -114,4 +115,19 @@ test('Codex receipt only acknowledges open request, never draft appearance', asy
  const receipt=await adapter.deliver!({workId:'w',deliveryId:'d',title:'t',purpose:'CONTINUE',prompt:'synthetic'});
  assert.equal(receipt.status,'OPEN_REQUESTED');assert.equal(receipt.conversationId,undefined);
  assert.match(receipt.guidance!,/不代表草稿已出现/);
+});
+
+
+test('altered source prompt is not reported as complete delivery without an exact recorded digest', async () => {
+  const f = fixture(); const app = f.open();
+  try {
+    const id = (await app.createWorkFromConversation({executorId:'codex', threadId:'source'})).selectedWorkId!;
+    await app.handoff(id, 'codex');
+    const prompt = f.prompts.at(-1)!;
+    assert.equal(app.dashboard(id).selectedWork!.dispatchInlineDelivered, false, 'opening app is not delivery evidence');
+    f.threads.set('target', prompt.replace('source evidence', 'changed evidence'));
+    await app.syncHook('codex', {hook_event_name:'UserPromptSubmit', session_id:'target', prompt});
+    assert.equal(app.dashboard(id).selectedWork!.dispatchInlineDelivered, false);
+    assert.equal(app.dashboard(id).selectedWork!.dispatchReadAt, null);
+  } finally { app.close(); f.cleanup(); }
 });

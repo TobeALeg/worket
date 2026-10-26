@@ -538,10 +538,11 @@ async function createdWork(d: Definition, dashboard: DashboardView): Promise<voi
   const work = dashboard.selectedWork!;
   const state = contractDispatchState(work);
   const failed = state === 'failed';
-  const received = state === 'received';
+  const delivered = state === 'delivered';
+  const received = state === 'received' || delivered;
   const waiting = state === 'waiting' || received;
-  show(received ? '执行者已接手' : waiting ? '等待执行者接手' : failed ? '派发未成功，工作已保留' : '新工作已创建',
-    `<div class="contract-work-result"><h3>${esc(work.title)}</h3><p class="consent">使用 ${esc(d.content.name)} · v${d.version}</p><p role="status">${received ? '工作包已被读取。可以在工作详情中跟进。' : waiting ? '已发起交接，请在目标执行者中确认。收到读取回执后会显示已接手。' : failed ? '可以重新选择执行者，无需再次创建工作。' : '选择执行者接手，也可以稍后在工作详情中派发。'}</p></div>`,
+  show(delivered ? '工作说明已送达' : received ? '执行者已接手' : waiting ? '等待执行者接手' : failed ? '派发未成功，工作已保留' : '新工作已创建',
+    `<div class="contract-work-result"><h3>${esc(work.title)}</h3><p class="consent">使用 ${esc(d.content.name)} · v${d.version}</p><p role="status">${delivered ? '目标会话已确认收到完整工作说明。可以在工作详情中跟进。' : received ? '工作包已被读取。可以在工作详情中跟进。' : waiting ? '已发起交接，请在目标执行者中确认。来源确认收到全文或返回读取回执后会更新状态。' : failed ? '可以重新选择执行者，无需再次创建工作。' : '选择执行者接手，也可以稍后在工作详情中派发。'}</p></div>`,
     `<button id="view-created-work" ${received ? 'class="primary"' : ''}>查看工作</button>${received ? '' : !waiting && work.status === 'OPEN' ? '<button id="dispatch-created-work" class="primary">选择执行者</button>' : '<button id="refresh-created-work" class="primary">检查接手状态</button>'}`,
     { label: '返回工作', action: async () => { modal.close(); changed(await window.workpet.getDashboard(work.id)); } });
   bind('#view-created-work', async () => { modal.close(); changed(await window.workpet.getDashboard(work.id)); });

@@ -59,6 +59,7 @@ export interface WorkDetailView extends WorkSummaryView {
   hasPinnedMaterials?: boolean;
   dispatchStatus?: string;
   dispatchReadAt?: string | null;
+  dispatchInlineDelivered?: boolean;
   state: WorkStateView;
   episodes: Array<{
     id: string;

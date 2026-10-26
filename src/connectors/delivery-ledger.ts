@@ -1,4 +1,4 @@
-import { deliveryMarkers } from "../executors/delivery-markers.js";
+import { deliveryMarkers, isInlineDelivery } from "../executors/delivery-markers.js";
 import { createHash } from "node:crypto";
 import type { DeliveryRequest } from "../executors/types.js";
 import type { DatabaseSync } from "node:sqlite";
@@ -35,7 +35,7 @@ export class DeliveryLedger {
       if (!match || match.workId !== workId) return event;
       const row = this.db.prepare("SELECT prompt_hash FROM connector_deliveries WHERE delivery_id=? AND work_id=?").get(match.deliveryId, workId);
       return row?.prompt_hash === hash(event.content)
-        ? { ...event, metadata: { ...event.metadata, worketDelivery: { verified: true, deliveryId: match.deliveryId } } }
+        ? { ...event, metadata: { ...event.metadata, worketDelivery: { verified: true, deliveryId: match.deliveryId, inline: isInlineDelivery(event.content) } } }
         : event;
     });
   }

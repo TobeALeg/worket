@@ -803,3 +803,5 @@ WorkBuddyLocalHistory 在查询数据库和枚举正文前验证账号快照；E
 候选审阅的直接添加约束复用 `definition-review.ts` 的 add/mutate 路径与稳定条目 key；通过 rowOpen 展开新增行，按 data-address 定位焦点。演进审阅的只看变化模式也显示用户新增条目，持久化继续使用既有 update/publish 接口。
 
 手动修订沿用 revise/update/publish：带 baseDefinitionId 且无 jobId 的草稿默认进入编辑模式，不显示存续条目的确认按钮，删除仍可撤销/恢复；候选提取与后续工作比较保留审阅逻辑。关联规则失效等实际阻断仍由既有校验处理。
+
+交付通过 buildWorkDelivery 复用 executionBrief，按完整消息（UTF-16 长度含 footer）8,000 字符选择内联全文或 MCP 引用；AppService 复用已准备的 WorkPackage。deliveryMarkers 优先识别末尾关联区，同时兼容旧开头标记，选定内容的失效标记拦截同步更新。DeliveryLedger 通过已记录消息 hash 验证来源中的全文交付，在本次 delivery、执行片段及输入修订范围内投影 dispatchInlineDelivered；该状态与 packageReadAt 分离，打开应用不构成送达证据。历史同步同样标注已验证的派发消息，避免把重复工作包当成新的用户要求。
