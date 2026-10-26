@@ -799,3 +799,5 @@ DistillationDesktop 的 jobs 查询从固定来源快照派生 title，返回给
 ## WorkBuddy 账号缓存恢复（2026-10-26）
 
 WorkBuddyLocalHistory 在查询数据库和枚举正文前验证账号快照；ENOENT、无效 JSON 和空 uid 转为可操作的账号不可用提示，其他文件系统错误继续上报。每次请求重新读取账号，不缓存旧 uid，不从会话数据库或历史目录猜测账号；renderer 的失败扫描不进入 30 秒成功缓存，窗口重新获焦时刷新最近活动来源。
+
+候选审阅的直接添加约束复用 `definition-review.ts` 的 add/mutate 路径与稳定条目 key；通过 rowOpen 展开新增行，按 data-address 定位焦点。演进审阅的只看变化模式也显示用户新增条目，持久化继续使用既有 update/publish 接口。
