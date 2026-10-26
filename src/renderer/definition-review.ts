@@ -144,7 +144,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
     const items = sectionItems(content, section);
     if (!onlyChanges || editMode) return items;
     const changes = new Set(draft.evolution?.changes.map(change => change.address));
-    return items.filter(item => changes.has(`${section}.${item.key}`) || issuesAt(section, item.key).length > 0);
+    return items.filter(item => changes.has(`${section}.${item.key}`) || !sectionItems(draft.originalContent, section).some(original => original.key === item.key) || issuesAt(section, item.key).length > 0);
   }
   function evolutionEvidenceHtml(): string {
     if (!draft.evolution) return '';
@@ -183,7 +183,7 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
         if (historyOpen.has(group.key)) for (const [id, entry] of deleted.sort((a, b) => a[1].index - b[1].index)) if (byAddress(id).address.section === section) rows.splice(Math.min(entry.index, rows.length), 0, { item: entry.item, deleted: true, index: entry.index });
         return `${rows.map(row => rowHtml(row.item, { section, key: row.item.key }, row.deleted)).join("")}<div data-issues-for="${section}">${issuesAt(section).map(issueHtml).join("")}</div>${editMode && section !== "purpose" ? `<button class="dr-add" data-review-action="add" data-section="${section}">＋ ${section === "acceptanceCriteria" ? "添加完成要求" : section === "methods" ? "添加执行要求" : "添加" + labels[section][1]}</button>` : ""}`;
       }).join("");
-      return `<section class="dr-group" data-review-group="${group.key}"><div class="dr-group-title"><h3>${group.english}<span>${group.label}</span></h3>${deleted.length ? `<button class="dr-history" data-review-action="history" data-group="${group.key}" aria-label="${historyOpen.has(group.key) ? "收起" : "查看"}${group.label}中已删除的条目" aria-expanded="${historyOpen.has(group.key)}"><i aria-hidden="true"></i></button>` : ""}</div><div class="dr-items">${body}</div></section>`;
+      return `<section class="dr-group" data-review-group="${group.key}"><div class="dr-group-title"><h3>${group.english}<span>${group.label}</span></h3>${deleted.length ? `<button class="dr-history" data-review-action="history" data-group="${group.key}" aria-label="${historyOpen.has(group.key) ? "收起" : "查看"}${group.label}中已删除的条目" aria-expanded="${historyOpen.has(group.key)}"><i aria-hidden="true"></i></button>` : ""}</div><div class="dr-items">${body}${!editMode && group.key === "constraints" ? '<button class="dr-add" data-review-action="add" data-section="constraints">＋ 添加约束</button>' : ""}</div></section>`;
     }).join("");
     const unplaced = visibleIssues().filter(isUnplaced);
     return `${sectionsHtml}${unplaced.length ? `<section class="dr-unlinked"><h3>${unplaced.some(issue => issue.blocking && !getResolution(issue.id)) ? "其他待定" : unplaced.every(issue => !issue.blocking) ? "其他提示" : "其他记录"}</h3><div data-issues-for="unlinked">${unplaced.map(issueHtml).join("")}</div></section>` : ""}`;
@@ -440,7 +440,12 @@ export function mountDefinitionReview(modal: HTMLDialogElement, initial: Draft, 
           if (section === "methods") item.obligation = "REFERENCE";
           if (section === "materialRoles") item.required = true;
           content[section].push(item as never);
-        }); render(); modal.querySelector<HTMLTextAreaElement>(`[data-section="${section}"]:last-of-type [data-text]`)?.focus(); return;
+        });
+        const addressId = idOf({ section, key });
+        rowOpen.add(addressId);
+        render();
+        modal.querySelector<HTMLTextAreaElement>(`[data-text][data-address="${CSS.escape(addressId)}"]`)?.focus();
+        return;
       }
       if (addressId) {
         const { item, address } = byAddress(addressId);

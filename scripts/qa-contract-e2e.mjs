@@ -127,6 +127,27 @@ try {
   // Open the actual draft UI, then explicitly review synthetic QA candidates.
   await panel.evaluate(async id => { const m = await import('./distillation.js'); await m.openJob(id); }, job.id);
   await panel.screenshot({ path: join(output, '02-draft.png') });
+  // Synthetic user addition: direct entry, focus, undo, persistence and publication.
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(410, 660));
+  const addConstraint = panel.locator('[data-review-action="add"][data-section="constraints"]');
+  const constraintCount = await panel.locator('.dr-item[data-section="constraints"]').count();
+  await addConstraint.click();
+  assert.equal(await panel.locator('#edit-all').getAttribute('aria-pressed'), 'false');
+  assert.ok(await panel.evaluate(() => document.activeElement?.matches('[data-text][data-address^="constraints.item_"]')));
+  await panel.locator('[data-review-action="undo"]').click();
+  assert.equal(await panel.locator('.dr-item[data-section="constraints"]').count(), constraintCount);
+  await addConstraint.click();
+  const addedText = '交付前检查文件命名一致。';
+  const addedInput = panel.locator('[data-text][data-address^="constraints.item_"]');
+  await addedInput.fill(addedText);
+  await panel.locator('#save-draft').click();
+  await panel.waitForFunction(() => !document.querySelector('.dr-controls')?.disabled);
+  const updatedDraft = await panel.evaluate(id => window.workpet.distillation('draft', { id }), job.draftId);
+  assert.ok(updatedDraft.content.constraints.some(item => item.text === addedText), 'direct addition persisted');
+  await panel.evaluate(async id => { const m = await import('./distillation.js'); await m.openJob(id); }, job.id);
+  assert.ok((await panel.locator('[data-review-group="constraints"]').innerText()).includes(addedText));
+  await panel.screenshot({ path: join(output, '02-added-constraint.png') });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(760, 820));
   // Do not invent new user requirements to make the generated output pass.
   assert.equal(draft.issues.filter(i => i.blocking).length, 0, 'unexpected blocking decisions require investigation');
   for (const issue of draft.issues) {
@@ -135,6 +156,7 @@ try {
   }
   await panel.locator('#publish-definition').click(); await panel.locator('#use-definition').waitFor();
   const contractText = await panel.locator('.contract-sheet').textContent();
+  assert.ok(contractText.includes(addedText), 'user-added constraint included in published contract');
   assert.ok(!/48\s*(秒|页|行)/.test(contractText), 'saved contract UI shows effective rules only');
   assert.equal(contractText.split(oldLimit).length - 1, 1);
   const category = await panel.locator('.wc-tab').innerText();
