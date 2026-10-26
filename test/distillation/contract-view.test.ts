@@ -66,5 +66,7 @@ test('dispatch presentation distinguishes NOT_DISPATCHED and failed retries from
   assert.equal(contractDispatchState({ ...work, dispatchStatus: 'WAITING' }), 'waiting');
   assert.equal(contractDispatchState({ ...work, dispatchStatus: 'STARTING', dispatchReadAt: 'now', captureStatus: 'waiting' }), 'waiting');
   assert.equal(contractDispatchState({ ...work, dispatchStatus: 'BOUND', dispatchReadAt: 'now', captureStatus: 'recording' }), 'received');
+  assert.equal(contractDispatchState({ ...work, dispatchStatus: 'BOUND', dispatchInlineDelivered: true, captureStatus: 'recording' }), 'delivered');
+  assert.equal(contractDispatchState({ ...work, dispatchStatus: 'WAITING', dispatchInlineDelivered: true }), 'waiting');
   assert.equal(contractDispatchState({ ...work, dispatchStatus: 'FAILED', bindings: [{ status: 'ACTIVE' }] }), 'waiting');
 });

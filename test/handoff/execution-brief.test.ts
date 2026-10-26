@@ -17,7 +17,7 @@ function fixture() {
 test('unresolved work retains requirements and progress without event JSON or read audits', () => {
   const { pkg, work } = fixture();
   const brief = inlineWorkPackage(work, pkg, 'delivery-1');
-  assert.match(brief, /^\[WORKPET:work-1\]\n\[DELIVERY:delivery-1\]/);
+  assert.match(brief, /\[WORKPET:work-1\]\n\[DELIVERY:delivery-1\]$/);
   assert.match(brief, /必须用人民币/);
   assert.match(brief, /数据已清洗/);
   assert.match(brief, /budget.xlsx/);

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { AppService } from '../../dist/app/app-service.js';
 import { createDefaultExecutors } from '../../dist/executors/defaults.js';
 
-test('application handoff reaches all default transports with v4 and current delivery markers intact', async () => {
+test('application handoff reaches all default transports with full short instructions and current delivery markers intact', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'worket-delivery-'));
   const prompts = new Map<string, string>();
   let opened = '';
@@ -44,7 +44,8 @@ test('application handoff reaches all default transports with v4 and current del
       await app.handoff(work.instance.id, adapter.id);
       const current = core.getWork(work.instance.id)!;
       const prompt = prompts.get(adapter.id)!;
-      assert.match(prompt, /context_version=4/);
+      assert.doesNotMatch(prompt, /get_work_context|context_version/);
+      assert.match(prompt, /^请按以下说明继续同一项工作。/);
       assert.ok(prompt.includes(`[WORKPET:${work.instance.id}]`));
       assert.ok(prompt.includes(`[DELIVERY:${current.packageDeliveryId}]`));
       assert.ok(prompt.includes('提案 & 证据 ? #'));

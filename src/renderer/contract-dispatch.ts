@@ -1,8 +1,9 @@
 import type { WorkDetailView } from '../ui-contract.js';
 
-type DispatchWork = Pick<WorkDetailView, 'status' | 'dispatchStatus' | 'dispatchReadAt' | 'captureStatus' | 'bindings'>;
+type DispatchWork = Pick<WorkDetailView, 'status' | 'dispatchStatus' | 'dispatchReadAt' | 'dispatchInlineDelivered' | 'captureStatus' | 'bindings'>;
 /** A launch/read receipt alone must not claim that a conversation has taken over. */
-export function contractDispatchState(work: DispatchWork): 'created' | 'failed' | 'waiting' | 'received' {
+export function contractDispatchState(work: DispatchWork): 'created' | 'failed' | 'waiting' | 'received' | 'delivered' {
+  if (work.dispatchInlineDelivered && work.dispatchStatus === 'BOUND') return 'delivered';
   if (work.dispatchReadAt && work.captureStatus === 'recording') return 'received';
   if (work.bindings.some(binding => binding.status === 'ACTIVE')) return 'waiting';
   if (work.dispatchStatus === 'FAILED') return 'failed';

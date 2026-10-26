@@ -41,7 +41,7 @@ import { ContinuationService, type ContinuationSnapshot } from "../handoff/conti
 import type { AIClient } from "../ai-service/client.js";
 import { WorkPreparation } from "../handoff/work-preparation.js";
 import { workEvidence } from "../core/work-evidence.js";
-import { buildWorkBootstrap } from "../executors/work-bootstrap.js";
+import { buildWorkDelivery } from "../executors/work-bootstrap.js";
 import type {
   ConversationPreview,
   ConversationPageView,
@@ -63,6 +63,17 @@ function artifactFile(text: string) {
   return { name: basename(path), path, url: pathToFileURL(path).href };
 }
 
+function inlineDelivered(work: WorkSnapshot): boolean {
+  const binding = work.activeBinding;
+  if (!binding || /^(pending|waiting):/.test(binding.conversationId) || !work.packageDeliveryId) return false;
+  const lastInputs = work.sourceArchive.findLast(event => event.kind === 'work.input_provided');
+  return currentSourceEvents(work.sourceArchive).some(event => {
+    const delivery = event.metadata.worketDelivery as { verified?: boolean; deliveryId?: string; inline?: boolean } | undefined;
+    return event.kind === 'user.prompt' && event.episodeId === binding.episodeId && event.sequence > (lastInputs?.sequence ?? 0) &&
+      delivery?.verified === true && delivery.inline === true && delivery.deliveryId === work.packageDeliveryId;
+  });
+}
+
 function captureStatus(work: WorkSnapshot): CaptureStatus {
   const binding = work.activeBinding;
   if (work.instance.status !== "OPEN" || !binding) return "stopped";
@@ -75,7 +86,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
   if (limited) return "selected";
   if (
     work.definition.kind === "REUSABLE" &&
-    !work.packageReadAt
+    !work.packageReadAt && !inlineDelivered(work)
   )
     return "waiting";
   return "recording";
@@ -571,7 +582,7 @@ export class AppService {
         this.#core.definitions.db.prepare("UPDATE pending_dispatches SET status='BOUND' WHERE work_id=?").run(work.instance.id);
       } else {
         if (input.scope === "HOOK_EVENTS") throw new Error("未授权此会话的有限事件。");
-        if (thread.events.some(event => event.kind === "user.prompt" && /^\[WORKPET:/u.test(event.content))) throw new Error("交付标记已失效或目标不符，未创建另一份工作。");
+        if (thread.events.some(event => event.kind === "user.prompt" && (deliveryMarkers(event.content) || /^\[WORKPET:/u.test(event.content)))) throw new Error("交付标记已失效或目标不符，未创建另一份工作。");
         work = this.#core.createWork({ definition: { key: "general-work", name: "通用工作", version: 1 },
           executor: { type: "AGENT", name: adapter.name }, environment: adapter.environment,
           source: { adapter: adapter.id, conversationId: thread.threadId } });
@@ -808,7 +819,7 @@ export class AppService {
       )
         throw new Error("准备交接期间工作状态已改变，未进行交接。");
       const handoff = this.#core.createHandoffPackage(workId, { continuation });
-      const pkg = buildWorkPackage(current, this.#core.definitions);
+      const pkg = buildWorkPackage(current, this.#core.definitions, continuation);
       const pending = `pending:${handoff.id}`;
       this.#core.startExecutionEpisode(workId, {
         executor: { type: "AGENT", name: adapter.name },
@@ -822,20 +833,9 @@ export class AppService {
           : undefined;
         const latestUserPrompt = workEvidence(current.sourceArchive).findLast(event => event.kind === "user.prompt" && event.content?.trim());
         const title = currentStage?.task.text ?? latestUserPrompt?.content?.replace(/\s+/gu, " ").slice(0, 96) ?? handoff.currentTask ?? current.definition.name;
-        const nextStep = currentStage?.remaining[0]?.text ??
-          (continuation.resolution === "RESOLVED" ? "按当前阶段和有效约束继续。" : "先读取工作说明，确认当前阶段。");
         const prompt = adapter.capabilities?.deliveryMode === "INLINE_PACKAGE"
-          ? inlineWorkPackage(current, buildWorkPackage(current, this.#core.definitions, continuation), handoff.id)
-          : buildWorkBootstrap({
-          workId,
-          deliveryId: handoff.id,
-          purpose: pkg.purpose,
-          contextVersion: 4,
-          title,
-          currentTask: title,
-          nextStep,
-          artifactPaths: handoff.neededArtifacts.map(artifact => artifact.path),
-        });
+          ? inlineWorkPackage(current, pkg, handoff.id)
+          : buildWorkDelivery(current, pkg, handoff.id);
         this.options.onHandoffStep?.("opening");
         this.#deliveryLedger.record(workId, handoff.id, prompt);
         const request = {
@@ -1139,7 +1139,7 @@ export class AppService {
     current: WorkSnapshot,
     thread: NormalizedThread,
   ): Promise<{ work: WorkSnapshot; newEvents: NormalizedSourceEvent[] }> {
-    const newEvents = sourceDelta(current, thread, this.#sourcePresence.observe(current, thread));
+    const newEvents = this.#deliveryLedger.annotate(current.instance.id, sourceDelta(current, thread, this.#sourcePresence.observe(current, thread)));
     let work = this.#core.appendSourceEvents(
       current.instance.id,
       this.#sourceInputs(newEvents),
@@ -1200,12 +1200,14 @@ export class AppService {
             hasInstanceFiles: this.#core.definitions.get(work.definition.id).content.inputs.some(spec => spec.valueType === "FILE") || this.#core.definitions.inputs(work.instance.id).referenceExamples.length > 0,
             dispatchStatus: work.activeBinding ? (work.activeBinding.conversationId.startsWith("pending:") ? "WAITING" : "BOUND") : String(dispatch?.status ?? "NOT_DISPATCHED"),
             dispatchReadAt: work.packageReadAt ?? null,
+            dispatchInlineDelivered: inlineDelivered(work),
           }
         : {}),
       ...this.#summary(work),
       ...(work.packageDeliveryId ? {
         dispatchStatus: work.activeBinding?.conversationId.startsWith("pending:") ? "WAITING" : "BOUND",
         dispatchReadAt: work.packageReadAt ?? null,
+        dispatchInlineDelivered: inlineDelivered(work),
       } : {}),
       ...(pkg?.stateStatus === "RESOLVED" && state.objective[0] ? {
         title: state.objective[0].text,
