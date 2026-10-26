@@ -11,10 +11,20 @@ const settled = new Set(["completed", "error", "cancelled", "canceled", "idle"])
 const MAX_TRANSCRIPT_BYTES = 64 * 1024 * 1024;
 export class WorkBuddyLocalHistory {
   constructor(readonly root = join(homedir(), ".workbuddy")) {}
+  async #accountUid(): Promise<string> {
+    let snapshot: unknown;
+    try {
+      snapshot = JSON.parse(await readFile(join(this.root, "storage/skeleton/account-snapshot.json"), "utf8"));
+    } catch (error) {
+      if (!(error instanceof SyntaxError) && object(error).code !== "ENOENT") throw error;
+    }
+    const uid = object(object(snapshot).primary).uid;
+    if (typeof uid !== "string" || !uid.trim())
+      throw new Error("WorkBuddy 账号信息暂不可用，请打开 WorkBuddy 并确认已登录，进入聊天首页后返回 Worket 刷新。已有工作记录不受影响。");
+    return uid;
+  }
   async #sessions(): Promise<Session[]> {
-    const account = object(object(JSON.parse(await readFile(join(this.root, "storage/skeleton/account-snapshot.json"), "utf8"))).primary);
-    if (typeof account.uid !== "string" || !account.uid) throw new Error("WorkBuddy 当前账号不可确认，请先登录 WorkBuddy。");
-    const uid = account.uid;
+    const uid = await this.#accountUid();
     return readDatabase(join(this.root, "workbuddy.db"), db => db.prepare(
       "SELECT id,title,custom_title,cwd,status,created_at,updated_at FROM sessions WHERE deleted_at IS NULL AND user_id = ? AND (transport = 'local' OR transport IS NULL) ORDER BY updated_at DESC,id DESC",
     ).all(uid) as Session[]);
@@ -35,7 +45,8 @@ export class WorkBuddyLocalHistory {
     return result;
   }
   async listThreadPage(limit = 30, cursor?: string, searchTerm?: string): Promise<ConversationPage> {
-    const [sessions, files] = await Promise.all([this.#sessions(), this.#files()]);
+    const sessions = await this.#sessions();
+    const files = await this.#files();
     const offset = pageOffset(cursor);
     const size = Math.max(1, Math.min(100, Math.floor(limit) || 30));
     const query = searchTerm?.trim().toLocaleLowerCase();
