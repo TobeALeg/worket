@@ -100,3 +100,32 @@ test('invalid and remote file URI links remain visible without creating local ar
   assert.equal(events[0]!.content, text);
   assert.deepEqual(events.filter(e => e.kind === 'artifact.added'), []);
 });
+
+
+test('missing account snapshot is actionable and recovers without restarting the source', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'buddy-account-'));
+  try {
+    const source = new WorkBuddyLocalHistory(root);
+    // Account validation must happen before reading any database or transcript.
+    await assert.rejects(source.listThreadPage(), /账号信息暂不可用/);
+    await assert.rejects(source.readThread('chat'), /账号信息暂不可用/);
+    await mkdir(join(root, 'storage/skeleton'), { recursive: true });
+    await mkdir(join(root, 'projects'), { recursive: true });
+    const db = new DatabaseSync(join(root, 'workbuddy.db'));
+    db.exec('CREATE TABLE sessions(id TEXT,title TEXT,custom_title TEXT,cwd TEXT,status TEXT,created_at INTEGER,updated_at INTEGER,user_id TEXT,deleted_at INTEGER,transport TEXT)');
+    db.close();
+    const snapshot = join(root, 'storage/skeleton/account-snapshot.json');
+    for (const content of ['{', '{}', '{"primary":{"uid":" "}}']) {
+      await writeFile(snapshot, content);
+      await assert.rejects(source.inspect(), /账号信息暂不可用/);
+    }
+    await writeFile(snapshot, JSON.stringify({ primary: { uid: 'me' } }));
+    assert.deepEqual((await source.listThreadPage()).threads, []);
+    await source.inspect();
+    await rm(snapshot);
+    await assert.rejects(source.inspect(), /账号信息暂不可用/);
+    // Other filesystem failures must not be disguised as a missing account.
+    await mkdir(snapshot);
+    await assert.rejects(source.inspect(), { code: 'EISDIR' });
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

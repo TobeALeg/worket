@@ -157,7 +157,8 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
         return [id, result.value];
       }));
       showError(results.flatMap((result, index) => result.status === "rejected" ? [`${eligible[index]!.name}：${String(result.reason)}`] : []).join("\n"));
-      lastRefresh = Date.now();
+      // Failed sources should recover on the next panel scan, not stay throttled.
+      lastRefresh = results.every(result => result.status === "fulfilled") ? Date.now() : 0;
     } catch (cause) { showError(cause); }
     finally {
       if (current === revision) {

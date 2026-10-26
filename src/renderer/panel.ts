@@ -519,6 +519,9 @@ async function refreshPanel(): Promise<void> {
     refreshing = false;
   }
 }
+window.addEventListener("focus", () => {
+  if (filter === "RECENT" && !detailOpen) void recordingSources.refresh(true);
+});
 void refreshPanel();
 window.workpet.onPanelShown((workId) => {
   feedback.collapse();
