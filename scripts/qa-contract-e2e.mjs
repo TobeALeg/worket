@@ -203,8 +203,7 @@ try {
   if (scenario === 'report') {
     // This recorded response has an acceptance alias of the normative limit.
     // A manual edit must enter re-review before publishing, just like a file revision.
-    await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('.contract-management > summary').click(); await panel.locator('#revise-definition').click();
-    await panel.locator('#edit-all').click();
+    await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
     await panel.locator(`[data-text][data-address="${firstAddress}"]`).fill(`今后每节摘要不超过 25 ${unit}。`);
     await panel.locator('#edit-all').click();
     await panel.locator('#publish-definition').click();
@@ -212,7 +211,7 @@ try {
     const versions = await panel.evaluate(key => window.workpet.distillation('versions', { key }), definition.definitionKey);
     assert.equal(versions.length, 1, 'manual edit with stale aliases must not publish');
     await panel.locator('#window-back').click();
-    await panel.locator('#return-from-contract').click();
+    await panel.locator('#window-back').click();
     // This isolated scenario next checks file revision from the published version.
     const reset = createWorkCore({ databasePath: join(directory, 'workpet.sqlite') });
     reset.definitions.db.prepare("DELETE FROM definition_drafts WHERE json_extract(payload_json, '$.baseDefinitionId') = ? AND json_extract(payload_json, '$.publishedId') IS NULL").run(definition.id);
@@ -220,7 +219,28 @@ try {
     mark('manual upstream edit → dependent review visible; stale acceptance prevents publication');
   }
   // File evolution and invalid dependency through the shipped renderer/IPC routes.
-  await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('.contract-management > summary').click(); await panel.locator('#revise-definition').click();
+  await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${definition.id}"]`).click(); await panel.locator('#revise-definition').click();
+  assert.equal(await panel.locator('#revise-definition').count(), 0);
+  assert.equal(await panel.locator('#edit-all').getAttribute('aria-pressed'), 'true', 'manual revision opens in edit mode');
+  assert.equal(await panel.locator('[data-review-action="confirm"]').count(), 0, 'existing terms need no repeat confirmation');
+  assert.equal(await panel.locator('#publish-definition').innerText(), '保存新版本');
+  const removedConstraint = definition.content.constraints.find(item => item.text === addedText);
+  assert.ok(removedConstraint);
+  await panel.locator(`[data-review-action="delete"][data-address="constraints.${removedConstraint.key}"]`).click();
+  await panel.locator('.dr-item[data-review-status="deleted"]').waitFor({ state: 'hidden' });
+  await panel.locator('[data-review-action="add"][data-section="constraints"]').click();
+  const revisedText = '交付前检查音画同步。';
+  await panel.locator('[data-text][data-address^="constraints.item_"]').fill(revisedText);
+  await panel.locator('#save-draft').click();
+  await panel.locator('#dr-status').filter({ hasText: '已暂存' }).waitFor();
+  await panel.locator('#window-back').click();
+  await panel.locator('#revise-definition').click();
+  assert.ok((await panel.locator('[data-text][data-address^="constraints.item_"]').inputValue()).includes(revisedText));
+  assert.equal(await panel.locator('[data-review-action="confirm"]').count(), 0);
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(410, 660));
+  await panel.screenshot({ path: join(output, '04-version-editor.png') });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith('/panel.html')).setSize(760, 820));
+  await panel.locator('#edit-all').click();
   const renamed = join(directory, 'RENAMED-FRAME.md'); renameSync(path, renamed);
   await app.evaluate(({dialog}, path) => { dialog.showOpenDialog = async () => ({canceled:false,filePaths:[path]}); }, renamed);
   await panel.locator(`[data-review-action="details"][data-address="${firstAddress}"]`).click();
@@ -236,6 +256,11 @@ try {
   await panel.locator('#publish-definition').click(); await panel.locator('#use-definition').waitFor();
   const versions = await panel.evaluate(key=>window.workpet.distillation('versions',{key}),definition.definitionKey);
   const v2 = versions.find(v=>v.version===2); assert.ok(v2);
+  assert.ok(v2.content.constraints.some(item => item.text === revisedText));
+  assert.ok(!v2.content.constraints.some(item => item.text === addedText));
+  assert.ok(versions.find(v => v.version === 1).content.constraints.some(item => item.text === addedText));
+  assert.deepEqual(v2.content.inputs, definition.content.inputs, 'untouched inputs retained');
+  assert.deepEqual(v2.content.deliverables, definition.content.deliverables, 'untouched outputs retained');
   const old = await panel.evaluate(workId=>window.workpet.distillation('package',{workId}),newId); assert.ok(old.markdown.includes(oldLimit));
   await panel.locator('#use-definition').click();
   for(const spec of v2.content.inputs) { const loc=panel.locator(`[data-input="${spec.key}"]`); if(spec.valueType==='BOOLEAN')await loc.selectOption('true'); else if(spec.valueType==='CHOICE')await loc.selectOption(spec.choices[0]); else await loc.fill(spec.valueType==='NUMBER'?'1':'新版标准下的新脚本'); }
