@@ -60,7 +60,6 @@ try {
     await panel.evaluate(async id => (await import('./distillation.js')).openJob(id), job.id);
   } else {
     await panel.locator('#tab-definitions').click(); await panel.locator(`[data-definition="${base.id}"]`).click(); await panel.locator('#revise-definition').click();
-    await panel.locator('#edit-all').click();
     await panel.locator('[data-review-action="toggle-property"][data-address="materialRoles.builder"]').click();
   }
   // Exercise the real selector route, substituting only the native dialog choice.

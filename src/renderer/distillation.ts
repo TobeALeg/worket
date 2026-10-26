@@ -343,8 +343,9 @@ export async function openJob(id: string): Promise<void> {
 }
 async function editDraft(draft: Draft): Promise<void> {
   const previous: Definition | undefined = draft.baseDefinitionId ? await api('definition', { id: draft.baseDefinitionId }) : undefined;
-  show("检查候选定义", "");
-  modal.setAttribute("aria-label", "检查候选定义");
+  const label = draft.baseDefinitionId && !draft.jobId ? "编辑新版本" : "检查候选定义";
+  show(label, "");
+  modal.setAttribute("aria-label", label);
   modal.removeAttribute("aria-labelledby");
   disposeReview = mountDefinitionReview(modal, draft, api, async definition => {
     await refreshActivity().catch(() => {});
@@ -383,13 +384,13 @@ async function openDefinition(id: string, feedback?: ContractFeedback): Promise<
     <details class="contract-management"><summary>版本与管理</summary><div class="contract-tools">
     <label class="inline-field">查看版本<select id="definition-version">${versions.map(v => `<option value="${v.id}" ${v.id === id ? 'selected' : ''}>v${v.version} · ${esc(new Date(v.confirmedAt).toLocaleDateString('zh-CN'))}${versions[0]?.id === v.id ? ' · 最新' : ''}</option>`).join('')}</select></label>
     <label class="contract-color">分类颜色<input id="contract-color" type="color" value="${contractColor(d.definitionKey)}"></label>
-    <div class="contract-secondary-actions"><button id="revise-definition" ${versions[0]?.id === id ? '' : 'disabled'}>修改并保存新版本</button><button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button></div>
+    <div class="contract-secondary-actions"><button id="evolve-definition" ${versions[0]?.id === id ? '' : 'disabled'}>从后续工作更新</button></div>
     ${versions[0]?.id !== id ? '<p class="consent">正在查看历史版本。切换到最新版本后可修改。</p>' : ''}
     <details><summary>来源与固定资料</summary>${d.refs.map(ref => `<p>${esc(ref.workId)} · ${ref.deleted ? '来源已删除' : esc(ref.eventId)}</p>`).join('')}${d.materials.map(m => `<p>${esc(m.role)} · ${esc(m.originalPath)} · ${esc(m.hash)}</p>`).join('')}</details>
     ${d.materials.length ? '<button id="repair-definition-materials">检查与恢复固定资料</button>' : ''}
     <div id="contract-advanced"></div><button id="delete-definition" class="danger-link">删除契约…</button>
     </div></details>`,
-    `<button id="return-from-contract">${returnLabel}</button><button id="use-definition" class="primary">发起新工作</button>`,
+    `<button id="revise-definition" ${versions[0]?.id === id ? '' : 'disabled title="请切换到最新版本后修改"'}>生成新版本</button><button id="use-definition" class="primary">发起新工作</button>`,
     { label: returnLabel, action: async () => { modal.close(); if (contractOrigin === 'library') changed(); } },
   );
   modal.classList.add('contract-view');
@@ -413,7 +414,6 @@ async function openDefinition(id: string, feedback?: ContractFeedback): Promise<
   modal.querySelector<HTMLInputElement>('#contract-color')!.addEventListener('input', event => {
     setContractColor(sheet, d.definitionKey, (event.target as HTMLInputElement).value);
   });
-  bind('#return-from-contract', async () => { modal.close(); if (contractOrigin === 'library') changed(); });
   modal
     .querySelector("#definition-version")!
     .addEventListener(
