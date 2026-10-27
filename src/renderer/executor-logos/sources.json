@@ -1,0 +1,51 @@
+[
+  {
+    "file": "qwenwork.png",
+    "source": "https://img.alicdn.com/imgextra/i1/O1CN011LNyUFRWLsI0OAXQ_!!6000000007507-2-tps-192-192.png",
+    "page": "https://qwenwork.ai/",
+    "sha256": "ea5e70cdbf01ec7f58164bf88fc09f6e729bb7c98a3938423cc48efa26f53ba8",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "kimi.png",
+    "source": "https://www.kimi.com/pwa-192.png",
+    "page": "https://www.kimi.com/",
+    "sha256": "6c14f9c3062e953b3ed57ae3e19db931c1c1bba38d4d8d55550544f31d55e469",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "doubao.png",
+    "source": "https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/favicon/new-doubao/192x192.png",
+    "page": "https://www.doubao.com/chat/",
+    "sha256": "dabb2abd94e3a6c11e7f1a42c9343839b6ef643c086751b71afbc68f615aec38",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "coze.ico",
+    "source": "https://lf-coze-web-cdn.coze.cn/obj/coze-web-cn/coze-space/static/favicon2.ico",
+    "page": "https://www.coze.cn/",
+    "sha256": "2502e491af60b041766702fd7a7d46a90bc8d89d7ddeb014e1167a6be1bcbec6",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "browser.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/world.svg",
+    "page": "https://tabler.io/icons/icon/world",
+    "sha256": "d0dfc538f966d03b72a9fe872fbb567d5e84db9d24b95af032305404ef71f587",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "deepseek.ico",
+    "source": "https://www.deepseek.com/favicon.ico",
+    "page": "https://www.deepseek.com/",
+    "sha256": "30a4420e6e4dcb17fd7de560c5004346c2bc8cd971d2d5f5ee15326603e51321",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "gemini.png",
+    "source": "https://gemini.google/images/spark_4c.png",
+    "page": "https://gemini.google/about/",
+    "sha256": "f39c8b1c0dbdf1411a52b203cd7d2815ef1dc5f899f457499e7d5aa57f25b6c8",
+    "verifiedAt": "2026-10-27"
+  }
+]

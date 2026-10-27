@@ -1,10 +1,18 @@
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
-const logos: Record<string, string> = {
-  codex: "codex.png",
-  workbuddy: "workbuddy.png",
-  zcode: "zcode.png",
-  antigravity: "antigravity.png",
+const options: Record<string, { logo: string; name: string; web?: boolean }> = {
+  codex: { logo: "codex.png", name: "Codex" },
+  workbuddy: { logo: "workbuddy.png", name: "WorkBuddy" },
+  zcode: { logo: "zcode.png", name: "ZCode" },
+  antigravity: { logo: "antigravity.png", name: "Antigravity" },
+  qwenwork: { logo: "qwenwork.png", name: "QwenWork" },
+  "qwenwork-web": { logo: "qwenwork.png", name: "QwenWork", web: true },
+  "kimi-work": { logo: "kimi.png", name: "Kimi", web: true },
+  "doubao-work": { logo: "doubao.png", name: "豆包", web: true },
+  "deepseek-web": { logo: "deepseek.ico", name: "DeepSeek", web: true },
+  "gemini-web": { logo: "gemini.png", name: "Gemini", web: true },
+  "coze-web": { logo: "coze.ico", name: "扣子", web: true },
+  "web-selected": { logo: "browser.svg", name: "其他", web: true },
 };
 
 export async function chooseExecutor(): Promise<string | null> {
@@ -34,6 +42,7 @@ export async function chooseExecutor(): Promise<string | null> {
     notice.hidden = disclosure.preparationRequired === false;
     if (!dialog.open) return result;
     for (const executor of executors) {
+      const presentation = options[executor.id];
       const option = document.createElement("div");
       option.className = "executor-option-wrap";
       const button = document.createElement("button");
@@ -44,30 +53,33 @@ export async function chooseExecutor(): Promise<string | null> {
       button.disabled = !executor.canDeliver;
       const icon = document.createElement("span");
       icon.className = "executor-option-icon";
-      if (logos[executor.id]) {
+      if (presentation) {
         const image = document.createElement("img");
-        image.src = `./executor-logos/${logos[executor.id]}`;
+        image.src = `./executor-logos/${presentation.logo}`;
         image.alt = "";
+        if (executor.id === "web-selected") image.className = "executor-generic-icon";
         icon.append(image);
       } else {
         const mark = document.createElement("span");
         mark.textContent = executor.mark;
         icon.append(mark);
       }
+      if (presentation?.web) {
+        const badge = document.createElement("span");
+        badge.className = "executor-web-badge";
+        badge.textContent = "网页";
+        badge.setAttribute("aria-hidden", "true");
+        icon.append(badge);
+      }
       const label = document.createElement("span");
       label.className = "executor-option-name";
-      label.textContent = executor.name;
+      label.textContent = presentation?.name ?? executor.name;
       button.append(icon, label);
       button.addEventListener("click", () => {
         selected = executor.id;
         dialog.close();
       });
       option.append(button);
-      if (executor.capabilities?.deliveryMode === "INLINE_PACKAGE") {
-        const hint = document.createElement("small");
-        hint.textContent = "复制工作包 · 手动发送 · 主动导入回流";
-        option.append(hint);
-      }
       if (executor.deliveryError || executor.error) {
         const error = document.createElement("p");
         error.textContent = `${executor.name}：${executor.deliveryError || (executor.canDeliver ? `历史读取暂不可用；仍可交付。${executor.error}` : executor.error)}`;
