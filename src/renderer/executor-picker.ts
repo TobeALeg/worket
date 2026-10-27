@@ -1,5 +1,12 @@
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
+const logos: Record<string, string> = {
+  codex: "codex.png",
+  workbuddy: "workbuddy.png",
+  zcode: "zcode.png",
+  antigravity: "antigravity.png",
+};
+
 export async function chooseExecutor(): Promise<string | null> {
   const dialog = document.createElement("dialog");
   dialog.innerHTML =
@@ -27,26 +34,46 @@ export async function chooseExecutor(): Promise<string | null> {
     notice.hidden = disclosure.preparationRequired === false;
     if (!dialog.open) return result;
     for (const executor of executors) {
+      const option = document.createElement("div");
+      option.className = "executor-option-wrap";
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "secondary";
-      button.textContent = executor.name;
+      button.className = "executor-option";
+      button.setAttribute("aria-label", executor.name);
+      button.title = executor.name;
       button.disabled = !executor.canDeliver;
+      const icon = document.createElement("span");
+      icon.className = "executor-option-icon";
+      if (logos[executor.id]) {
+        const image = document.createElement("img");
+        image.src = `./executor-logos/${logos[executor.id]}`;
+        image.alt = "";
+        icon.append(image);
+      } else {
+        const mark = document.createElement("span");
+        mark.textContent = executor.mark;
+        icon.append(mark);
+      }
+      const label = document.createElement("span");
+      label.className = "executor-option-name";
+      label.textContent = executor.name;
+      button.append(icon, label);
       button.addEventListener("click", () => {
         selected = executor.id;
         dialog.close();
       });
-      list.append(button);
+      option.append(button);
       if (executor.capabilities?.deliveryMode === "INLINE_PACKAGE") {
         const hint = document.createElement("small");
         hint.textContent = "复制工作包 · 手动发送 · 主动导入回流";
-        list.append(hint);
+        option.append(hint);
       }
       if (executor.deliveryError || executor.error) {
         const error = document.createElement("p");
         error.textContent = `${executor.name}：${executor.deliveryError || (executor.canDeliver ? `历史读取暂不可用；仍可交付。${executor.error}` : executor.error)}`;
-        list.append(error);
+        option.append(error);
       }
+      list.append(option);
     }
     if (!executors.some((e) => e.canDeliver)) {
       message.hidden = false;
