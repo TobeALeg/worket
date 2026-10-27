@@ -1,4 +1,4 @@
-import { RECORDING_UPLOAD_NOTICE, type ConversationView, type DashboardView, type ExecutorView } from "../ui-contract.js";
+import { type ConversationView, type DashboardView, type ExecutorView } from "../ui-contract.js";
 
 type Page = { threads: ConversationView[]; nextCursor: string | null; notice?: string };
 const logos: Record<string, string> = { codex: "codex.png", workbuddy: "workbuddy.png", antigravity: "antigravity.png", zcode: "zcode.png" };
@@ -15,7 +15,7 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
   const retry = document.querySelector<HTMLButtonElement>("#source-retry")!;
   let executors: ExecutorView[] = [];
   let pages = new Map<string, Page>();
-  let selected = "all", noticeRequired = true, recording = false, loading = false;
+  let selected = "all", recording = false, loading = false;
   let lastRefresh = 0, revision = 0, searchRevision = 0;
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
   let codexSearch: Page | null = null;
@@ -26,7 +26,8 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
   }
 
   function sourceRow(source: ConversationView): HTMLElement {
-    const row = document.createElement("div");
+    const row = document.createElement("button");
+    row.type = "button";
     row.className = "source-row";
     row.dataset.threadId = source.id;
     const text = document.createElement("div");
@@ -36,25 +37,20 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     meta.className = "source-meta";
     meta.textContent = `${source.projectLabel ?? (source.cwd.split("/").filter(Boolean).at(-1) || "无项目")} · ${new Date(source.updatedAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`;
     text.append(title, meta);
-    const button = document.createElement("button");
-    button.className = "secondary";
-    button.textContent = source.workId ? "打开记录" : "开始记录";
-    button.disabled = recording;
-    button.addEventListener("click", async () => {
+    row.disabled = recording;
+    row.addEventListener("click", async () => {
       if (recording) return;
       recording = true;
-      button.disabled = true;
-      button.textContent = source.workId ? "正在打开…" : "正在导入…";
+      row.disabled = true;
+      row.setAttribute("aria-busy", "true");
       showError(null);
       try {
-        const dashboard = source.workId
-          ? await window.workpet.getDashboard(source.workId)
-          : await window.workpet.createWorkFromConversation({ executorId: source.executorId, threadId: source.id });
+        const dashboard = await window.workpet.createWorkFromConversation({ executorId: source.executorId, threadId: source.id, mode: "view" });
         onRecorded(dashboard);
       } catch (cause) { showError(cause); }
       finally { recording = false; await refresh(true); }
     });
-    row.append(text, button);
+    row.append(text);
     return row;
   }
 
@@ -100,12 +96,6 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     search.setAttribute("aria-label", selected === "codex" ? "搜索全部 Codex 聊天标题" : "搜索已加载聊天");
     search.placeholder = selected === "codex" ? "聊天标题（区分大小写）" : "聊天标题或项目";
     sources.replaceChildren();
-    if (noticeRequired) {
-      const disclosure = document.createElement("p");
-      disclosure.className = "notice";
-      disclosure.textContent = RECORDING_UPLOAD_NOTICE;
-      sources.append(disclosure);
-    }
     const visible = executors.filter(item => selected === "all" || item.id === selected);
     visible.sort((a, b) => (Date.parse(pages.get(b.id)?.threads[0]?.updatedAt ?? "") || 0) - (Date.parse(pages.get(a.id)?.threads[0]?.updatedAt ?? "") || 0));
     let count = 0;
@@ -139,15 +129,11 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     retry.disabled = true;
     showError(null);
     try {
-      const [available, notice] = await Promise.all([
-        window.workpet.listExecutors(),
-        window.workpet.distillation("recordingNotice"),
-      ]);
+      const available = await window.workpet.listExecutors();
       const eligible = available.filter(item => !item.capabilities || item.capabilities.source === "HISTORY");
       const results = await Promise.allSettled(eligible.map(item => window.workpet.listConversationHistory(item.id)));
       if (current !== revision) return;
       executors = eligible;
-      noticeRequired = notice.required;
       pages = new Map(results.map((result, index) => {
         const id = eligible[index]!.id;
         if (result.status === "rejected") return [id, pages.get(id) ?? { threads: [], nextCursor: null }];

@@ -230,3 +230,8 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 @media (prefers-reduced-motion: reduce) {
   .executor-inline .executor-option-icon { transition: none; }
 }
+
+/* Activity titles open the existing detail without an extra recording control. */
+button.source-row { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--text); font: inherit; }
+button.source-row:hover:not(:disabled) { background: var(--hover); }
+button.source-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

@@ -48,7 +48,7 @@ export class WorkPreparation {
     const work = this.core.getWork(workId);
     const row = this.core.definitions.db.prepare("SELECT * FROM work_preparation WHERE work_id=?").get(workId);
     if (!work || work.instance.status !== "OPEN" || row?.identity !== this.#identity() ||
-      background && (!work.activeBinding || hasPendingSourceChecks(work.sourceArchive) || /^(pending|waiting):/.test(work.activeBinding.conversationId))) return null;
+      background && (this.core.definitions.db.prepare("SELECT 1 FROM work_view_snapshots WHERE work_id=?").get(workId) || !work.activeBinding || hasPendingSourceChecks(work.sourceArchive) || /^(pending|waiting):/.test(work.activeBinding.conversationId))) return null;
     const pkg = buildWorkPackage(work, this.core.definitions);
     const materials = packageMaterialVersions(pkg);
     const basis = buildContinuationBasis(work, materials);

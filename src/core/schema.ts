@@ -20,6 +20,10 @@ export function createSchema(database: DatabaseSync): void {
       updated_at TEXT NOT NULL
     ) STRICT;
 
+    CREATE TABLE IF NOT EXISTS work_view_snapshots (
+      work_id TEXT PRIMARY KEY REFERENCES work_instances(id) ON DELETE CASCADE
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS work_records (
       id TEXT PRIMARY KEY,
       work_instance_id TEXT NOT NULL UNIQUE REFERENCES work_instances(id) ON DELETE CASCADE,
