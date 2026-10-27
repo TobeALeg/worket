@@ -32,7 +32,9 @@
     "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/world.svg",
     "page": "https://tabler.io/icons/icon/world",
     "sha256": "d0dfc538f966d03b72a9fe872fbb567d5e84db9d24b95af032305404ef71f587",
-    "verifiedAt": "2026-10-27"
+    "verifiedAt": "2026-10-27",
+    "usage": "Generic other-web manual handoff; not a vendor or website",
+    "license": "../review-icons/LICENSE"
   },
   {
     "file": "deepseek.ico",
@@ -46,6 +48,20 @@
     "source": "https://gemini.google/images/spark_4c.png",
     "page": "https://gemini.google/about/",
     "sha256": "f39c8b1c0dbdf1411a52b203cd7d2815ef1dc5f899f457499e7d5aa57f25b6c8",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "codex-current.png",
+    "source": "/Applications/ChatGPT.app/Contents/Resources/app.asar/webview/assets/codex-app-ga-logo-3e5209898ca3.png",
+    "page": "Installed official app 26.1021.31345, transparent Codex GA logo",
+    "sha256": "8e82b26c98a10e45798ce48124515720657f7735fb8d0853b3f087eaa8a6b74e",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "workbuddy.svg",
+    "source": "https://www.workbuddy.ai/",
+    "page": "https://www.workbuddy.ai/",
+    "sha256": "10ccbc099e7bc3d5ff12c315c4edd7b21386aa7166c1ec19997b3d55010d5c7d",
     "verifiedAt": "2026-10-27"
   }
 ]

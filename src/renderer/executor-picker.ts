@@ -1,10 +1,11 @@
+import { setupExecutorDock } from "./executor-dock.js";
 import { animateExecutorRelease } from "./executor-release.js";
 import type { ExecutorView } from "../ui-contract.js";
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
 const options: Record<string, { logo: string; name: string; web?: boolean }> = {
-  codex: { logo: "codex.png", name: "Codex" },
-  workbuddy: { logo: "workbuddy.png", name: "WorkBuddy" },
+  codex: { logo: "codex-current.png", name: "Codex" },
+  workbuddy: { logo: "workbuddy.svg", name: "WorkBuddy" },
   zcode: { logo: "zcode.png", name: "ZCode" },
   antigravity: { logo: "antigravity.png", name: "Antigravity" },
   qwenwork: { logo: "qwenwork.png", name: "QwenWork" },
@@ -14,7 +15,7 @@ const options: Record<string, { logo: string; name: string; web?: boolean }> = {
   "deepseek-web": { logo: "deepseek.ico", name: "DeepSeek", web: true },
   "gemini-web": { logo: "gemini.png", name: "Gemini", web: true },
   "coze-web": { logo: "coze.ico", name: "扣子", web: true },
-  "web-selected": { logo: "browser.svg", name: "其他", web: true },
+  "web-selected": { logo: "browser.svg", name: "其他网页", web: true },
 };
 
 function executorOption(executor: ExecutorView, select: (id: string) => void): HTMLElement {
@@ -25,7 +26,8 @@ function executorOption(executor: ExecutorView, select: (id: string) => void): H
   button.type = "button";
   button.className = "executor-option";
   button.setAttribute("aria-label", executor.name);
-  button.title = executor.name;
+  button.title = executor.id === "web-selected" ? "其他网页（手动复制；不绑定固定站点）" : executor.name;
+  if (executor.id === "web-selected") button.setAttribute("aria-description", "通用手动交接入口，不代表某个网站。");
   button.disabled = !executor.canDeliver;
   const icon = document.createElement("span");
   icon.className = "executor-option-icon";
@@ -122,6 +124,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
   return new Promise(resolve => {
     let closed = false;
     let release: ReturnType<typeof animateExecutorRelease> | undefined;
+    let disposeDock: (() => void) | undefined;
     const finish = (id: string | null, restoreFocus = true) => {
       if (closed) return;
       closed = true;
@@ -131,6 +134,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
       observer.disconnect();
       trigger.setAttribute("aria-expanded", "false");
       trigger.removeAttribute("aria-controls");
+      disposeDock?.();
       release?.cancel();
       strip.inert = true;
       const returning = animateExecutorRelease(strip, trigger, true);
@@ -189,6 +193,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
         notice.textContent = WORK_PREPARATION_NOTICE;
         host.append(notice);
       }
+      disposeDock = setupExecutorDock(list);
       release = animateExecutorRelease(strip, trigger);
       list.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true });
     }).catch(error => {
