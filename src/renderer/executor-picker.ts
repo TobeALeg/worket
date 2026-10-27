@@ -45,7 +45,7 @@ function executorOption(executor: ExecutorView, select: (id: string) => void): H
     const badge = document.createElement("span");
     badge.className = "executor-web-badge";
     const globe = document.createElement("img");
-    globe.src = "./executor-logos/browser-circle.svg";
+    globe.src = "./executor-logos/web-badge.svg";
     globe.alt = "";
     badge.append(globe);
     badge.setAttribute("aria-hidden", "true");
