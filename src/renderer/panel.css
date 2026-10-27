@@ -177,7 +177,7 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 .executor-option-icon { position: relative; display: grid; place-items: center; width: 44px; height: 44px; background: transparent; }
 .executor-option-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .executor-option-icon > span:not(.executor-web-badge) { font-size: 18px; }
-.executor-web-badge { position: absolute; right: -8px; bottom: -2px; padding: 1px 3px; border: 1px solid var(--line); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 8px; line-height: 1.4; white-space: nowrap; }
+.executor-web-badge { position: absolute; right: -4px; bottom: -2px; display: grid; place-items: center; width: 14px; height: 14px; padding: 1px; border-radius: 50%; background: var(--background); }
 .executor-option-name { max-width: 100%; font-size: 10px; line-height: 1.3; overflow-wrap: anywhere; }
 .executor-option:disabled { opacity: .45; }
 .executor-option:focus-visible .executor-option-icon { outline: 1px solid var(--accent); outline-offset: 3px; }
@@ -223,7 +223,7 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 .executor-inline .executor-options button.executor-option { width: 26px; height: 26px; padding: 2px; gap: 0; }
 .executor-inline .executor-option-icon { width: 22px; height: 22px; transform: translateY(var(--dock-lift, 0px)) scale(var(--dock-scale, 1)); transition: transform 120ms ease-out; transform-origin: center; }
 .executor-inline .executor-option-name { display: none; }
-.executor-inline .executor-web-badge { right: -3px; bottom: -2px; padding: 0 1px; font-size: 7px; line-height: 1.1; border-radius: 2px; }
+.executor-inline .executor-web-badge { right: -3px; bottom: -2px; width: 11px; height: 11px; padding: 1px; }
 .executor-inline .detail-meta { white-space: nowrap; }
 /* Flight copies live above scroll clipping; the real icons retain their slots. */
 .executor-release-layer { position: fixed; inset: 0; height: auto; max-width: none; pointer-events: none; z-index: 1000; }
