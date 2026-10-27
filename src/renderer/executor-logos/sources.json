@@ -77,5 +77,14 @@
     "page": "https://play.google.com/store/apps/details?id=com.deepseek.chat",
     "sha256": "33875ee79e60963931765c690e7227d03b2dc6a20555699803f5b75f63400302",
     "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "web-badge.svg",
+    "derivedFrom": "browser-circle.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/world.svg",
+    "treatment": "badge-only gray #969c96, stroke width 1.25; main other-web icon unchanged",
+    "sha256": "0ee6e3bfd686c620beff35c531dfdb2990c6144eca11f8fb4cac827da655ab90",
+    "verifiedAt": "2026-10-27",
+    "license": "../review-icons/LICENSE"
   }
 ]
