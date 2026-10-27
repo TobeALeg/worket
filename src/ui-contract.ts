@@ -153,6 +153,8 @@ export interface ConversationPreview extends ConversationView {
 }
 
 export interface CreateWorkRequest {
+  /** Read and extract once; do not enroll in background capture or improvement collection. */
+  mode?: "view";
   executorId: string;
   threadId: string;
   /** Legacy callers may pass this; automatic preparation is scoped by the recording action. */

@@ -345,7 +345,10 @@ export class AppService {
     const adapter = this.#executors.get(request.executorId);
     let existing = this.#core.findWorkByBinding(adapter.id, request.threadId);
     if (existing) {
-      this.#notice = "这个聊天已经属于一份 WorkRecord。";
+      if (request.mode === "view" && existing.instance.status === "OPEN") {
+        try { await this.#readBoundWork(existing.instance.id); this.#notice = null; }
+        catch { this.#notice = "来源暂不可用，显示已保存的内容。"; }
+      } else this.#notice = null;
       return this.dashboard(existing.instance.id);
     }
     const thread = await this.#historySource(adapter.id).readThread(request.threadId);
@@ -360,6 +363,7 @@ export class AppService {
       environment: adapter.environment,
       source: { adapter: adapter.id, conversationId: thread.threadId },
     });
+    if (request.mode === "view") this.#core.definitions.db.prepare("INSERT INTO work_view_snapshots VALUES (?)").run(work.instance.id);
     const titleEvent = title
       ? this.#titleEvent(adapter.id, thread.threadId, title, thread.updatedAt)
       : null;
@@ -379,10 +383,12 @@ export class AppService {
       work.activeBinding?.id
     )
       this.#core.applyExtractorPatch(work.instance.id, patch, Math.max(0, ...work.sourceArchive.map((event) => event.sequence)));
-    this.#preparation.enable(work.instance.id);
-    this.#preparation.schedule(work.instance.id, true);
-    this.options.onRecordingStarted?.(work.instance.id);
-    this.#notice = `已记录 ${adapter.name} 聊天，导入 ${work.sourceArchive.length} 条可见事件。`;
+    if (request.mode !== "view") {
+      this.#preparation.enable(work.instance.id);
+      this.#preparation.schedule(work.instance.id, true);
+      this.options.onRecordingStarted?.(work.instance.id);
+    }
+    this.#notice = request.mode === "view" ? null : `已记录 ${adapter.name} 聊天，导入 ${work.sourceArchive.length} 条可见事件。`;
     return this.dashboard(work.instance.id);
   }
   async listSplitPoints(workId: string): Promise<SplitPointView[]> {
@@ -676,6 +682,7 @@ export class AppService {
     }
     if (
       !work ||
+      this.#isViewOnly(work.instance.id) ||
       work.instance.status !== "OPEN" ||
       work.activeBinding?.adapter !== executorId ||
       work.activeBinding.conversationId !== id
@@ -694,7 +701,7 @@ export class AppService {
       .listWorks("OPEN")
       .filter(
         (work) =>
-          work.activeBinding &&
+          !this.#isViewOnly(work.instance.id) && work.activeBinding &&
           !/^(pending|waiting):/.test(work.activeBinding.conversationId),
       );
     await Promise.all(
@@ -793,8 +800,12 @@ export class AppService {
       throw new Error("这项工作正在交接，请等待本次结果。");
     const adapter = this.#executors.get(executorId);
     if (!adapter.deliver) throw new Error("该执行者尚不支持接收工作。");
-    const initial = this.#requireWork(workId);
-    if (initial.instance.status !== "OPEN") throw new Error("请先继续原工作。");
+    let initial = this.#requireWork(workId);
+    if (initial.instance.status !== "OPEN" && initial.definition.kind !== "REUSABLE") {
+      this.resumeWork(workId);
+      initial = this.#requireWork(workId);
+    }
+    if (initial.instance.status !== "OPEN") throw new Error("已验收的工作请从契约重新开展。");
     if (initial.activeBinding?.conversationId.startsWith("pending:"))
       throw new Error("上次交付尚未确认，请先检查目标执行者。");
     this.#handoffs.add(workId);
@@ -820,6 +831,7 @@ export class AppService {
         throw new Error("准备交接期间工作状态已改变，未进行交接。");
       const handoff = this.#core.createHandoffPackage(workId, { continuation });
       const pkg = buildWorkPackage(current, this.#core.definitions, continuation);
+      const wasViewOnly = this.#isViewOnly(workId);
       const pending = `pending:${handoff.id}`;
       this.#core.startExecutionEpisode(workId, {
         executor: { type: "AGENT", name: adapter.name },
@@ -827,6 +839,7 @@ export class AppService {
         source: { adapter: adapter.id, conversationId: pending },
         endCurrentEpisode: true,
       });
+      this.#core.definitions.db.prepare("DELETE FROM work_view_snapshots WHERE work_id=?").run(workId);
       try {
         const currentStage = continuation.currentStageId
           ? continuation.stages.find(stage => stage.id === continuation.currentStageId)
@@ -871,6 +884,7 @@ export class AppService {
         if (this.#requireWork(workId).activeBinding?.conversationId === pending) {
           this.#core.stopCapture(workId);
           this.#restoreBinding(current);
+          if (wasViewOnly) this.#core.definitions.db.prepare("INSERT OR IGNORE INTO work_view_snapshots VALUES (?)").run(workId);
           this.#notice = `${adapter.name} 打开请求失败，${current.activeBinding ? "已恢复原来源记录" : "未保留活动的待确认绑定"}。${String(error)}`;
         } else {
           this.#notice = `打开请求报错，工作来源状态已改变，未回滚已确认的来源。${String(error)}`;
@@ -1154,10 +1168,14 @@ export class AppService {
     return work;
   }
 
+  #isViewOnly(workId: string): boolean {
+    return !!this.#core.definitions.db.prepare("SELECT 1 FROM work_view_snapshots WHERE work_id=?").get(workId);
+  }
+
   #globalPetState(): DashboardView["petState"] {
     if (this.#petState === "carrying" || this.#petState === "alert")
       return this.#petState;
-    const statuses = this.#core.listWorks("OPEN").map(captureStatus);
+    const statuses = this.#core.listWorks("OPEN").filter(work => !this.#isViewOnly(work.instance.id)).map(captureStatus);
     if (statuses.includes("recording")) return "awake";
     if (statuses.includes("waiting")) return "waiting";
     return "sleeping";
@@ -1173,7 +1191,7 @@ export class AppService {
         (work.definition.kind === "REUSABLE" ? "尚未交给执行者" : "未知 Agent"),
       title: work.state.objective[0]?.text ?? "未命名工作",
       status: work.instance.status,
-      captureStatus: captureStatus(work),
+      captureStatus: this.#isViewOnly(work.instance.id) ? "stopped" : captureStatus(work),
       updatedAt: work.instance.updatedAt,
       eventCount: work.sourceArchive.length,
       artifactCount: work.artifactRefs.length,

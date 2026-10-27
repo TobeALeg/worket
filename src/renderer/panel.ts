@@ -17,7 +17,6 @@ import {
   type DashboardView,
   type WorkDetailView,
   type WorkStateField,
-  type WorkStatus,
 } from "../ui-contract.js";
 import { setupRecordingSources } from "./recording-sources.js";
 
@@ -32,8 +31,8 @@ const cancelRecordingPrompt = required<HTMLElement>("#cancel-recording-prompt");
 const splitPointSelect = required<HTMLSelectElement>("#split-point");
 let dashboard: DashboardView;
 let recordingNoticeRequired = true;
-type PanelTab = WorkStatus | "RECENT" | "DEFINITIONS" | 'WORKFLOWS';
-let filter: PanelTab = "OPEN";
+type PanelTab = "SAVED" | "ARCHIVED" | "RECENT" | "DEFINITIONS" | "WORKFLOWS";
+let filter: PanelTab = "RECENT";
 const selectedDistillationIds = new Set<string>();
 let pendingCancelRecordingWorkId: string | null = null;
 let pendingSplitWorkId: string | null = null;
@@ -67,6 +66,7 @@ function formatDate(value: string): string {
 }
 
 function render(): void {
+  if (detailOpen && dashboard && !dashboard.selectedWork) detailOpen = false;
   if (filter !== "RECENT") headerSearch.close();
   document.querySelectorAll<HTMLElement>(".filter").forEach((button) => {
     const selected = button.dataset.filter === filter;
@@ -76,10 +76,10 @@ function render(): void {
     if (selected && filter !== "RECENT" && filter !== "DEFINITIONS" && filter !== 'WORKFLOWS')
       required("#works-panel").setAttribute("aria-labelledby", button.id);
   });
-  if (filter === "ARCHIVED") required<HTMLElement>("#tab-open").tabIndex = 0;
-  required<HTMLElement>("#sources-panel").hidden = filter !== "RECENT";
+  if (filter === "ARCHIVED" || filter === "SAVED") required<HTMLElement>("#tab-recent").tabIndex = 0;
+  required<HTMLElement>("#sources-panel").hidden = filter !== "RECENT" || detailOpen;
   required<HTMLElement>("#works-panel").hidden =
-    filter === "RECENT" || filter === "DEFINITIONS" || filter === 'WORKFLOWS';
+    (filter === "RECENT" && !detailOpen) || filter === "DEFINITIONS" || filter === 'WORKFLOWS';
   required<HTMLElement>("#definitions-panel").hidden = filter !== "DEFINITIONS";
   required<HTMLElement>('#workflows-panel').hidden = filter !== 'WORKFLOWS';
   if (filter === 'WORKFLOWS') { void renderWorkflows().catch(showError); return; }
@@ -87,16 +87,21 @@ function render(): void {
     void renderDefinitions().catch(showError);
     return;
   }
-  if (filter === "RECENT" || !dashboard) return;
+  if (!dashboard) return;
+  if (filter === "RECENT") {
+    notice.hidden = !dashboard.notice; notice.textContent = dashboard.notice ?? "";
+    renderDetail(detailOpen ? dashboard.selectedWork : null);
+    return;
+  }
   notice.hidden = !dashboard.notice;
   notice.textContent = dashboard.notice ?? "";
-  const works = dashboard.works.filter((work) => work.status === filter);
+  const works = dashboard.works.filter((work) => filter === "ARCHIVED" ? work.status === "ARCHIVED" : work.status !== "ARCHIVED");
   const checkedIds = selectedDistillationIds;
   for (const id of checkedIds)
     if (!dashboard.works.some((work) => work.id === id)) checkedIds.delete(id);
   updateSelection();
-  required("#list-title").textContent = filter === "ARCHIVED" ? "归档记录" : filter === "COMPLETED" ? "已完成" : "进行中";
-  if (filter === "ARCHIVED") required("#works-panel").setAttribute("aria-labelledby", "list-title");
+  required("#list-title").textContent = filter === "ARCHIVED" ? "归档记录" : "工作记录";
+  if (filter === "ARCHIVED" || filter === "SAVED") required("#works-panel").setAttribute("aria-labelledby", "list-title");
   list.innerHTML = works.length
     ? works
         .map(
@@ -109,7 +114,7 @@ function render(): void {
       </button></div>`,
         )
         .join("")
-    : `<div class="empty">${filter === "OPEN" ? "还没有正在记录的工作" : filter === "COMPLETED" ? "还没有已完成的工作" : "还没有已归档的工作"}</div>`;
+    : `<div class="empty">${filter === "ARCHIVED" ? "还没有已归档的工作" : "暂无工作记录"}</div>`;
 
   for (const input of list.querySelectorAll<HTMLInputElement>(
     "[data-distill-work]",
@@ -128,7 +133,7 @@ function render(): void {
     );
   }
   renderDetail(
-    detailOpen && dashboard.selectedWork?.status === filter ? dashboard.selectedWork : null,
+    detailOpen ? dashboard.selectedWork : null,
   );
 }
 
@@ -146,23 +151,15 @@ function renderDetail(work: WorkDetailView | null): void {
     return;
   }
   const waiting = work.bindings.some((binding) => binding.status === "ACTIVE" && binding.conversationId.startsWith("pending:")) || (work.reusableDefinitionId && !work.bindings.some((binding) => binding.status === "ACTIVE") && ["STARTING", "WAITING"].includes(work.dispatchStatus ?? ""));
-  const actions = work.status === "OPEN"
-    ? `${waiting ? '<button data-action="reopen-handoff" class="primary">重新打开</button><button data-action="cancel-handoff">取消未确认交接</button>' : '<button data-action="handoff" class="primary">交接</button>'}<button data-action="complete">完成</button><button data-action="distill">沉淀</button>`
-    : `<button data-action="resume" class="primary">${work.status === "COMPLETED" ? "继续工作" : "恢复工作"}</button><button data-action="distill">沉淀</button>`;
-  const preparationNotice = work.preparationStatus === "RUNNING" ? "正在更新工作状态…"
-    : work.preparationStatus === "QUEUED" ? "工作状态待更新"
-    : work.understandingStatus === "RESOLVED" ? "工作状态已更新"
-    : work.understandingStatus === "PARTIAL" ? "工作状态仍有缺口"
-    : work.understandingNotice;
+  const actions = `${waiting ? '<button data-action="reopen-handoff" class="primary">重新打开</button><button data-action="cancel-handoff">取消未确认交接</button>' : (!work.reusableDefinitionId || work.status === "OPEN") ? '<button data-action="handoff" class="primary">交接</button>' : ''}${work.reusableDefinitionId && work.status === "OPEN" ? '<button data-action="complete">验收交付</button>' : ''}<button data-action="distill">沉淀</button>`;
   detail.innerHTML = `
     <div class="detail-navigation"><button id="back-to-list" class="back-button">‹ 返回列表</button><span class="eyebrow detail-executor" title="${escapeHtml(work.agentName)}">${escapeHtml(work.agentName)}</span></div>
     <div class="detail-head"><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.dispatchStatus || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" ? (work.dispatchInlineDelivered ? "已绑定 · 完整说明已送达" : work.dispatchReadAt ? "已绑定 · 工作包已读取" : "已绑定 · 尚无工作包读取回执") : "等待用户发送与来源确认"}</span>` : ""}</p></div>
     ${waiting ? '<p class="notice">打开请求返回不代表草稿已出现。请检查目标应用；只发送一次。未出现草稿可重新打开，确认未接手后可取消。</p>' : ""}
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
-    ${work.currentStageTask ? `<p class="detail-meta" data-current-stage>${escapeHtml(work.currentStageTask)}</p>` : ""}
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制网页工作包</button><button data-action="export-inline">导出网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
-    ${work.status !== "OPEN" && recordingNoticeRequired ? `<p class="field-help">${escapeHtml(RECORDING_UPLOAD_NOTICE)}</p>` : ""}
-    ${work.status === "OPEN" ? `<div class="handoff-slot" data-handoff-slot>${preparationNotice ? `<span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? "")}">${escapeHtml(preparationNotice)}</span>` : ""}</div><div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
+    <div class="handoff-slot" data-handoff-slot></div>
+    ${work.status === "OPEN" ? `<div class="progress-overview">${progressSection(work, "pendingActions")}</div>
     <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
     ${Object.entries(WORK_STATE_LABELS)
       .map(([field, label]) =>
@@ -182,6 +179,7 @@ function renderDetail(work: WorkDetailView | null): void {
   required("#back-to-list").addEventListener("click", () => {
     detailOpen = false;
     render();
+    if (filter === "RECENT") void recordingSources.refresh(true);
     list.querySelector<HTMLButtonElement>(`[data-work-id="${CSS.escape(work.id)}"]`)?.focus();
   });
   for (const button of detail.querySelectorAll<HTMLButtonElement>(
@@ -242,7 +240,7 @@ async function renderWithRecordingNotice(): Promise<void> {
 async function selectWork(workId: string): Promise<void> {
   detailOpen = true;
   dashboard = await window.workpet.getDashboard(workId);
-  filter = dashboard.selectedWork?.status ?? filter;
+  if (filter !== "SAVED" && filter !== "ARCHIVED") filter = "RECENT";
   render();
   window.scrollTo(0, 0);
   required<HTMLButtonElement>("#back-to-list").focus();
@@ -341,13 +339,11 @@ async function runAction(workId: string, action: string): Promise<void> {
   }
   const operation = {
     refresh: () => window.workpet.refreshWork(workId),
-    complete: () => window.workpet.completeWork(workId),
     archive: () => window.workpet.archiveWork(workId),
-    resume: () => window.workpet.resumeWork(workId),
   }[action];
   if (!operation) return;
   dashboard = await operation();
-  filter = dashboard.selectedWork?.status ?? filter;
+  if (filter !== "SAVED" && filter !== "ARCHIVED") filter = "RECENT";
   await renderWithRecordingNotice();
 }
 
@@ -372,7 +368,7 @@ setupDistillation(
     if (result) {
       dashboard = result;
       detailOpen = true;
-      filter = result.selectedWork?.status ?? "OPEN";
+      filter = "RECENT";
     } else {
       filter = "DEFINITIONS";
     }
@@ -380,6 +376,9 @@ setupDistillation(
   },
   () => [...selectedDistillationIds],
 );
+required("#saved-records").addEventListener("click", () => {
+  feedback.collapse(); detailOpen = false; filter = "SAVED"; render();
+});
 required("#archive-records").addEventListener("click", () => {
   feedback.collapse();
   document.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => dialog.close());
@@ -406,7 +405,7 @@ required<HTMLButtonElement>("#confirm-split").addEventListener(
       });
       pendingSplitWorkId = null;
       splitDialog.close();
-      filter = "OPEN";
+      filter = "RECENT";
       detailOpen = true;
       await renderWithRecordingNotice();
     } catch (error) {
@@ -490,11 +489,11 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(".filter")) {
 const recordingSources = setupRecordingSources((result) => {
   dashboard = result;
   detailOpen = true;
-  filter = result.selectedWork?.status ?? "OPEN";
+  filter = "RECENT";
   void renderWithRecordingNotice();
 });
-setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = result.selectedWork?.status ?? "OPEN"; void renderWithRecordingNotice(); });
-setupWorkflows(result => { dashboard = result; detailOpen = true; filter = result.selectedWork?.status ?? 'OPEN'; void renderWithRecordingNotice(); });
+setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = "RECENT"; void renderWithRecordingNotice(); });
+setupWorkflows(result => { dashboard = result; detailOpen = true; filter = "RECENT"; void renderWithRecordingNotice(); });
 let refreshing = false;
 async function refreshPanel(): Promise<void> {
   if (refreshing || actionPending || document.querySelector("dialog[open], .secondary-menu[open]") || document.activeElement?.matches("input, textarea, select")) return;

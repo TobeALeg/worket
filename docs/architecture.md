@@ -1,5 +1,12 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 2026-10-27：按需查看与持续记录分离
+
+最近活动通过已有 createWorkFromConversation 接口的 mode=view 打开工作，renderer 不创建新的状态分类。work_view_snapshots 保存按需查看工作 ID；来源绑定仍用于去重和证据身份，但轮询、来源通知和后台工作准备跳过这些工作。显式打开/刷新可读取来源并执行现有抽取，首次查看不调用 onRecordingStarted。标记跨重启保留且随工作级联删除；明确交接后移除标记，待接手及后续回流沿用原机制，传输失败恢复原按需模式。
+
+普通历史工作可在交接入口恢复，契约验收与工作流完成边界保留。展示导航与 WorkStatus 解耦：最近活动中的详情不依赖 OPEN/COMPLETED Tab；菜单中的工作记录和归档列表复用原列表与多选沉淀。现有交接 icon 动效、沉淀审阅、历史生命周期数据不迁移。
+
+
 ## 交接执行者选择器（2026-10-27）
 
 `renderer/executor-picker.ts` 共享执行者图标构造，工作详情通过 `chooseInlineExecutor(host, trigger)` 将选择条挂到状态说明槽；原 `chooseExecutor()` 继续服务契约与工作流。品牌素材和网页身份映射本地化，未知 ID 回退到短标记。选择返回原执行者 ID，取消返回 null；关闭时移除全局事件与观察器、恢复原说明及触发按钮状态。宿主离开 DOM 时取消未完成选择，异步列表不再写入已关闭宿主。`panel.ts` 等待选择期间阻止重复交接与自动刷新，选择后检查工作身份再调用原交接 API。`executor-release.ts` 根据按钮与图标的真实 DOM 坐标，通过不可交互的视觉副本执行错峰释放和回收；原按钮保留布局与焦点。动画完成或取消后清理副本并恢复图标，旧收起动画不会覆盖重新打开的选择器。`executor-dock.ts` 根据指针与按钮中心距离派生放大，保持原点击区域；requestAnimationFrame 驱动边缘自动滚动，离开/关闭时停止并释放监听。`scripts/prepare-executor-circles.py` 按固定像素坐标紧裁原始素材，生成满版圆形 PNG；`circle-crops.json` 记录原文件、裁剪范围和输出哈希。第一项按用户参考映射 ChatGPT 结绳素材，仍返回 codex 执行者 ID，不改变交接适配器。原生圆形 WorkBuddy SVG 直接复用，通用地球 SVG 收紧 viewBox，渲染容器不套圆壳或添加内边距。CSS 负责无框显示、隐藏滚动条与减少动态效果，无新增 IPC、数据库或领域状态。
