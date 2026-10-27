@@ -8,7 +8,7 @@ from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent / 'src/renderer/executor-logos'
 CROPS = {
-    'codex-circle.png': ('codex-current.png', (13, 13, 91, 91)),
+    'chatgpt-circle.png': ('chatgpt-official.jpg', (32, 32, 480, 480)),
     'zcode-circle.png': ('zcode.png', (10, 11, 86, 87)),
     'antigravity-circle.png': ('antigravity.png', (14, 14, 82, 82)),
     'qwenwork-circle.png': ('qwenwork.png', (0, 0, 192, 192)),

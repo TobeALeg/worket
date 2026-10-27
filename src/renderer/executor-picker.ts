@@ -4,7 +4,7 @@ import type { ExecutorView } from "../ui-contract.js";
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
 const options: Record<string, { logo: string; name: string; web?: boolean }> = {
-  codex: { logo: "codex-circle.png", name: "Codex" },
+  codex: { logo: "chatgpt-circle.png", name: "Codex" },
   workbuddy: { logo: "workbuddy.svg", name: "WorkBuddy" },
   zcode: { logo: "zcode-circle.png", name: "ZCode" },
   antigravity: { logo: "antigravity-circle.png", name: "Antigravity" },
