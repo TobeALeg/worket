@@ -13,27 +13,27 @@
   },
   {
     "file": "zcode-circle.png",
-    "derivedFrom": "zcode.png",
+    "derivedFrom": "zcode-official.png",
     "cropBox": [
-      10,
-      11,
-      86,
-      87
+      16,
+      16,
+      176,
+      176
     ],
     "treatment": "tight square crop, circular alpha mask; no added background, border or padding",
-    "sha256": "d3024986cc4fd5c1810a3233149122c71d5171dbc5b26eda7fcb28d6b32cf9ff"
+    "sha256": "ddf72f5b48db568d80738a57c35c10653b1f50ee3988ba030d38077d1113baa4"
   },
   {
     "file": "antigravity-circle.png",
-    "derivedFrom": "antigravity.png",
+    "derivedFrom": "antigravity-app-official.png",
     "cropBox": [
-      14,
-      14,
-      82,
-      82
+      64,
+      64,
+      448,
+      448
     ],
     "treatment": "tight square crop, circular alpha mask; no added background, border or padding",
-    "sha256": "21b40eb2ee44f3e5ef0ae8a5180c8acaaa3e2b6bbb287a5d55fc5bd8ea24428d"
+    "sha256": "bba9d5059f2b526fcda05fc12a945afb7a2b5231486d31a77b0de5353dfc1125"
   },
   {
     "file": "qwenwork-circle.png",
@@ -97,15 +97,15 @@
   },
   {
     "file": "coze-circle.png",
-    "derivedFrom": "coze.ico",
+    "derivedFrom": "coze-official.png",
     "cropBox": [
-      2,
-      2,
-      18,
-      18
+      50,
+      44,
+      770,
+      764
     ],
     "treatment": "tight square crop, circular alpha mask; no added background, border or padding",
-    "sha256": "9ad2d736feffb0a6a04fe19c3086ec6e96a4a00e0cd950f644812a23d6dcb05c"
+    "sha256": "4dd056f8dbde5e5fc8fe361e58d65cd0dcc424f537327e2e03e4cc1714e3b51d"
   },
   {
     "file": "browser-circle.svg",
