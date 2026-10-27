@@ -215,3 +215,22 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
   .progress-overview { gap: 8px; margin-bottom: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } .extraction-indicator { animation: none !important; } }
+
+.handoff-slot { min-height: 32px; margin: -6px 0 10px; display: grid; align-items: center; }
+.executor-inline { height: 32px; min-width: 0; max-width: 100%; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); animation: executor-strip-enter 180ms ease-out both; }
+.executor-inline .executor-options { display: flex; align-items: center; gap: 3px; height: 100%; padding: 2px 4px; overflow-x: auto; scrollbar-width: none; }
+.executor-inline .executor-options::-webkit-scrollbar { display: none; }
+.executor-inline .executor-option-wrap { flex: 0 0 auto; }
+.executor-inline .executor-options button.executor-option { width: 26px; height: 26px; padding: 2px; gap: 0; }
+.executor-inline .executor-option-icon { width: 22px; height: 22px; transition: transform 140ms ease-out; transform-origin: center; }
+.executor-inline .executor-option:hover:not(:disabled) .executor-option-icon,
+.executor-inline .executor-option:focus-visible .executor-option-icon { transform: scale(1.16); }
+.executor-inline .executor-option-name { display: none; }
+.executor-inline .executor-option-icon img.executor-generic-icon { padding: 4px; }
+.executor-inline .executor-web-badge { right: -3px; bottom: -2px; padding: 0 1px; font-size: 7px; line-height: 1.1; border-radius: 2px; }
+.executor-inline .detail-meta { white-space: nowrap; }
+@keyframes executor-strip-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .executor-inline { animation: none; }
+  .executor-inline .executor-option-icon { transition: none; }
+}

@@ -2,7 +2,7 @@
 
 ## 交接执行者选择器（2026-10-27）
 
-`renderer/executor-picker.ts` 将现有执行者列表投影为图标与名称按钮，品牌图使用 `executor-logos/` 本地素材（来源和哈希见 `sources.json`），展示映射集中定义短名称和网页角标，未知 ID 回退到执行者短标记；`panel.css` 负责自适应网格、圆形图标、焦点与禁用态。数据仍经 `listExecutors()` 与 `recordingNotice` 读取，按钮返回执行者 ID，取消返回 null；没有新增 IPC、数据库迁移或交接状态。
+`renderer/executor-picker.ts` 共享执行者图标构造，工作详情通过 `chooseInlineExecutor(host, trigger)` 将选择条挂到状态说明槽；原 `chooseExecutor()` 继续服务契约与工作流。品牌素材和网页身份映射本地化，未知 ID 回退到短标记。选择返回原执行者 ID，取消返回 null；关闭时移除全局事件与观察器、恢复原说明及触发按钮状态。宿主离开 DOM 时取消未完成选择，异步列表不再写入已关闭宿主。`panel.ts` 等待选择期间阻止重复交接与自动刷新，选择后检查工作身份再调用原交接 API。CSS 负责入场、悬停与减少动态效果，无新增 IPC、数据库或领域状态。
 
 2026-10-23 桌宠上下文气泡按现有 `PetView.currentConversation` 展示：`needsSelection` 驱动等待三点，应用 `adapter` 选择标志资源，有聊天时显示标题。呈现状态在 renderer 派生，不增加领域状态、IPC 字段、数据流或状态流。
 
