@@ -59,7 +59,7 @@
   },
   {
     "file": "workbuddy.svg",
-    "source": "https://www.workbuddy.ai/",
+    "source": "https://download.codebuddy.ai/web/workbuddy/2365138d79c29bb1cbce4644f5cbbffd2b561a5c/assets/logo.svg",
     "page": "https://www.workbuddy.ai/",
     "sha256": "10ccbc099e7bc3d5ff12c315c4edd7b21386aa7166c1ec19997b3d55010d5c7d",
     "verifiedAt": "2026-10-27"
@@ -95,6 +95,42 @@
     "publisher": "OpenAI OpCo, LLC",
     "version": "1.2026.286",
     "sha256": "e7e5c80ab4738ebd3ab55610a0802e07c61643f1b3e3b6425475eea218f599d2",
+    "verifiedAt": "2026-10-27",
+    "recheck": {
+      "verifiedAt": "2026-10-27",
+      "downloadSha256": "37e015e54a98714be5433b2dcdd39216ad70724abe6417044912254892433631",
+      "decodedPixelsIdentical": true,
+      "note": "Official CDN JPEG container bytes differ, decoded RGB pixels are identical to the pinned source."
+    }
+  },
+  {
+    "file": "zcode-official.png",
+    "source": "https://zcode.z.ai/favicon-192x192.png?v=20260707-transparent",
+    "page": "https://zcode.z.ai/en",
+    "sha256": "089bdfa74910eaed241eac46bf5d02bb5718f15d8d6b247a1ee61b3372c9c82c",
     "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "coze-official.png",
+    "source": "https://lf-coze-web-cdn.coze.cn/obj/coze-web-cn/coze-space/static/static/image/coze-logo.8681dead1d.png",
+    "page": "https://www.coze.cn/",
+    "linkedBy": "https://lf-coze-web-cdn.coze.cn/obj/coze-web-cn/coze-space/static/static/js/index.5b90eb7c6d.js",
+    "sha256": "ece88bf92c4009fb1ae06cc731290e04c0c07cf89f5962f48863745c6d05ff68",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "antigravity-app-official.png",
+    "source": "/Applications/Antigravity.app/Contents/Resources/icon.icns",
+    "page": "https://antigravity.google/download",
+    "brandReference": "https://antigravity.google/assets/image/brand/antigravity-icon__full-color.png",
+    "brandPage": "https://antigravity.google/press",
+    "applicationVersion": "2.16.0",
+    "bundleIdentifier": "com.google.antigravity",
+    "teamIdentifier": "EQHXZ8M8AV",
+    "sourceContainerSha256": "51203ef3a75727c3a4b68be36610db347f7936b1cb60ff4cc75eb337577a5977",
+    "conversion": "sips -s format png; complete official application artwork, no added background",
+    "sha256": "fa3b733c979860856639a197e6dcd43366b7a4592c5ea63175eaec2525ac55c9",
+    "verifiedAt": "2026-10-27",
+    "signatureCheck": "codesign --verify --strict: valid on disk; satisfies its Designated Requirement"
   }
 ]
