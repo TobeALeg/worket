@@ -44,7 +44,10 @@ function executorOption(executor: ExecutorView, select: (id: string) => void): H
   if (presentation?.web) {
     const badge = document.createElement("span");
     badge.className = "executor-web-badge";
-    badge.textContent = "网页";
+    const globe = document.createElement("img");
+    globe.src = "./executor-logos/browser-circle.svg";
+    globe.alt = "";
+    badge.append(globe);
     badge.setAttribute("aria-hidden", "true");
     icon.append(badge);
   }
@@ -175,8 +178,6 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
           button.setAttribute("aria-description", error.textContent ?? "");
           error.remove();
         }
-        const badge = option.querySelector(".executor-web-badge");
-        if (badge) badge.textContent = "网";
         return option;
       }));
       list.removeAttribute("aria-busy");
