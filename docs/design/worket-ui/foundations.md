@@ -81,7 +81,7 @@
 | `InlineMessage / EmptyState` | `.notice`、`.empty`、`.source-empty` | tone、message、action | 错误、空和无搜索结果不得共用含糊文案 |
 | `ReviewItem` | `definition-review.ts/css` | pending/confirmed/deleted、expanded、issues | 业务决定由审阅模块处理；保留来源与撤销 |
 | `ContractSheet` | `work-contract.ts/css`、`contract/*` | confirmedVersion、category、content、savedFeedback | 只表达真实已确认版本；不替代候选审阅 |
-| `ExecutorPicker` | `executor-picker.ts` | loading、available/unavailable、error | 选择执行者不代表已接手；业务保留在现有模块 |
+| `ExecutorPicker` | `executor-picker.ts`、`panel.css` | loading、available/unavailable、error | 用圆形品牌图标网格快速选择；名称仍可见，键盘与屏幕阅读器可识别；选择执行者不代表已接手，业务保留在现有模块 |
 | `AttachmentPreview` | `problem-feedback.ts/css` | image、remove、preview、error | 反馈截图与业务输入的权限、存储不合并 |
 
 基础组件不导入 `window.workpet`，不拥有工作、契约或运行的业务状态。逐页抽取时以展示参数和回调连接既有模块；不同业务的数据模型不因视觉相似而合并。

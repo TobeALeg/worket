@@ -170,9 +170,19 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 .job-status { grid-column: 2; grid-row: 1 / 3; align-self: center; font-size: 10px; white-space: nowrap; color: var(--muted); }
 .job-status[data-status="AWAITING_REVIEW"] { color: #38634b; }
 .job-status[data-status="FAILED"], .job-status[data-status="INTERRUPTED"], .job-status[data-status="NEEDS_SELECTION"] { color: #995c4d; }
-.executor-options { display: grid; gap: 6px; }
-.executor-options button { width: 100%; text-align: left; padding: 8px 10px; }
+.executor-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px 8px; }
+.executor-option-wrap { min-width: 0; text-align: center; }
+.executor-options button.executor-option { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; min-height: 0; padding: 4px 2px; border: 0; background: transparent; color: var(--text); }
+.executor-options button.executor-option:hover:not(:disabled) { background: transparent; }
+.executor-option-icon { display: grid; place-items: center; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.executor-option-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.executor-option-icon > span { font-size: 18px; }
+.executor-option-name { max-width: 100%; font-size: 10px; line-height: 1.3; overflow-wrap: anywhere; }
+.executor-option:disabled { opacity: .45; }
+.executor-option:focus-visible .executor-option-icon { box-shadow: 0 0 0 2px var(--accent); }
 .executor-options p { color: var(--muted); font-size: 11px; }
+.executor-option-wrap > small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.executor-option-wrap > p { margin: 4px 0 0; text-align: left; overflow-wrap: anywhere; }
 .inline-field { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
 .inline-field > select { width: auto; flex: 1; }
 .settings-link { display: flex; align-items: center; gap: 7px; width: 100%; padding: 9px 0; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; font-size: 12px; }

@@ -1,5 +1,9 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## 交接执行者选择器（2026-10-27）
+
+`renderer/executor-picker.ts` 将现有执行者列表投影为图标与名称按钮，品牌图使用 `executor-logos/` 本地素材，未知 ID 回退到执行者短标记；`panel.css` 负责自适应网格、圆形图标、焦点与禁用态。数据仍经 `listExecutors()` 与 `recordingNotice` 读取，按钮返回执行者 ID，取消返回 null；没有新增 IPC、数据库迁移或交接状态。
+
 2026-10-23 桌宠上下文气泡按现有 `PetView.currentConversation` 展示：`needsSelection` 驱动等待三点，应用 `adapter` 选择标志资源，有聊天时显示标题。呈现状态在 renderer 派生，不增加领域状态、IPC 字段、数据流或状态流。
 
 ## 工作流地图投影（2026-10-23）
