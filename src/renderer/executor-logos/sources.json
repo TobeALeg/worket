@@ -63,5 +63,19 @@
     "page": "https://www.workbuddy.ai/",
     "sha256": "10ccbc099e7bc3d5ff12c315c4edd7b21386aa7166c1ec19997b3d55010d5c7d",
     "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "gemini-app-source.png",
+    "source": "https://play-lh.googleusercontent.com/C64IqPWyFoCZzXVxXVl0Y6mliiNlG_sZJsqul-SBvk9ZL0wJHlU0Eho2wvsBHhho0FT5XQtH55RVGerIwXF_MA=s0-br30",
+    "page": "https://play.google.com/store/apps/details?id=com.google.android.apps.bard",
+    "sha256": "3a43d5c130088f63412eb05b484b5c39307867cd600ee9f2da4234b03f3ee523",
+    "verifiedAt": "2026-10-27"
+  },
+  {
+    "file": "deepseek-app-source.png",
+    "source": "https://play-lh.googleusercontent.com/6acgsFuPK-ynZRKRvbvEhhC5jcUJybr5Dnsy9cU1OPIxiDazubiqYqfq3nGOKSq-EG3G_6VtxM7tjRV_jiaK=s0-br30",
+    "page": "https://play.google.com/store/apps/details?id=com.deepseek.chat",
+    "sha256": "33875ee79e60963931765c690e7227d03b2dc6a20555699803f5b75f63400302",
+    "verifiedAt": "2026-10-27"
   }
 ]
