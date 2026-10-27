@@ -1,15 +1,15 @@
 [
   {
-    "file": "codex-circle.png",
-    "derivedFrom": "codex-current.png",
+    "file": "chatgpt-circle.png",
+    "derivedFrom": "chatgpt-official.jpg",
     "cropBox": [
-      13,
-      13,
-      91,
-      91
+      32,
+      32,
+      480,
+      480
     ],
     "treatment": "tight square crop, circular alpha mask; no added background, border or padding",
-    "sha256": "6c042b22bdc056c4f41f9bfba9e0c9ae4efd4ef4448627334154855a6c19917e"
+    "sha256": "c2561f0a9b794d0ee84df94952d386c557e3419053c6b55294520e8746cea827"
   },
   {
     "file": "zcode-circle.png",
