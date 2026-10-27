@@ -2,7 +2,7 @@ import { setupHeaderSearch } from "./header-search.js";
 import { setupSelectedImport } from "./selected-import.js";
 import { setupWorkflows, renderWorkflows, openWorkflowRun } from './workflows.js';
 import { setupProblemFeedback } from "./problem-feedback.js";
-import { chooseExecutor } from "./executor-picker.js";
+import { chooseInlineExecutor } from "./executor-picker.js";
 import {
   setupDistillation,
   renderDefinitions,
@@ -162,7 +162,7 @@ function renderDetail(work: WorkDetailView | null): void {
     ${work.currentStageTask ? `<p class="detail-meta" data-current-stage>${escapeHtml(work.currentStageTask)}</p>` : ""}
     <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制网页工作包</button><button data-action="export-inline">导出网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
     ${work.status !== "OPEN" && recordingNoticeRequired ? `<p class="field-help">${escapeHtml(RECORDING_UPLOAD_NOTICE)}</p>` : ""}
-    ${work.status === "OPEN" ? `${preparationNotice ? `<div class="detail-actions"><span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? "")}">${escapeHtml(preparationNotice)}</span></div>` : ""}<div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
+    ${work.status === "OPEN" ? `<div class="handoff-slot" data-handoff-slot>${preparationNotice ? `<span class="detail-meta" title="${escapeHtml(work.understandingNotice ?? "")}">${escapeHtml(preparationNotice)}</span>` : ""}</div><div class="progress-overview">${progressSection(work, "completedActions")}${progressSection(work, "pendingActions")}</div>
     <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
     ${Object.entries(WORK_STATE_LABELS)
       .map(([field, label]) =>
@@ -263,7 +263,7 @@ function updateSelection(): void {
 async function performAction(workId: string, action: string, button: HTMLButtonElement): Promise<void> {
   if (actionPending) return;
   actionPending = true;
-  button.disabled = true;
+  button.disabled = action !== "handoff";
   try {
     await runAction(workId, action);
   } catch (error) {
@@ -302,8 +302,10 @@ async function runAction(workId: string, action: string): Promise<void> {
     return;
   }
   if (action === "handoff") {
-    const executorId = await chooseExecutor();
-    if (!executorId) return;
+    const trigger = detail.querySelector<HTMLButtonElement>('[data-action="handoff"]')!;
+    const executorId = await chooseInlineExecutor(required<HTMLElement>("[data-handoff-slot]"), trigger);
+    if (!executorId || dashboard.selectedWork?.id !== workId || !detailOpen) return;
+    trigger.disabled = true;
     try {
       notice.hidden = false;
       notice.textContent = '正在准备交接…';
