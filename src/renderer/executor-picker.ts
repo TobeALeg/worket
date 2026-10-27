@@ -1,3 +1,4 @@
+import { animateExecutorRelease } from "./executor-release.js";
 import type { ExecutorView } from "../ui-contract.js";
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
@@ -103,7 +104,10 @@ export async function chooseExecutor(): Promise<string | null> {
   return result;
 }
 
+const pendingInlineReturns = new WeakMap<HTMLElement, () => void>();
+
 export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonElement): Promise<string | null> {
+  pendingInlineReturns.get(host)?.();
   const previous = [...host.childNodes];
   const strip = document.createElement("div");
   strip.className = "executor-inline";
@@ -117,6 +121,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
   trigger.setAttribute("aria-controls", strip.id);
   return new Promise(resolve => {
     let closed = false;
+    let release: ReturnType<typeof animateExecutorRelease> | undefined;
     const finish = (id: string | null, restoreFocus = true) => {
       if (closed) return;
       closed = true;
@@ -126,7 +131,18 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
       observer.disconnect();
       trigger.setAttribute("aria-expanded", "false");
       trigger.removeAttribute("aria-controls");
-      if (host.isConnected) host.replaceChildren(...previous);
+      release?.cancel();
+      strip.inert = true;
+      const returning = animateExecutorRelease(strip, trigger, true);
+      const restore = () => {
+        returning.cancel();
+        if (host.contains(strip)) host.replaceChildren(...previous);
+        pendingInlineReturns.delete(host);
+      };
+      pendingInlineReturns.set(host, restore);
+      void returning.finished.then(() => {
+        if (pendingInlineReturns.get(host) === restore) restore();
+      });
       if (restoreFocus && trigger.isConnected) trigger.focus();
       resolve(id);
     };
@@ -173,6 +189,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
         notice.textContent = WORK_PREPARATION_NOTICE;
         host.append(notice);
       }
+      release = animateExecutorRelease(strip, trigger);
       list.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true });
     }).catch(error => {
       if (closed) return;
