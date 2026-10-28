@@ -114,7 +114,6 @@ function render(state: PetView): void {
     contextTitle.textContent = activity.detail;
     contextTitle.hidden = false;
     waitingDots.hidden = true;
-    required<HTMLElement>("#recording-upload-notice").hidden = true;
     paperAction.disabled = false;
     paperLabel.textContent = activity.state === "ready" ? "审阅" : activity.state === "failed" ? "处理" : "进度";
     paperAction.dataset.action = "distillation";
@@ -137,9 +136,9 @@ function render(state: PetView): void {
   if (!currentConversation) {
     bubble.classList.remove("is-waiting");
     petBody.title = "打开 Worket";
-    paperLabel.textContent = "记录";
+    paperLabel.textContent = "查看";
     paperAction.removeAttribute("data-action");
-    paperAction.setAttribute("aria-label", "当前没有可记录的对话");
+    paperAction.setAttribute("aria-label", "当前没有可查看的对话");
     return;
   }
   setApplicationMark(
@@ -153,16 +152,12 @@ function render(state: PetView): void {
   contextTitle.hidden = needsSelection;
   contextTitle.textContent = currentConversation.title;
   waitingDots.hidden = !needsSelection;
-  const hasWork = Boolean(currentConversation.workId);
-  const disclosure = required<HTMLElement>("#recording-upload-notice");
-  disclosure.hidden = hasWork || state.recordingUploadNoticeRequired === false;
-  disclosure.textContent = "记录后将由 Worket 服务自动更新工作状态。参与改进开启时，对话另留存 90 天，可在 Worket 服务关闭或删除。";
   if (currentBody) positionBubble(currentBody);
-  paperLabel.textContent = hasWork ? "打开" : "记录";
-  paperAction.dataset.action = hasWork ? "open" : "record";
+  paperLabel.textContent = needsSelection ? "选择" : "查看";
+  paperAction.dataset.action = "open";
   paperAction.setAttribute(
     "aria-label",
-    `${hasWork ? "打开" : "记录"}当前工作：${currentConversation.title}`,
+    `查看当前活动：${currentConversation.title}`,
   );
   petBody.title = `打开 Worket · ${currentConversation.title}`;
 }
@@ -237,7 +232,7 @@ paperAction.addEventListener("click", async () => {
   busy = true;
   paperAction.disabled = true;
   try {
-    await window.workpet.recordCurrentContextFromPet();
+    await window.workpet.openCurrentContextFromPet();
   } finally {
     busy = false;
     await refresh();

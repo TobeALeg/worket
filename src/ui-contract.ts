@@ -34,6 +34,7 @@ export interface StateItemView {
 export type WorkStateView = Record<WorkStateField, StateItemView[]>;
 
 export interface WorkSummaryView {
+  reusableDefinitionId?: string;
   workflowLabel?: string;
   id: string;
   agentName: string;
@@ -54,7 +55,6 @@ export interface WorkDetailView extends WorkSummaryView {
   currentStageTask?: string;
   sourceNotice?: string;
   latestActivity?: { text: string; sourceMessageId: string };
-  reusableDefinitionId?: string;
   hasInstanceFiles?: boolean;
   hasPinnedMaterials?: boolean;
   dispatchStatus?: string;
@@ -111,7 +111,6 @@ export interface CurrentConversationView {
 }
 
 export const WORK_PREPARATION_NOTICE = "记录和交接时，Worket 服务会分析这项工作已有及后续的可见记录、要求和材料版本，自动准备工作状态；不额外读取附件正文。";
-export const RECORDING_UPLOAD_NOTICE = WORK_PREPARATION_NOTICE + "参与改进开启时，点击记录会上传所选聊天已有及后续的用户消息和 AI 回复，供 Worket 管理员改进产品，保存 90 天。不额外读取附件、工具输出或推理摘要；可在“Worket 服务 → 改进数据”关闭或删除。";
 
 export type PetUpdateState = "none" | "available" | "receiving" | "ready";
 
@@ -120,7 +119,6 @@ export interface PetView {
   distillation?: import("./distillation/activity.js").DistillationActivity | null;
   placement?: PetPlacement;
   edge?: "left" | "right" | "top" | "bottom" | null;
-  recordingUploadNoticeRequired?: boolean;
   petState: PetState;
   currentConversation: CurrentConversationView | null;
 }
@@ -168,6 +166,7 @@ export interface SplitPointView {
 }
 
 export interface CreateWorkFromMessageRequest {
+  mode?: "view";
   sourceWorkId: string;
   startExternalId: string;
 }
@@ -195,7 +194,7 @@ export interface WorkPetApi {
   getWorketServiceStatus(): Promise<{ url: string; automatic: boolean; hasCredential: boolean; expiresAt: string | null; userId: string | null; deviceId: string | null; hasRecoveryCode: boolean }>;
   copyWorketRecoveryCode(): Promise<void>;
   restoreWorketAccount(recoveryCode: string): Promise<void>;
-  recordCurrentContextFromPet(): Promise<DashboardView>;
+  openCurrentContextFromPet(): Promise<DashboardView>;
   getPetView(): Promise<PetView>;
   openDistillationFromPet(): Promise<void>;
   onOpenDistillation(callback: (jobId: string) => void): () => void;
@@ -231,13 +230,11 @@ export interface WorkPetApi {
   ): Promise<DashboardView>;
   consumeSourceSelection(): Promise<string | undefined>;
   refreshWork(workId: string): Promise<DashboardView>;
-  completeWork(workId: string): Promise<DashboardView>;
   archiveWork(workId: string): Promise<DashboardView>;
-  resumeWork(workId: string): Promise<DashboardView>;
   reopenHandoff(workId: string): Promise<DashboardView>;
   cancelHandoff(workId: string, confirmation: string): Promise<DashboardView>;
   handoff(workId: string, executorId: string): Promise<DashboardView>;
-  cancelRecording(workId: string, confirmation: string): Promise<DashboardView>;
+  deleteLocalActivity(workId: string, confirmation: string): Promise<DashboardView>;
   onPanelShown(callback: (workId?: string) => void): () => void;
   closePanel(): Promise<void>;
 }

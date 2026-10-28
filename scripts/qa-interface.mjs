@@ -63,7 +63,7 @@ await page.addInitScript(() => {
     completeWork: async id => change(id, 'COMPLETED'), resumeWork: async id => change(id, 'OPEN'), archiveWork: async id => change(id, 'ARCHIVED'),
     refreshWork: async () => { throw new Error('连接中断，请重试'); },
     handoff: async id => { selected = works.find(w => w.id === id); selected.captureStatus = 'waiting'; return dashboard(); },
-    cancelRecording: async (id, confirmation) => { window.cancelRecordingCalls = (window.cancelRecordingCalls ?? 0) + 1; if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
+    deleteLocalActivity: async (id, confirmation) => { window.deleteLocalActivityCalls = (window.deleteLocalActivityCalls ?? 0) + 1; if (confirmation !== '删除本地活动') throw new Error('请输入“删除本地活动”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
     copyWorkPackage: async () => {}, exportWorkPackage: async () => '/tmp/fixture.json',
     consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, onFeedbackCollapse() {}, closePanel() { window.panelCloseCalls = (window.panelCloseCalls ?? 0) + 1; },
     feedback: async () => null,
@@ -140,28 +140,28 @@ try {
   assert.equal(await page.getByRole('button', { name: 'WorkBuddy', exact: true }).isDisabled(), true);
   await page.keyboard.press('Escape');
   await menuAction('split'); await shot('06-split'); await page.keyboard.press('Escape');
-  await menuAction('cancel-recording');
-  await page.locator('#confirm-cancel-recording').click();
-  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
-  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
-  assert.equal(await page.locator('#cancel-recording-confirmation').evaluate(el => el === document.activeElement), true);
-  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  await menuAction('delete-local-activity');
+  await page.locator('#confirm-delete-local-activity').click();
+  assert.equal(await page.locator('#delete-local-activity-error').isVisible(), false);
+  assert.equal(await page.locator('#delete-local-activity-confirmation').getAttribute('aria-invalid'), 'true');
+  assert.equal(await page.locator('#delete-local-activity-confirmation').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#delete-local-activity-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
   await shot('07-cancel-confirmation');
-  await page.locator('#cancel-recording-confirmation').fill('取消');
-  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
-  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
-  await page.locator('#confirm-cancel-recording').click();
-  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
-  assert.equal(await page.evaluate(() => window.cancelRecordingCalls ?? 0), 0);
-  assert.equal(await page.locator('#cancel-recording-error').isVisible(), false);
+  await page.locator('#delete-local-activity-confirmation').fill('取消');
+  assert.equal(await page.locator('#delete-local-activity-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#delete-local-activity-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await page.locator('#confirm-delete-local-activity').click();
+  assert.equal(await page.locator('#delete-local-activity-prompt').evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), true);
+  assert.equal(await page.evaluate(() => window.deleteLocalActivityCalls ?? 0), 0);
+  assert.equal(await page.locator('#delete-local-activity-error').isVisible(), false);
   await page.keyboard.press('Escape');
-  await menuAction('cancel-recording');
-  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), null);
-  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
+  await menuAction('delete-local-activity');
+  assert.equal(await page.locator('#delete-local-activity-confirmation').getAttribute('aria-invalid'), null);
+  assert.equal(await page.locator('#delete-local-activity-prompt').evaluate(el => el.classList.contains('confirmation-invalid')), false);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.locator('#confirm-cancel-recording').click();
-  assert.equal(await page.locator('#cancel-recording-prompt').evaluate(el => el.getAnimations().length), 0);
-  assert.equal(await page.locator('#cancel-recording-confirmation').getAttribute('aria-invalid'), 'true');
+  await page.locator('#confirm-delete-local-activity').click();
+  assert.equal(await page.locator('#delete-local-activity-prompt').evaluate(el => el.getAnimations().length), 0);
+  assert.equal(await page.locator('#delete-local-activity-confirmation').getAttribute('aria-invalid'), 'true');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.keyboard.press('Escape');
   await page.locator('[data-action="complete"]').click(); await page.locator('[data-action="resume"]').waitFor(); await shot('08-completed');
@@ -260,10 +260,10 @@ try {
   await page.locator('[data-action="resume"]').click();
   await menuAction('split'); await page.locator('#confirm-split').click();
   await page.getByRole('heading', { name: '新的发布工作', exact: true }).waitFor();
-  await menuAction('cancel-recording'); await page.locator('#cancel-recording-confirmation').fill('取消记录'); await page.locator('#confirm-cancel-recording').click();
+  await menuAction('delete-local-activity'); await page.locator('#delete-local-activity-confirmation').fill('删除本地活动'); await page.locator('#confirm-delete-local-activity').click();
   await page.locator('#work-list').waitFor({ state: 'visible' });
   assert.equal(await page.locator('[data-work-id="split"]').count(), 0);
-  assert.equal(await page.evaluate(() => window.cancelRecordingCalls), 1);
+  assert.equal(await page.evaluate(() => window.deleteLocalActivityCalls), 1);
 
   const adminPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   adminPage.on('pageerror', e => errors.push(e.message));

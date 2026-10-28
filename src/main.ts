@@ -383,12 +383,11 @@ function registerIpc(): void {
     ...await requireService().getPetView(),
     updateState: updates.state,
     distillation: await distillation.call("activity"),
-    recordingUploadNoticeRequired: distillation.service.recordings.noticeRequired() || requireService().preparationNoticeRequired(),
     edge: petPosition?.edge ?? null,
     placement: petPosition?.placement,
   }));
-  ipcMain.handle("panel:record-current-context", async () => {
-    const dashboard = await diagnostics.operation("record", () => requireService().recordCurrentContext());
+  ipcMain.handle("panel:open-current-context", async () => {
+    const dashboard = await diagnostics.operation("app", () => requireService().openCurrentContext());
     showPanel(dashboard.selectedWorkId ?? undefined);
     return dashboard;
   });
@@ -500,14 +499,8 @@ function registerIpc(): void {
   ipcMain.handle("work:refresh", (_event, workId: string) =>
     diagnostics.operation("sync", () => requireService().refreshWork(workId)),
   );
-  ipcMain.handle("work:complete", (_event, workId: string) =>
-    requireService().completeWork(workId),
-  );
   ipcMain.handle("work:archive", (_event, workId: string) =>
     requireService().archiveWork(workId),
-  );
-  ipcMain.handle("work:resume", (_event, workId: string) =>
-    requireService().resumeWork(workId),
   );
   ipcMain.handle(
     "work:cancel-handoff",
@@ -522,7 +515,7 @@ function registerIpc(): void {
     }),
   );
   ipcMain.handle(
-    "work:cancel-recording",
+    "work:delete-local-activity",
     (_event, workId: string, confirmation: string) =>
       requireService().cancelRecording(workId, confirmation),
   );

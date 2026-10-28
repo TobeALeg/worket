@@ -24,12 +24,16 @@ await page.addInitScript(() => {
     bindings: [{ status: 'ACTIVE', conversationId: id === 'waiting' ? 'pending:1' : 'chat-1' }],
   });
   let works = [work('open', 'MentiFem 品牌与发布方案', 'OPEN'), work('waiting', '官网首页设计与开发交接', 'OPEN', 'waiting'), work('done', '本周客户项目报告', 'COMPLETED'), work('archived', '第一版产品调研', 'ARCHIVED')];
+  works.push({ ...work('contract', '契约工作', 'OPEN'), reusableDefinitionId: 'definition' }, { ...work('flow', '流程节点', 'OPEN'), reusableDefinitionId: 'definition', workflowRunId: 'run' });
   let selected = null;
   const dashboard = () => ({ works, selectedWorkId: selected?.id ?? null, selectedWork: selected, notice: null, petState: 'awake' });
   const change = (id, status) => { selected = works.find(w => w.id === id); selected.status = status; return dashboard(); };
   const thread = { id: 'chat', executorId: 'codex', agentName: 'Codex', title: '整理下周的产品发布计划', cwd: '/tmp/fixture', projectLabel: '产品发布', updatedAt: new Date().toISOString() };
   let preference = true;
   window.workpet = {
+    getPetView: async () => ({ petState: 'sleeping', currentConversation: { adapter: 'codex', applicationName: 'Codex', title: '查看活动', needsSelection: false, isRecording: false } }),
+    openCurrentContextFromPet: async () => { window.petOpened = true; },
+    setPetMousePassthrough() {},
     openArtifact: async (workId, itemId) => {
       window.openedArtifact = { workId, itemId };
       if (window.artifactMissing) throw new Error('文件不存在或已移动');
@@ -44,7 +48,7 @@ await page.addInitScript(() => {
     completeWork: async id => change(id, 'COMPLETED'), resumeWork: async id => change(id, 'OPEN'), archiveWork: async id => change(id, 'ARCHIVED'),
     refreshWork: async () => { throw new Error('连接中断，请重试'); },
     handoff: async id => { selected = works.find(w => w.id === id); selected.captureStatus = 'waiting'; return dashboard(); },
-    cancelRecording: async (id, confirmation) => { window.cancelRecordingCalls = (window.cancelRecordingCalls ?? 0) + 1; if (confirmation !== '取消记录') throw new Error('请输入“取消记录”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
+    deleteLocalActivity: async (id, confirmation) => { window.deleteLocalActivityCalls = (window.deleteLocalActivityCalls ?? 0) + 1; if (confirmation !== '删除本地活动') throw new Error('请输入“删除本地活动”'); works = works.filter(w => w.id !== id); selected = null; return dashboard(); },
     copyWorkPackage: async () => {}, exportWorkPackage: async () => '/tmp/fixture.json',
     consumeSourceSelection: async () => null, onPanelShown(callback) { window.openFromPet = callback; }, onFeedbackCollapse() {}, onWorkflowDraftFlush() {}, closePanel() { window.panelCloseCalls = (window.panelCloseCalls ?? 0) + 1; },
     feedback: async () => null,
@@ -89,6 +93,13 @@ try {
  await page.locator('[data-work-id="done"]').waitFor();
  await page.locator('[data-distill-work]').first().check();
  assert.equal(await page.locator('#distill-selected').isEnabled(),true);
+ await page.locator('[data-work-id="contract"]').click();
+ assert.equal(await page.getByRole('button', { name: '验收交付', exact: true }).isVisible(), true);
+ await page.locator('#back-to-list').click();
+ await page.locator('[data-work-id="flow"]').click();
+ assert.equal(await page.locator('[data-action="complete"]').count(), 0);
+ assert.equal(await page.getByRole('button', { name: '返回所属流程', exact: true }).isVisible(), true);
+ await page.locator('#back-to-list').click();
  await page.locator('[data-work-id="done"]').click();
  assert.equal(await page.locator('[data-action="handoff"]').isVisible(),true);
  assert.equal(await page.locator('[data-action="resume"]').count(),0);
@@ -98,9 +109,9 @@ try {
  await page.locator('#tab-recent').click();
  await page.locator('.source-row').first().click();
  await page.locator('#work-detail summary[aria-label="工作操作"]').click();
- await page.locator('[data-action="cancel-recording"]').click();
- await page.locator('#cancel-recording-confirmation').fill('取消记录');
- await page.locator('#confirm-cancel-recording').click();
+ await page.locator('[data-action="delete-local-activity"]').click();
+ await page.locator('#delete-local-activity-confirmation').fill('删除本地活动');
+ await page.locator('#confirm-delete-local-activity').click();
  await page.locator('#sources-panel').waitFor();
  assert.equal(await page.locator('#work-detail').isVisible(),false);
  assert.match(await page.locator('[data-provider="codex"] img').getAttribute('src'), /chatgpt-circle/);
@@ -161,6 +172,12 @@ try {
  assert.equal(motion.wheelScrolled, 45);
  assert.ok(motion.edgeScrolled > 0);
  assert.equal(motion.centered, motion.centerStopped);
+ await page.goto(`http://127.0.0.1:${server.address().port}/renderer/pet.html`);
+ await page.getByRole('button', { name: '查看当前活动：查看活动' }).waitFor();
+ assert.equal(await page.locator('#paper-label').textContent(), '查看');
+ await page.locator('#paper-action').click();
+ assert.equal(await page.evaluate(() => window.petOpened), true);
+ assert.equal(await page.locator('#recording-upload-notice').count(), 0);
  assert.deepEqual(errors,[]);
  console.log('PASS: direct activity, original detail, inline icons, historical handoff, combined distillation, navigation');
 } finally {await browser.close();await new Promise(r=>server.close(r));}
