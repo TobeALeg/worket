@@ -74,3 +74,17 @@ test('旧已完成普通工作可以直接交接，打开历史本身不恢复�
     assert.equal(handed.selectedWork?.captureStatus, 'waiting');
   } finally { f.close(); }
 });
+
+
+test('已有 v6 数据库启动时补齐查看表并保留历史工作', async () => {
+  const f = fixture();
+  try {
+    const id = (await f.open()).selectedWorkId!;
+    f.app.core().definitions.db.exec('DROP TABLE work_view_snapshots');
+    f.restart();
+    assert.equal(f.app.dashboard(id).selectedWork?.id, id);
+    assert.equal((await f.open()).selectedWorkId, id);
+    f.restart();
+    assert.equal(f.app.dashboard(id).selectedWork?.id, id);
+  } finally { f.close(); }
+});
