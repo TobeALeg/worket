@@ -1,0 +1,30 @@
+/* Delegate Board reference palette for active workflow status. */
+.worket-badge {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  gap: 5px; min-height: 20px; padding: 0 7px; border-radius: 5px;
+  font-size: 11px; line-height: 16px; font-weight: 500; white-space: nowrap;
+  background: #008ff519; color: #006dcbf2;
+}
+.worket-spinner {
+  width: 12px; height: 12px; flex: none;
+  background: currentColor;
+  mask: url('./review-icons/delegate-board-spinner.svg') center / contain no-repeat;
+  animation: worket-status-spin 900ms linear infinite;
+}
+@keyframes worket-status-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .worket-spinner { animation: none; } }
+.list-row-heading { display: flex; align-items: center; gap: 8px; min-width: 0; grid-column: 1 / -1; }
+.list-row-heading h3 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-row-heading time { flex: none; white-space: nowrap; }
+.list-row-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+body:has(#tab-workflows[aria-selected="true"]) { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+body:has(#tab-workflows[aria-selected="true"]) > .topbar { flex: none; }
+body:has(#tab-workflows[aria-selected="true"]) > main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: 0; }
+#workflows-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.workflow-overview-content { flex: 1; min-height: 0; overflow: auto; }
+.workflow-overview-heading { display: flex; justify-content: flex-end; }
+.workflow-open-all { display: inline-flex; align-items: center; gap: 4px; }
+.workflow-overview-row .worket-badge { justify-self: start; grid-column: 1 / -1; }
+.workflow-overview-actions { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); background: var(--background); }
+.workflow-text-action { border: 0; background: transparent; padding: 3px 0; }
+.external-page-icon { display: block; width: 16px; height: 16px; background: currentColor; mask: url('./review-icons/icons-outline-arrow-up-right.svg') center / contain no-repeat; }

@@ -4,6 +4,7 @@ import type { Definition } from '../definitions/repository.js';
 import { acceptanceChecks } from '../contracts/rules.js';
 import { currentNode, outputPorts, type RunDetail, type WorkflowDefinition } from '../workflows/types.js';
 import { showWorkspace } from './workflow-workspace.js';
+import { workflowOverview } from './workflow-overview.js';
 import { WorkflowSession } from './workflow-session.js';
 import { chooseExecutor } from './executor-picker.js';
 import { showPageHeader } from './window-header.js';
@@ -17,11 +18,13 @@ const step = document.createElement('dialog'); step.id = 'workflow-step-dialog';
 let definitions: WorkflowDefinition[] = [], selectedDefinition: WorkflowDefinition | undefined, active: RunDetail | undefined, selectedNode = '';
 const navigation = new WorkflowSession(), dialogSession = new WorkflowSession(), pending = new Set<string>();
 let displayedPage: () => boolean = () => false;
+let overviewRequest = 0, overviewLoading = false;
 const live = (dialog = false) => { const page = navigation.capture(), modal = dialogSession.capture(); return () => page() && (!dialog || modal() && step.open); };
 let disposeMap: (() => void) | undefined, inspectorOpen = false;
 let refreshWorkspace: (() => Promise<void>) | undefined;
 function enter(): () => boolean { disposeMap?.(); disposeMap = undefined; refreshWorkspace = undefined; dialogSession.invalidate(); step.close(); return navigation.begin(); }
 root.addEventListener('close', () => {
+  if (!root.open) void window.workpet.setWorkflowExpanded?.(false);
   if (!root.open && displayedPage()) {
     navigation.invalidate(); disposeMap?.(); disposeMap = undefined; active = undefined;
     const save = preserveDraft;
@@ -32,7 +35,7 @@ step.addEventListener('close', () => { if (!step.open) dialogSession.invalidate(
 let preserveDraft: (() => Promise<void>) | undefined;
 const selectedNodes = new Map<string, string>();
 async function leaveEditor(): Promise<void> { const save = preserveDraft; if (save) { await save(); if (preserveDraft === save) preserveDraft = undefined; } }
-async function library(): Promise<void> { await leaveEditor(); enter(); root.close(); await renderWorkflows(); }
+async function library(): Promise<void> { await leaveEditor(); enter(); root.close(); await window.workpet.setWorkflowExpanded?.(false); await renderWorkflows(); }
 root.addEventListener('cancel', event => { event.preventDefault(); void library().catch(e => error(root, e)); });
 let changed: (d: DashboardView) => void = () => {};
 const runStatus = { RUNNING: '进行中', PAUSED: '已暂停', COMPLETED: '已完成', CANCELLED: '已取消' };
@@ -62,12 +65,13 @@ function modal(title: string, body: string, actions: string): HTMLDialogElement 
   step.querySelector<HTMLButtonElement>('#wf-close-step')!.onclick = () => step.close(); if (!step.open) step.showModal(); return step;
 }
 function page(title: string, body: string, actions = ''): void {
+  void window.workpet.setWorkflowExpanded?.(true).catch(e => error(root, e));
   disposeMap?.(); disposeMap = undefined;
   root.classList.toggle('wf-map-page', body.includes('wf-map-viewport'));
   displayedPage = navigation.capture();
   root.innerHTML = `<div class="dialog-shell"><div class="window-header-slot"></div><div class="wf-shell"><aside class="wf-sidebar"><strong>工作流</strong><button id="wf-library">全部流程</button><button id="wf-workspace">所有运行</button><button id="wf-pending">待验收</button>${definitions.filter((d, i) => definitions.findIndex(x => x.key === d.key) === i).map(d => `<button data-flow="${esc(d.id)}" class="${selectedDefinition?.key === d.key ? 'active' : ''}">${esc(d.name)}</button>`).join('')}</aside><div class="wf-page"><header class="wf-heading"><div><p class="wf-context">${selectedDefinition ? `${esc(active?.run.name ?? selectedDefinition.name)} / 固定流程 v${selectedDefinition.version}` : '工作空间 / 工作流'}</p><h2>${esc(title)}</h2></div><div class="wf-actions">${actions}</div></header><p role="alert" class="notice" hidden></p>${body}</div></div></div>`;
   if (!root.open) root.showModal(); showPageHeader({ dialog: root, label: '返回流程列表', back: library, beforeNavigate: async () => { await preserveDraft?.(); } });
-  bind(root, '#wf-library', library);
+  bind(root, '#wf-library', openCatalog);
   bind(root, '#wf-workspace', () => workspace());
   bind(root, '#wf-pending', () => workspace({ review: true }));
   root.querySelectorAll<HTMLButtonElement>('[data-flow]').forEach(b => b.onclick = () => { void openDefinition(b.dataset.flow!).catch(e => error(root, e)); });
@@ -75,15 +79,44 @@ function page(title: string, body: string, actions = ''): void {
 const builderHost: BuilderHost = { preserve: save => { preserveDraft = save; }, clearPreserve: () => { preserveDraft = undefined; }, library, capture: () => live(), page, modal, bind, root, closeModal: () => step.close() };
 export async function renderWorkflows(): Promise<void> {
   if (root.open) return;
-  const valid = enter(), [catalog, drafts]: [any, DraftSummary[]] = await Promise.all([api('catalog'), api('drafts')]); if (!valid()) return; definitions = catalog.definitions;
+  const request = ++overviewRequest;
   const host = document.querySelector<HTMLElement>('#workflows-panel')!;
+  overviewLoading = true;
+  try {
+    const [catalog, running, completed]: [any, RunPage, RunPage] = await Promise.all([api('catalog'), api('queryRuns', { status: 'RUNNING', limit: 50 }), api('queryRuns', { status: 'COMPLETED', limit: 50 })]);
+    if (request !== overviewRequest || root.open || host.hidden) return;
+    definitions = catalog.definitions;
+    const html = workflowOverview(running, completed);
+    // Preserve focus and scroll when the polling result has not changed.
+    if (host.dataset.overview === html) return;
+    const content = host.querySelector<HTMLElement>('.workflow-overview-content'), scroll = content?.scrollTop ?? 0;
+    const focusedRun = host.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.overviewRun : undefined;
+    host.innerHTML = html; host.dataset.overview = html;
+    host.querySelector<HTMLElement>('.workflow-overview-content')!.scrollTop = scroll;
+    const action = (selector: string, run: () => Promise<void>): void => {
+      host.querySelectorAll<HTMLButtonElement>(selector).forEach(button => button.onclick = () => {
+        if (button.disabled) return;
+        button.disabled = true;
+        void run().catch(e => error(root.open ? root : host, e)).finally(() => { button.disabled = false; });
+      });
+    };
+    action('#wf-open-workspace', () => workspace());
+    action('#wf-definitions', openCatalog);
+    action('#wf-new', () => editWorkflow());
+    host.querySelectorAll<HTMLButtonElement>('[data-overview-run]').forEach(button => action(`[data-overview-run="${CSS.escape(button.dataset.overviewRun!)}"]`, () => openRun(button.dataset.overviewRun!)));
+    if (focusedRun) host.querySelector<HTMLButtonElement>(`[data-overview-run="${CSS.escape(focusedRun)}"]`)?.focus({ preventScroll: true });
+  } finally { if (request === overviewRequest) overviewLoading = false; }
+}
+async function openCatalog(): Promise<void> {
+  await leaveEditor();
+  const valid = enter(), [catalog, drafts]: [any, DraftSummary[]] = await Promise.all([api('catalog'), api('drafts')]);
+  if (!valid()) return;
+  definitions = catalog.definitions; selectedDefinition = undefined; active = undefined;
   const latest = definitions.filter((d, i) => definitions.findIndex(x => x.key === d.key) === i);
-  host.innerHTML = `<div class="wf-heading"><h2>工作流</h2><div class="wf-actions"><button id="wf-open-workspace">所有运行</button><button id="wf-open-pending">待验收</button><button id="wf-new" class="primary">新建流程</button></div></div>${drafts.length ? `<section class="wf-drafts"><h3>草稿</h3>${drafts.map(d => `<button class="work-row" data-open-draft="${esc(d.id)}"><h3>${esc(d.name || "未命名流程")}</h3><span class="row-meta">${esc(new Date(d.updatedAt).toLocaleString("zh-CN"))} · 继续编辑</span></button>`).join("")}</section>` : ""}${latest.length ? latest.map(d => `<button class="work-row" data-open-flow="${esc(d.id)}"><h3>${esc(d.name)}</h3><span class="row-meta">v${d.version} · ${d.nodes.length} 份 Contract</span><p>${d.nodes.map(n => esc(n.name)).join(' → ')}</p></button>`).join('') : '<p class="empty">暂无已保存流程</p>'}`;
-  host.querySelector<HTMLButtonElement>('#wf-new')!.onclick = () => { void editWorkflow().catch(e => error(root, e)); };
-  host.querySelector<HTMLButtonElement>('#wf-open-workspace')!.onclick = () => { void workspace().catch(e => error(root, e)); };
-  host.querySelector<HTMLButtonElement>('#wf-open-pending')!.onclick = () => { void workspace({ review: true }).catch(e => error(root, e)); };
-  host.querySelectorAll<HTMLButtonElement>('[data-open-draft]').forEach(b => b.onclick = () => { void editWorkflow(undefined, b.dataset.openDraft).catch(e => error(root, e)); });
-  host.querySelectorAll<HTMLButtonElement>('[data-open-flow]').forEach(b => b.onclick = () => { void openDefinition(b.dataset.openFlow!).catch(e => error(host, e)); });
+  page('流程定义与编辑', `${drafts.length ? `<section class="wf-drafts"><h3>草稿</h3>${drafts.map(d => `<button class="work-row" data-open-draft="${esc(d.id)}"><h3>${esc(d.name || '未命名流程')}</h3><span class="row-meta">${esc(new Date(d.updatedAt).toLocaleString('zh-CN'))} · 继续编辑</span></button>`).join('')}</section>` : ''}${latest.length ? latest.map(d => `<button class="work-row" data-open-flow="${esc(d.id)}"><h3>${esc(d.name)}</h3><span class="row-meta">v${d.version} · ${d.nodes.length} 项工作</span><p>${d.nodes.map(n => esc(n.name)).join('、')}</p></button>`).join('') : '<p class="empty">暂无已保存流程</p>'}`, '<button id="wf-new" class="primary">新建工作流</button>');
+  bind(root, '#wf-new', () => editWorkflow());
+  root.querySelectorAll<HTMLButtonElement>('[data-open-draft]').forEach(b => b.onclick = () => { void editWorkflow(undefined, b.dataset.openDraft).catch(e => error(root, e)); });
+  root.querySelectorAll<HTMLButtonElement>('[data-open-flow]').forEach(b => b.onclick = () => { void openDefinition(b.dataset.openFlow!).catch(e => error(root, e)); });
 }
 async function saved(d: WorkflowDefinition): Promise<void> { const valid = live(), catalog = await api('catalog'); if (!valid()) return; definitions = catalog.definitions; await openDefinition(d.id); }
 async function openDefinition(id: string): Promise<void> {
@@ -202,6 +235,10 @@ export function setupWorkflows(onChanged: typeof changed): void {
   changed = onChanged;
   window.workpet.onWorkflowDraftFlush(async () => { await preserveDraft?.(); });
   setInterval(() => {
+    const overview = document.querySelector<HTMLElement>('#workflows-panel');
+    if (!root.open && overview && !overview.hidden && !document.hidden && !overviewLoading && !document.querySelector('dialog[open]')) {
+      void renderWorkflows().catch(e => error(overview, e)); return;
+    }
     if (root.open && !active && refreshWorkspace && !step.open && !document.activeElement?.matches('input,textarea,select')) { const valid = live(); void refreshWorkspace().catch(e => { if (valid()) error(root, e); }); return; }
     if (!root.open || !active || [...pending].some(key => key.startsWith(active!.run.id + ':')) || step.open || document.querySelector('dialog[open]:not(#workflow-dialog), .secondary-menu[open]') || document.activeElement?.matches('input,textarea,select')) return;
     const id = active.run.id, valid = live(); void api('detail', { runId: id }).then((next: RunDetail) => { if (valid() && !step.open && ![...pending].some(key => key.startsWith(id + ':')) && active?.run.id === id && JSON.stringify(next) !== JSON.stringify(active)) { active = next; drawRun(next); } }).catch(e => { if (valid()) error(root, e); });

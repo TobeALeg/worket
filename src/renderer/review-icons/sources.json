@@ -43,5 +43,15 @@
     "file": "icons-outline-x.svg",
     "source": "https://cdn.jsdelivr.net/npm/@tabler/icons@3.35.0/icons/outline/x.svg",
     "sha256": "b71b2c0e17697c41893d00e222a6244a3d3cbb3cd2b40496ce7f58e21db44664"
+  },
+  {
+    "file": "icons-outline-arrow-up-right.svg",
+    "source": "https://raw.githubusercontent.com/tabler/tabler-icons/v3.35.0/icons/outline/arrow-up-right.svg",
+    "sha256": "3d145248af5c819e5016dde81fc3e2c06800bf762fa074cb044a02aac81e3ec7"
+  },
+  {
+    "file": "delegate-board-spinner.svg",
+    "source": "User-provided Delegate Board reference: live/live.html .ui-dbc__spin",
+    "sha256": "db968ad3f029bc30f2e16680e468fe5ef71b1883090a47a7b9b4472f6cb1da39"
   }
 ]

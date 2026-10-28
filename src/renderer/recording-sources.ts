@@ -1,4 +1,5 @@
 import { executorPresentation } from "./executor-presentation.js";
+import { listDate } from './list-date.js';
 import { setupExecutorDock } from "./executor-dock.js";
 import { hintHorizontalMotion } from "./horizontal-motion-hint.js";
 import { type ConversationView, type DashboardView, type ExecutorView } from "../ui-contract.js";
@@ -40,7 +41,7 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
     title.textContent = source.title || "未命名聊天";
     const meta = document.createElement("p");
     meta.className = "source-meta";
-    meta.textContent = `${source.projectLabel ?? (source.cwd.split("/").filter(Boolean).at(-1) || "无项目")} · ${new Date(source.updatedAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+    meta.textContent = `${source.projectLabel ?? (source.cwd.split("/").filter(Boolean).at(-1) || "无项目")} · ${listDate(source.updatedAt)}`;
     text.append(title, meta);
     row.disabled = recording;
     row.addEventListener("click", async () => {

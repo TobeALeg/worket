@@ -305,6 +305,19 @@ function revealApp(): void {
 }
 
 function registerIpc(): void {
+  let compactBounds: Electron.Rectangle | undefined;
+  ipcMain.handle('workflow:expanded', (event, expanded: boolean) => {
+    if (event.sender !== panelWindow?.webContents || typeof expanded !== 'boolean') throw new Error('INVALID_SENDER');
+    if (!panelWindow) return;
+    if (expanded && !compactBounds) {
+      compactBounds = panelWindow.getBounds();
+      const area = screen.getDisplayMatching(compactBounds).workArea;
+      const width = Math.min(1280, area.width), height = Math.min(900, area.height);
+      panelWindow.setBounds({ x: Math.round(area.x + (area.width - width) / 2), y: Math.round(area.y + (area.height - height) / 2), width, height });
+    } else if (!expanded && compactBounds) {
+      panelWindow.setBounds(compactBounds); compactBounds = undefined;
+    }
+  });
   ipcMain.handle('workflow:command', (event, action, input) => {
     if (event.sender !== panelWindow?.webContents) throw new Error('INVALID_SENDER');
     return new WorkflowDesktop(requireService(), distillation, path => shell.openPath(path)).call(action, input);
