@@ -20,10 +20,6 @@ export function createSchema(database: DatabaseSync): void {
       updated_at TEXT NOT NULL
     ) STRICT;
 
-    CREATE TABLE IF NOT EXISTS work_view_snapshots (
-      work_id TEXT PRIMARY KEY REFERENCES work_instances(id) ON DELETE CASCADE
-    ) STRICT;
-
     CREATE TABLE IF NOT EXISTS work_records (
       id TEXT PRIMARY KEY,
       work_instance_id TEXT NOT NULL UNIQUE REFERENCES work_instances(id) ON DELETE CASCADE,
@@ -105,6 +101,11 @@ export function createSchema(database: DatabaseSync): void {
 }
 
 export function migrateStateProgress(database: DatabaseSync): void {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS work_view_snapshots (
+      work_id TEXT PRIMARY KEY REFERENCES work_instances(id) ON DELETE CASCADE
+    ) STRICT;
+  `);
   database.exec('CREATE INDEX IF NOT EXISTS source_events_by_work_row ON source_events(work_instance_id,row_id)');
   const recordColumns = database.prepare("PRAGMA table_info(work_records)").all() as Array<{ name: string }>;
   if (!recordColumns.some((column) => column.name === "extracted_sequence")) {

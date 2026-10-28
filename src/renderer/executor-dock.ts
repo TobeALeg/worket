@@ -1,6 +1,6 @@
-/** Proximity magnification and edge scrolling without changing button hit areas. */
-export function setupExecutorDock(list: HTMLElement): () => void {
-  const buttons = [...list.querySelectorAll<HTMLButtonElement>(".executor-option")];
+/** Gentle proximity feedback, edge browsing and mouse-wheel scrolling. */
+export function setupExecutorDock(list: HTMLElement, selector = ".executor-option"): () => void {
+  const buttons = [...list.querySelectorAll<HTMLButtonElement>(selector)];
   let pointerX: number | null = null;
   let focused: HTMLButtonElement | null = null;
   let frame = 0;
@@ -11,16 +11,16 @@ export function setupExecutorDock(list: HTMLElement): () => void {
   });
   const update = (time: number) => {
     frame = 0;
-    const bounds = list.getBoundingClientRect();
     const elapsed = Math.min(previousTime ? time - previousTime : 16, 32);
     previousTime = time;
+    const bounds = list.getBoundingClientRect();
     let scrolling = false;
-    if (pointerX !== null) {
-      const edge = 36;
-      const left = Math.max(0, 1 - (pointerX - bounds.left) / edge);
-      const right = Math.max(0, 1 - (bounds.right - pointerX) / edge);
+    if (pointerX !== null && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const edge = 32;
+      const left = Math.max(0, Math.min(1, 1 - (pointerX - bounds.left) / edge));
+      const right = Math.max(0, Math.min(1, 1 - (bounds.right - pointerX) / edge));
       const before = list.scrollLeft;
-      list.scrollLeft += (right * right - left * left) * 180 * elapsed / 1000;
+      list.scrollLeft += (right * right - left * left) * 110 * elapsed / 1000;
       scrolling = Math.abs(list.scrollLeft - before) > .01;
     }
     const focusBounds = focused?.getBoundingClientRect();
@@ -29,7 +29,7 @@ export function setupExecutorDock(list: HTMLElement): () => void {
       const rect = button.getBoundingClientRect();
       const distance = x === null ? 90 : Math.abs(rect.left + rect.width / 2 - x);
       const influence = button.disabled ? 0 : Math.cos(Math.min(distance / 90, 1) * Math.PI / 2) ** 2;
-      button.style.setProperty("--dock-scale", String(1 + .4 * influence));
+      button.style.setProperty("--dock-scale", String(1 + .18 * influence));
       button.style.setProperty("--dock-lift", `${-.5 * influence}px`);
     }
     if (scrolling) schedule();
@@ -42,8 +42,18 @@ export function setupExecutorDock(list: HTMLElement): () => void {
     schedule();
   };
   const leave = () => { pointerX = null; previousTime = 0; schedule(); };
+  const wheel = (event: WheelEvent) => {
+    if (event.ctrlKey || event.metaKey || list.scrollWidth <= list.clientWidth) return;
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? list.clientWidth : 1;
+    const before = list.scrollLeft;
+    pointerX = null;
+    list.scrollLeft += delta * unit;
+    if (list.scrollLeft !== before) event.preventDefault();
+    schedule();
+  };
   const focus = (event: FocusEvent) => {
-    const button = (event.target as HTMLElement).closest<HTMLButtonElement>(".executor-option");
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>(selector);
     if (!button?.matches(":focus-visible")) return;
     focused = button;
     pointerX = null;
@@ -56,6 +66,8 @@ export function setupExecutorDock(list: HTMLElement): () => void {
   const blur = (event: FocusEvent) => {
     if (!list.contains(event.relatedTarget as Node | null)) { focused = null; schedule(); }
   };
+  list.addEventListener("wheel", wheel, { passive: false });
+  list.addEventListener("pointerdown", leave);
   list.addEventListener("pointermove", move);
   list.addEventListener("pointerleave", leave);
   list.addEventListener("focusin", focus);
@@ -63,6 +75,8 @@ export function setupExecutorDock(list: HTMLElement): () => void {
   list.addEventListener("scroll", schedule);
   return () => {
     cancelAnimationFrame(frame);
+    list.removeEventListener("wheel", wheel);
+    list.removeEventListener("pointerdown", leave);
     list.removeEventListener("pointermove", move);
     list.removeEventListener("pointerleave", leave);
     list.removeEventListener("focusin", focus);
