@@ -235,3 +235,11 @@ blockquote { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--lin
 button.source-row { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--text); font: inherit; }
 button.source-row:hover:not(:disabled) { background: var(--hover); }
 button.source-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Shared artwork and a quiet, user-controlled icon strip. */
+.source-providers { padding: 4px 7px; margin-left: -7px; scrollbar-width: none; }
+.source-providers::-webkit-scrollbar { display: none; }
+.source-icon { background: transparent; overflow: visible; transform: translateY(var(--dock-lift, 0px)) scale(var(--dock-scale, 1)); transition: transform 140ms ease-out; }
+.source-provider[data-provider] .source-icon { background: transparent; }
+.source-icon img { object-fit: contain; transform: none; }
+@media (prefers-reduced-motion: reduce) { .source-icon { transition: none; } }

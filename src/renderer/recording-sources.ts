@@ -1,7 +1,10 @@
+import { executorPresentation } from "./executor-presentation.js";
+import { setupExecutorDock } from "./executor-dock.js";
+import { hintHorizontalMotion } from "./horizontal-motion-hint.js";
 import { type ConversationView, type DashboardView, type ExecutorView } from "../ui-contract.js";
 
 type Page = { threads: ConversationView[]; nextCursor: string | null; notice?: string };
-const logos: Record<string, string> = { codex: "codex.png", workbuddy: "workbuddy.png", antigravity: "antigravity.png", zcode: "zcode.png" };
+
 
 export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => void): {
   refresh: (force?: boolean) => Promise<void>;
@@ -18,6 +21,8 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
   let selected = "all", recording = false, loading = false;
   let lastRefresh = 0, revision = 0, searchRevision = 0;
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  let disposeProviderMotion: (() => void) | undefined;
+  let providersHinted = false;
   let codexSearch: Page | null = null;
 
   function showError(value: unknown): void {
@@ -55,6 +60,7 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
   }
 
   function renderProviders(): void {
+    disposeProviderMotion?.();
     providers.replaceChildren();
     for (const item of executors) {
       const button = document.createElement("button");
@@ -66,9 +72,10 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
       button.setAttribute("aria-pressed", String(selected === item.id));
       const icon = document.createElement("span");
       icon.className = "source-icon";
-      if (logos[item.id]) {
+      const presentation = executorPresentation[item.id];
+      if (presentation) {
         const logo = document.createElement("img");
-        logo.src = `./executor-logos/${logos[item.id]}`;
+        logo.src = `./executor-logos/${presentation.logo}`;
         logo.alt = "";
         icon.append(logo);
       } else {
@@ -87,6 +94,10 @@ export function setupRecordingSources(onRecorded: (dashboard: DashboardView) => 
       });
       providers.append(button);
     }
+    const disposeDock = setupExecutorDock(providers, ".source-provider");
+    const disposeHint = !providersHinted && executors.length ? hintHorizontalMotion(providers) : () => {};
+    if (executors.length) providersHinted = true;
+    disposeProviderMotion = () => { disposeDock(); disposeHint(); };
   }
 
   function render(): void {

@@ -1,25 +1,13 @@
+import { executorPresentation } from "./executor-presentation.js";
+import { hintHorizontalMotion } from "./horizontal-motion-hint.js";
 import { setupExecutorDock } from "./executor-dock.js";
 import { animateExecutorRelease } from "./executor-release.js";
 import type { ExecutorView } from "../ui-contract.js";
 import { WORK_PREPARATION_NOTICE } from "../ui-contract.js";
 
-const options: Record<string, { logo: string; name: string; web?: boolean }> = {
-  codex: { logo: "chatgpt-circle.png", name: "Codex" },
-  workbuddy: { logo: "workbuddy.svg", name: "WorkBuddy" },
-  zcode: { logo: "zcode-circle.png", name: "ZCode" },
-  antigravity: { logo: "antigravity-circle.png", name: "Antigravity" },
-  qwenwork: { logo: "qwenwork-circle.png", name: "QwenWork" },
-  "qwenwork-web": { logo: "qwenwork-circle.png", name: "QwenWork", web: true },
-  "kimi-work": { logo: "kimi-circle.png", name: "Kimi", web: true },
-  "doubao-work": { logo: "doubao-circle.png", name: "豆包", web: true },
-  "deepseek-web": { logo: "deepseek-circle.png", name: "DeepSeek", web: true },
-  "gemini-web": { logo: "gemini-circle.png", name: "Gemini", web: true },
-  "coze-web": { logo: "coze-circle.png", name: "扣子", web: true },
-  "web-selected": { logo: "browser-circle.svg", name: "其他网页", web: true },
-};
 
 function executorOption(executor: ExecutorView, select: (id: string) => void): HTMLElement {
-  const presentation = options[executor.id];
+  const presentation = executorPresentation[executor.id];
   const option = document.createElement("div");
   option.className = "executor-option-wrap";
   const button = document.createElement("button");
@@ -126,6 +114,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
   return new Promise(resolve => {
     let closed = false;
     let release: ReturnType<typeof animateExecutorRelease> | undefined;
+    let disposeHint: (() => void) | undefined;
     let disposeDock: (() => void) | undefined;
     const finish = (id: string | null, restoreFocus = true) => {
       if (closed) return;
@@ -136,6 +125,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
       observer.disconnect();
       trigger.setAttribute("aria-expanded", "false");
       trigger.removeAttribute("aria-controls");
+      disposeHint?.();
       disposeDock?.();
       release?.cancel();
       strip.inert = true;
@@ -196,6 +186,7 @@ export function chooseInlineExecutor(host: HTMLElement, trigger: HTMLButtonEleme
       disposeDock = setupExecutorDock(list);
       release = animateExecutorRelease(strip, trigger);
       list.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true });
+      disposeHint = hintHorizontalMotion(list, release.finished);
     }).catch(error => {
       if (closed) return;
       list.removeAttribute("aria-busy");
