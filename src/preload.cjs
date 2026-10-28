@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld("workpet", {
   openArtifact: (workId, itemId) => ipcRenderer.invoke("work:open-artifact", workId, itemId),
   distillation: (action, input) => ipcRenderer.invoke("distillation:command", action, input),
   workflow: (action, input) => ipcRenderer.invoke('workflow:command', action, input),
+  setWorkflowExpanded: expanded => ipcRenderer.invoke('workflow:expanded', expanded),
   onWorkflowDraftFlush: callback => { flushWorkflowDraft = callback; return () => { if (flushWorkflowDraft === callback) flushWorkflowDraft = async () => {}; }; },
   chooseDefinitionFile: (kind) => ipcRenderer.invoke("distillation:choose-file", kind),
   exportWorkPackage: (workId) => ipcRenderer.invoke("distillation:export", workId),

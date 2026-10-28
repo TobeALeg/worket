@@ -1,5 +1,13 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+2026-10-28 用户再次确认：列表只展示最新沉淀，移除版本彩条；版本仍在详情查找。最近活动、已沉淀与工作流列表共用 listDate（M/D HH:mm，斜杠）。已完成运行保留在下方，但去掉分区标题、计数和完成标签；仅 RUNNING 条目显示“进行中”，待验收节点在正文表达。已完成条目与沉淀复用标题、右侧日期、三行正文样式。全页只保留一个“打开全部”箭头入口，新建及定义编辑入口保留。
+
+## 2026-10-28：列表信息来源审核（未改实现）
+
+后续 Figma 提案将小页面的 WorkflowRun 概览和完整页面的 WorkflowDefinition 查看/编辑分开；运行中与已完成同时展示，静态定义不按运行状态分类。运行摘要继续投影已有状态与验收事实，不新增工作流状态机。400×720 可编辑状态稿已完成，尚未实现路由、窗口或查询修改，见 [页面索引](design/worket-ui/pages.md#2026-10-28-已沉淀与-workflow-小页面视觉提案)。
+
+已沉淀经 DefinitionRepository.list 按 definitionKey 选择最新版本；renderer/distillation.ts 展示 content.name、version、confirmedAt，purpose.text 在列表截断至三行，详情保留全文。workflow-overview.ts 投影 queryRuns 的 RUNNING/COMPLETED、review 和 accepted/total；2.5 秒刷新仅在概览可见且无弹层时运行，内容未变保留 DOM，变更时保留滚动与运行行焦点。静态定义移至完整目录，不再用节点数组顺序画箭头。workflow:expanded IPC 校验面板 sender，进入完整页扩展当前窗口，返回恢复原 bounds。未增加持久字段或迁移。来源审核见 [信息审核](design/worket-ui/information-audit.md)。
+
 ## 2026-10-27：按需查看与持续记录分离
 
 最近活动通过已有 createWorkFromConversation 接口的 mode=view 打开工作，renderer 不创建新的状态分类。work_view_snapshots 保存按需查看工作 ID；来源绑定仍用于去重和证据身份，但轮询、来源通知和后台工作准备跳过这些工作。显式打开/刷新可读取来源并执行现有抽取，首次查看不调用 onRecordingStarted。标记跨重启保留且随工作级联删除；明确交接后移除标记，待接手及后续回流沿用原机制，传输失败恢复原按需模式。

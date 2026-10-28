@@ -96,7 +96,7 @@ try {
   await root().locator('#wf-save-copy').click(); await root().locator('#wf-draft-status').filter({ hasText: '草稿已保存' }).waitFor();
   await screenshot('01-draft-conflict-recovered');
   await root().locator('#wf-name').fill('退出前最后输入'); await app.close(); app = undefined;
-  await launch(); const recovered = (await api('drafts')).find(d => d.name === '退出前最后输入'); assert.ok(recovered);
+  await launch(); await panel.locator('#wf-definitions').click(); const recovered = (await api('drafts')).find(d => d.name === '退出前最后输入'); assert.ok(recovered);
   await panel.locator(`[data-open-draft="${recovered.id}"]`).click(); assert.equal(await root().locator('#wf-name').inputValue(), '退出前最后输入');
   await root().locator('#wf-discard').click(); await step().locator('#wf-confirm-discard').click(); await step().waitFor({ state: 'hidden' });
   assert.equal((await api('drafts')).some(d => d.id === recovered.id), false);

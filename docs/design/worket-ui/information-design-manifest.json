@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-28",
+  "fileKey": "DctYxpkI7FMqVfhCJGC8qC",
+  "sessionId": "0646f708-5fb0-469b-8b41-5c398716f243",
+  "pageId": "0:1",
+  "rootId": "172:3182",
+  "status": "USER_ACCEPTED",
+  "runtimeChanged": true,
+  "definitionRowComponentId": "179:3240",
+  "statusComponentSetId": "182:3275",
+  "statusVariableCollectionId": "VariableCollectionId:182:3253",
+  "spinnerId": "183:3263",
+  "spinnerPeriodMs": 900,
+  "spinnerPreviewSeconds": 2.7,
+  "motionValidation": "keyframes read back; no video export",
+  "definitionRowLayout": "title and confirmation time on one line; no version badge; summary up to three lines",
+  "screens": [
+    {
+      "name": "已沉淀",
+      "id": "172:3188"
+    },
+    {
+      "name": "Workflow 运行中与已完成",
+      "id": "172:3246"
+    },
+    {
+      "name": "Workflow 无运行中",
+      "id": "172:3328"
+    },
+    {
+      "name": "Workflow 首次进入",
+      "id": "172:3391"
+    }
+  ],
+  "validation": {
+    "imageFilledNodes": 0,
+    "summaryLines": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "fontFamily": "Noto Sans SC",
+    "finalScreenshotReviewed": true,
+    "dynamicChecks": [
+      "build",
+      "10 workflow unit tests",
+      "qa-list-overview",
+      "qa-workflow-workspace"
+    ]
+  },
+  "interaction": "one Open all arrow; whole run rows clickable; only ongoing runs show status; completed rows remain without section or status label",
+  "dateFormat": "shared M/D HH:mm",
+  "acceptedDate": "2026-10-28"
+}

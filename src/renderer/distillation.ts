@@ -1,4 +1,5 @@
 import { showPageHeader } from "./window-header.js";
+import { listDate } from './list-date.js';
 import { contractDispatchState } from './contract-dispatch.js';
 import { chooseExecutor } from './executor-picker.js';
 import { contractColor, setContractColor, workContract } from './work-contract.js';
@@ -174,11 +175,11 @@ async function openServiceSettings(connected = false): Promise<void> {
 export async function renderDefinitions(): Promise<void> {
   const panel = document.querySelector<HTMLElement>("#definitions-panel")!;
   const [page, jobs] = await Promise.all([api("definitions"), api("jobs")]);
-  panel.innerHTML = `${page.items.length ? page.items.map((d: Definition) => `<button class="work-row" data-definition="${esc(d.id)}"><h3>${esc(d.content.name)}</h3><span class="row-meta">v${d.version} · ${esc(new Date(d.confirmedAt).toLocaleDateString())}</span><p>${esc(d.content.purpose.text)}</p></button>`).join("") : '<p class="empty">暂无已沉淀工作</p>'}${jobs.some((j: Job) => j.status !== "SAVED") ? "<h3>沉淀任务</h3>" : ""}${jobs
+  panel.innerHTML = `${page.items.length ? page.items.map((d: Definition) => `<button class="work-row definition-list-row" data-definition="${esc(d.id)}"><span class="list-row-heading"><h3 title="${esc(d.content.name)}">${esc(d.content.name)}</h3><time datetime="${esc(d.confirmedAt)}" title="版本确认时间">${esc(listDate(d.confirmedAt))}</time></span><p class="list-row-summary">${esc(d.content.purpose.text)}</p></button>`).join("") : '<p class="empty">暂无已沉淀工作</p>'}${jobs.some((j: Job) => j.status !== "SAVED") ? "<h3>沉淀任务</h3>" : ""}${jobs
     .filter((j: Job) => j.status !== "SAVED")
     .map(
       (j: Job & { title: string }) =>
-        `<button class="work-row distillation-job" data-job="${esc(j.id)}"><h3>${esc(j.title)}</h3><span class="job-status" data-status="${esc(j.status)}">${esc(jobLabel(j.status))}</span><time datetime="${esc(j.createdAt)}">${esc(new Date(j.createdAt).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }))}</time>${j.error ? `<p>${esc(jobError(j.error))}</p>` : ""}</button>`,
+        `<button class="work-row distillation-job" data-job="${esc(j.id)}"><span class="list-row-heading"><h3>${esc(j.title)}</h3><time datetime="${esc(j.createdAt)}">${esc(listDate(j.createdAt))}</time></span><span class="job-status" data-status="${esc(j.status)}">${esc(jobLabel(j.status))}</span>${j.error ? `<p class="list-row-summary">${esc(jobError(j.error))}</p>` : ""}</button>`,
     )
     .join("")}`;
   panel
