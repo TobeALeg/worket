@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld("workpet", {
   getWorketServiceStatus: () => ipcRenderer.invoke("distillation:connection"),
   copyWorketRecoveryCode: () => ipcRenderer.invoke("distillation:copy-recovery"),
   restoreWorketAccount: (recoveryCode) => ipcRenderer.invoke("distillation:restore-account", recoveryCode),
-  recordCurrentContextFromPet: () => ipcRenderer.invoke("panel:record-current-context"),
+  openCurrentContextFromPet: () => ipcRenderer.invoke("panel:open-current-context"),
   onPetPlacement: (callback) => {
     const listener = (_event, edge) => callback(edge);
     ipcRenderer.on("pet:placement", listener);
@@ -54,13 +54,11 @@ contextBridge.exposeInMainWorld("workpet", {
   createWorkFromMessage: (request) => ipcRenderer.invoke("work:create-from-message", request),
   consumeSourceSelection: () => ipcRenderer.invoke("conversations:selection"),
   refreshWork: (workId) => ipcRenderer.invoke("work:refresh", workId),
-  completeWork: (workId) => ipcRenderer.invoke("work:complete", workId),
   archiveWork: (workId) => ipcRenderer.invoke("work:archive", workId),
-  resumeWork: (workId) => ipcRenderer.invoke("work:resume", workId),
   reopenHandoff: (workId) => ipcRenderer.invoke("work:reopen-handoff", workId),
   cancelHandoff: (workId, confirmation) => ipcRenderer.invoke("work:cancel-handoff", workId, confirmation),
   handoff: (workId, executorId) => ipcRenderer.invoke("work:handoff", workId, executorId),
-  cancelRecording: (workId, confirmation) => ipcRenderer.invoke("work:cancel-recording", workId, confirmation),
+  deleteLocalActivity: (workId, confirmation) => ipcRenderer.invoke("work:delete-local-activity", workId, confirmation),
   onPanelShown: (callback) => {
     const listener = (_event, workId) => callback(workId);
     ipcRenderer.on("panel:shown", listener);

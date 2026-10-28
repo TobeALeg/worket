@@ -256,7 +256,7 @@ export class AppService {
     this.#notice = context
       ? context.conversationId
         ? `已识别当前 ${context.applicationName} 任务：${context.applicationTitle ?? "未命名工作"}`
-        : `请选择要记录的 ${context.applicationName} 聊天。`
+        : `请选择要查看的 ${context.applicationName} 聊天。`
       : "未识别到已接入的前台应用。";
     return context;
   }
@@ -278,10 +278,15 @@ export class AppService {
         needsSelection: !context.conversationId,
         workId: work?.instance.id ?? null,
         workStatus: work?.instance.status ?? null,
-        isRecording: work ? captureStatus(work) === "recording" : false,
-        ...(work ? { captureStatus: captureStatus(work) } : {}),
+        isRecording: work ? !this.#isViewOnly(work.instance.id) && captureStatus(work) === "recording" : false,
+        ...(work ? { captureStatus: this.#isViewOnly(work.instance.id) ? "stopped" as const : captureStatus(work) } : {}),
       },
     };
+  }
+  async openCurrentContext(): Promise<DashboardView> {
+    const context = await this.captureForegroundContext();
+    if (!context) return this.dashboard();
+    return this.createWorkFromCurrentContext(context, "view");
   }
   async recordCurrentContext(): Promise<DashboardView> {
     const context = await this.captureForegroundContext();
@@ -290,6 +295,7 @@ export class AppService {
   }
   async createWorkFromCurrentContext(
     context: CurrentApplicationContext,
+    mode?: "view",
   ): Promise<DashboardView> {
     if (!context.conversationId) {
       this.#sourceSelection = context.adapter;
@@ -298,6 +304,7 @@ export class AppService {
     return this.createWorkFromConversation({
       executorId: context.adapter,
       threadId: context.conversationId,
+      ...(mode ? { mode } : {}),
     });
   }
   consumeSourceSelection(): string | undefined {
@@ -447,6 +454,7 @@ export class AppService {
         source: { adapter: adapter.id, conversationId: binding.conversationId },
       });
       createdId = work.instance.id;
+      if (request.mode === "view") this.#core.definitions.db.prepare("INSERT INTO work_view_snapshots VALUES (?)").run(work.instance.id);
       work = this.#core.appendSourceEvents(
         work.instance.id,
         this.#sourceInputs(events, { adapter: adapter.id, conversationId: thread.threadId, scopeStartExternalId: originalId }),
@@ -459,10 +467,12 @@ export class AppService {
       this.#core.applyExtractorPatch(work.instance.id, patch, Math.max(0, ...work.sourceArchive.map((event) => event.sequence)));
       this.options.onRecordingStopped?.(sourceWork.instance.id);
       this.#preparation.cancel(sourceWork.instance.id);
-      this.#preparation.enable(work.instance.id);
-      this.#preparation.schedule(work.instance.id, true);
-      this.options.onRecordingStarted?.(work.instance.id);
-      this.#notice = "已从指定消息创建新的工作记录。";
+      if (request.mode !== "view") {
+        this.#preparation.enable(work.instance.id);
+        this.#preparation.schedule(work.instance.id, true);
+        this.options.onRecordingStarted?.(work.instance.id);
+      }
+      this.#notice = "已从指定消息创建新的活动。";
       return this.dashboard(work.instance.id);
     } catch (error) {
       if (createdId)
@@ -992,14 +1002,14 @@ export class AppService {
       });
   }
   cancelRecording(workId: string, confirmation: string): DashboardView {
-    if (confirmation !== "取消记录")
-      throw new Error("请输入“取消记录”进行二次确认");
+    if (confirmation !== "取消记录" && confirmation !== "删除本地活动")
+      throw new Error("请输入“删除本地活动”进行二次确认（旧版：取消记录）");
     this.#core.deleteWorkPermanently(workId, { confirmation: workId });
     this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
     this.#selectedWorkId = null;
     this.#petState = "sleeping";
-    this.#notice = "已取消记录，后续不再同步；Worket 本地副本已清除，原对话和原文件保持不变。";
+    this.#notice = "本地活动已删除，后续不再同步；原对话和原文件保持不变。";
     return this.dashboard();
   }
 
@@ -1186,6 +1196,7 @@ export class AppService {
     return {
       ...(workflow ? { workflowLabel: `${workflow.name} · ${workflow.nodeName} · 第 ${workflow.generation} 轮` } : {}),
       id: work.instance.id,
+      ...(work.definition.kind === "REUSABLE" ? { reusableDefinitionId: work.definition.id } : {}),
       agentName:
         (work.activeEpisode ?? work.episodes.at(-1))?.executor.name ??
         (work.definition.kind === "REUSABLE" ? "尚未交给执行者" : "未知 Agent"),

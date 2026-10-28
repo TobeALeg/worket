@@ -5,17 +5,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AppService } from '../../dist/app/app-service.js';
 
-function fixture() {
+function fixture(withContext = false) {
   const directory = mkdtempSync(join(tmpdir(), 'worket-view-'));
   let reads = 0, enrollments = 0, failDelivery = false;
   const events: any[] = [];
   const add = () => events.push({ id: `e${events.length}`, externalId: `e${events.length}`, sequence: events.length + 1,
     kind: 'user.prompt', content: `必须交付第 ${events.length + 1} 份报告。`, timestamp: new Date().toISOString(), executorType: 'HUMAN', environmentType: 'FIXTURE' });
   add();
-  const adapter = { id: 'fixture', name: 'Fixture', mark: 'F', bundleIds: [], environment: { type: 'FIXTURE', name: 'Fixture' },
+  const adapter = { id: 'fixture', name: 'Fixture', mark: 'F', bundleIds: ['dev.fixture'], environment: { type: 'FIXTURE', name: 'Fixture' },
     source: { async readThread(id: string) { reads++; return { threadId: id, title: '报告', applicationTitle: '报告', cwd: directory, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), events }; }, close() {} },
-    async inspect() {}, async resolveCurrent() { return null; }, async deliver() { if (failDelivery) throw new Error('delivery failed'); return {}; } };
-  const options = { databasePath: join(directory, 'work.sqlite'), executors: [adapter], foreground: { async detect() { return null; } }, onRecordingStarted() { enrollments++; } };
+    async inspect() {}, async resolveCurrent() { return withContext ? { id: "source", title: "报告", cwd: directory, updatedAt: new Date().toISOString() } : null; }, async deliver() { if (failDelivery) throw new Error('delivery failed'); return {}; } };
+  const options = { databasePath: join(directory, 'work.sqlite'), executors: [adapter], foreground: { async detect() { return withContext ? { bundleId: "dev.fixture", name: "Fixture", windowTitle: "报告" } : null; } }, onRecordingStarted() { enrollments++; } };
   let app = new AppService(options);
   return { get app() { return app; }, add, reads: () => reads, enrollments: () => enrollments,
     failDelivery() { failDelivery = true; }, restart() { app.close(); app = new AppService(options); },
@@ -86,5 +86,27 @@ test('已有 v6 数据库启动时补齐查看表并保留历史工作', async (
     assert.equal((await f.open()).selectedWorkId, id);
     f.restart();
     assert.equal(f.app.dashboard(id).selectedWork?.id, id);
+  } finally { f.close(); }
+});
+
+
+test('桌宠直接查看不启动采集，从消息新建保持按需模式', async () => {
+  const f = fixture(true);
+  try {
+    const opened = await f.app.openCurrentContext();
+    const id = opened.selectedWorkId!;
+    assert.ok(id);
+    assert.equal((await f.app.getPetView()).currentConversation?.isRecording, false);
+    assert.equal((await f.app.openCurrentContext()).selectedWorkId, id);
+    const split = await f.app.createWorkFromMessage({ sourceWorkId: id, startExternalId: 'e0', mode: 'view' });
+    assert.notEqual(split.selectedWorkId, id);
+    assert.equal(split.selectedWork?.captureStatus, 'stopped');
+    const reads = f.reads(); f.add(); await f.app.syncRecordedWorks();
+    assert.equal(f.reads(), reads);
+    assert.equal(f.enrollments(), 0);
+    assert.equal(f.app.core().definitions.db.prepare('SELECT count(*) AS n FROM work_preparation').get()!.n, 0);
+    f.app.cancelRecording(split.selectedWorkId!, '删除本地活动');
+    assert.equal(f.app.core().getWork(split.selectedWorkId!), null);
+    assert.ok(f.app.core().getWork(id));
   } finally { f.close(); }
 });

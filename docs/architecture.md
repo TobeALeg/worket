@@ -820,3 +820,8 @@ WorkBuddyLocalHistory 在查询数据库和枚举正文前验证账号快照；E
 2026-10-27 执行者素材核对：[官方素材记录](design/worket-ui/executor-artwork.md)关联官网/商店/应用原图，`sources.json` 固定原图地址与哈希，`circle-crops.json` 固定派生坐标和哈希。圆形素材脚本在生成时检查最低源尺寸、裁剪范围及无空边，构建继续只复制本地静态素材，无运行时网络依赖。
 
 2026-10-27 发布准备：v0.1.9 从固定 main 提交构建 macOS ARM64 ZIP 与 SHA-256，通过现有 release:mac 脚本完成临时签名、解压验签、桌面与更新下载验收；不改变模块、协议或数据库版本。实际发布与跨版本验证另行记录。
+
+
+## 2026-10-28 普通活动入口清理（用户已确认）
+
+桌宠通过 panel:open-current-context → AppService.openCurrentContext → mode=view 打开来源；从消息新建通过显式 mode=view 写入按需查看标记，跳过后台准备与改进采集。移除 renderer/preload/main 中无调用者的普通 complete/resume IPC；保留领域完成/恢复方法供契约、流程和兼容路径使用。删除入口通过 deleteLocalActivity 调用原删除服务，确认词为“删除本地活动”；旧确认词只为后端兼容保留。WorkSummaryView 补充契约身份以区分列表标签，持久状态不迁移。

@@ -23,7 +23,7 @@ await page.addInitScript(() => {
   const thread = { id: 'synthetic', executorId: 'fixture', agentName: 'Fixture', title: '合成测试 · 整理客户周报', cwd: '/tmp/fixture', updatedAt: new Date().toISOString() };
   window.workpet = {
     getPetView: async () => ({ petState: 'awake', recordingUploadNoticeRequired: !localStorage.getItem("noticeAccepted") && !localStorage.getItem("optOut"), currentConversation: { adapter: 'fixture', applicationName: 'Fixture', mark: 'F', title: thread.title, needsSelection: false, workId: null, workStatus: null, isRecording: false } }),
-    recordCurrentContextFromPet: async () => { localStorage.setItem("noticeAccepted", "yes"); },
+    openCurrentContextFromPet: async () => { localStorage.setItem("noticeAccepted", "yes"); },
     createWorkFromConversation: async () => { localStorage.setItem("noticeAccepted", "yes"); return { petState: 'sleeping', works: [], selectedWorkId: null, selectedWork: null, notice: null }; },
     getDashboard: async () => ({ petState: 'sleeping', works: [], selectedWorkId: null, selectedWork: null, notice: null }),
     listRecentConversations: async () => ({ threads: [thread], errors: [] }),
@@ -37,42 +37,12 @@ await page.addInitScript(() => {
 const url = `http://127.0.0.1:${server.address().port}`;
 try {
   await page.goto(url + '/renderer/pet.html');
-  await page.locator('#recording-upload-notice').waitFor({ state: 'visible' });
-  const box = await page.locator('#context-bubble').boundingBox();
-  assert.ok(box && box.y >= 0 && box.x >= 0 && box.x + box.width <= 304);
-  assert.match(await page.locator('#recording-upload-notice').textContent(), /留存 90 天/);
-  await page.screenshot({ path: output + '/pet.png' });
+  await page.getByRole('button', { name: '查看当前活动：' + '合成测试 · 整理客户周报' }).waitFor();
+  assert.equal(await page.locator('#recording-upload-notice').count(), 0);
+  assert.equal(await page.locator('#paper-label').textContent(), '查看');
   await page.locator('#paper-action').click();
-  await page.locator('#recording-upload-notice').waitFor({ state: 'hidden' });
-  await page.reload();
-  await page.locator('#context-bubble').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#recording-upload-notice').isVisible(), false);
-  await page.screenshot({ path: output + '/pet-after-recording.png' });
-  await page.evaluate(() => { localStorage.removeItem('noticeAccepted'); localStorage.setItem('optOut', 'yes'); });
-  await page.reload();
-  await page.locator('#context-bubble').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#recording-upload-notice').isVisible(), false);
-  await page.screenshot({ path: output + '/pet-opt-out.png' });
-  await page.evaluate(() => { localStorage.clear(); });
-  await page.setViewportSize({ width: 448, height: 760 });
-  await page.goto(url + '/renderer/panel.html');
-  await page.locator('#tab-recent').click();
-  await page.locator('#recent-sources .source-row').waitFor();
-  assert.match(await page.locator('#recent-sources .notice').textContent(), /保存 90 天/);
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.screenshot({ path: output + '/recent.png' });
-  assert.match(await page.locator('#recent-sources .notice').textContent(), /已有及后续/);
-  await page.screenshot({ path: output + '/history.png' });
-  await page.locator('#recent-sources .source-row button').click();
-  await page.locator('#tab-recent').click();
-  await page.waitForFunction(() => document.querySelector('#recent-sources .source-row') && !document.querySelector('#recent-sources .notice'));
-  await page.screenshot({ path: output + '/recent-after-recording.png' });
-  assert.equal(await page.locator('#recent-sources .notice').count(), 0);
-  await page.reload();
-  await page.locator('#tab-recent').click();
-  await page.locator('#recent-sources .source-row').waitFor();
-  assert.equal(await page.locator('#recent-sources .notice').count(), 0);
+  assert.equal(await page.evaluate(() => localStorage.getItem('noticeAccepted')), 'yes');
+  await page.screenshot({ path: output + '/pet-view.png' });
   assert.deepEqual(errors, []);
-  await writeFile(output + '/report.json', JSON.stringify({ passed: true, synthetic: true, uploaded: false, screenshots: 6, noticeOnce: true, reloadPersistence: true }, null, 2));
-  console.log('PASS: recording disclosures, opt-out, and narrow layouts');
+  console.log('PASS: pet opens activity without recording entry or upload notice');
 } finally { await browser.close(); await new Promise(r => server.close(r)); }

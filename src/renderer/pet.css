@@ -19,7 +19,6 @@ button { font: inherit; }
 .waiting-dots i:nth-child(3) { animation-delay: .36s; }
 .context-bubble.is-waiting { grid-template-columns: 24px 24px; }
 .context-bubble.is-waiting .context-copy { display: flex; align-items: center; justify-content: center; }
-#recording-upload-notice { max-width: 260px; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .pet, .pet-anchor { width: var(--pet-width, 80.25px); height: var(--pet-height, 77px); }
 .pet { position: relative; }
 .pet-anchor { position: absolute; left: var(--pet-x, 190.875px); top: var(--pet-y, 159.25px); }

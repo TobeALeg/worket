@@ -13,7 +13,6 @@ import { errorText } from "../distillation/activity.js";
 import {
   WORK_STATE_LABELS,
   CAPTURE_STATUS_LABELS,
-  RECORDING_UPLOAD_NOTICE,
   type DashboardView,
   type WorkDetailView,
   type WorkStateField,
@@ -25,16 +24,15 @@ const list = required<HTMLElement>("#work-list");
 const detail = required<HTMLElement>("#work-detail");
 const notice = required<HTMLElement>("#notice");
 const splitDialog = required<HTMLDialogElement>("#split-dialog");
-const cancelRecordingDialog = required<HTMLDialogElement>("#cancel-recording-dialog");
-const cancelRecordingConfirmation = required<HTMLInputElement>("#cancel-recording-confirmation");
-const cancelRecordingPrompt = required<HTMLElement>("#cancel-recording-prompt");
+const deleteLocalActivityDialog = required<HTMLDialogElement>("#delete-local-activity-dialog");
+const deleteLocalActivityConfirmation = required<HTMLInputElement>("#delete-local-activity-confirmation");
+const deleteLocalActivityPrompt = required<HTMLElement>("#delete-local-activity-prompt");
 const splitPointSelect = required<HTMLSelectElement>("#split-point");
 let dashboard: DashboardView;
-let recordingNoticeRequired = true;
 type PanelTab = "SAVED" | "ARCHIVED" | "RECENT" | "DEFINITIONS" | "WORKFLOWS";
 let filter: PanelTab = "RECENT";
 const selectedDistillationIds = new Set<string>();
-let pendingCancelRecordingWorkId: string | null = null;
+let pendingDeleteLocalActivityWorkId: string | null = null;
 let pendingSplitWorkId: string | null = null;
 let detailOpen = false;
 let actionPending = false;
@@ -108,7 +106,7 @@ function render(): void {
           (
             work,
           ) => `<div class="work-entry"><label class="work-select"><input type="checkbox" data-distill-work value="${escapeHtml(work.id)}" aria-label="选择 ${escapeHtml(work.title)}"></label><button class="work-row" data-work-id="${escapeHtml(work.id)}">
-        <h3>${escapeHtml(work.title)}</h3><span class="status ${work.captureStatus === "waiting" ? "status-waiting" : ""}">${work.status === "OPEN" ? CAPTURE_STATUS_LABELS[work.captureStatus] : work.status === "COMPLETED" ? "已完成" : "已归档"}</span>
+        <h3>${escapeHtml(work.title)}</h3><span class="status ${work.captureStatus === "waiting" ? "status-waiting" : ""}">${work.status === "ARCHIVED" ? "已归档" : work.captureStatus === "waiting" ? "等待确认" : work.reusableDefinitionId || work.workflowLabel ? (work.status === "COMPLETED" ? "已完成" : CAPTURE_STATUS_LABELS[work.captureStatus]) : ""}</span>
         ${work.workflowLabel ? `<span class="row-meta">${escapeHtml(work.workflowLabel)}</span>` : ""}
         <span class="row-meta"><span class="agent-label">${escapeHtml(work.agentName)}</span><span>· ${work.eventCount} 条记录</span><time>· ${formatDate(work.updatedAt)}</time></span>
       </button></div>`,
@@ -157,7 +155,7 @@ function renderDetail(work: WorkDetailView | null): void {
     <div class="detail-head"><h2>${escapeHtml(work.title)}</h2><p class="detail-meta">${work.eventCount} 条记录 · ${work.artifactCount} 份资料 · ${work.episodeCount} 段执行${work.status === "OPEN" && (work.reusableDefinitionId || work.dispatchStatus || work.captureStatus === "waiting") ? ` · <span class="capture-status">${work.dispatchStatus === "NOT_DISPATCHED" ? "尚未交接" : work.dispatchStatus === "FAILED" ? "交接失败" : work.dispatchStatus === "BOUND" ? (work.dispatchInlineDelivered ? "已绑定 · 完整说明已送达" : work.dispatchReadAt ? "已绑定 · 工作包已读取" : "已绑定 · 尚无工作包读取回执") : "等待用户发送与来源确认"}</span>` : ""}</p></div>
     ${waiting ? '<p class="notice">打开请求返回不代表草稿已出现。请检查目标应用；只发送一次。未出现草稿可重新打开，确认未接手后可取消。</p>' : ""}
     ${work.sourceNotice ? `<p class="notice source-notice">${escapeHtml(work.sourceNotice)}</p>` : ""}
-    <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新记录</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制网页工作包</button><button data-action="export-inline">导出网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="cancel-recording" class="destructive">取消记录</button></div></details></div>
+    <div class="detail-actions">${actions}<details class="secondary-menu"><summary aria-label="工作操作" title="更多操作">•••</summary><div class="menu-items">${work.status === "OPEN" ? '<button data-action="refresh">刷新内容</button>' : ""}${work.status !== "ARCHIVED" ? '<button data-action="split">从消息新建</button><button data-action="archive">归档</button>' : ""}${waiting ? '<button data-action="cancel-handoff">取消未确认交接</button>' : ""}${work.status === "OPEN" && work.hasInstanceFiles ? '<button data-action="instance-files">本次文件</button>' : ""}${work.hasPinnedMaterials ? '<button data-action="repair-materials">修复固定资料</button>' : ""}${work.artifactCount ? '<button data-action="distill-files">含附件沉淀</button>' : ""}<button data-action="copy">复制工作包</button><button data-action="copy-inline">复制网页工作包</button><button data-action="export-inline">导出网页工作包</button><button data-action="export">导出工作包</button><div class="menu-divider"></div><button data-action="delete-local-activity" class="destructive">删除本地活动</button></div></details></div>
     <div class="handoff-slot" data-handoff-slot></div>
     ${work.status === "OPEN" ? `<div class="progress-overview">${progressSection(work, "pendingActions")}</div>
     <details class="activity-preview" data-preview="context" ${expanded.has("context") ? "open" : ""}><summary>完整上下文 · ${Object.values(work.state).reduce((count, items) => count + items.length, 0)} 条</summary>` : ""}
@@ -225,16 +223,6 @@ function stateSection(
       <span class="origin" title="${item.sourceMessageIds.length} 个来源" aria-label="${item.sourceMessageIds.length} 个来源">${item.sourceMessageIds.length ? `↗ ${item.sourceMessageIds.length}` : ""}</span>
     </div>`;
   }).join("")}</div></section>`;
-}
-
-async function renderWithRecordingNotice(): Promise<void> {
-  try {
-    const state = await window.workpet.distillation("recordingNotice");
-    recordingNoticeRequired = state.required;
-  } catch {
-    recordingNoticeRequired = true;
-  }
-  render();
 }
 
 async function selectWork(workId: string): Promise<void> {
@@ -324,13 +312,13 @@ async function runAction(workId: string, action: string): Promise<void> {
     return;
   }
   if (selected && (await workDefinitionAction(selected, action))) return;
-  if (action === "cancel-recording") {
-    pendingCancelRecordingWorkId = workId;
-    cancelRecordingConfirmation.value = "";
-    cancelRecordingConfirmation.removeAttribute("aria-invalid");
-    cancelRecordingPrompt.classList.remove("confirmation-invalid");
-    required<HTMLElement>("#cancel-recording-error").hidden = true;
-    cancelRecordingDialog.showModal();
+  if (action === "delete-local-activity") {
+    pendingDeleteLocalActivityWorkId = workId;
+    deleteLocalActivityConfirmation.value = "";
+    deleteLocalActivityConfirmation.removeAttribute("aria-invalid");
+    deleteLocalActivityPrompt.classList.remove("confirmation-invalid");
+    required<HTMLElement>("#delete-local-activity-error").hidden = true;
+    deleteLocalActivityDialog.showModal();
     return;
   }
   if (action === "split") {
@@ -344,14 +332,14 @@ async function runAction(workId: string, action: string): Promise<void> {
   if (!operation) return;
   dashboard = await operation();
   if (filter !== "SAVED" && filter !== "ARCHIVED") filter = "RECENT";
-  await renderWithRecordingNotice();
+  render();
 }
 
 async function openSplit(workId: string): Promise<void> {
   const points = await window.workpet.listSplitPoints(workId);
   const uploadNotice = required<HTMLElement>("#split-upload-notice");
-  uploadNotice.textContent = RECORDING_UPLOAD_NOTICE;
-  uploadNotice.hidden = !recordingNoticeRequired;
+  uploadNotice.textContent = "";
+  uploadNotice.hidden = true;
   splitPointSelect.innerHTML = points
     .map(
       (point) =>
@@ -401,13 +389,14 @@ required<HTMLButtonElement>("#confirm-split").addEventListener(
     try {
       dashboard = await window.workpet.createWorkFromMessage({
         sourceWorkId: pendingSplitWorkId,
+        mode: "view",
         startExternalId: splitPointSelect.value,
       });
       pendingSplitWorkId = null;
       splitDialog.close();
       filter = "RECENT";
       detailOpen = true;
-      await renderWithRecordingNotice();
+      render();
     } catch (error) {
       const message = required<HTMLElement>("#split-upload-notice");
       message.textContent = String(error);
@@ -415,43 +404,43 @@ required<HTMLButtonElement>("#confirm-split").addEventListener(
     } finally { button.disabled = false; }
   },
 );
-cancelRecordingConfirmation.addEventListener("input", () => {
-  cancelRecordingConfirmation.removeAttribute("aria-invalid");
-  cancelRecordingPrompt.classList.remove("confirmation-invalid");
+deleteLocalActivityConfirmation.addEventListener("input", () => {
+  deleteLocalActivityConfirmation.removeAttribute("aria-invalid");
+  deleteLocalActivityPrompt.classList.remove("confirmation-invalid");
 });
-required<HTMLButtonElement>("#confirm-cancel-recording").addEventListener(
+required<HTMLButtonElement>("#confirm-delete-local-activity").addEventListener(
   "click",
   async (event) => {
     event.preventDefault();
-    if (!pendingCancelRecordingWorkId) return;
+    if (!pendingDeleteLocalActivityWorkId) return;
     const button = event.currentTarget as HTMLButtonElement;
     if (button.disabled) return;
-    const confirmation = cancelRecordingConfirmation.value;
-    required<HTMLElement>("#cancel-recording-error").hidden = true;
-    if (confirmation !== "取消记录") {
-      cancelRecordingConfirmation.setAttribute("aria-invalid", "true");
-      cancelRecordingPrompt.classList.add("confirmation-invalid");
-      for (const animation of cancelRecordingPrompt.getAnimations()) animation.cancel();
+    const confirmation = deleteLocalActivityConfirmation.value;
+    required<HTMLElement>("#delete-local-activity-error").hidden = true;
+    if (confirmation !== "删除本地活动") {
+      deleteLocalActivityConfirmation.setAttribute("aria-invalid", "true");
+      deleteLocalActivityPrompt.classList.add("confirmation-invalid");
+      for (const animation of deleteLocalActivityPrompt.getAnimations()) animation.cancel();
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        cancelRecordingPrompt.animate(
+        deleteLocalActivityPrompt.animate(
           [0, -4, 4, -3, 3, 0].map((x) => ({ transform: `translateX(${x}px)` })),
           { duration: 320, easing: "ease-in-out" },
         );
       }
-      cancelRecordingConfirmation.focus();
+      deleteLocalActivityConfirmation.focus();
       return;
     }
     button.disabled = true;
     try {
-      dashboard = await window.workpet.cancelRecording(
-        pendingCancelRecordingWorkId,
+      dashboard = await window.workpet.deleteLocalActivity(
+        pendingDeleteLocalActivityWorkId,
         confirmation,
       );
-      pendingCancelRecordingWorkId = null;
-      cancelRecordingDialog.close();
+      pendingDeleteLocalActivityWorkId = null;
+      deleteLocalActivityDialog.close();
       render();
     } catch (error) {
-      const message = required<HTMLElement>("#cancel-recording-error");
+      const message = required<HTMLElement>("#delete-local-activity-error");
       message.textContent = String(error);
       message.hidden = false;
     } finally {
@@ -490,26 +479,23 @@ const recordingSources = setupRecordingSources((result) => {
   dashboard = result;
   detailOpen = true;
   filter = "RECENT";
-  void renderWithRecordingNotice();
+  render();
 });
-setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = "RECENT"; void renderWithRecordingNotice(); });
-setupWorkflows(result => { dashboard = result; detailOpen = true; filter = "RECENT"; void renderWithRecordingNotice(); });
+setupSelectedImport(result => { dashboard = result; detailOpen = true; filter = "RECENT"; render(); });
+setupWorkflows(result => { dashboard = result; detailOpen = true; filter = "RECENT"; render(); });
 let refreshing = false;
 async function refreshPanel(): Promise<void> {
   if (refreshing || actionPending || document.querySelector("dialog[open], .secondary-menu[open]") || document.activeElement?.matches("input, textarea, select")) return;
   refreshing = true;
   try {
-    const [result, disclosure] = await Promise.allSettled([
+    const [result] = await Promise.allSettled([
       window.workpet.getDashboard(),
-      window.workpet.distillation("recordingNotice"),
       recordingSources.refresh(),
     ]);
-    const previousNoticeRequired = recordingNoticeRequired;
-    recordingNoticeRequired = disclosure.status === "fulfilled" ? disclosure.value.required : true;
     if (result.status === "fulfilled") {
       const changed = JSON.stringify(dashboard) !== JSON.stringify(result.value);
       dashboard = result.value;
-      if (changed || previousNoticeRequired !== recordingNoticeRequired || filter === "DEFINITIONS") render();
+      if (changed || filter === "DEFINITIONS") render();
       const selection = await window.workpet.consumeSourceSelection();
       if (selection) await recordingSources.open(selection);
     } else {
