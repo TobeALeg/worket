@@ -1,3 +1,4 @@
+import { localExecutionFields, bindLocalFields, executionEvidenceHtml, mountExecutionEvidence } from './local-execution.js';
 import { showPageHeader } from "./window-header.js";
 import { listDate } from './list-date.js';
 import { contractDispatchState } from './contract-dispatch.js';
@@ -483,13 +484,14 @@ async function deleteDefinition(d: Definition): Promise<void> {
   });
 }
 async function useDefinition(d: Definition): Promise<void> {
+  const defaults = await window.workpet.localExecution("defaults", { definitionId: d.id });
   const activeRules = ruleItems(effectiveRules(d.content).content);
   const examples: any[] = await api("examples", { definitionId: d.id });
   const { enabled } = await api("improvementPreference");
   show(
     `发起新工作`,
-    `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.inputs.length ? '' : '<p>此契约不需要额外输入，可以直接创建工作。</p>'}${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${esc(i.key)}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${esc(i.key)}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc((m.bundle ? "技能 · " : "") + (d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料"))} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}<details><summary>仅本次的特殊要求</summary>${activeRules.map(({ address, item }) => `<label class="field">${esc(ruleText(item))}<textarea data-rule-override="${esc(address)}" aria-label="仅本次替代：${esc(item.text)}"></textarea></label>`).join("")}</details>${improvementConsent("REUSE", enabled)}`,
-    '<button id="create-defined-work" class="primary">创建并选择执行者</button>',
+    `<p class="consent">${esc(d.content.name)} · v${d.version}</p>${d.content.inputs.length ? '' : '<p>此契约不需要额外输入，可以直接创建工作。</p>'}${d.content.inputs.map((i) => `<label class="field">${esc(i.text)} ${i.required ? "*" : ""}${i.valueType === "BOOLEAN" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option><option value="true" ${i.defaultValue === true ? "selected" : ""}>是</option><option value="false" ${i.defaultValue === false ? "selected" : ""}>否</option></select>` : i.valueType === "CHOICE" ? `<select data-input="${esc(i.key)}"><option value="">请选择</option>${i.choices!.map((c) => `<option ${i.defaultValue === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : `<input data-input="${esc(i.key)}" type="${i.valueType === "NUMBER" ? "number" : "text"}" value="${esc(i.defaultValue ?? "")}">`}${i.valueType === "FILE" ? `<button data-input-file="${esc(i.key)}">选择本次文件</button>` : ""}</label>`).join("")}${d.materials.length ? `<section class="state-section"><h3><span class="category-icon" aria-hidden="true">▤</span> 固定资料</h3>${d.materials.map((m) => `<p>${esc((m.bundle ? "技能 · " : "") + (d.content.materialRoles.find(role => role.key === m.role)?.text ?? "固定资料"))} · <span title="${esc(m.originalPath)}">${esc(m.originalPath.split(/[\\/]/u).at(-1))}</span></p>`).join("")}</section>` : ""}${examples.length ? `<details><summary>参考案例（可选）</summary>${examples.map((a) => `<label class="file-choice"><input type="checkbox" data-example="${esc(a.id)}">${esc(a.filename)}</label>`).join("")}</details>` : ""}<details><summary>仅本次的特殊要求</summary>${activeRules.map(({ address, item }) => `<label class="field">${esc(ruleText(item))}<textarea data-rule-override="${esc(address)}" aria-label="仅本次替代：${esc(item.text)}"></textarea></label>`).join("")}</details>${localExecutionFields(defaults)}${improvementConsent("REUSE", enabled)}`,
+    '<button id="create-defined-work" class="primary">开始工作</button>',
     { label: '返回契约', action: () => openDefinition(d.id) },
   );
   modal.querySelectorAll<HTMLElement>("[data-input-file]").forEach(
@@ -504,8 +506,10 @@ async function useDefinition(d: Definition): Promise<void> {
             ).value = path;
         })),
   );
-  const id = commandId();
+  const localFields = bindLocalFields(modal, defaults);
+  const id = commandId(), launchId = commandId();
   bind("#create-defined-work", async () => {
+    const local = localFields();
     const inputs: Record<string, string | number | boolean> = {};
     for (const spec of d.content.inputs) {
       const field = modal.querySelector<HTMLInputElement>(`[data-input="${CSS.escape(spec.key)}"]`)!;
@@ -531,9 +535,21 @@ async function useDefinition(d: Definition): Promise<void> {
       commandId: id,
     });
     changed(dashboard);
+    if (local) {
+      await window.workpet.localExecution("start", { workId: dashboard.selectedWork!.id, ...local, commandId: launchId });
+      changed();
+      await openExecutionEvidence(dashboard.selectedWork!.id);
+      return;
+    }
     await createdWork(d, dashboard);
     modal.querySelector<HTMLButtonElement>('#dispatch-created-work')?.click();
   });
+}
+async function openExecutionEvidence(workId: string): Promise<void> {
+  const record = await window.workpet.localExecution('get', { workId });
+  if (!record) throw new Error('尚无本地执行记录');
+  show('执行依据', executionEvidenceHtml(record));
+  disposeReview = mountExecutionEvidence(modal, record, () => changed());
 }
 async function createdWork(d: Definition, dashboard: DashboardView): Promise<void> {
   const work = dashboard.selectedWork!;
@@ -580,6 +596,7 @@ export async function workDefinitionAction(
   work: WorkDetailView,
   action: string,
 ): Promise<boolean> {
+  if (action === "execution-evidence") { await openExecutionEvidence(work.id); return true; }
   if (action === "repair-materials") {
     await openMaterialRecovery({ workId: work.id });
     return true;

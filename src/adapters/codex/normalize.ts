@@ -93,7 +93,8 @@ export function normalizeCodexThread(thread: CodexThreadPayload, includeUnsettle
               ? event(thread, turn, item, sequence, `text-${index}`, {
                   kind: "user.prompt",
                   content: input.value,
-                  executorType: "HUMAN"
+                  executorType: "HUMAN",
+                  metadata: { cwd: thread.cwd }
                 })
               : event(thread, turn, item, sequence, `artifact-${index}`, {
                   kind: "artifact.added",

@@ -323,3 +323,31 @@ test('temporary source read failure does not consume or suppress the first model
     assert.equal(f.calls(), 1);
   } finally { await f.close(); }
 });
+
+test('starting from a contract delivers without waiting for the continuation service', async () => {
+  const f = await fixture();
+  const service = new DistillationService(f.core, new FixtureClient());
+  try {
+    const preparation = service.prepare({ workIds: [f.id], includedFileIds: [] });
+    const job = service.start({ preparationId: preparation.id, expectedContentHash: preparation.contentHash,
+      consentVersion: 'worket-data-v1', commandId: randomUUID() });
+    await new Promise(resolve => setImmediate(resolve));
+    const ready = await service.get(job.id);
+    const draft = f.core.definitions.read('definition_drafts', ready.draftId!);
+    const definition = f.core.definitions.publish({ draftId: draft.id, expectedRevision: draft.revision,
+      materialBindings: {}, commandId: randomUUID() });
+    const work = f.core.createWorkFromDefinition({ definitionId: definition.id, inputs: { customer: '新客户', market: '欧洲' },
+      referenceExampleIds: [], commandId: randomUUID() });
+    let requests = 0;
+    f.client.continuation = async () => { requests++; throw new Error('New work must not depend on the model'); };
+    const start = performance.now();
+    await f.app.handoff(work.instance.id, 'fixture');
+    console.info(`Contract start: ${Math.round(performance.now() - start)} ms; continuation requests: ${requests}`);
+    assert.equal(requests, 0);
+    assert.equal(f.deliveries(), 1);
+    const pkg = f.core.getWork(work.instance.id)!.handoffPackages.at(-1)!.workPackage!;
+    assert.equal(pkg.purpose, 'START');
+    assert.equal(pkg.continuation, undefined);
+    assert.equal(pkg.stateStatus, undefined);
+  } finally { service.close(); await f.close(); }
+});

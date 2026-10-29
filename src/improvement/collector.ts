@@ -37,7 +37,7 @@ export class ImprovementCollector {
     if (!enabled) { this.stop(); return; }
     this.db.prepare("INSERT INTO improvement_preferences VALUES (1,1) ON CONFLICT(id) DO UPDATE SET enabled=1").run();
   }
-  async authorize(version: unknown): Promise<(() => void) | undefined> {
+  authorizeLocal(version: unknown): (() => void) | undefined {
     if (version === undefined) return;
     ensure(this.enabled(), "COLLECTION_DISABLED", "参与改进已关闭，请先开启后再提交");
     ensure(version === IMPROVEMENT_POLICY.version, "CONSENT_REQUIRED");
@@ -47,6 +47,11 @@ export class ImprovementCollector {
       ensure(!this.closed && this.enabled() && generation === this.#authorizationGeneration, "COLLECTION_STOPPED");
       ensure(this.client.improvementIdentity?.() === destination, "SERVICE_CHANGED");
     };
+    return authorized;
+  }
+  async authorize(version: unknown): Promise<(() => void) | undefined> {
+    const authorized = this.authorizeLocal(version);
+    if (!authorized) return;
     const c = await this.client.capabilities() as { improvement?: { version: string; enabled: boolean; retentionDays: number } };
     authorized();
     ensure(c.improvement?.enabled && c.improvement.version === version && c.improvement.retentionDays === IMPROVEMENT_POLICY.retentionDays, "COLLECTION_UNAVAILABLE", "后台当前不接收此版本的改进样本");
@@ -135,6 +140,13 @@ export class ImprovementCollector {
           }
           const queue = this.db.prepare("SELECT event_key,payload FROM improvement_outbox WHERE sample_id=? AND payload IS NOT NULL ORDER BY rowid LIMIT 20").all(s.id);
           if (!queue.length) continue;
+          if (s.scope === "REUSE") {
+            // Local work creation only checks local consent. Negotiate server policy at send time.
+            const capabilities = await this.client.capabilities() as { improvement?: { version: string; enabled: boolean; retentionDays: number } };
+            beforeSend();
+            ensure(capabilities.improvement?.enabled && capabilities.improvement.version === JSON.parse(s.consent).version &&
+              capabilities.improvement.retentionDays === IMPROVEMENT_POLICY.retentionDays, "COLLECTION_UNAVAILABLE", "后台当前不接收此版本的改进样本");
+          }
           if (s.scope === "RECORDING") {
             const capabilities = await this.client.capabilities() as { improvement?: { recordingViewSchemaVersions?: number[] } };
             beforeSend();

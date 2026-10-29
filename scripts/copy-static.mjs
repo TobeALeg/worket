@@ -52,3 +52,4 @@ if (process.platform === "darwin") {
 }
 
 await import("./sync-browser-catalog.mjs");
+await import('./lib/build-provenance.mjs');

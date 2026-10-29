@@ -1,3 +1,6 @@
+import { LocalExecution } from '../execution/local-execution.js';
+import { CodexLocalRunner } from '../adapters/codex/local-runner.js';
+import type { LocalRunner } from '../execution/types.js';
 import { WebTransfer, UPLOAD_CONNECTORS } from "../connectors/web-transfer.js";
 import { deliveryMarkers } from "../executors/delivery-markers.js";
 import { DeliveryLedger } from "../connectors/delivery-ledger.js";
@@ -36,7 +39,7 @@ import type {
   ExecutorAdapter,
   ConversationSummary,
 } from "../executors/types.js";
-import { buildWorkPackage } from "../definitions/work-package.js";
+import { buildWorkPackage, isDefinitionStart } from "../definitions/work-package.js";
 import { ContinuationService, type ContinuationSnapshot } from "../handoff/continuation.js";
 import type { AIClient } from "../ai-service/client.js";
 import { WorkPreparation } from "../handoff/work-preparation.js";
@@ -93,6 +96,7 @@ function captureStatus(work: WorkSnapshot): CaptureStatus {
 }
 export interface AppServiceOptions {
   databasePath: string;
+  localRunner?: LocalRunner;
   aiClient?: AIClient;
   extractor?: WorkStateExtractor;
   executors: ExecutorAdapter[];
@@ -105,6 +109,7 @@ export interface AppServiceOptions {
 type WorkSyncResult = { work: WorkSnapshot; newEvents: NormalizedSourceEvent[] } | null;
 
 export class AppService {
+  readonly localExecution: LocalExecution;
   readonly webTransfer = new WebTransfer();
   readonly #sourcePresence = new SourcePresence();
   readonly #deliveryLedger: DeliveryLedger;
@@ -126,6 +131,12 @@ export class AppService {
     this.#core = createWorkCore({ databasePath: options.databasePath });
     this.#deliveryLedger = new DeliveryLedger(this.#core.definitions.db);
     this.#executors = new ExecutorRegistry(options.executors);
+    this.localExecution = new LocalExecution(this.#core, options.localRunner ?? new CodexLocalRunner(), async work => {
+      const binding = work.bindings.findLast(item => !/^(pending|waiting):/.test(item.conversationId));
+      if (!binding) return;
+      const source = this.#executors.all().find(adapter => adapter.id === binding.adapter)?.source;
+      return source ? (await source.readThread(binding.conversationId)).cwd : undefined;
+    });
     this.#foreground =
       options.foreground ??
       createForegroundApplicationDetector(
@@ -772,6 +783,7 @@ export class AppService {
     return this.dashboard();
   }
   completeWork(workId: string): DashboardView {
+    this.localExecution.requireIdle(workId);
     this.#core.completeWork(workId);
     this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
@@ -779,6 +791,7 @@ export class AppService {
     return this.dashboard(workId);
   }
   archiveWork(workId: string): DashboardView {
+    this.localExecution.requireIdle(workId);
     this.#core.archiveWork(workId);
     this.#preparation.cancel(workId);
     this.options.onRecordingStopped?.(workId);
@@ -805,6 +818,7 @@ export class AppService {
     return this.dashboard(workId);
   }
   async handoff(workId: string, executorId: string): Promise<DashboardView> {
+    this.localExecution.requireIdle(workId);
     this.#core.workflows.assertActive(workId);
     if (this.#handoffs.has(workId))
       throw new Error("这项工作正在交接，请等待本次结果。");
@@ -830,7 +844,10 @@ export class AppService {
       )
         throw new Error("工作状态已改变，未进行交接。");
       this.options.onHandoffStep?.("preparing");
-      const continuation = await this.#preparation.ensure(workId);
+      const fresh = isDefinitionStart(current);
+      // New work already has its instructions; there is no execution history to interpret.
+      if (fresh) this.#preparation.enable(workId);
+      const continuation = fresh ? undefined : await this.#preparation.ensure(workId);
       this.options.onHandoffStep?.("prepared");
       current = await this.#artifacts.verify(this.#requireWork(workId));
       this.#core.workflows.assertActive(workId);
@@ -839,7 +856,7 @@ export class AppService {
         current.activeBinding?.id !== initial.activeBinding?.id
       )
         throw new Error("准备交接期间工作状态已改变，未进行交接。");
-      const handoff = this.#core.createHandoffPackage(workId, { continuation });
+      const handoff = this.#core.createHandoffPackage(workId, continuation ? { continuation } : {});
       const pkg = buildWorkPackage(current, this.#core.definitions, continuation);
       const wasViewOnly = this.#isViewOnly(workId);
       const pending = `pending:${handoff.id}`;
@@ -851,7 +868,7 @@ export class AppService {
       });
       this.#core.definitions.db.prepare("DELETE FROM work_view_snapshots WHERE work_id=?").run(workId);
       try {
-        const currentStage = continuation.currentStageId
+        const currentStage = continuation?.currentStageId
           ? continuation.stages.find(stage => stage.id === continuation.currentStageId)
           : undefined;
         const latestUserPrompt = workEvidence(current.sourceArchive).findLast(event => event.kind === "user.prompt" && event.content?.trim());
@@ -1002,6 +1019,7 @@ export class AppService {
       });
   }
   cancelRecording(workId: string, confirmation: string): DashboardView {
+    this.localExecution.requireIdle(workId);
     if (confirmation !== "取消记录" && confirmation !== "删除本地活动")
       throw new Error("请输入“删除本地活动”进行二次确认（旧版：取消记录）");
     this.#core.deleteWorkPermanently(workId, { confirmation: workId });
@@ -1020,6 +1038,7 @@ export class AppService {
   close(): void {
     this.#closed = true;
     this.#preparation.close();
+    this.localExecution.close();
     this.#executors.close();
     this.#core.close();
   }
@@ -1213,6 +1232,7 @@ export class AppService {
   #detail(work: WorkSnapshot): WorkDetailView {
     let pkg: ReturnType<typeof buildWorkPackage> | undefined;
     try { pkg = buildWorkPackage(work, this.#core.definitions); } catch { /* Detail must remain available for repairing materials. */ }
+    const localExecution = this.localExecution.summary(work.instance.id);
     const state = pkg?.state ?? work.state;
     const limited = work.sourceArchive.some(event => ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
     const sourceNotice = limited ? "仅有选定内容或有限事件；完整历史、未加载分支及附件正文未包含。" : work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
@@ -1233,6 +1253,7 @@ export class AppService {
           }
         : {}),
       ...this.#summary(work),
+      ...(localExecution ? { localExecution } : {}),
       ...(work.packageDeliveryId ? {
         dispatchStatus: work.activeBinding?.conversationId.startsWith("pending:") ? "WAITING" : "BOUND",
         dispatchReadAt: work.packageReadAt ?? null,
@@ -1243,6 +1264,7 @@ export class AppService {
         currentStageTask: pkg.continuation?.stages.find(stage => stage.id === pkg.continuation?.currentStageId)?.task.text ?? "",
       } : {}),
       ...(sourceNotice ? { sourceNotice } : {}),
+      ...(localExecution?.lastMessage ? { latestActivity: { text: localExecution.lastMessage, sourceMessageId: "local-execution" } } : {}),
       ...(latestReply?.content ? { latestActivity: { text: latestReply.content, sourceMessageId: latestReply.externalId } } : {}),
       ...(this.#preparation.status(work.instance.id) ? { preparationStatus: this.#preparation.status(work.instance.id)! } : {}),
       understandingStatus: pkg?.stateStatus ?? "UNRESOLVED",

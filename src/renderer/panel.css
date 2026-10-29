@@ -243,3 +243,6 @@ button.source-row:focus-visible { outline: 2px solid var(--accent); outline-offs
 .source-provider[data-provider] .source-icon { background: transparent; }
 .source-icon img { object-fit: contain; transform: none; }
 @media (prefers-reduced-motion: reduce) { .source-icon { transition: none; } }
+
+.execution-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 12px; line-height: 1.65; max-height: 420px; overflow: auto; user-select: text; }
+#local-files p { overflow-wrap: anywhere; }
