@@ -19,7 +19,7 @@ const electronApp = await electron.launch({
     ? join(root, "node_modules", "electron", "dist", "electron.exe")
     : join(root, "node_modules", "electron", "dist", "Electron.app", "Contents", "MacOS", "Electron")),
   args: packagedExecutable
-    ? [`--user-data-dir=${testDirectory}`, "--dev"]
+    ? [...(process.platform === "darwin" ? ["--use-mock-keychain"] : []), `--user-data-dir=${testDirectory}`, "--dev"]
     : [".", `--user-data-dir=${testDirectory}`, "--dev"],
   cwd: root,
   env: {
@@ -209,6 +209,7 @@ try {
 
   console.log(JSON.stringify({
     passed: true,
+    credentialStorage: packagedExecutable && process.platform === "darwin" ? "isolated mock keychain; production keychain approval not tested" : "platform default",
     dockVisible,
     secondInstanceRestored,
     petMetrics,

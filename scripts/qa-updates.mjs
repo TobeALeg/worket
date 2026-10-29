@@ -29,7 +29,7 @@ try {
   desktop = await electron.launch({
     executablePath: process.env.WORKPET_EXECUTABLE_PATH ?? join(process.cwd(), process.platform === "win32"
       ? "release/Worket-win32-x64/Worket.exe" : "release/Worket-darwin-arm64/Worket.app/Contents/MacOS/Worket"),
-    args: ["--dev", `--user-data-dir=${directory}`],
+    args: [...(process.platform === "darwin" ? ["--use-mock-keychain"] : []), "--dev", `--user-data-dir=${directory}`],
     env: { ...process.env, WORKPET_SKIP_INTEGRATIONS: "1", WORKPET_DATA_DIR: directory,
       WORKPET_BRIDGE_CONFIG: join(directory, "bridge.json") },
   });
@@ -67,6 +67,7 @@ try {
   assert.ok(result.messages.every(message => !message.buttons?.includes("重启更新")));
   console.log("PASS: packaged Electron menu, consent, HTTP download, checksum, reuse and manual replacement text");
   console.log("Native dialog choices and Finder reveal are intercepted; no application is replaced.");
+  if (process.platform === "darwin") console.log("Uses an isolated mock keychain; production keychain approval is not tested.");
 } finally {
   await desktop?.close();
   await new Promise(resolve => server.close(resolve));
