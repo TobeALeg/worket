@@ -84,3 +84,22 @@ test('unresolved handoff does not promote stale automatic claims above the conve
   }
   assert.match(executionBrief(pkg), /生成英文 CSV/, 'without source dialogue the remaining clues must not disappear');
 });
+
+test('new work contains only its contract and current inputs, with plain text headings', () => {
+  const { pkg, work } = fixture();
+  pkg.purpose = 'START';
+  pkg.definition = { content: { name: '报告', purpose: { text: '准备报告' }, inputs: [],
+    deliverables: [{ text: '交付 PDF' }], constraints: [], acceptanceCriteria: [], methods: [] } };
+  pkg.state.completedActions = [{ text: '旧工作已经完成' }];
+  pkg.state.facts = [{ text: '旧客户资料', origin: 'USER_STATED' }];
+  pkg.inputs = { customer: '新客户' };
+  pkg.stateStatus = 'RESOLVED';
+  pkg.continuation = { currentStageId: 'old', stages: [{ id: 'old', task: claim('旧阶段') }] };
+  for (const text of [executionBrief(pkg, work), inlineWorkPackage(work, pkg)]) {
+    assert.match(text, /准备报告/);
+    assert.match(text, /交付 PDF/);
+    assert.match(text, /新客户/);
+    assert.doesNotMatch(text, /旧工作|旧客户|旧阶段|当前阶段|进度|必要背景|尚待整理|数据已清洗/);
+    assert.doesNotMatch(text, /^(?:#{1,6} |[-*] |---$)/m);
+  }
+});

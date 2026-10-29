@@ -33,6 +33,12 @@ export type WorkPackage = {
   fileAccess: string;
   sourceNotice?: string;
 };
+/** A reusable definition has no execution state until this instance records external work. */
+export function isDefinitionStart(work: WorkSnapshot): boolean {
+  return work.definition.kind === "REUSABLE" &&
+    !work.sourceArchive.some(event => event.environmentType !== "WORKPET_LOCAL");
+}
+
 export function buildWorkPackage(
   work: WorkSnapshot,
   repository: DefinitionRepository,
@@ -70,8 +76,7 @@ export function buildWorkPackage(
   const pkg: WorkPackage = {
     packageVersion: 1,
     purpose:
-      definition &&
-      !work.sourceArchive.some((e) => e.environmentType !== "WORKPET_LOCAL")
+      isDefinitionStart(work)
         ? "START"
         : "CONTINUE",
     workId: work.instance.id,
@@ -93,6 +98,8 @@ export function buildWorkPackage(
   };
   const workflow = workflowWorkContext(repository, work.instance.id);
   if (workflow) pkg.workflow = workflow;
+
+  if (pkg.purpose === "START") return pkg;
 
   const candidate = prepared ?? work.handoffPackages.findLast(value => value.continuation)?.continuation;
   const current = candidate && continuationBasisMatches(work, packageMaterialVersions(pkg), candidate.basis);

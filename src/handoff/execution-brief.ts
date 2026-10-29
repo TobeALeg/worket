@@ -6,10 +6,11 @@ import type { WorkPackage } from '../definitions/work-package.js';
 
 /** Executor-facing content only. Provenance and read receipts stay in the stored package. */
 export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'local' | 'web' = 'local'): string {
-  const lines = [`# ${pkg.definition?.content.name ?? pkg.state.objective[0]?.text ?? work?.definition.name ?? '工作'}`];
+  const fresh = pkg.purpose === 'START';
+  const lines = [`${pkg.definition?.content.name ?? pkg.state.objective[0]?.text ?? work?.definition.name ?? '工作'}`];
   const section = (title: string, values: string[]) => {
     const unique = [...new Set(values.filter(value => value.trim()))];
-    if (unique.length) lines.push(`\n## ${title}\n${unique.map(value => `- ${value}`).join('\n')}`);
+    if (unique.length) lines.push(`\n${title}\n${unique.join('\n')}`);
   };
   const content = pkg.definition?.content;
   if (pkg.workflow) {
@@ -19,10 +20,10 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
       ...(pkg.workflow.note ? [`本轮返工要求：${pkg.workflow.note}`] : []),
       '交付后在 Worket 流程中关联输出并等待用户验收。具备 Worket MCP 时，可用 submit_workflow_outputs 提交；提交不代表验收通过。']);
   }
-  const snapshot = pkg.stateStatus === 'RESOLVED' ? pkg.continuation : undefined;
-  const messages = !snapshot && work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
+  const snapshot = !fresh && pkg.stateStatus === 'RESOLVED' ? pkg.continuation : undefined;
+  const messages = !fresh && !snapshot && work ? workEvidence(work.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response') : [];
   const current = snapshot?.stages.find(stage => stage.id === snapshot.currentStageId);
-  section('目标', [content?.purpose.text ?? '', ...pkg.state.objective.map(item => item.text)]);
+  section('目标', [content?.purpose.text ?? '', ...(fresh ? [] : pkg.state.objective.map(item => item.text))]);
   if (content) {
     for (const [label, rules] of [
       ['交付物', content.deliverables], ['约束', content.constraints],
@@ -56,19 +57,19 @@ export function executionBrief(pkg: WorkPackage, work?: WorkSnapshot, target: 'l
       return `${item.status === 'CONFLICT' ? '待澄清：' : ''}${item.claim.text}${scope}`;
     }));
     section('待澄清', snapshot.uncertainties.map(claim => claim.text));
-  } else {
+  } else if (!fresh) {
     for (const [label, key] of [
       ['约束线索', 'constraints'], ['决定线索', 'decisions'], ['验收标准线索', 'successCriteria'],
       ['已记录进度', 'completedActions'], ['待办线索', 'pendingActions'],
     ] as const) section(label, pkg.state[key].filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
     // Without a resolved understanding, dropping conversation text would silently lose requirements.
     if (messages.length) {
-      lines.push('\n## 尚待整理的工作对话\n以下对话按先后排列，请按用户最新有效要求继续。执行者的建议和完成声明不代表用户已确认；已被后文替换的要求不再执行。');
-      for (const message of messages) lines.push(`\n### ${message.kind === 'user.prompt' ? '用户' : '执行者'}\n${message.content ?? ''}`);
+      lines.push('\n尚待整理的工作对话\n以下对话按先后排列，请按用户最新有效要求继续。执行者的建议和完成声明不代表用户已确认；已被后文替换的要求不再执行。');
+      for (const message of messages) lines.push(`\n${message.kind === 'user.prompt' ? '用户' : '执行者'}\n${message.content ?? ''}`);
     }
   }
-  section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_EDITED' || !messages.length && item.origin === 'USER_STATED').map(item => item.text));
-  section('已有成果', pkg.state.artifacts.filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
+  if (!fresh) section('必要背景', pkg.state.facts.filter(item => item.origin === 'USER_EDITED' || !messages.length && item.origin === 'USER_STATED').map(item => item.text));
+  if (!fresh) section('已有成果', pkg.state.artifacts.filter(item => !messages.length || item.origin === 'USER_EDITED').map(item => item.text));
   const materials = pkg.fixedMaterials.map(item => `${item.role}：${target === 'web' ? `${basename(item.originalPath || item.path)}（需上传）` : item.path}`);
   for (const reference of pkg.referenceExamples) {
     if (reference && typeof reference === 'object' && 'path' in reference && typeof reference.path === 'string') {

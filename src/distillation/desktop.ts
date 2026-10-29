@@ -210,7 +210,7 @@ export class DistillationDesktop {
       case "deleteDefinition":
         return r.delete(input as Parameters<typeof r.delete>[0]);
       case "create": {
-        const improvementAuthorized = await this.service.improvement.authorize(
+        const improvementAuthorized = this.service.improvement.authorizeLocal(
           input.improvementConsentVersion,
         );
         improvementAuthorized?.();

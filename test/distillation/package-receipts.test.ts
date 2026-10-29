@@ -30,7 +30,7 @@ test('default brief keeps receipt validation internal and rejects an unrelated d
       work_id: f.work.instance.id, ...(delivery ? { delivery_id: delivery } : {}),
     } } }) as any;
     const preview = await read();
-    assert.match(preview.result.content[0].text, /^# /);
+    assert.match(preview.result.content[0].text, /^带固定技能的报告\n/);
     assert.equal(f.core.getWork(f.work.instance.id)!.packageReadAt, null);
     assert.match((await read('other-delivery')).error.message, /DELIVERY_MISMATCH/);
     const response = await read(deliveryId);

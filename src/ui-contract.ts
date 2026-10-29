@@ -48,6 +48,7 @@ export interface WorkSummaryView {
 }
 
 export interface WorkDetailView extends WorkSummaryView {
+  localExecution?: { status: import("./execution/types.js").LocalStatus; directory: string; lastMessage?: string };
   workflowRunId?: string;
   preparationStatus?: "RUNNING" | "QUEUED";
   understandingStatus?: "RESOLVED" | "PARTIAL" | "UNRESOLVED" | "STALE";
@@ -188,6 +189,7 @@ export interface WorkPetApi {
   resizePanelRight(phase: "start" | "move" | "end", screenX: number): void;
   openArtifact(workId: string, itemId: string): Promise<void>;
   distillation(action: string, input?: unknown): Promise<any>;
+  localExecution(action: string, input?: unknown): Promise<any>;
   chooseDefinitionFile(kind?: "SKILL"): Promise<string | null>;
   exportWorkPackage(workId: string): Promise<string | null>;
   copyWorkPackage(workId: string): Promise<void>;

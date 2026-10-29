@@ -73,6 +73,10 @@ export async function findCodexBinary(candidates: string[]): Promise<string> {
 }
 
 export class CodexAppServerClient {
+  readonly #events = new Set<(method: string, params: any) => void>();
+  readonly #disconnects = new Set<(error: Error) => void>();
+  runtimeIdentity = "";
+  requestHandler?: (id: string | number, method: string, params: any) => void;
   readonly #binaryCandidates: string[];
   #process: ChildProcessWithoutNullStreams | null = null;
   #nextRequestId = 1;
@@ -127,9 +131,10 @@ export class CodexAppServerClient {
       for (const request of this.#pending.values()) request.reject(error);
       this.#pending.clear();
       if (this.#process === child) this.#process = null;
+      for (const listener of this.#disconnects) listener(error);
     });
 
-    await this.#request("initialize", {
+    const initialized = await this.#request<{ userAgent?: string }>("initialize", {
       clientInfo: { name: "workpet", title: "Worket", version: "0.1.0" },
       capabilities: {
         experimentalApi: true,
@@ -140,6 +145,7 @@ export class CodexAppServerClient {
         ],
       },
     });
+    this.runtimeIdentity = `${binary} · ${initialized.userAgent ?? "版本未返回"}`;
     this.#notify("initialized", {});
   }
 
@@ -227,6 +233,19 @@ export class CodexAppServerClient {
     this.#process = null;
   }
 
+  async rpc<T = any>(method: string, params: unknown): Promise<T> {
+    await this.connect();
+    return this.#request<T>(method, params);
+  }
+  onEvent(listener: (method: string, params: any) => void): () => void {
+    this.#events.add(listener); return () => this.#events.delete(listener);
+  }
+  onDisconnect(listener: (error: Error) => void): () => void {
+    this.#disconnects.add(listener); return () => this.#disconnects.delete(listener);
+  }
+  rejectRequest(id: string | number, message: string): void { this.#write({ id, error: { code: -32601, message } }); }
+  respond(id: string | number, result: unknown): void { this.#write({ id, result }); }
+
   #notify(method: string, params: unknown): void {
     this.#write({ method, params });
   }
@@ -267,6 +286,14 @@ export class CodexAppServerClient {
     try {
       message = JSON.parse(line) as JsonRpcSuccess<unknown> | JsonRpcFailure;
     } catch {
+      return;
+    }
+    if ('method' in message && typeof message.method === 'string') {
+      const incoming = message as unknown as { id?: string | number; method: string; params: any };
+      if (incoming.id !== undefined) {
+        if (this.requestHandler) this.requestHandler(incoming.id, incoming.method, incoming.params);
+        else this.#write({ id: incoming.id, error: { code: -32601, message: 'Interactive requests are not supported by this connection' } });
+      } else for (const listener of this.#events) listener(incoming.method, incoming.params);
       return;
     }
     if (typeof message.id !== "number") return;

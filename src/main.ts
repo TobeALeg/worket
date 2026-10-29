@@ -318,6 +318,19 @@ function registerIpc(): void {
       panelWindow.setBounds(compactBounds); compactBounds = undefined;
     }
   });
+  ipcMain.handle('execution:command', async (event, action, input) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error('INVALID_SENDER');
+    const execution = requireService().localExecution;
+    if (action === 'defaults') return execution.defaults(input.definitionId);
+    if (action === 'get') return execution.get(input.workId);
+    if (action === 'start') return execution.start(input);
+    if (action === 'continue') return execution.continue(input);
+    if (action === 'approve') return execution.approve(input.workId, input.requestId, input.accept);
+    if (action === 'interrupt') return execution.interrupt(input.workId);
+    if (action === 'reconcile') return execution.reconcile(input.workId);
+    if (action === 'open-material') return shell.openPath(execution.materialPath(input.workId, input.path));
+    throw new Error('UNKNOWN_EXECUTION_ACTION');
+  });
   ipcMain.handle('workflow:command', (event, action, input) => {
     if (event.sender !== panelWindow?.webContents) throw new Error('INVALID_SENDER');
     return new WorkflowDesktop(requireService(), distillation, path => shell.openPath(path)).call(action, input);
