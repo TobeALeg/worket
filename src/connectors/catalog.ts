@@ -1,5 +1,6 @@
 /** Product identities are separate from code agents and model APIs. */
 export const WEB_CONNECTORS = [
+  { id: "chatgpt-web", name: "ChatGPT 网页", mark: "G", url: "https://chatgpt.com/", hosts: ["chatgpt.com", "chat.openai.com"] },
   { id: "qwenwork-web", name: "QwenWork 网页", mark: "Q", url: "https://qwenwork.ai/", hosts: ["qwenwork.ai", "www.qwenwork.ai"] },
   // Keep persisted IDs so existing Work-mode bindings remain valid for ordinary chats too.
   { id: "kimi-work", name: "Kimi 网页", mark: "K", url: "https://www.kimi.com/", hosts: ["www.kimi.com", "kimi.com"] },

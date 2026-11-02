@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Worket 网页交接",
-  "version": "0.2.0",
-  "description": "主动选区导入；将本机已准备的工作包和相关附件填入当前聊天草稿，由你核对发送。",
+  "version": "0.3.1",
+  "description": "导入当前 ChatGPT 聊天或选定正文；将 Worket 工作包与附件填入草稿，由你核对发送。",
   "permissions": [
     "activeTab",
     "scripting",

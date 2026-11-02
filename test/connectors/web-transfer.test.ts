@@ -40,3 +40,16 @@ test('web transfer freezes only work attachments, transports bounded chunks and 
     await assert.rejects(transfer.prepare(work, pkg, 'new'), /需补充/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+
+test('ChatGPT transfer accepts current and legacy hosts and rejects lookalike sites', async () => {
+  const transfer = new WebTransfer();
+  await transfer.prepare({ definition: { name: 'ChatGPT 交接' }, artifactRefs: [] } as any,
+    { fixedMaterials: [], inputMaterials: [], referenceExamples: [] } as any, '完整工作包', 'chatgpt-web');
+  for (const host of ['chatgpt.com', 'chat.openai.com']) {
+    const result: any = transfer.handle({ action: 'preview', url: `https://${host}/c/test` });
+    assert.equal(result.prompt, '完整工作包');
+  }
+  for (const host of ['chatgpt.com.evil.example', 'example.com', 'gemini.google.com'])
+    assert.throws(() => transfer.handle({ action: 'preview', url: `https://${host}/c/test` }), /目标不符/);
+});

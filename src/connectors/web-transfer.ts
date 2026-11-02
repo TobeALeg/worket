@@ -7,7 +7,7 @@ import { WEB_CONNECTORS } from './catalog.js';
 
 const MAX_BYTES = 40 * 1024 * 1024;
 export const TRANSFER_CHUNK = 256 * 1024;
-export const UPLOAD_CONNECTORS = ['kimi-work', 'doubao-work', 'deepseek-web', 'gemini-web'];
+export const UPLOAD_CONNECTORS = ['chatgpt-web', 'kimi-work', 'doubao-work', 'deepseek-web', 'gemini-web'];
 type FileSource = { path: string; name: string; hash: string; available: boolean };
 /** Only files already associated with this work can enter the browser transfer. */
 export function webFiles(work: WorkSnapshot, pkg: WorkPackage): FileSource[] {
@@ -58,7 +58,7 @@ export class WebTransfer {
   }
   handle(payload: Record<string, unknown>): unknown {
     const transfer = this.#current;
-    if (!transfer || transfer.expires < Date.now()) { this.#current = null; throw new Error('请先在 Worket 复制工作包或交接到网页（10 分钟内有效）。'); }
+    if (!transfer || transfer.expires < Date.now()) { this.#current = null; throw Object.assign(new Error('请先在 Worket 复制工作包或交接到网页（10 分钟内有效）。'), { code: 'TRANSFER_NOT_PREPARED' }); }
     const url = new URL(String(payload.url));
     const site = WEB_CONNECTORS.find(item => (item.hosts as readonly string[]).includes(url.hostname));
     if (url.protocol !== 'https:' || !site || !UPLOAD_CONNECTORS.includes(site.id) || transfer.adapterId && transfer.adapterId !== site.id)

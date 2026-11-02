@@ -9,6 +9,8 @@ export class IntegrationInstaller {
     const entries = await Promise.all(
       this.executors.map(async (adapter) => {
         try {
+          if (adapter.isInstalled && !(await adapter.isInstalled()))
+            return [adapter.id, "not-installed"] as const;
           return [
             adapter.id,
             adapter.installation === "EXPLICIT" ? "requires-explicit-setup" : (await adapter.install?.(this.appPath)) ?? "not-required",

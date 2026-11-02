@@ -5,6 +5,8 @@ export async function conversationPage(
   cursor?: string,
   searchTerm?: string,
 ): Promise<ConversationPage> {
+  if (adapter.isInstalled && !(await adapter.isInstalled()))
+    return { threads: [], nextCursor: null };
   const source = adapter.source;
   if (!source) return { threads: [], nextCursor: null };
   if (source.listThreadPage) return source.listThreadPage(30, cursor, searchTerm);

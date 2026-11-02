@@ -21,9 +21,11 @@
       </section>
       <section aria-labelledby="capture-title">
         <div class="section-heading">
-          <h2 id="capture-title">导入选区</h2>
-          <button id="capture">读取当前选区</button>
+          <h2 id="capture-title">导入聊天</h2>
+          <button id="capture-chat">导入当前聊天</button>
         </div>
+        <p class="capture-scope">ChatGPT：读取当前分支的消息文字，附件正文与其他分支不包含。保存前需在 Worket 确认。</p>
+        <button id="capture">读取当前选区</button>
         <details class="capture-scope">
           <summary>只读取选区，保存前需在 Worket 确认</summary>
           <p>先在当前页选中一条可见消息。不加载历史，不读取 Cookies 或附件；选区不代表完整对话。</p>
@@ -31,16 +33,17 @@
         <div class="fields">
           <div class="field-row">
             <label class="field" for="site">来源<select id="site"></select></label>
-            <label class="field" for="role">消息角色<select id="role"><option value="user">用户</option><option value="assistant">助手</option></select></label>
+            <label class="field" id="role-field" for="role">消息角色<select id="role"><option value="user">用户</option><option value="assistant">助手</option></select></label>
           </div>
           <label class="field" for="conversation">会话标识<input id="conversation" placeholder="会话 URL 或稳定标识" autocomplete="off"></label>
-          <label class="field" for="content"><span>选定正文<span class="field-hint">可编辑、脱敏</span></span><textarea id="content" spellcheck="false"></textarea></label>
+          <label class="field" id="selected-body" for="content"><span>选定正文<span class="field-hint">可编辑、脱敏</span></span><textarea id="content" spellcheck="false"></textarea></label>
         </div>
+        <div id="chat-preview" hidden><p id="chat-summary" class="status"></p><div id="chat-messages" class="chat-messages"></div></div>
         <div class="import-actions"><button id="stage" class="primary" disabled>发送到 Worket 待确认箱</button></div>
         <p id="status" class="status" role="status" aria-live="polite"></p>
       </section>
     </main>
     <script src="catalog.js"></script>
-    <script src="popup.js"></script>
+    <script type="module" src="popup.js"></script>
   </body>
 </html>

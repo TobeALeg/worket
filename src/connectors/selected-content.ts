@@ -10,13 +10,14 @@ export interface SelectedMessage {
 export interface SelectedContent {
   schemaVersion: 1;
   adapterId: string;
-  /** Explicit locator entered by the user; never infer a conversation from a title. */
+  /** User-entered locator or the explicitly imported current chat URL; never a title. */
   conversationId: string;
   title: string;
   url: string;
   messages: SelectedMessage[];
   scope: "SELECTED_CONTENT" | "HOOK_EVENTS";
   missingAttachments?: string[];
+  captureMode?: "CURRENT_CHAT";
 }
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 export function normalizeSelectedContent(value: SelectedContent, options: { environmentType?: string; desktopSelection?: boolean } = {}): NormalizedThread {
@@ -27,6 +28,7 @@ export function normalizeSelectedContent(value: SelectedContent, options: { envi
   if (JSON.stringify(value).length > 1_000_000) throw new Error("选定内容超过 1 MB；请缩小范围，未截断导入。");
   if (typeof value.url !== "string") throw new Error("来源地址格式无效。");
   const url = value.scope === "SELECTED_CONTENT" && !options.desktopSelection ? validateSourceUrl(value.adapterId, value.url) : "";
+  if (value.captureMode !== undefined && (value.captureMode !== "CURRENT_CHAT" || value.adapterId !== "chatgpt-web" || value.scope !== "SELECTED_CONTENT")) throw new Error("聊天读取方式无效。");
   const missing = value.missingAttachments ?? [];
   if (!Array.isArray(missing) || missing.length > 100 || missing.some(x => typeof x !== "string" || x.length > 1024)) throw new Error("附件引用无效。");
   const seen = new Set<string>(), counts = new Map<string, number>(), now = new Date().toISOString();
@@ -46,6 +48,7 @@ export function normalizeSelectedContent(value: SelectedContent, options: { envi
       content: message.content, timestamp, executorType: message.role === "user" ? "HUMAN" as const : "AGENT" as const,
       environmentType: options.environmentType ?? (value.scope === "HOOK_EVENTS" ? "QWENWORK_DESKTOP" : "WEB_SELECTED"),
       metadata: { captureOrigin: value.scope === "HOOK_EVENTS" ? "HOOK" : options.desktopSelection ? "DESKTOP_VISIBLE" : "WEB_PAGE", captureScope: value.scope, historyComplete: false, sourceUrl: url,
+        ...(value.captureMode ? { captureMode: value.captureMode, pageCoverage: "START_TO_END" } : {}),
         messageIdentity: message.id ? "PROVIDED" : "CONTENT_HASH", missingAttachments: missing },
     };
   });

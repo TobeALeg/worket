@@ -25,7 +25,11 @@ export async function postToWorkPet(path, body, timeoutMs = 60_000) {
     const code = error?.cause?.code;
     throw new Error(`Worket bridge 请求失败${code ? `（${code}）` : ""}：${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
-  if (!response.ok) throw new Error(`Worket bridge 返回 HTTP ${response.status}`);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    const message = typeof detail?.error === "string" ? detail.error.slice(0, 2000) : `Worket bridge 返回 HTTP ${response.status}`;
+    throw Object.assign(new Error(message), { code: detail?.code, status: response.status });
+  }
   if (response.status === 204) return null;
   return response.json();
 }

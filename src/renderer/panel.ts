@@ -1,3 +1,4 @@
+import { openBrowserSetup } from "./browser-setup.js";
 import { localStatusLabel } from './local-execution.js';
 import { setupHeaderSearch } from "./header-search.js";
 import { setupSelectedImport } from "./selected-import.js";
@@ -20,6 +21,7 @@ import {
 } from "../ui-contract.js";
 import { setupRecordingSources } from "./recording-sources.js";
 
+document.querySelector("#browser-setup")!.addEventListener("click", () => { document.querySelector<HTMLDetailsElement>("#app-menu")!.open = false; void openBrowserSetup(); });
 const feedback = setupProblemFeedback();
 const list = required<HTMLElement>("#work-list");
 const detail = required<HTMLElement>("#work-detail");

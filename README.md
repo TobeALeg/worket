@@ -150,3 +150,7 @@ gh release create v0.1.1 \
 下载中断会清理此次临时文件夹；若进程被强制结束，可能留下 `.part` 文件，可删除后重试。发现错误发布时撤回 Release，并用更高版本发布修复；已下载文件不会自动撤回。数据结构变更须另行验证迁移和恢复。
 
 实现见 `src/desktop/app-updates.ts`、`src/desktop/github-release.ts`、`scripts/release-mac.mjs`。[GitHub Releases API 文档](https://docs.github.com/en/rest/releases/releases#get-the-latest-release)。
+
+### 浏览器插件独立包
+
+`npm run package:browser` 生成 `release/Worket-browser-extension-<插件版本>.zip` 与 `.sha256`，macOS / Windows 发行脚本也会一并生成。发布客户端时同时上传插件 ZIP 和校验文件。插件解压后在浏览器手动加载，再到 Worket 的“浏览器插件”入口配对；更新后需在浏览器扩展管理页重新加载。

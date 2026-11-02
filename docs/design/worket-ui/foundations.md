@@ -132,3 +132,11 @@ ContractSheet 底部次要按钮为“生成新版本”；手动修订复用 Re
 2026-10-29：本地自动执行沿用 field / select / primary button 和详情 dialog-shell；执行说明与证据使用 `.execution-text`（可选择、保留换行、长路径断行、最大高度滚动）。状态区单独刷新，不重建用户正在编辑的修改意见。无新增图标或视觉体系。
 
 2026-10-29 补充：默认项目路径使用可换行的只读文本，无目录选择控件；用户输入区只保留本次业务内容和可选资料。
+
+2026-11-02：ChatGPT 网页（chatgpt-web）复用 ChatGPT 圆形品牌图及网页地球角标，与 Codex 维持独立身份；无新增样式 token。
+
+2026-11-02：浏览器插件安装与连接状态复用 dialog-card、label、field-help、notice、dialog-actions；未准备交接包为普通提示，不能使用连接失败语义。
+
+2026-11-02 插件的当前聊天读取复用 section-heading、capture-scope、status、field 与按钮；逐条消息以 details / summary / pre 呈现，限定预览高度并允许滚动，无新增品牌图像。
+
+2026-11-02：插件外层页面采用与客户端弹层一致的 10px 圆角及细边框，内容区最大 600px 并独立滚动，保留 6px 控件圆角。无新增全局 token；Figma 未同步。

@@ -1,3 +1,4 @@
+import { desktopExecutorInstalled } from "./installation.js";
 import { createWebExecutors } from "../connectors/web-executor.js";
 import { createQwenWorkExecutor } from "../adapters/qwenwork/executor.js";
 import { createCodexExecutor } from "../adapters/codex/executor.js";
@@ -14,7 +15,15 @@ export function createDefaultExecutors(options: {
   antigravity?: ConversationSource;
   desktop?: ManualDelivery;
   launcher: WorkBuddyLauncher;
+  applicationForProtocol?: (url: string) => Promise<string | null>;
   openUrl?: (url: string) => Promise<void>;
 }): ExecutorAdapter[] {
-  return [createCodexExecutor(options), createWorkBuddyExecutor(options), createZCodeExecutor(options), createAntigravityExecutor(options), createQwenWorkExecutor(options), ...createWebExecutors(options)];
+  const adapters = [createCodexExecutor(options), createWorkBuddyExecutor(options), createZCodeExecutor(options), createAntigravityExecutor(options), createQwenWorkExecutor(options), ...createWebExecutors(options)];
+  for (const adapter of adapters) {
+    if (["codex", "workbuddy", "zcode", "antigravity"].includes(adapter.id) &&
+        !options[adapter.id as "codex" | "workbuddy" | "zcode" | "antigravity"]) {
+      adapter.isInstalled = () => desktopExecutorInstalled(adapter.id, options.applicationForProtocol);
+    }
+  }
+  return adapters;
 }

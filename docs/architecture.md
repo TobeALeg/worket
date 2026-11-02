@@ -1,5 +1,24 @@
 # 架构：本地 Work Core 与桌面应用 Adapter
 
+## ChatGPT 当前聊天读取（2026-11-02）
+
+`integrations/browser-extension/current-chat.js` 提供自包含的 captureCurrentChat，由用户点击后通过 activeTab + scripting 在当前标签页的隔离上下文运行。识别当前 ChatGPT Work 的 search-unit / user-bubble / assistant markdown DOM 和旧版 message-author-role DOM；只投影可见消息正文，不调用私有接口或读取认证信息。自动检查页面顶部与底部稳定状态，遍历滚动区收集虚拟化消息，通过相邻顺序图合并重叠快照，稳定消息 ID 去重；正文变化、分支错序、无锚点间隔和超限失败。完成后恢复原滚动位置，用户操作或换页使读取取消。
+
+Popup 显示按角色排序的逐条只读预览并自动填写真实聊天 URL，送入既有 Native Messaging / SelectedContentInbox / Worket 预览确认链路。SelectedContent 增加可选 captureMode=CURRENT_CHAT，仅限 ChatGPT 网页的 SELECTED_CONTENT，规范化事件保存 captureMode 与 pageCoverage，始终维持 historyComplete=false，不推断来源删除。Worket 审阅保留来源采集方式；没有扩大授权到其他会话或自动保存。
+
+## 浏览器插件安装与桥接诊断（2026-11-02）
+
+`BrowserSetup` 在用户点击准备／配对时复制随应用打包的 integrations 到本机 Worket 目录；通过 Chrome / Edge 的 NativeMessagingHosts manifest（Windows 使用 HKCU 注册）精确绑定用户填写的扩展 ID。Runner 使用当前 Worket 的 Electron 可执行文件及 ELECTRON_RUN_AS_NODE，无独立 Node 安装依赖；更新应用路径后可重新配对修复。安装操作仅通过限定面板来源的 browser:setup IPC 暴露，界面复用现有 dialog-card、field-help、notice。浏览器手动加载不由 Worket 修改浏览器私有配置代替。
+
+`status` 以 Native Messaging 帧调用已登记 Host，再通过带令牌的 `/browser/status` 检查当前 Worket，区别于单纯发现配置文件。它不读取聊天或发送任务，也不能证明浏览器当前启用了扩展。`postToWorkPet` 保留失败响应中的错误原因与 code，HTTP bridge 和 Host 逐层传递；没有待交接内容的 TRANSFER_NOT_PREPARED 在插件中作为普通操作提示，不标为连接故障。
+
+## 桌面执行器安装检查（2026-11-02）
+
+默认原生历史适配器通过 `isInstalled` 单独提供安装存在性，`conversationPage` 在读取前跳过未安装来源，`listExecutors` 同样过滤未安装项。`installation.ts` 检查协议登记所指向的实际应用路径、macOS 系统及用户 Applications、Windows 常见安装目录；Codex 额外识别桌面管理的 App Server。账号快照及历史数据库不作为安装判据，权限等文件系统错误不作为未安装处理。`IntegrationInstaller` 也使用相同检查，未安装返回 not-installed，不执行 install。安装状态每次刷新重新检查；已安装后的读取错误仍向上传递。注入的自定义来源不受本机安装限制，已绑定工作的同步／读取及本地留存不受此列表筛选影响。
+
+ChatGPT 网页复用 `catalog.ts → createWebExecutors / SELECTED_IMPORT_CONNECTORS → browser catalog` 统一注册及域名校验，ID 为 chatgpt-web，与 codex 分开。`web-transfer.ts` 允许其接收冻结的工作包与附件；浏览器仍只在用户点击后读取选区或填入草稿，不调用私有聊天历史接口。展示复用已有 ChatGPT 品牌图像及网页角标。
+
+
 ## 本地自动开展（2026-10-29，v0.1.10）
 
 普通 Contract 的新工作入口支持 Codex 本地自动开始。`LocalExecution` 封装目录校验、固定资料、发起去重、执行片段绑定及依据查询；`CodexLocalRunner` 通过独立的官方 app-server stdio 连接执行，不与历史读取连接共享生命周期。工作流节点继续由原流程模块管理，本次不改流程布局或节点派发。
@@ -951,3 +970,7 @@ WorkBuddyLocalHistory 在查询数据库和枚举正文前验证账号快照；E
 ## 2026-10-28 普通活动入口清理（用户已确认）
 
 桌宠通过 panel:open-current-context → AppService.openCurrentContext → mode=view 打开来源；从消息新建通过显式 mode=view 写入按需查看标记，跳过后台准备与改进采集。移除 renderer/preload/main 中无调用者的普通 complete/resume IPC；保留领域完成/恢复方法供契约、流程和兼容路径使用。删除入口通过 deleteLocalActivity 调用原删除服务，确认词为“删除本地活动”；旧确认词只为后端兼容保留。WorkSummaryView 补充契约身份以区分列表标签，持久状态不迁移。
+
+## 插件发布（2026-11-02）
+
+`package-browser-extension.mjs` 从随应用交付的插件目录构建版本化 ZIP，附安装说明与 SHA256；macOS / Windows 发行脚本同时产出插件附件。插件独立版本与客户端版本分别管理，当前为 Worket 0.1.11 / 插件 0.3.1。浏览器重新加载仍由用户执行，不扩大原扩展权限。

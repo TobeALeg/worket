@@ -167,6 +167,7 @@ export class AppService {
   async listExecutors(): Promise<ExecutorView[]> {
     const executors = await Promise.all(
       this.#executors.all().map(async (adapter) => {
+        if (adapter.isInstalled && !(await adapter.isInstalled())) return null;
         const readingCheck = adapter.inspect();
         const [reading, delivery] = await Promise.allSettled([
           readingCheck,
@@ -579,7 +580,7 @@ export class AppService {
     const adapter = this.#executors.get(input.adapterId);
     const desktopSelection = adapter.capabilities?.source === "HOOK_EVENTS" && adapter.capabilities.manualSelection === true && input.scope === "SELECTED_CONTENT";
     if (!desktopSelection && adapter.capabilities?.source !== input.scope) throw new Error("连接器与采集范围不符。");
-    return { thread: normalizeSelectedContent(input, { desktopSelection, environmentType: adapter.environment.type }), notice: "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
+    return { thread: normalizeSelectedContent(input, { desktopSelection, environmentType: adapter.environment.type }), notice: input.captureMode === "CURRENT_CHAT" ? "导入当前聊天分支的消息文字；已检查页面首尾，其他分支和附件正文未包含。" : "仅导入选定或有限事件；未加载消息、分支和附件正文未包含。无消息 ID 时按正文去重，修改可能成为新观察。" };
   }
 
   /** User confirmation belongs in the UI. This seam only consumes selected, validated data. */
@@ -619,7 +620,9 @@ export class AppService {
     thread.events = this.#deliveryLedger.annotate(work.instance.id, thread.events);
     const result = await this.#ingestDelta(work, thread);
     await this.#updateRecordedState(result.work);
-    this.#notice = `已导入 ${result.newEvents.length} 条选定内容。未加载历史和附件正文未包含；本地导入不证明目标已读工作包。`;
+    this.#notice = input.captureMode === "CURRENT_CHAT"
+      ? `已导入 ${result.newEvents.length} 条当前聊天消息。其他分支和附件正文未包含；本地导入不证明目标已读工作包。`
+      : `已导入 ${result.newEvents.length} 条选定内容。未加载历史和附件正文未包含；本地导入不证明目标已读工作包。`;
     return this.dashboard(work.instance.id);
   }
 
@@ -1235,7 +1238,7 @@ export class AppService {
     const localExecution = this.localExecution.summary(work.instance.id);
     const state = pkg?.state ?? work.state;
     const limited = work.sourceArchive.some(event => ["SELECTED_CONTENT", "HOOK_EVENTS"].includes(String(event.metadata.captureScope)));
-    const sourceNotice = limited ? "仅有选定内容或有限事件；完整历史、未加载分支及附件正文未包含。" : work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
+    const sourceNotice = limited ? "来自主动导入或有限事件；未读取的消息、其他分支及附件正文未包含。" : work.activeBinding && unavailableSourceRange(work) ? "记录起点已不在当前来源中，请通过“从消息新建”重新选择范围。" : sourceAvailabilityNotice(work.sourceArchive);
     const latestReply = currentSourceEvents(work.sourceArchive).findLast((event) => event.kind === "agent.response" && event.content?.trim());
     const dispatch = this.#core.definitions.db
       .prepare("SELECT status,read_at FROM pending_dispatches WHERE work_id=?")
