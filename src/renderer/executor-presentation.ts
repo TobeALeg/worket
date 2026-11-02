@@ -1,4 +1,5 @@
 export const executorPresentation: Record<string, { logo: string; name: string; web?: boolean }> = {
+  "chatgpt-web": { logo: "chatgpt-circle.png", name: "ChatGPT", web: true },
   codex: { logo: "chatgpt-circle.png", name: "Codex" },
   workbuddy: { logo: "workbuddy.svg", name: "WorkBuddy" },
   zcode: { logo: "zcode-circle.png", name: "ZCode" },

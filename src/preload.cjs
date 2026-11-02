@@ -6,6 +6,7 @@ ipcRenderer.on('workflow:flushDraft', async (_event, id) => {
 });
 
 contextBridge.exposeInMainWorld("workpet", {
+  browserSetup: (action, input) => ipcRenderer.invoke("browser:setup", action, input),
   previewSelectedContent: input => ipcRenderer.invoke("connectors:preview", input),
   importSelectedContent: input => ipcRenderer.invoke("connectors:import", input),
   listSelectedInbox: () => ipcRenderer.invoke("connectors:inbox"),

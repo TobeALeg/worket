@@ -57,6 +57,9 @@ export class WorkPetHttpBridge {
         }
         if (request.headers.origin) { response.writeHead(403).end(); return; }
         const payload = await jsonBody(request);
+        if (request.url === "/browser/status") {
+          response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ connected: true })); return;
+        }
         if (request.url === "/selected/stage" && this.#options.onSelectedContent) {
           const result = await this.#options.onSelectedContent(payload as unknown as SelectedContent);
           response.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(result)); return;
@@ -89,6 +92,7 @@ export class WorkPetHttpBridge {
           .end(
             JSON.stringify({
               error: error instanceof Error ? error.message : String(error),
+              ...(error && typeof error === "object" && "code" in error && typeof error.code === "string" ? { code: error.code } : {}),
             }),
           );
       }

@@ -65,6 +65,8 @@ export interface ExecutorAdapter {
     application: ForegroundApplication,
   ): Promise<ConversationSummary | null>;
   install?(appPath: string): Promise<string>;
+  /** Installation presence only; must not depend on login or readable history. */
+  isInstalled?(): Promise<boolean>;
   inspect(): Promise<void>;
   /** Check delivery transport independently of history; legacy adapters share inspect. */
   inspectDelivery?(): Promise<void>;

@@ -1,3 +1,4 @@
+import { BrowserSetup } from "./integrations/browser-setup.js";
 import { SelectedContentInbox } from "./connectors/inbox.js";
 import type { SelectedContent } from "./connectors/selected-content.js";
 import { Diagnostics } from "./diagnostics/recorder.js";
@@ -305,6 +306,32 @@ function revealApp(): void {
 }
 
 function registerIpc(): void {
+  const browserSetup = new BrowserSetup({
+    root: join(app.getPath("appData"), "Worket"), home: homedir(),
+    resourceRoot: integrationResourceRoot(), runtime: process.execPath,
+    bridgeConfig: process.env.WORKPET_BRIDGE_CONFIG ?? join(homedir(), ".workpet", "bridge.json"),
+  });
+  ipcMain.handle("browser:setup", async (event, action: string, input?: { browser?: string; extensionId?: string }) => {
+    if (event.sender !== panelWindow?.webContents) throw new Error("INVALID_SENDER");
+    const browser = input?.browser;
+    if (browser !== "chrome" && browser !== "edge") throw new Error("请选择 Chrome 或 Edge。");
+    if (action === "status") return browserSetup.status(browser);
+    if (action === "pair") return browserSetup.pair(browser, input?.extensionId?.trim() ?? "");
+    if (["open", "folder", "path"].includes(action)) {
+      const directory = await browserSetup.prepare();
+      if (action === "path") clipboard.writeText(directory);
+      if (action === "folder") { const error = await shell.openPath(directory); if (error) throw new Error(error); }
+      if (action === "open") {
+        const url = browser === "chrome" ? "chrome://extensions/" : "edge://extensions/";
+        if (process.platform === "darwin") {
+          const { execFile } = await import("node:child_process");
+          await new Promise<void>((resolve, reject) => execFile("/usr/bin/open", ["-a", browser === "chrome" ? "Google Chrome" : "Microsoft Edge", url], error => error ? reject(error) : resolve()));
+        } else await shell.openExternal(url);
+      }
+      return null;
+    }
+    throw new Error("不支持的插件操作。");
+  });
   let compactBounds: Electron.Rectangle | undefined;
   ipcMain.handle('workflow:expanded', (event, expanded: boolean) => {
     if (event.sender !== panelWindow?.webContents || typeof expanded !== 'boolean') throw new Error('INVALID_SENDER');
@@ -570,6 +597,10 @@ app.whenReady().then(async () => {
   process.on("uncaughtExceptionMonitor", () => diagnostics.event("app", "failed", { code: "UNCAUGHT_EXCEPTION" }));
   const executors = createDefaultExecutors({
     launcher: new ElectronWorkBuddyLauncher(),
+    applicationForProtocol: async url => {
+      try { return (await app.getApplicationInfoForProtocol(url)).path; }
+      catch { return null; }
+    },
     openUrl: async (url) => {
       await shell.openExternal(url);
       diagnostics.event("handoff", "open-requested");

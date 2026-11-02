@@ -39,4 +39,5 @@ try {
 } finally { rmSync(extracted, { recursive: true, force: true }); }
 const checksum = createHash("sha256").update(readFileSync(archive)).digest("hex");
 writeFileSync(`${archive}.sha256`, `${checksum}  ${archive.split("/").at(-1)}\n`);
+run("node", ["scripts/package-browser-extension.mjs"]);
 console.log(`已验证：${archive}。按 README 创建草稿 Release，完成跨版本验收后发布。`);

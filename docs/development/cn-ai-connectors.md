@@ -84,3 +84,13 @@ QwenWork 手动回复回流：在“导入选定内容”选择 QwenWork 桌面�
 ## 日常 Chrome 加载目录（2026-10-14）
 
 本机扩展复制到 `~/Library/Application Support/Worket/browser-extension`。在 Chrome 扩展管理页开启开发者模式，点击“加载未打包的扩展程序”；macOS 选择器中用 Command+Shift+G 输入完整目录，无需显示隐藏的 Library。加载后取得卡片实际 ID，再由 prepare-browser-native.mjs 生成 exact-origin 本机配对；扩展加载与本机 Host 注册是两个独立步骤。工具禁止访问 chrome:// 管理页时，加载步骤由用户完成，不改写浏览器配置绕过该限制。
+
+## 客户端安装入口（2026-11-02）
+
+应用菜单 → 浏览器插件（选定内容导入中也有入口）提供插件文件夹、扩展管理页、精确 ID 配对与连接检查。常规用户无需执行本文的开发命令。Chrome / Edge 仍由用户手动加载，更新后重新加载扩展卡片；配对按钮同时更新本机 Host 与插件文件。连接检查真实调用 Host 的 status 帧及 Worket 的鉴权 /browser/status；已配对不等于浏览器当前启用插件。
+
+本机复现 HTTP 400 的具体响应为“请先在 Worket 复制工作包或交接到网页（10 分钟内有效）”。此前 config.mjs 丢失失败响应正文。现在保留 error/code，TRANSFER_NOT_PREPARED 作为普通操作提示；不是所有 HTTP 400 都表示同一原因。
+
+## ChatGPT 当前聊天导入（2026-11-02）
+
+插件 0.3.0 的“导入当前聊天”无需文字选区。保持目标会话及 popup 打开，等待读取首尾与消息预览，发送到 Worket 待确认箱后在 Worket 预览确认。受限于可见 DOM，只读取当前分支消息文字，不含附件正文或其他分支；生成、导航、页面结构变化或超限明确失败。真实 Chrome 和隔离虚拟滚动验证见 [验收记录](../acceptance/chatgpt-current-chat-2026-11-02.md)。

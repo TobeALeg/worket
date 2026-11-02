@@ -173,6 +173,7 @@ export interface CreateWorkFromMessageRequest {
 }
 
 export interface WorkPetApi {
+  browserSetup(action: string, input: { browser: string; extensionId?: string }): Promise<import("./integrations/browser-setup.js").BrowserSetupStatus | null>;
   workflow(action: string, input?: unknown): Promise<any>;
   setWorkflowExpanded(expanded: boolean): Promise<void>;
   onWorkflowDraftFlush(callback: () => Promise<void>): () => void;

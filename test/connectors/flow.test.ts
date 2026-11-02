@@ -10,11 +10,12 @@ import { currentSourceEvents } from '../../dist/core/source-revisions.js';
 import { createQwenWorkExecutor } from '../../dist/adapters/qwenwork/executor.js';
 import { SelectedContentInbox } from '../../dist/connectors/inbox.js';
 const fixture = () => JSON.parse(readFileSync(new URL('../fixtures/connectors/selected-requirements.json', import.meta.url), 'utf8'));
-test('ordinary web chats preserve one work across Kimi, Doubao, DeepSeek and Gemini handoffs', async () => {
+test('ordinary web chats preserve one work across ChatGPT, Kimi, Doubao, DeepSeek and Gemini handoffs', async () => {
   const { app, delivered } = setup();
   try {
     const id = (await app.importSelectedContent(fixture())).selectedWork!.id;
     for (const [adapterId, url] of [
+      ['chatgpt-web', 'https://chatgpt.com/c/synthetic-ordinary'],
       ['doubao-work', 'https://www.doubao.com/chat/synthetic-ordinary'],
       ['deepseek-web', 'https://chat.deepseek.com/a/chat/synthetic-ordinary'],
       ['gemini-web', 'https://gemini.google.com/app/synthetic-ordinary'],
@@ -143,5 +144,23 @@ test('explicit selection imports an earlier message before an existing overlap w
     await app.importSelectedContent(input);
     assert.equal(currentSourceEvents(app.core().getWork(id)!.sourceArchive).filter(event => event.kind === 'user.prompt').length, 1);
     assert.equal(app.core().getWork(id)!.sourceArchive.some(event => event.kind === 'source.absent'), false);
+  } finally { app.close(); }
+});
+
+test('current ChatGPT conversation stages all messages, preserves capture mode and deduplicates repeated imports', async () => {
+  const { app } = setup();
+  const input = { ...fixture(), adapterId: 'chatgpt-web', url: 'https://chatgpt.com/c/current-chat', conversationId: 'https://chatgpt.com/c/current-chat', captureMode: 'CURRENT_CHAT' as const,
+    messages: [{ id: 'user:u1', role: 'user', content: '请保留角色与顺序。' }, { id: 'assistant:a1', role: 'assistant', content: '第一条回复。' }, { id: 'user:u2', role: 'user', content: '补充要求：保留来源。' }, { id: 'assistant:a2', role: 'assistant', content: '第二条回复。' }] };
+  try {
+    const inbox = new SelectedContentInbox(), stagedId = inbox.stage(input);
+    const staged = inbox.read(stagedId);
+    assert.equal(staged.captureMode, 'CURRENT_CHAT');
+    assert.match(app.previewSelectedContent(staged).notice, /当前聊天分支/);
+    const first = await app.importSelectedContent(staged), id = first.selectedWork!.id;
+    const events = currentSourceEvents(app.core().getWork(id)!.sourceArchive).filter(event => event.kind === 'user.prompt' || event.kind === 'agent.response');
+    assert.deepEqual(events.map(event=>event.kind), ['user.prompt','agent.response','user.prompt','agent.response']);
+    assert.ok(events.every(event=>event.metadata.captureMode === 'CURRENT_CHAT' && event.metadata.historyComplete === false));
+    const again = await app.importSelectedContent(staged);
+    assert.equal(again.selectedWork!.id,id); assert.equal(again.selectedWork!.eventCount,first.selectedWork!.eventCount);
   } finally { app.close(); }
 });

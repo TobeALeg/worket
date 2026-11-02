@@ -61,4 +61,5 @@ try {
 }
 const checksum = createHash("sha256").update(readFileSync(archive)).digest("hex");
 writeFileSync(`${archive}.sha256`, `${checksum}  Worket-${version}-win32-x64.zip\n`);
+run("node", ["scripts/package-browser-extension.mjs"]);
 console.log(`已验证：${archive}。Windows 包未进行代码签名，发布前需明确 SmartScreen 提示。`);
